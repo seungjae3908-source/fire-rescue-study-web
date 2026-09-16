@@ -1,0 +1,30 @@
+/* Stable v8 P0 desktop/tablet layout repair */
+@media (min-width:760px) and (hover:hover) and (pointer:fine){
+  .app{padding-left:210px!important;}
+  .desktop-nav{display:flex!important;flex-direction:column!important;gap:5px!important;width:186px!important;left:12px!important;top:78px!important;bottom:12px!important;height:auto!important;padding:9px!important;border-radius:18px!important;overflow:auto!important;}
+  .desktop-nav button{display:grid!important;grid-template-columns:32px minmax(0,1fr)!important;align-items:center!important;width:100%!important;min-height:45px!important;padding:7px 10px!important;text-align:left!important;border-radius:12px!important;}
+  .desktop-nav .nav-icon{font-size:17px!important;line-height:1!important;}
+  .desktop-nav .nav-label{display:block!important;font-size:12px!important;line-height:1.2!important;margin:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .mobile-nav{display:none!important;}
+  .top{width:100%!important;padding:10px 18px!important;}
+  .topin{max-width:none!important;margin:0!important;}
+  .layout{width:100%!important;max-width:none!important;margin:0!important;padding:14px 18px 14px 16px!important;grid-template-columns:minmax(0,1fr)!important;gap:16px!important;}
+  .side{display:none!important;}
+  .main{min-width:0!important;}
+  .screen{max-width:none!important;}
+  .screen-head h1{font-size:25px!important;}
+  .qcard,.wrong-focus,.exam-question{max-width:980px!important;width:100%!important;margin-inline:auto!important;}
+  .screen-actions{max-width:980px!important;width:100%!important;margin-inline:auto!important;}
+  .choices{gap:8px!important;}
+  .choice{min-height:50px!important;font-size:15px!important;padding:11px 14px!important;}
+  .v8-upload-zone,.upload-zone{max-width:1100px!important;width:100%!important;margin-inline:auto!important;}
+}
+@media (min-width:1180px) and (hover:hover) and (pointer:fine){
+  .app{padding-left:224px!important;}
+  .desktop-nav{width:198px!important;}
+  .layout{grid-template-columns:minmax(0,1fr) 300px!important;gap:20px!important;padding-right:24px!important;}
+  .side{display:flex!important;}
+}
+@media (min-width:760px) and (max-width:1179px) and (hover:hover) and (pointer:fine){
+  .subject-dashboard,.v8-scope-grid,.topic-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
