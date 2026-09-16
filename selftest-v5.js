@@ -17,11 +17,15 @@ function runProductionSelfTests(){
   add('문제 품질 게이트',typeof validateAIQuestion==='function'&&typeof normalizeQuestionFingerprint==='function');
   add('단원 학습지도',typeof curriculumPriority==='function'&&typeof chapterMetric==='function');
   add('D-day 플래너',typeof todayStudyPlan==='function'&&typeof examPhase==='function');
-  add('반응형 장치 분류',document.documentElement.dataset.device==='phone'||document.documentElement.dataset.device==='tablet'||document.documentElement.dataset.device==='desktop');
+  add('반응형 장치 분류',['phone','tablet','desktop'].includes(document.documentElement.dataset.device));
   qualityRuntime.selfTests={pass:checks.filter(x=>x.ok).length,total:checks.length,failures:checks.filter(x=>!x.ok),checks,ran:true};
   if(qualityRuntime.selfTests.failures.length)qualityRuntime.errors+=qualityRuntime.selfTests.failures.length;
   return qualityRuntime.selfTests;
 }
 const _qualityPageBeforeSelfTest=qualityPage;
-qualityPage=function(){const html=_qualityPageBeforeSelfTest();const s=qualityRuntime.selfTests;const block=`<section class="card selftest-card"><div class="row"><div><div class="tiny muted">RUNTIME SELF TEST</div><h3>자동 자가검증 ${s.pass}/${s.total||'—'}</h3></div><span class="spacer"></span><span class="tag ${s.failures.length?'d':'a'}">${s.failures.length?'FAIL '+s.failures.length:'PASS'}</span></div>${s.ran?`<div class="selftest-list">${s.checks.map(x=>`<div class="selftest-row ${x.ok?'ok':'fail'}"><span>${x.ok?'✓':'✕'}</span><b>${esc(x.name)}</b><small>${esc(x.detail||'')}</small></div>`).join('')}</div>`:'<p class="muted">검사 준비 중…</p>'}</section>`;return html.replace('</div></div>',block+'</div></div>');};
+qualityPage=function(){
+  const html=_qualityPageBeforeSelfTest();const s=qualityRuntime.selfTests;
+  const block=`<section class="card selftest-card"><div class="row"><div><div class="tiny muted">RUNTIME SELF TEST</div><h3>자동 자가검증 ${s.pass}/${s.total||'—'}</h3></div><span class="spacer"></span><span class="tag ${s.failures.length?'d':'a'}">${s.failures.length?'FAIL '+s.failures.length:'PASS'}</span></div>${s.ran?`<div class="selftest-list">${s.checks.map(x=>`<div class="selftest-row ${x.ok?'ok':'fail'}"><span>${x.ok?'✓':'✕'}</span><b>${esc(x.name)}</b><small>${esc(x.detail||'')}</small></div>`).join('')}</div>`:'<p class="muted">검사 준비 중…</p>'}</section>`;
+  return html.replace('<div class="quality-grid">',block+'<div class="quality-grid">');
+};
 window.addEventListener('load',()=>{setTimeout(()=>{runProductionSelfTests();if(state.page==='quality')render();},100);},{once:true});
