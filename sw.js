@@ -1,4 +1,4 @@
-const CACHE='ai-tutor-v8-6-learning-pack-20260917';
+const CACHE='ai-tutor-v8-6a-learning-pack-20260917';
 const BASE=new URL('./',self.location.href).pathname;
 const CORE=[BASE,BASE+'index.html',BASE+'manifest.webmanifest',BASE+'icon.svg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
