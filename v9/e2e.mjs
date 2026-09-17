@@ -7,7 +7,6 @@ async function errors(page){const arr=[];page.on('pageerror',e=>arr.push('pageer
 
 const browser=await chromium.launch({headless:true});
 try{
-  // Desktop workspace
   const desktop=await browser.newContext({viewport:{width:1440,height:900}});const p=await desktop.newPage();const err=await errors(p);
   await p.goto(base,{waitUntil:'domcontentloaded'});await p.waitForSelector('.app');await noX(p,'desktop home');
   await p.locator('[data-go="study"]').first().click();await p.waitForSelector('.workspace');await noX(p,'desktop study');
@@ -18,21 +17,31 @@ try{
   await p.locator('[data-concept="F03-C06"]').click();await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');assert((await p.locator('.concept-head h2').textContent()).includes('플래시오버'),'TOC selects concept without permanent extra columns');
   await p.locator('[data-study-tab="compare"]').click();assert((await p.locator('.study-body').textContent()).includes('백드래프트'),'comparison tab renders rich concept content');
 
-  // Real exam must remain locked until distinct 25+40 bank exists.
-  await p.locator('[data-go="exam"]').first().click();await p.waitForSelector('.page');const examText=await p.locator('.page').textContent();assert(examText.includes('실전모드 잠금'),'real mock exam is visibly fail-closed');assert(await p.locator('[data-exam-start="real"]').count()===0,'real exam start button absent while coverage insufficient');assert(await p.locator('[data-exam-start="practice"]').count()===1,'practice mode remains available');
+  // Mock-exam UI and integrity change automatically with distinct verified bank coverage.
+  const readiness=await p.evaluate(()=>window.AITUTOR_V9.examReadiness());
+  await p.locator('[data-go="exam"]').first().click();await p.waitForSelector('.page');const examText=await p.locator('.page').textContent();
+  assert(await p.locator('[data-exam-start="practice"]').count()===1,'practice mode remains available');
+  if(readiness.ready){
+    assert(!examText.includes('실전모드 잠금'),'real mock exam unlocks only after 25+40 coverage');
+    assert(await p.locator('[data-exam-start="real"]').count()===1,'real exam start button appears after coverage gate');
+    await p.locator('[data-exam-start="real"]').click();await p.waitForSelector('[data-exam-answer]');
+    const integrity=await p.evaluate(()=>{const qs=window.AITUTOR_V9.App.runtime.exam.qs;return{total:qs.length,unique:new Set(qs.map(q=>q.id)).size,fire:qs.filter(q=>q.subject==='fire').length,ems:qs.filter(q=>q.subject==='ems').length}});
+    assert(integrity.total===65&&integrity.unique===65&&integrity.fire===25&&integrity.ems===40,`real mock uses 65 distinct questions with 25+40 split (${JSON.stringify(integrity)})`);
+    await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.render()});
+  } else {
+    assert(examText.includes('실전모드 잠금'),'real mock exam is visibly fail-closed');
+    assert(await p.locator('[data-exam-start="real"]').count()===0,'real exam start button absent while coverage insufficient');
+  }
 
   // Confident-wrong -> wrong treatment -> exact concept.
   await p.evaluate(()=>{const V=window.AITUTOR_V9,q=V.questions.find(x=>x.conceptId==='F03-C06');V.Mastery.recordAnswer(q,(q.a+1)%4,'sure',8000);V.App.render()});
   await p.locator('[data-go="wrong"]').first().click();await p.waitForSelector('[data-concept="F03-C06"]');assert((await p.locator('.page').textContent()).includes('위험오답'),'confident wrong is marked dangerous');await p.locator('[data-concept="F03-C06"]').first().click();await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.conceptId==='F03-C06');assert(true,'wrong answer treatment returns to exact concept');
 
-  // Local personal document is isolated by owner namespace.
   const isolation=await p.evaluate(async()=>{const V=window.AITUTOR_V9,owner=V.Store.ownerId;const file=new File(['내 개인 노트: 테스트 전용 내용'], 'isolation-note.txt',{type:'text/plain'});await V.PrivateDocs.ingest(file,{kind:'personal'});const mine=(await V.PrivateDocs.listDocuments('personal')).length;V.Store.switchOwner('qa-other-user');const other=(await V.PrivateDocs.listDocuments('personal')).length;V.Store.switchOwner(owner);return{mine,other,privateRules:V.PrivateDocs.privacyRules}});assert(isolation.mine>=1&&isolation.other===0,'private documents are isolated per owner in local-first store');assert(isolation.privateRules.crossUserSharing===false&&isolation.privateRules.serverUpload===false,'personal docs are no-share/no-auto-upload by default');
   assert(err.length===0,`desktop runtime errors = 0 (${err.join(' | ')})`);await desktop.close();
 
-  // Mobile geometry: study action bar must sit above global mobile nav.
   const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true});const m=await mobile.newPage();const merr=await errors(m);await m.goto(base,{waitUntil:'domcontentloaded'});await m.waitForSelector('.mobile-nav');await noX(m,'mobile home');await m.locator('[data-go="study"]').last().click();await m.waitForSelector('.actionbar');await noX(m,'mobile study');const boxes=await m.evaluate(()=>{const a=document.querySelector('.actionbar').getBoundingClientRect(),n=document.querySelector('.mobile-nav').getBoundingClientRect();return{a:{top:a.top,bottom:a.bottom},n:{top:n.top,bottom:n.bottom},vw:innerWidth}});assert(boxes.a.bottom<=boxes.n.top+1,`mobile study action bar sits above global nav (${JSON.stringify(boxes)})`);assert(await m.locator('.actionbar').isVisible(),'mobile AI/문제/근거 action bar visible');assert(merr.length===0,`mobile runtime errors = 0 (${merr.join(' | ')})`);await mobile.close();
 
-  // Legacy v8 local data -> v9 guest migration, without deleting source data.
   const migration=await browser.newContext({viewport:{width:1024,height:768}});await migration.addInitScript(()=>{if(location.protocol==='http:'){localStorage.setItem('rescue6:profile',JSON.stringify({examYear:'2031',daily:55,level:'재도전'}));localStorage.setItem('rescue6:notes',JSON.stringify([{id:'legacy-note',title:'기존노트',text:'이전 기록'}]));}});const g=await migration.newPage();await g.goto(base,{waitUntil:'domcontentloaded'});await g.waitForSelector('.app');const mig=await g.evaluate(()=>({year:window.AITUTOR_V9.Store.state.profile.examYear,notes:window.AITUTOR_V9.Store.state.notes.map(x=>x.id),legacyStill:localStorage.getItem('rescue6:notes')!==null,guest:window.AITUTOR_V9.Auth.isGuest}));assert(mig.year==='2031'&&mig.notes.includes('legacy-note'),'v8 guest study data migrates into v9 namespace');assert(mig.legacyStill&&mig.guest,'legacy source remains intact and migration stays guest-local before sign-in');await migration.close();
 
   console.log('V9_BROWSER_QA_SUCCESS');

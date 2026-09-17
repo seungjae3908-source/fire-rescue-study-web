@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','content-packs.js','questions.js']){
+for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -17,11 +17,13 @@ ok(V.questions.every(q=>q.choices.length===4),'all questions have four choices')
 ok(V.questions.every(q=>new Set(q.choices).size===4),'no duplicate choices inside a question');
 ok(new Set(V.questions.map(q=>q.id)).size===V.questions.length,'unique question ids');
 ok(V.questions.every(q=>Number.isInteger(q.a)&&q.a>=0&&q.a<4),'single valid answer index');
+ok(V.questions.every(q=>!/(기출|실제 출제|과거시험)/.test(String(q.q||''))),'no generated question is mislabeled as past exam');
 const mock=V.examReadiness();
 ok(mock.ready===(mock.fire>=25&&mock.ems>=40),'real mock exam is fail-closed');
 const coverage=V.contentPacks.coverage();
 ok(coverage.total===135,'content coverage denominator is 135');
 ok(coverage.verified<=coverage.total,'verified pack count valid');
+ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'),'authored content packs are explicitly verified');
 
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
 for(const table of ['profiles','user_progress','user_answers','wrong_answers','review_schedule','personal_notes','private_documents','document_chunks','study_sessions','exam_history','tutor_preferences']){
