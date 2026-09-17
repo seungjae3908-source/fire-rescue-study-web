@@ -1,0 +1,37 @@
+name: V9 Development CI
+
+on:
+  push:
+    branches: [feat/v9-learning-workspace]
+    paths:
+      - 'v9/**'
+      - 'supabase/v9-schema.sql'
+      - 'V9-ARCHITECTURE.md'
+      - '.github/workflows/v9-ci.yml'
+  pull_request:
+    paths:
+      - 'v9/**'
+      - 'supabase/v9-schema.sql'
+      - 'V9-ARCHITECTURE.md'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for f in v9/*.js; do
+            echo "Checking $f"
+            node --check "$f"
+          done
+      - name: Static integrity / privacy / source truth
+        run: node v9/ci-static.mjs
