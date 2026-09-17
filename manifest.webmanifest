@@ -1,13 +1,14 @@
 {
   "name": "AI과외",
   "short_name": "AI과외",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#08111f",
   "theme_color": "#08111f",
   "lang": "ko",
   "description": "소방공무원 구급 경채 소방학개론·응급처치학개론 AI 학습 웹앱",
   "icons": [
-    {"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+    {"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
   ]
 }
