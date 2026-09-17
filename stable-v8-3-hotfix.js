@@ -1,0 +1,1 @@
+'use strict';(()=>{const A=window.AITUTOR||{},baseBind=bind;bind=function(){baseBind();$$('[data-v8-bank-subject]').forEach(b=>b.onclick=()=>{A.bankSubject=b.dataset.v8BankSubject;A.v83BankScope='';bankIndex=0;S.set('v8-bank-subject',A.bankSubject);S.set('v83-bank-scope','');render()})};})();
