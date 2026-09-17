@@ -51,33 +51,46 @@ ok(v9index.indexOf('./sync-merge.js')<v9index.indexOf('./auth.js'),'conflict-saf
 ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sync API loads before member auth');
 
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
-for(const table of ['profiles','user_progress','user_answers','wrong_answers','review_schedule','personal_notes','private_documents','document_chunks','study_sessions','exam_history','tutor_preferences']){
+const studyTables=['study_profiles','study_user_progress','study_user_answers','study_wrong_answers','study_review_schedule','study_personal_notes','study_private_documents','study_document_chunks','study_sessions','study_exam_history','study_tutor_preferences'];
+for(const table of studyTables){
   ok(sql.includes(`alter table public.${table} enable row level security;`),`${table} RLS enabled`);
 }
-ok(sql.includes("values('private-study','private-study',false"),'private storage bucket is non-public');
-ok(sql.includes('(storage.foldername(name))[1]=auth.uid()::text'),'storage objects are user-folder scoped');
+ok(!/create table if not exists public\.profiles\s*\(/.test(sql),'shared backend never creates or repurposes investment public.profiles');
+ok(sql.includes("values('study-private-v9','study-private-v9',false"),'Study private storage bucket is non-public');
+ok(sql.includes("bucket_id='study-private-v9'"),'Storage policies are isolated to the Study bucket');
+ok(sql.includes('to authenticated'),'Study policies explicitly target authenticated users');
+ok(sql.includes('(select auth.uid())'),'Study owner checks use cached auth.uid() form');
 ok(!sql.toLowerCase().includes('public = true'),'schema never enables public storage');
 ok((sql.match(/deleted_at timestamptz/g)||[]).length>=2,'personal notes and private documents support deletion tombstones');
+ok(!sql.includes('create trigger on_ai_tutor_user_created')&&!sql.includes('handle_new_ai_tutor_user'),'shared backend adds no project-wide auth.users bootstrap trigger');
+ok(!sql.toLowerCase().includes('alter default privileges'),'shared schema does not change project-wide default privileges');
+
 const hardening=fs.readFileSync(new URL('../supabase/v9-owner-hardening.sql',import.meta.url),'utf8');
-ok(hardening.includes('unique (id, user_id)'),'private document identity is owner-bound');
+ok(hardening.includes('study_private_documents_id_user_id_key'),'private document identity constraint is Study-namespaced');
 ok(hardening.includes('foreign key (document_id, user_id)'),'document chunks use an owner-bound composite foreign key');
-ok(hardening.includes('d.id = document_id and d.user_id = auth.uid()'),'document chunk RLS verifies parent ownership');
+ok(hardening.includes('public.study_private_documents'),'document hardening never targets investment tables');
+ok(hardening.includes('d.id = document_id and d.user_id = (select auth.uid())'),'document chunk RLS verifies parent ownership');
+
 const liveHardening=fs.readFileSync(new URL('../supabase/v9-live-backend-hardening.sql',import.meta.url),'utf8');
-ok(liveHardening.includes('revoke all privileges on table public.%I from anon'),'anonymous Data API access is explicitly revoked');
+ok(liveHardening.includes('revoke all privileges on table public.%I from anon'),'anonymous Data API access is explicitly revoked for Study tables');
 ok(liveHardening.includes('grant select, insert, update, delete on table public.%I to authenticated'),'authenticated Data API grants are explicit');
-ok(liveHardening.includes("set search_path = ''"),'SECURITY DEFINER trigger search_path is locked');
-ok(liveHardening.includes('revoke all on function public.handle_new_ai_tutor_user() from public, anon, authenticated'),'auth bootstrap trigger is not callable as a client RPC');
-ok(liveHardening.includes('c.relrowsecurity'),'live hardening aborts if any private table lacks RLS');
+ok(liveHardening.includes("'study_profiles'")&&liveHardening.includes("'study_tutor_preferences'"),'live hardening is bound to Study-prefixed tables');
+ok(!liveHardening.toLowerCase().includes('alter default privileges'),'live hardening does not change investment-app default privileges');
+ok(!liveHardening.includes('handle_new_ai_tutor_user')&&!liveHardening.includes('auth.users'),'live hardening adds no project-wide auth trigger/function');
+ok(liveHardening.includes('c.relrowsecurity'),'live hardening aborts if any Study private table lacks RLS');
 
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
-for(const table of ['user_answers','review_schedule','private_documents','document_chunks','tutor_preferences'])ok(auth.includes(`'${table}'`),`member sync covers ${table}`);
+for(const [logical,physical] of Object.entries({profiles:'study_profiles',user_progress:'study_user_progress',user_answers:'study_user_answers',wrong_answers:'study_wrong_answers',review_schedule:'study_review_schedule',personal_notes:'study_personal_notes',private_documents:'study_private_documents',document_chunks:'study_document_chunks',study_sessions:'study_sessions',exam_history:'study_exam_history',tutor_preferences:'study_tutor_preferences'})){
+  ok(auth.includes(`${logical}:'${physical}'`),`member sync maps ${logical} -> ${physical}`);
+}
 ok(auth.includes('remoteFirstOnSignIn:true'),'existing-member sign-in is remote-first before local push');
 ok(auth.includes('remoteFirstOnManualSync:true'),'manual sync is remote-first before local push');
 ok(auth.includes('await pullRemoteIntoLocal(user.id);return syncAllInternal(user.id)'),'manual sync performs pull/merge before push');
 ok(auth.includes('deleted_at:iso(d.deletedAt)'),'private document tombstones are uploaded');
-ok(auth.includes("from('document_chunks').delete()"),'deleted private documents remove remote extracted chunks');
+ok(auth.includes('client.from(T.document_chunks).delete()'),'deleted private documents remove remote extracted chunks');
 ok(auth.includes('originalFilesAutoUpload:false'),'original personal files are never auto-uploaded');
 ok(!auth.includes('.storage.from('),'auth sync has no original-file storage upload path');
+ok(auth.includes('sharedProjectNamespace:\'study_*\''),'sync contract records the Study shared-project namespace');
 ok(auth.includes('supabasePublishableKey'),'browser auth prefers the Supabase publishable key');
 ok(auth.includes('enableCloudSync===true'),'backend connection is feature-gated until explicitly enabled');
 ok(auth.includes('@supabase/supabase-js@2.116.0'),'Supabase browser SDK is pinned to an exact reviewed version');
@@ -96,4 +109,4 @@ ok(pdf.includes('serverUpload:false')&&pdf.includes('crossUserSharing:false'),'p
 
 const root=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 ok(!root.includes('/v9/')&&!root.includes('v9/app.js'),'production root remains v8.6 during development');
-console.log(JSON.stringify({concepts:135,verifiedPacks:coverage.verified,enrichedPacks:Object.values(V.contentPacks.authored).filter(p=>p.depthEnriched).length,questions:V.questions.length,mock},null,2));
+console.log(JSON.stringify({concepts:135,verifiedPacks:coverage.verified,enrichedPacks:Object.values(V.contentPacks.authored).filter(p=>p.depthEnriched).length,questions:V.questions.length,mock,studyTables},null,2));
