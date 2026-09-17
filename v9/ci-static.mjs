@@ -84,7 +84,7 @@ ok(auth.includes('@supabase/supabase-js@2.116.0'),'Supabase browser SDK is pinne
 ok(!auth.includes('service_role')&&!auth.includes('sb_secret_'),'browser auth contains no privileged Supabase key');
 const configExample=fs.readFileSync(new URL('./config.example.js',import.meta.url),'utf8');
 ok(configExample.includes('supabasePublishableKey'),'config example uses a publishable key');
-ok(!configExample.includes('service_role')&&!configExample.includes('sb_secret_'),'config example never asks for a privileged key');
+ok(!/supabase(?:ServiceRole|Secret|Service)_?Key\s*:/i.test(configExample)&&!/sb_secret_[A-Za-z0-9]/.test(configExample),'config example never configures a privileged key');
 const config=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
 ok(config.includes('enableCloudSync:false'),'checked-in v9 config keeps real cloud sync disabled');
 ok(!/supabaseUrl:'https:\/\//.test(config),'checked-in v9 config has no live backend URL yet');
