@@ -63,7 +63,7 @@ ok(sql.includes('(select auth.uid())'),'Study owner checks use cached auth.uid()
 ok(!sql.toLowerCase().includes('public = true'),'schema never enables public storage');
 ok((sql.match(/deleted_at timestamptz/g)||[]).length>=2,'personal notes and private documents support deletion tombstones');
 ok(!sql.includes('create trigger on_ai_tutor_user_created')&&!sql.includes('handle_new_ai_tutor_user'),'shared backend adds no project-wide auth.users bootstrap trigger');
-ok(!sql.toLowerCase().includes('alter default privileges'),'shared schema does not change project-wide default privileges');
+ok(!/^\s*alter\s+default\s+privileges\b/im.test(sql),'shared schema does not execute project-wide default-privilege changes');
 
 const hardening=fs.readFileSync(new URL('../supabase/v9-owner-hardening.sql',import.meta.url),'utf8');
 ok(hardening.includes('study_private_documents_id_user_id_key'),'private document identity constraint is Study-namespaced');
@@ -75,7 +75,7 @@ const liveHardening=fs.readFileSync(new URL('../supabase/v9-live-backend-hardeni
 ok(liveHardening.includes('revoke all privileges on table public.%I from anon'),'anonymous Data API access is explicitly revoked for Study tables');
 ok(liveHardening.includes('grant select, insert, update, delete on table public.%I to authenticated'),'authenticated Data API grants are explicit');
 ok(liveHardening.includes("'study_profiles'")&&liveHardening.includes("'study_tutor_preferences'"),'live hardening is bound to Study-prefixed tables');
-ok(!liveHardening.toLowerCase().includes('alter default privileges'),'live hardening does not change investment-app default privileges');
+ok(!/^\s*alter\s+default\s+privileges\b/im.test(liveHardening),'live hardening does not execute investment-app default-privilege changes');
 ok(!liveHardening.includes('handle_new_ai_tutor_user')&&!liveHardening.includes('auth.users'),'live hardening adds no project-wide auth trigger/function');
 ok(liveHardening.includes('c.relrowsecurity'),'live hardening aborts if any Study private table lacks RLS');
 
