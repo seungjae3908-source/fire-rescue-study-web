@@ -22,9 +22,15 @@ const mock=V.examReadiness();
 ok(mock.ready===(mock.fire>=25&&mock.ems>=40),'real mock exam is fail-closed');
 ok(mock.fire>=25&&mock.ems>=40,'distinct verified bank reaches 25 fire + 40 EMS');
 const coverage=V.contentPacks.coverage();
+const missing=V.curriculum.concepts.filter(c=>V.contentPacks.authored[c.id]?.status!=='verified').map(c=>c.id);
+const extra=Object.keys(V.contentPacks.authored).filter(id=>!V.curriculum.byId[id]);
+console.log('VERIFIED_COVERAGE',coverage);
+console.log('MISSING_VERIFIED_CONCEPTS',missing);
+console.log('EXTRA_AUTHORED_CONCEPTS',extra);
 ok(coverage.total===135,'content coverage denominator is 135');
-ok(coverage.verified===135,'all 135 concept packs are source-verified');
-ok(Object.values(V.contentPacks.authored).length===135,'exactly 135 authored concept packs');
+ok(missing.length===0,`all 135 concept packs are source-verified; missing=${missing.join(',')||'none'}`);
+ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===135,'exactly 135 valid authored concept packs');
+ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'),'all authored content packs are explicitly verified');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored verified pack');
 
