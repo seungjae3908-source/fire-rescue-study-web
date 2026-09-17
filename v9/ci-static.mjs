@@ -76,7 +76,7 @@ ok(liveHardening.includes('revoke all privileges on table public.%I from anon'),
 ok(liveHardening.includes('grant select, insert, update, delete on table public.%I to authenticated'),'authenticated Data API grants are explicit');
 ok(liveHardening.includes("'study_profiles'")&&liveHardening.includes("'study_tutor_preferences'"),'live hardening is bound to Study-prefixed tables');
 ok(!/^\s*alter\s+default\s+privileges\b/im.test(liveHardening),'live hardening does not execute investment-app default-privilege changes');
-ok(!liveHardening.includes('handle_new_ai_tutor_user')&&!liveHardening.includes('auth.users'),'live hardening adds no project-wide auth trigger/function');
+ok(!/^\s*create\s+(?:or\s+replace\s+)?function\b/im.test(liveHardening)&&!/^\s*create\s+trigger\b/im.test(liveHardening),'live hardening adds no project-wide trigger/function');
 ok(liveHardening.includes('c.relrowsecurity'),'live hardening aborts if any Study private table lacks RLS');
 
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
