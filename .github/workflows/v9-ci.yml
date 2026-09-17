@@ -37,6 +37,8 @@ jobs:
           done
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
+      - name: 135-concept content depth gate
+        run: node v9/content-depth.mjs
 
   browser:
     runs-on: ubuntu-latest
