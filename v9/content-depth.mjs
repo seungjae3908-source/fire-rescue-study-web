@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js']){
+for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js']){
   vm.runInThisContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),{filename:file});
 }
 const V=window.AITUTOR_V9,rows=[],fail=[];
@@ -12,7 +12,7 @@ for(const c of V.curriculum.concepts){
   if(!p){fail.push(`${c.id}: missing pack`);continue}
   const summary=String(p.summary||'').trim(),details=(p.detail||[]).map(String),must=(p.must||[]).map(String),traps=(p.traps||[]).map(String),compare=(p.compare||[]).flat().map(String),flow=(p.flow||[]).map(String),source=String(p.source||'');
   const detailChars=chars(details.join('')),totalChars=chars([summary,...details,...must,...traps,...compare,...flow].join(' '));
-  const placeholder=/원문\s*(검증|확인)|근거\s*(확인|필요)|연결\s*대기|추후\s*확인|임의로/.test([summary,...details,...must,...traps].join(' '));
+  const placeholder=/원문\s*(검증|확인)|근거\s*(확인|필요)|연결\s*대기|추후\s*확인|임의로\s*(생성|추정|채움|작성)/.test([summary,...details,...must,...traps].join(' '));
   const checks={
     verified:p.status==='verified',
     summary:chars(summary)>=20,

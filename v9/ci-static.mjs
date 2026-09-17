@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js']){
+for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -33,7 +33,8 @@ ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'),'all authored content packs are explicitly verified');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored verified pack');
-ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch is loaded');
+ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
+ok(!!V.depthEnrichment2,'source-depth enrichment batch 2 is loaded');
 
 const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url),'utf8'));
 ok(manifest.start_url==='./'&&manifest.scope==='./','v9 PWA manifest is subpath-scoped');
@@ -41,10 +42,11 @@ const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 ok(sw.includes("const PREFIX='ai-tutor-v9-'"),'v9 service worker uses a dedicated cache prefix');
 ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names');
 ok(sw.includes("'./sync-merge.js'")&&sw.includes("'./sync-ui.js'"),'v9 sync hardening files are offline-cached');
-ok(sw.includes("'./depth-enrichment.js'"),'v9 depth enrichment is offline-cached');
+ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'"),'v9 depth enrichments are offline-cached');
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
 ok(v9index.indexOf('./depth-enrichment.js')>v9index.indexOf('./verified-final.js'),'depth enrichment loads after base verified packs');
+ok(v9index.indexOf('./depth-enrichment-2.js')>v9index.indexOf('./depth-enrichment.js'),'depth enrichment batch 2 loads after batch 1');
 ok(v9index.indexOf('./sync-merge.js')<v9index.indexOf('./auth.js'),'conflict-safe merge loads before member auth');
 ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sync API loads before member auth');
 
@@ -71,4 +73,4 @@ ok(pdf.includes('serverUpload:false')&&pdf.includes('crossUserSharing:false'),'p
 
 const root=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 ok(!root.includes('/v9/')&&!root.includes('v9/app.js'),'production root remains v8.6 during development');
-console.log(JSON.stringify({concepts:135,verifiedPacks:coverage.verified,enrichedPacks:V.depthEnrichment?.conceptIds?.length||0,questions:V.questions.length,mock},null,2));
+console.log(JSON.stringify({concepts:135,verifiedPacks:coverage.verified,enrichedPacks:Object.values(V.contentPacks.authored).filter(p=>p.depthEnriched).length,questions:V.questions.length,mock},null,2));
