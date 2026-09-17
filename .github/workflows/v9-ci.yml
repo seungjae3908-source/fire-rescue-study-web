@@ -38,7 +38,7 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -58,5 +58,7 @@ jobs:
           done
           cat /tmp/aitutor-v9-http.log
           exit 1
-      - name: PC/mobile privacy and learning flow QA
+      - name: PC/mobile privacy, PWA and learning flow QA
         run: node v9/e2e.mjs
+      - name: Personal PDF extraction and owner isolation QA
+        run: node v9/pdf-e2e.mjs
