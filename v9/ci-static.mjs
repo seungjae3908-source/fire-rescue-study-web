@@ -34,6 +34,14 @@ ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.j
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'),'all authored content packs are explicitly verified');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored verified pack');
 
+const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url),'utf8'));
+ok(manifest.start_url==='./'&&manifest.scope==='./','v9 PWA manifest is subpath-scoped');
+const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
+ok(sw.includes("const PREFIX='ai-tutor-v9-'"),'v9 service worker uses a dedicated cache prefix');
+ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names');
+const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
+
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
 for(const table of ['profiles','user_progress','user_answers','wrong_answers','review_schedule','personal_notes','private_documents','document_chunks','study_sessions','exam_history','tutor_preferences']){
   ok(sql.includes(`alter table public.${table} enable row level security;`),`${table} RLS enabled`);

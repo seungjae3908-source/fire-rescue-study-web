@@ -1,0 +1,14 @@
+{
+  "name": "AI과외 v9",
+  "short_name": "AI과외",
+  "description": "소방 구급 경채 개인 맞춤 학습 워크스페이스",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#08111f",
+  "lang": "ko",
+  "icons": [
+    {"src":"../icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}
+  ]
+}

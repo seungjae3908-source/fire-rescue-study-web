@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#08111f">
   <meta name="description" content="AI과외 v9 · 소방 구급 경채 개인 맞춤 학습 워크스페이스">
   <title>AI과외 · v9 개발본</title>
+  <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="../icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -26,5 +27,6 @@
   <script src="./app.js"></script>
   <script src="./source-ui.js"></script>
   <script src="./selftest.js"></script>
+  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(console.warn))}</script>
 </body>
 </html>
