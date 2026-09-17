@@ -8,6 +8,7 @@ on:
       - 'supabase/v9-schema.sql'
       - 'supabase/v9-owner-hardening.sql'
       - 'supabase/v9-live-backend-hardening.sql'
+      - 'supabase/v9-shared-auth-routing.sql'
       - 'V9-ARCHITECTURE.md'
       - '.github/workflows/v9-ci.yml'
   pull_request:
@@ -16,6 +17,7 @@ on:
       - 'supabase/v9-schema.sql'
       - 'supabase/v9-owner-hardening.sql'
       - 'supabase/v9-live-backend-hardening.sql'
+      - 'supabase/v9-shared-auth-routing.sql'
       - 'V9-ARCHITECTURE.md'
 
 permissions:
