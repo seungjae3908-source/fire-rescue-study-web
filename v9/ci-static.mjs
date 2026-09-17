@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js']){
+for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -20,10 +20,13 @@ ok(V.questions.every(q=>Number.isInteger(q.a)&&q.a>=0&&q.a<4),'single valid answ
 ok(V.questions.every(q=>!/(기출|실제 출제|과거시험)/.test(String(q.q||''))),'no generated question is mislabeled as past exam');
 const mock=V.examReadiness();
 ok(mock.ready===(mock.fire>=25&&mock.ems>=40),'real mock exam is fail-closed');
+ok(mock.fire>=25&&mock.ems>=40,'distinct verified bank reaches 25 fire + 40 EMS');
 const coverage=V.contentPacks.coverage();
 ok(coverage.total===135,'content coverage denominator is 135');
-ok(coverage.verified<=coverage.total,'verified pack count valid');
-ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'),'authored content packs are explicitly verified');
+ok(coverage.verified===135,'all 135 concept packs are source-verified');
+ok(Object.values(V.contentPacks.authored).length===135,'exactly 135 authored concept packs');
+ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'),'all authored content packs are explicitly verified');
+ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored verified pack');
 
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
 for(const table of ['profiles','user_progress','user_answers','wrong_answers','review_schedule','personal_notes','private_documents','document_chunks','study_sessions','exam_history','tutor_preferences']){
