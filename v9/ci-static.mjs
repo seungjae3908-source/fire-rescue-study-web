@@ -57,6 +57,7 @@ for(const table of ['profiles','user_progress','user_answers','wrong_answers','r
 ok(sql.includes("values('private-study','private-study',false"),'private storage bucket is non-public');
 ok(sql.includes('(storage.foldername(name))[1]=auth.uid()::text'),'storage objects are user-folder scoped');
 ok(!sql.toLowerCase().includes('public = true'),'schema never enables public storage');
+ok((sql.match(/deleted_at timestamptz/g)||[]).length>=2,'personal notes and private documents support deletion tombstones');
 const hardening=fs.readFileSync(new URL('../supabase/v9-owner-hardening.sql',import.meta.url),'utf8');
 ok(hardening.includes('unique (id, user_id)'),'private document identity is owner-bound');
 ok(hardening.includes('foreign key (document_id, user_id)'),'document chunks use an owner-bound composite foreign key');
@@ -65,10 +66,15 @@ ok(hardening.includes('d.id = document_id and d.user_id = auth.uid()'),'document
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 for(const table of ['user_answers','review_schedule','private_documents','document_chunks','tutor_preferences'])ok(auth.includes(`'${table}'`),`member sync covers ${table}`);
 ok(auth.includes('remoteFirstOnSignIn:true'),'existing-member sign-in is remote-first before local push');
+ok(auth.includes('remoteFirstOnManualSync:true'),'manual sync is remote-first before local push');
+ok(auth.includes('await pullRemoteIntoLocal(user.id);return syncAllInternal(user.id)'),'manual sync performs pull/merge before push');
+ok(auth.includes('deleted_at:iso(d.deletedAt)'),'private document tombstones are uploaded');
+ok(auth.includes("from('document_chunks').delete()"),'deleted private documents remove remote extracted chunks');
 ok(auth.includes('originalFilesAutoUpload:false'),'original personal files are never auto-uploaded');
 ok(!auth.includes('.storage.from('),'auth sync has no original-file storage upload path');
 const pdf=fs.readFileSync(new URL('./pdf.js',import.meta.url),'utf8');
 ok(pdf.includes('exportForSync')&&pdf.includes('importFromSync'),'private extracted text supports owner-scoped member sync');
+ok(pdf.includes('deletedDocuments')&&pdf.includes('deletionTombstones:true'),'local private-document deletion uses owner-scoped tombstones');
 ok(pdf.includes('serverUpload:false')&&pdf.includes('crossUserSharing:false'),'personal document defaults remain private/no-share');
 
 const root=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');

@@ -73,7 +73,8 @@ create table if not exists public.personal_notes (
   source_type text not null default 'manual',
   private boolean not null default true check (private = true),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz
 );
 
 create table if not exists public.private_documents (
@@ -88,6 +89,7 @@ create table if not exists public.private_documents (
   sync_original boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  deleted_at timestamptz,
   unique(user_id, source_hash)
 );
 
