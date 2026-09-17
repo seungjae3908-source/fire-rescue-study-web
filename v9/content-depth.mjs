@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','content-packs.js','verified-expansion.js','verified-completion.js','verified-final.js']){
+for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js']){
   vm.runInThisContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),{filename:file});
 }
 const V=window.AITUTOR_V9,rows=[],fail=[];
