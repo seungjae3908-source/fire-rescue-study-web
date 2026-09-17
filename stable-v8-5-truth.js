@@ -12,18 +12,16 @@ const phys=(doc,p)=>p+OFF[doc];
 const addScope=(doc,scopeId,from,to)=>scopes.push({doc,scopeId,from:phys(doc,from),to:phys(doc,to),printedFrom:from,printedTo:to});
 const addConcept=(doc,conceptId,scopeId,from,to)=>concepts.push({doc,conceptId,scopeId,from:phys(doc,from),to:phys(doc,to),printedFrom:from,printedTo:to});
 EMS.forEach(([scopeId,from,to,starts])=>{addScope('ems',scopeId,from,to);starts.forEach((s,i)=>{const next=[...new Set(starts.filter(x=>x>s))].sort((a,b)=>a-b)[0]||to+1;addConcept('ems',`${scopeId}-C${String(i+1).padStart(2,'0')}`,scopeId,s,next-1)})});
-// 소방학개론: 공식 시험범위와 직접 연결되는 부분만 허용.
+// F01 소방조직 — 소방기본법 중 시험영역과 직접 연결되는 부분만.
 addScope('law2','F01',42,164);addScope('law2','F01',174,197);
-[[42,66],[68,83],[99,103]].forEach(r=>addConcept('law2','F01-C01'==='x'?'': 'F01-C02','F01',r[0],r[1]));
-// F01-C01 소방기관·조직체계
-concepts.splice(concepts.length-3,0,{doc:'law2',conceptId:'F01-C01',scopeId:'F01',from:phys('law2',42),to:phys('law2',66),printedFrom:42,printedTo:66});
-// 위 임시 C02 레코드 중 첫 범위(42~66)는 제거하고 정확 범위 재구성
-for(let i=concepts.length-1;i>=0;i--){const r=concepts[i];if(r.doc==='law2'&&r.conceptId==='F01-C02'&&r.printedFrom===42)concepts.splice(i,1)}
-addConcept('law2','F01-C03','F01',67,98);addConcept('law2','F01-C04','F01',104,164);addConcept('law2','F01-C05','F01',174,197);
+addConcept('law2','F01-C01','F01',42,66);addConcept('law2','F01-C02','F01',68,83);addConcept('law2','F01-C02','F01',99,103);addConcept('law2','F01-C03','F01',67,98);addConcept('law2','F01-C04','F01',104,164);addConcept('law2','F01-C05','F01',174,197);
+// F02 재난관리 — 재난 및 안전관리 기본법의 총칙~복구만.
 addScope('law5','F02',509,610);
 addConcept('law5','F02-C01','F02',509,521);addConcept('law5','F02-C02','F02',509,523);addConcept('law5','F02-C03','F02',524,543);addConcept('law5','F02-C04','F02',550,564);addConcept('law5','F02-C05','F02',565,610);addConcept('law5','F02-C06','F02',581,601);addConcept('law5','F02-C07','F02',540,543);
+// F03 연소·화재이론 — 화재1 이론부 + 화재2 연소/폭발부.
 addScope('fire1','F03',3,34);addScope('fire2','F03',295,358);
 addConcept('fire1','F03-C01','F03',3,7);addConcept('fire1','F03-C02','F03',9,13);addConcept('fire1','F03-C03','F03',14,17);addConcept('fire2','F03-C03','F03',295,328);addConcept('fire1','F03-C04','F03',18,21);addConcept('fire1','F03-C05','F03',22,22);addConcept('fire1','F03-C06','F03',23,34);addConcept('fire1','F03-C07','F03',31,34);addConcept('fire2','F03-C07','F03',329,338);addConcept('fire2','F03-C08','F03',339,358);
+// F04 소화이론 — 화재1 소화이론 + 화재2 소화약제 전편.
 addScope('fire1','F04',35,40);addScope('fire2','F04',183,256);
 addConcept('fire1','F04-C01','F04',35,40);addConcept('fire2','F04-C01','F04',183,185);addConcept('fire2','F04-C02','F04',186,188);addConcept('fire2','F04-C03','F04',189,198);addConcept('fire2','F04-C04','F04',199,211);addConcept('fire2','F04-C05','F04',212,218);addConcept('fire2','F04-C06','F04',219,228);addConcept('fire2','F04-C07','F04',229,239);addConcept('fire2','F04-C08','F04',240,256);
 function scopeTitle(id){return [...(A.studyDetailFire||A.fire||[]),...(A.studyDetailEms||A.ems||[])].find(x=>x.id===id)?.title||id}
@@ -35,7 +33,7 @@ function applyTruth(){A.pages=(A.pages||[]).map(p=>{const t=A.v85TruthForPage(p.
 A.v85ApplyTruth=applyTruth;
 const oldRestore=A.restoreSources;A.restoreSources=async()=>{const r=await oldRestore?.();applyTruth();return r};
 const oldImport=A.importOfficial;A.importOfficial=async files=>{const r=await oldImport?.(files);applyTruth();return r};
-const oldQuestion=A.questionFor;A.questionFor=key=>{const p=(A.pages||[]).find(x=>x.key===key);if(!p||p.truth!=='official-range'||!p.scopeAllowed||p.conceptIds?.length!==1)return null;const q=oldQuestion?.(key);return q?{...q,conceptId:p.conceptIds[0],source:`${p.sourceTitle||DOC[p.docId]} · 교재 ${p.printedPage}쪽`,officialPrintedPage:p.printedPage}:null};
+const oldQuestion=A.questionFor;A.questionFor=key=>{const p=(A.pages||[]).find(x=>x.key===key);if(!p||p.truth!=='official-range'||!p.scopeAllowed||p.conceptIds?.length!==1)return null;const before=p.scopeConfidence;let q=null;try{p.scopeConfidence='high';q=oldQuestion?.(key)||null}finally{p.scopeConfidence=before}return q?{...q,conceptId:p.conceptIds[0],source:`${p.sourceTitle||DOC[p.docId]} · 교재 ${p.printedPage}쪽`,officialPrintedPage:p.printedPage}:null};
 A.ground=(q,n=4)=>A.hits(q,'all',n).map(h=>`[${h.sourceTitle||DOC[h.docId]} · ${h.scopeTitle} · 교재 ${h.printedPage||h.page}쪽]\n${h.snippet||String(h.text||'').slice(0,620)}`).join('\n\n');
 A.v84ConceptPages=(topic,concept)=>{const list=typeof A.v84Concepts==='function'?A.v84Concepts():[],d=list.find(x=>x.scopeId===topic?.id&&x.title===concept);if(!d)return[];return (A.pages||[]).filter(p=>p.scopeAllowed&&p.conceptIds?.includes(d.id)).sort((a,b)=>(a.docId||'').localeCompare(b.docId||'')||a.page-b.page)};
 function currentConceptId(){if(typeof A.v84Concepts!=='function')return'';return A.v84Concepts().find(x=>x.scopeId===A.v83Scope&&x.title===A.v83Concept)?.id||''}
