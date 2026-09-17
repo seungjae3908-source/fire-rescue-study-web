@@ -17,7 +17,7 @@ addScope('law2','F01',42,164);addScope('law2','F01',174,197);
 addConcept('law2','F01-C01','F01',42,66);addConcept('law2','F01-C02','F01',68,83);addConcept('law2','F01-C02','F01',99,103);addConcept('law2','F01-C03','F01',67,98);addConcept('law2','F01-C04','F01',104,164);addConcept('law2','F01-C05','F01',174,197);
 // F02 재난관리 — 재난 및 안전관리 기본법의 총칙~복구만.
 addScope('law5','F02',509,610);
-addConcept('law5','F02-C01','F02',509,521);addConcept('law5','F02-C02','F02',509,523);addConcept('law5','F02-C03','F02',524,543);addConcept('law5','F02-C04','F02',550,564);addConcept('law5','F02-C05','F02',565,610);addConcept('law5','F02-C06','F02',581,601);addConcept('law5','F02-C07','F02',540,543);
+addConcept('law5','F02-C01','F02',509,521);addConcept('law5','F02-C02','F02',509,523);addConcept('law5','F02-C03','F02',524,543);addConcept('law5','F02-C04','F02',550,564);addConcept('law5','F02-C05','F02',509,510);addConcept('law5','F02-C05','F02',565,610);addConcept('law5','F02-C06','F02',581,601);addConcept('law5','F02-C07','F02',540,543);
 // F03 연소·화재이론 — 화재1 이론부 + 화재2 연소/폭발부.
 addScope('fire1','F03',3,34);addScope('fire2','F03',295,358);
 addConcept('fire1','F03-C01','F03',3,7);addConcept('fire1','F03-C02','F03',9,13);addConcept('fire1','F03-C03','F03',14,17);addConcept('fire2','F03-C03','F03',295,328);addConcept('fire1','F03-C04','F03',18,21);addConcept('fire1','F03-C05','F03',22,22);addConcept('fire1','F03-C06','F03',23,34);addConcept('fire1','F03-C07','F03',31,34);addConcept('fire2','F03-C07','F03',329,338);addConcept('fire2','F03-C08','F03',339,358);
@@ -26,8 +26,8 @@ addScope('fire1','F04',35,40);addScope('fire2','F04',183,256);
 addConcept('fire1','F04-C01','F04',35,40);addConcept('fire2','F04-C01','F04',183,185);addConcept('fire2','F04-C02','F04',186,188);addConcept('fire2','F04-C03','F04',189,198);addConcept('fire2','F04-C04','F04',199,211);addConcept('fire2','F04-C05','F04',212,218);addConcept('fire2','F04-C06','F04',219,228);addConcept('fire2','F04-C07','F04',229,239);addConcept('fire2','F04-C08','F04',240,256);
 function scopeTitle(id){return [...(A.studyDetailFire||A.fire||[]),...(A.studyDetailEms||A.ems||[])].find(x=>x.id===id)?.title||id}
 function conceptTitle(id){return typeof A.v84Concepts==='function'?A.v84Concepts().find(x=>x.id===id)?.title||id:id}
-A.v85Truth={version:'2026-official-v1',offsets:OFF,docs:DOC,scopes,concepts,emsMainPhysical:[21,442],emsAppendixStartsPhysical:443};
-A.v85TruthForPage=(doc,page)=>{if(!(doc in OFF))return null;const sm=scopes.filter(r=>r.doc===doc&&page>=r.from&&page<=r.to),scopeId=sm[0]?.scopeId||'';const cm=concepts.filter(r=>r.doc===doc&&page>=r.from&&page<=r.to&&(scopeId?r.scopeId===scopeId:true));return{allowed:!!scopeId,scopeId,scopeTitle:scopeId?scopeTitle(scopeId):'범위밖/참고',conceptIds:[...new Set(cm.map(r=>r.conceptId))],printedPage:page-OFF[doc],docLabel:DOC[doc],truth:'official-range'}};
+A.v85Truth={version:'2026-official-v2',offsets:OFF,docs:DOC,scopes,concepts,emsMainPhysical:[21,442],emsAppendixStartsPhysical:443};
+A.v85TruthForPage=(doc,page)=>{if(!(doc in OFF))return null;const sm=scopes.filter(r=>r.doc===doc&&page>=r.from&&page<=r.to),scopeId=sm[0]?.scopeId||'';const cm=concepts.filter(r=>r.doc===doc&&page>=r.from&&page<=r.to&&(scopeId?r.scopeId===scopeId:true));const ids=[...new Set(cm.map(r=>r.conceptId))];if(doc==='ems'&&scopeId){const ch=EMS.find(x=>x[0]===scopeId);if(ch&&page===phys('ems',ch[2]))for(let i=0;i<ch[3].length;i++)ids.push(`${scopeId}-C${String(i+1).padStart(2,'0')}`)}return{allowed:!!scopeId,scopeId,scopeTitle:scopeId?scopeTitle(scopeId):'범위밖/참고',conceptIds:[...new Set(ids)],printedPage:page-OFF[doc],docLabel:DOC[doc],truth:'official-range'}};
 A.v85ConceptRanges=id=>concepts.filter(r=>r.conceptId===id).map(r=>({...r,docLabel:DOC[r.doc],title:conceptTitle(id)}));
 function applyTruth(){A.pages=(A.pages||[]).map(p=>{const t=A.v85TruthForPage(p.docId,p.page);if(!t)return p;return{...p,scopeAllowed:t.allowed,scopeId:t.scopeId||'OUT',scopeTitle:t.scopeTitle,scopeConfidence:t.allowed?'truth':'out',conceptIds:t.conceptIds,conceptId:t.conceptIds.length===1?t.conceptIds[0]:'',printedPage:t.printedPage,truth:t.truth}});return A.pages}
 A.v85ApplyTruth=applyTruth;
@@ -42,6 +42,7 @@ const oldBind=bind;bind=function(){oldBind();enhance()};
 A.v85QA=()=>[
 ['EMS 24장 본문 고정',A.v85TruthForPage('ems',21)?.scopeId==='E01'&&A.v85TruthForPage('ems',442)?.scopeId==='E24'],
 ['EMS 부록 차단',!A.v85TruthForPage('ems',443)?.allowed],
+['EMS 요약페이지 다중개념',A.v85TruthForPage('ems',332)?.conceptIds?.includes('E17-C03')&&A.v85TruthForPage('ems',332)?.conceptIds?.length===4],
 ['화재1 이론 뒤 전술 차단',A.v85TruthForPage('fire1',56)?.scopeId==='F04'&&!A.v85TruthForPage('fire1',57)?.allowed],
 ['화재2 소화약제 경계',A.v85TruthForPage('fire2',193)?.scopeId==='F04'&&!A.v85TruthForPage('fire2',267)?.allowed],
 ['화재2 연소·폭발 경계',A.v85TruthForPage('fire2',305)?.scopeId==='F03'&&A.v85TruthForPage('fire2',368)?.scopeId==='F03'&&!A.v85TruthForPage('fire2',369)?.allowed],
