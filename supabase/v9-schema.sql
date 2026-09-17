@@ -1,9 +1,11 @@
--- AI과외 v9 dedicated backend schema
--- IMPORTANT: run only in a NEW AI과외 Supabase project. Never run in the investment-app project.
+-- AI과외 v9 shared-project-safe backend schema
+-- This schema is safe to install alongside the investment-app Staging database.
+-- Every AI과외 table and Storage policy is namespaced; existing investment tables are untouched.
+-- IMPORTANT: do not rename these tables back to generic names such as public.profiles in a shared project.
 
 create extension if not exists pgcrypto;
 
-create table if not exists public.profiles (
+create table if not exists public.study_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   exam_year text,
   exam_date date,
@@ -13,7 +15,7 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.user_progress (
+create table if not exists public.study_user_progress (
   user_id uuid not null references auth.users(id) on delete cascade,
   concept_id text not null,
   mastery numeric not null default 0 check (mastery between 0 and 100),
@@ -26,7 +28,7 @@ create table if not exists public.user_progress (
   primary key(user_id, concept_id)
 );
 
-create table if not exists public.user_answers (
+create table if not exists public.study_user_answers (
   id text primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
   question_id text not null,
@@ -40,7 +42,7 @@ create table if not exists public.user_answers (
   answered_at timestamptz not null default now()
 );
 
-create table if not exists public.wrong_answers (
+create table if not exists public.study_wrong_answers (
   id text primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
   question_id text not null,
@@ -55,7 +57,7 @@ create table if not exists public.wrong_answers (
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.review_schedule (
+create table if not exists public.study_review_schedule (
   user_id uuid not null references auth.users(id) on delete cascade,
   concept_id text not null,
   due_at timestamptz not null,
@@ -65,7 +67,7 @@ create table if not exists public.review_schedule (
   primary key(user_id, concept_id)
 );
 
-create table if not exists public.personal_notes (
+create table if not exists public.study_personal_notes (
   id text primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
   title text not null,
@@ -77,7 +79,7 @@ create table if not exists public.personal_notes (
   deleted_at timestamptz
 );
 
-create table if not exists public.private_documents (
+create table if not exists public.study_private_documents (
   id text primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
   title text not null,
@@ -93,10 +95,10 @@ create table if not exists public.private_documents (
   unique(user_id, source_hash)
 );
 
-create table if not exists public.document_chunks (
+create table if not exists public.study_document_chunks (
   id text primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
-  document_id text not null references public.private_documents(id) on delete cascade,
+  document_id text not null references public.study_private_documents(id) on delete cascade,
   page_no integer,
   chunk_index integer not null default 0,
   body text not null,
@@ -112,7 +114,7 @@ create table if not exists public.study_sessions (
   duration_sec integer not null default 0
 );
 
-create table if not exists public.exam_history (
+create table if not exists public.study_exam_history (
   id text primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
   mode text not null check (mode in ('practice','real')),
@@ -123,7 +125,7 @@ create table if not exists public.exam_history (
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.tutor_preferences (
+create table if not exists public.study_tutor_preferences (
   user_id uuid primary key references auth.users(id) on delete cascade,
   explanation_level text not null default 'adaptive',
   emphasize_dangerous_wrong boolean not null default true,
@@ -131,92 +133,93 @@ create table if not exists public.tutor_preferences (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists idx_user_answers_user_concept on public.user_answers(user_id, concept_id, answered_at desc);
-create index if not exists idx_wrong_answers_due on public.wrong_answers(user_id, resolved, due_at);
-create index if not exists idx_review_schedule_due on public.review_schedule(user_id, due_at);
-create index if not exists idx_private_documents_user on public.private_documents(user_id, created_at desc);
-create index if not exists idx_document_chunks_user_doc on public.document_chunks(user_id, document_id, page_no);
+create index if not exists idx_study_user_answers_user_concept on public.study_user_answers(user_id, concept_id, answered_at desc);
+create index if not exists idx_study_wrong_answers_due on public.study_wrong_answers(user_id, resolved, due_at);
+create index if not exists idx_study_review_schedule_due on public.study_review_schedule(user_id, due_at);
+create index if not exists idx_study_private_documents_user on public.study_private_documents(user_id, created_at desc);
+create index if not exists idx_study_document_chunks_user_doc on public.study_document_chunks(user_id, document_id, page_no);
 create index if not exists idx_study_sessions_user on public.study_sessions(user_id, started_at desc);
 
-alter table public.profiles enable row level security;
-alter table public.user_progress enable row level security;
-alter table public.user_answers enable row level security;
-alter table public.wrong_answers enable row level security;
-alter table public.review_schedule enable row level security;
-alter table public.personal_notes enable row level security;
-alter table public.private_documents enable row level security;
-alter table public.document_chunks enable row level security;
+alter table public.study_profiles enable row level security;
+alter table public.study_user_progress enable row level security;
+alter table public.study_user_answers enable row level security;
+alter table public.study_wrong_answers enable row level security;
+alter table public.study_review_schedule enable row level security;
+alter table public.study_personal_notes enable row level security;
+alter table public.study_private_documents enable row level security;
+alter table public.study_document_chunks enable row level security;
 alter table public.study_sessions enable row level security;
-alter table public.exam_history enable row level security;
-alter table public.tutor_preferences enable row level security;
+alter table public.study_exam_history enable row level security;
+alter table public.study_tutor_preferences enable row level security;
 
 -- Strict owner-only policies. No public read policy is created for personal tables.
 do $$
 declare t text;
 begin
-  foreach t in array array['user_progress','user_answers','wrong_answers','review_schedule','personal_notes','private_documents','document_chunks','study_sessions','exam_history'] loop
+  foreach t in array array[
+    'study_user_progress',
+    'study_user_answers',
+    'study_wrong_answers',
+    'study_review_schedule',
+    'study_personal_notes',
+    'study_private_documents',
+    'study_document_chunks',
+    'study_sessions',
+    'study_exam_history'
+  ] loop
     execute format('drop policy if exists owner_select on public.%I',t);
     execute format('drop policy if exists owner_insert on public.%I',t);
     execute format('drop policy if exists owner_update on public.%I',t);
     execute format('drop policy if exists owner_delete on public.%I',t);
-    execute format('create policy owner_select on public.%I for select using (auth.uid() = user_id)',t);
-    execute format('create policy owner_insert on public.%I for insert with check (auth.uid() = user_id)',t);
-    execute format('create policy owner_update on public.%I for update using (auth.uid() = user_id) with check (auth.uid() = user_id)',t);
-    execute format('create policy owner_delete on public.%I for delete using (auth.uid() = user_id)',t);
+    execute format('create policy owner_select on public.%I for select to authenticated using ((select auth.uid()) = user_id)',t);
+    execute format('create policy owner_insert on public.%I for insert to authenticated with check ((select auth.uid()) = user_id)',t);
+    execute format('create policy owner_update on public.%I for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id)',t);
+    execute format('create policy owner_delete on public.%I for delete to authenticated using ((select auth.uid()) = user_id)',t);
   end loop;
 end $$;
 
-drop policy if exists profile_select on public.profiles;
-drop policy if exists profile_insert on public.profiles;
-drop policy if exists profile_update on public.profiles;
-drop policy if exists profile_delete on public.profiles;
-create policy profile_select on public.profiles for select using (auth.uid() = id);
-create policy profile_insert on public.profiles for insert with check (auth.uid() = id);
-create policy profile_update on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
-create policy profile_delete on public.profiles for delete using (auth.uid() = id);
+drop policy if exists profile_select on public.study_profiles;
+drop policy if exists profile_insert on public.study_profiles;
+drop policy if exists profile_update on public.study_profiles;
+drop policy if exists profile_delete on public.study_profiles;
+create policy profile_select on public.study_profiles for select to authenticated using ((select auth.uid()) = id);
+create policy profile_insert on public.study_profiles for insert to authenticated with check ((select auth.uid()) = id);
+create policy profile_update on public.study_profiles for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
+create policy profile_delete on public.study_profiles for delete to authenticated using ((select auth.uid()) = id);
 
-drop policy if exists tutor_select on public.tutor_preferences;
-drop policy if exists tutor_insert on public.tutor_preferences;
-drop policy if exists tutor_update on public.tutor_preferences;
-drop policy if exists tutor_delete on public.tutor_preferences;
-create policy tutor_select on public.tutor_preferences for select using (auth.uid() = user_id);
-create policy tutor_insert on public.tutor_preferences for insert with check (auth.uid() = user_id);
-create policy tutor_update on public.tutor_preferences for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy tutor_delete on public.tutor_preferences for delete using (auth.uid() = user_id);
+drop policy if exists tutor_select on public.study_tutor_preferences;
+drop policy if exists tutor_insert on public.study_tutor_preferences;
+drop policy if exists tutor_update on public.study_tutor_preferences;
+drop policy if exists tutor_delete on public.study_tutor_preferences;
+create policy tutor_select on public.study_tutor_preferences for select to authenticated using ((select auth.uid()) = user_id);
+create policy tutor_insert on public.study_tutor_preferences for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy tutor_update on public.study_tutor_preferences for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+create policy tutor_delete on public.study_tutor_preferences for delete to authenticated using ((select auth.uid()) = user_id);
 
--- Private object storage. Objects live under /<user_uuid>/... and are never public.
+-- Private Study object storage. The original personal files are not auto-uploaded by v9,
+-- but the bucket stays available for an explicit future opt-in flow.
 insert into storage.buckets(id,name,public,file_size_limit)
-values('private-study','private-study',false,52428800)
+values('study-private-v9','study-private-v9',false,52428800)
 on conflict(id) do update set public=false;
 
-drop policy if exists private_study_select on storage.objects;
-drop policy if exists private_study_insert on storage.objects;
-drop policy if exists private_study_update on storage.objects;
-drop policy if exists private_study_delete on storage.objects;
-create policy private_study_select on storage.objects for select using (
-  bucket_id='private-study' and (storage.foldername(name))[1]=auth.uid()::text
+drop policy if exists study_v9_private_select on storage.objects;
+drop policy if exists study_v9_private_insert on storage.objects;
+drop policy if exists study_v9_private_update on storage.objects;
+drop policy if exists study_v9_private_delete on storage.objects;
+create policy study_v9_private_select on storage.objects for select to authenticated using (
+  bucket_id='study-private-v9' and (storage.foldername(name))[1]=(select auth.uid())::text
 );
-create policy private_study_insert on storage.objects for insert with check (
-  bucket_id='private-study' and (storage.foldername(name))[1]=auth.uid()::text
+create policy study_v9_private_insert on storage.objects for insert to authenticated with check (
+  bucket_id='study-private-v9' and (storage.foldername(name))[1]=(select auth.uid())::text
 );
-create policy private_study_update on storage.objects for update using (
-  bucket_id='private-study' and (storage.foldername(name))[1]=auth.uid()::text
+create policy study_v9_private_update on storage.objects for update to authenticated using (
+  bucket_id='study-private-v9' and (storage.foldername(name))[1]=(select auth.uid())::text
 ) with check (
-  bucket_id='private-study' and (storage.foldername(name))[1]=auth.uid()::text
+  bucket_id='study-private-v9' and (storage.foldername(name))[1]=(select auth.uid())::text
 );
-create policy private_study_delete on storage.objects for delete using (
-  bucket_id='private-study' and (storage.foldername(name))[1]=auth.uid()::text
+create policy study_v9_private_delete on storage.objects for delete to authenticated using (
+  bucket_id='study-private-v9' and (storage.foldername(name))[1]=(select auth.uid())::text
 );
 
--- Optional profile bootstrap. It writes only the newly created user's own row.
-create or replace function public.handle_new_ai_tutor_user()
-returns trigger language plpgsql security definer set search_path=public as $$
-begin
-  insert into public.profiles(id) values(new.id) on conflict do nothing;
-  insert into public.tutor_preferences(user_id) values(new.id) on conflict do nothing;
-  return new;
-end $$;
-
-drop trigger if exists on_ai_tutor_user_created on auth.users;
-create trigger on_ai_tutor_user_created after insert on auth.users
-for each row execute procedure public.handle_new_ai_tutor_user();
+-- Shared-project safety: intentionally NO auth.users trigger and NO global default-privilege changes.
+-- v9 creates the member's Study profile/tutor rows through owner-scoped client upserts after sign-in.
