@@ -6,12 +6,14 @@ on:
     paths:
       - 'v9/**'
       - 'supabase/v9-schema.sql'
+      - 'supabase/v9-owner-hardening.sql'
       - 'V9-ARCHITECTURE.md'
       - '.github/workflows/v9-ci.yml'
   pull_request:
     paths:
       - 'v9/**'
       - 'supabase/v9-schema.sql'
+      - 'supabase/v9-owner-hardening.sql'
       - 'V9-ARCHITECTURE.md'
 
 permissions:
@@ -62,3 +64,5 @@ jobs:
         run: node v9/e2e.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
+      - name: Member merge and extracted-text sync isolation QA
+        run: node v9/sync-e2e.mjs

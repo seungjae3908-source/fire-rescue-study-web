@@ -39,8 +39,11 @@ ok(manifest.start_url==='./'&&manifest.scope==='./','v9 PWA manifest is subpath-
 const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 ok(sw.includes("const PREFIX='ai-tutor-v9-'"),'v9 service worker uses a dedicated cache prefix');
 ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names');
+ok(sw.includes("'./sync-merge.js'")&&sw.includes("'./sync-ui.js'"),'v9 sync hardening files are offline-cached');
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
+ok(v9index.indexOf('./sync-merge.js')<v9index.indexOf('./auth.js'),'conflict-safe merge loads before member auth');
+ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sync API loads before member auth');
 
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
 for(const table of ['profiles','user_progress','user_answers','wrong_answers','review_schedule','personal_notes','private_documents','document_chunks','study_sessions','exam_history','tutor_preferences']){
@@ -49,6 +52,19 @@ for(const table of ['profiles','user_progress','user_answers','wrong_answers','r
 ok(sql.includes("values('private-study','private-study',false"),'private storage bucket is non-public');
 ok(sql.includes('(storage.foldername(name))[1]=auth.uid()::text'),'storage objects are user-folder scoped');
 ok(!sql.toLowerCase().includes('public = true'),'schema never enables public storage');
+const hardening=fs.readFileSync(new URL('../supabase/v9-owner-hardening.sql',import.meta.url),'utf8');
+ok(hardening.includes('unique (id, user_id)'),'private document identity is owner-bound');
+ok(hardening.includes('foreign key (document_id, user_id)'),'document chunks use an owner-bound composite foreign key');
+ok(hardening.includes('d.id = document_id and d.user_id = auth.uid()'),'document chunk RLS verifies parent ownership');
+
+const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
+for(const table of ['user_answers','review_schedule','private_documents','document_chunks','tutor_preferences'])ok(auth.includes(`'${table}'`),`member sync covers ${table}`);
+ok(auth.includes('remoteFirstOnSignIn:true'),'existing-member sign-in is remote-first before local push');
+ok(auth.includes('originalFilesAutoUpload:false'),'original personal files are never auto-uploaded');
+ok(!auth.includes('.storage.from('),'auth sync has no original-file storage upload path');
+const pdf=fs.readFileSync(new URL('./pdf.js',import.meta.url),'utf8');
+ok(pdf.includes('exportForSync')&&pdf.includes('importFromSync'),'private extracted text supports owner-scoped member sync');
+ok(pdf.includes('serverUpload:false')&&pdf.includes('crossUserSharing:false'),'personal document defaults remain private/no-share');
 
 const root=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 ok(!root.includes('/v9/')&&!root.includes('v9/app.js'),'production root remains v8.6 during development');
