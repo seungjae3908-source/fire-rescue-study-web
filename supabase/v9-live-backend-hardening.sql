@@ -25,6 +25,14 @@ begin
   end loop;
 end $$;
 
+-- Cover Study foreign keys used by deletes/ownership joins.
+create index if not exists idx_study_document_chunks_doc_owner
+  on public.study_document_chunks(document_id, user_id);
+create index if not exists idx_study_exam_history_user
+  on public.study_exam_history(user_id);
+create index if not exists idx_study_personal_notes_user
+  on public.study_personal_notes(user_id);
+
 -- Defense-in-depth checks: every Study table must have RLS enabled.
 do $$
 declare t text;
