@@ -100,7 +100,9 @@ ok(configExample.includes('supabasePublishableKey'),'config example uses a publi
 ok(!/supabase(?:ServiceRole|Secret|Service)_?Key\s*:/i.test(configExample)&&!/sb_secret_[A-Za-z0-9]/.test(configExample),'config example never configures a privileged key');
 const config=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
 ok(config.includes('enableCloudSync:false'),'checked-in v9 config keeps real cloud sync disabled');
-ok(!/supabaseUrl:'https:\/\//.test(config),'checked-in v9 config has no live backend URL yet');
+ok(config.includes("supabaseUrl:'https://petlfbztqguuzkasfpug.supabase.co'"),'checked-in v9 config pins the approved shared Supabase URL');
+ok(/supabasePublishableKey:'sb_publishable_[A-Za-z0-9_-]+'/.test(config),'checked-in v9 config uses a browser-safe publishable key');
+ok(!/sb_secret_[A-Za-z0-9_-]+/.test(config)&&!/service_role/i.test(config),'checked-in v9 config contains no privileged Supabase key');
 
 const pdf=fs.readFileSync(new URL('./pdf.js',import.meta.url),'utf8');
 ok(pdf.includes('exportForSync')&&pdf.includes('importFromSync'),'private extracted text supports owner-scoped member sync');
