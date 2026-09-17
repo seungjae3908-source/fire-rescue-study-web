@@ -62,6 +62,12 @@ const hardening=fs.readFileSync(new URL('../supabase/v9-owner-hardening.sql',imp
 ok(hardening.includes('unique (id, user_id)'),'private document identity is owner-bound');
 ok(hardening.includes('foreign key (document_id, user_id)'),'document chunks use an owner-bound composite foreign key');
 ok(hardening.includes('d.id = document_id and d.user_id = auth.uid()'),'document chunk RLS verifies parent ownership');
+const liveHardening=fs.readFileSync(new URL('../supabase/v9-live-backend-hardening.sql',import.meta.url),'utf8');
+ok(liveHardening.includes('revoke all privileges on table public.%I from anon'),'anonymous Data API access is explicitly revoked');
+ok(liveHardening.includes('grant select, insert, update, delete on table public.%I to authenticated'),'authenticated Data API grants are explicit');
+ok(liveHardening.includes("set search_path = ''"),'SECURITY DEFINER trigger search_path is locked');
+ok(liveHardening.includes('revoke all on function public.handle_new_ai_tutor_user() from public, anon, authenticated'),'auth bootstrap trigger is not callable as a client RPC');
+ok(liveHardening.includes('c.relrowsecurity'),'live hardening aborts if any private table lacks RLS');
 
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 for(const table of ['user_answers','review_schedule','private_documents','document_chunks','tutor_preferences'])ok(auth.includes(`'${table}'`),`member sync covers ${table}`);
@@ -72,6 +78,17 @@ ok(auth.includes('deleted_at:iso(d.deletedAt)'),'private document tombstones are
 ok(auth.includes("from('document_chunks').delete()"),'deleted private documents remove remote extracted chunks');
 ok(auth.includes('originalFilesAutoUpload:false'),'original personal files are never auto-uploaded');
 ok(!auth.includes('.storage.from('),'auth sync has no original-file storage upload path');
+ok(auth.includes('supabasePublishableKey'),'browser auth prefers the Supabase publishable key');
+ok(auth.includes('enableCloudSync===true'),'backend connection is feature-gated until explicitly enabled');
+ok(auth.includes('@supabase/supabase-js@2.116.0'),'Supabase browser SDK is pinned to an exact reviewed version');
+ok(!auth.includes('service_role')&&!auth.includes('sb_secret_'),'browser auth contains no privileged Supabase key');
+const configExample=fs.readFileSync(new URL('./config.example.js',import.meta.url),'utf8');
+ok(configExample.includes('supabasePublishableKey'),'config example uses a publishable key');
+ok(!configExample.includes('service_role')&&!configExample.includes('sb_secret_'),'config example never asks for a privileged key');
+const config=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
+ok(config.includes('enableCloudSync:false'),'checked-in v9 config keeps real cloud sync disabled');
+ok(!/supabaseUrl:'https:\/\//.test(config),'checked-in v9 config has no live backend URL yet');
+
 const pdf=fs.readFileSync(new URL('./pdf.js',import.meta.url),'utf8');
 ok(pdf.includes('exportForSync')&&pdf.includes('importFromSync'),'private extracted text supports owner-scoped member sync');
 ok(pdf.includes('deletedDocuments')&&pdf.includes('deletionTombstones:true'),'local private-document deletion uses owner-scoped tombstones');
