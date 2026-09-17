@@ -1,1 +1,1 @@
-window.AITUTOR_V9_CONFIG={supabaseUrl:'',supabaseAnonKey:'',enableCloudSync:false};
+window.AITUTOR_V9_CONFIG={supabaseUrl:'',supabasePublishableKey:'',enableCloudSync:false};
