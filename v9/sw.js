@@ -1,8 +1,8 @@
 'use strict';
-const CACHE='ai-tutor-v9-shell-20260917-4';
+const CACHE='ai-tutor-v9-shell-20260917-5';
 const PREFIX='ai-tutor-v9-';
 const CORE=[
-  './','./index.html','./styles.css','./manifest.webmanifest','./config.js','./curriculum.js','./content-packs.js','./questions.js','./verified-expansion.js','./verified-completion.js','./verified-final.js','./depth-enrichment.js','./depth-enrichment-2.js','./store.js','./mastery.js','./sync-merge.js','./pdf.js','./auth.js','./source-compiler.js','./app.js','./sync-ui.js','./source-ui.js','./selftest.js'
+  './','./index.html','./styles.css','./manifest.webmanifest','./config.js','./curriculum.js','./content-packs.js','./questions.js','./verified-expansion.js','./verified-completion.js','./verified-final.js','./depth-enrichment.js','./depth-enrichment-2.js','./store.js','./mastery.js','./sync-merge.js','./pdf.js','./auth.js','./auth-membership-guard.js','./source-compiler.js','./app.js','./sync-ui.js','./source-ui.js','./selftest.js'
 ];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
