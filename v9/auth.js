@@ -1,23 +1,24 @@
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};const cfg=window.AITUTOR_V9_CONFIG||{};let client=null,user=null,readyPromise=null,activeAdopt=null,activeId='',lastAdoptedId='',lastAdoptedAt=0;
+const T=Object.freeze({profiles:'study_profiles',user_progress:'study_user_progress',user_answers:'study_user_answers',wrong_answers:'study_wrong_answers',review_schedule:'study_review_schedule',personal_notes:'study_personal_notes',private_documents:'study_private_documents',document_chunks:'study_document_chunks',study_sessions:'study_sessions',exam_history:'study_exam_history',tutor_preferences:'study_tutor_preferences'});
 const clientKey=()=>cfg.supabasePublishableKey||cfg.supabaseAnonKey||'';
 const configured=()=>cfg.enableCloudSync===true&&!!(cfg.supabaseUrl&&clientKey());const iso=x=>x?new Date(x).toISOString():null;const ms=x=>x?Date.parse(x)||0:0;
 const subject=s=>s==='fire'||/소방/.test(String(s||''))?'fire':'ems';
 function emit(){window.dispatchEvent(new CustomEvent('aitutor-auth-change',{detail:{user}}))}
 async function checked(p){const r=await p;if(r.error)throw r.error;return r.data}
 async function fetchRemoteSnapshot(uid){const [profile,progress,answers,wrongs,reviews,notes,sessions,exams,tutor,docs,chunks]=await Promise.all([
-  checked(client.from('profiles').select('*').eq('id',uid).maybeSingle()),
-  checked(client.from('user_progress').select('*').eq('user_id',uid)),
-  checked(client.from('user_answers').select('*').eq('user_id',uid)),
-  checked(client.from('wrong_answers').select('*').eq('user_id',uid)),
-  checked(client.from('review_schedule').select('*').eq('user_id',uid)),
-  checked(client.from('personal_notes').select('*').eq('user_id',uid)),
-  checked(client.from('study_sessions').select('*').eq('user_id',uid)),
-  checked(client.from('exam_history').select('*').eq('user_id',uid)),
-  checked(client.from('tutor_preferences').select('*').eq('user_id',uid).maybeSingle()),
-  checked(client.from('private_documents').select('*').eq('user_id',uid)),
-  checked(client.from('document_chunks').select('*').eq('user_id',uid))
+  checked(client.from(T.profiles).select('*').eq('id',uid).maybeSingle()),
+  checked(client.from(T.user_progress).select('*').eq('user_id',uid)),
+  checked(client.from(T.user_answers).select('*').eq('user_id',uid)),
+  checked(client.from(T.wrong_answers).select('*').eq('user_id',uid)),
+  checked(client.from(T.review_schedule).select('*').eq('user_id',uid)),
+  checked(client.from(T.personal_notes).select('*').eq('user_id',uid)),
+  checked(client.from(T.study_sessions).select('*').eq('user_id',uid)),
+  checked(client.from(T.exam_history).select('*').eq('user_id',uid)),
+  checked(client.from(T.tutor_preferences).select('*').eq('user_id',uid).maybeSingle()),
+  checked(client.from(T.private_documents).select('*').eq('user_id',uid)),
+  checked(client.from(T.document_chunks).select('*').eq('user_id',uid))
 ]);
   const remote={ownerId:uid,progress:{},reviewSchedule:{},answerEvents:[],answers:{},confidence:{},wrongs:[],notes:[],studySessions:[],examHistory:[],settings:{cloudSync:true}};
   if(profile)remote.profile={examYear:profile.exam_year||'2027',examDate:profile.exam_date||'',dailyMinutes:profile.daily_minutes||40,level:profile.level||'처음 시작',updatedAt:ms(profile.updated_at)};
@@ -35,20 +36,20 @@ async function fetchRemoteSnapshot(uid){const [profile,progress,answers,wrongs,r
 }
 async function pullRemoteIntoLocal(uid){const snap=await fetchRemoteSnapshot(uid);V.Store.mergeIntoOwner(uid,snap.state);V.Store.switchOwner(uid);if(V.PrivateDocs?.importFromSync)await V.PrivateDocs.importFromSync(snap.docs,snap.chunks);V.Store.state.settings.cloudSync=true;V.Store.save();return snap}
 async function upsertRows(table,rows,options){if(!rows?.length)return;for(let i=0;i<rows.length;i+=250){const r=await client.from(table).upsert(rows.slice(i,i+250),options||{});if(r.error)throw r.error}}
-async function deleteChunksFor(uid,ids){if(!ids?.length)return;for(let i=0;i<ids.length;i+=100){const r=await client.from('document_chunks').delete().eq('user_id',uid).in('document_id',ids.slice(i,i+100));if(r.error)throw r.error}}
+async function deleteChunksFor(uid,ids){if(!ids?.length)return;for(let i=0;i<ids.length;i+=100){const r=await client.from(T.document_chunks).delete().eq('user_id',uid).in('document_id',ids.slice(i,i+100));if(r.error)throw r.error}}
 async function syncAllInternal(uid){if(!client||!uid)throw Error('NOT_SIGNED_IN');if(V.Store.ownerId!==uid)V.Store.switchOwner(uid);const s=V.Store.state,now=new Date().toISOString(),tasks=[];
-  tasks.push(upsertRows('profiles',[{id:uid,exam_year:s.profile?.examYear||null,exam_date:s.profile?.examDate||null,daily_minutes:s.profile?.dailyMinutes||40,level:s.profile?.level||'처음 시작',updated_at:iso(s.profile?.updatedAt||Date.now())}]));
-  const progress=Object.entries(s.progress||{}).map(([concept_id,p])=>({user_id:uid,concept_id,mastery:p.mastery||0,attempts:p.attempts||0,correct_count:p.correct||0,dangerous_wrong:p.dangerousWrong||0,last_study:iso(p.lastStudy),next_review:iso(p.nextReview),updated_at:iso(p.updatedAt||p.lastStudy||Date.now())}));tasks.push(upsertRows('user_progress',progress,{onConflict:'user_id,concept_id'}));
-  const events=(s.answerEvents||[]).filter(e=>e?.eventId&&e?.questionId&&Number.isInteger(Number(e.choice))).map(e=>({id:e.eventId,user_id:uid,question_id:e.questionId,concept_id:e.conceptId||'',scope_id:e.scopeId||null,subject:subject(e.subject),choice:Number(e.choice),correct:!!e.correct,confidence:e.confidence||'none',response_ms:e.responseMs==null?null:Number(e.responseMs),answered_at:iso(e.at||Date.now())}));tasks.push(upsertRows('user_answers',events));
-  const wrong=(s.wrongs||[]).map(w=>({id:w.id,user_id:uid,question_id:w.questionId,concept_id:w.conceptId||'',confidence:w.confidence||'none',due_at:iso(w.due||Date.now()),interval_days:w.intervalDays||0,resolved:!!w.resolved,wrong_count:w.wrongCount||1,last_wrong_at:iso(w.lastWrongAt),resolved_at:iso(w.resolvedAt),created_at:iso(w.createdAt||w.lastWrongAt||Date.now())}));tasks.push(upsertRows('wrong_answers',wrong));
-  const reviews=Object.entries(s.reviewSchedule||{}).map(([concept_id,r])=>({user_id:uid,concept_id,due_at:iso(r.due||Date.now()),interval_days:r.intervalDays||0,mastery:r.mastery||0,updated_at:iso(r.updatedAt||Date.now())}));tasks.push(upsertRows('review_schedule',reviews,{onConflict:'user_id,concept_id'}));
-  const notes=(s.notes||[]).map(n=>({id:n.id,user_id:uid,title:n.title||'내 노트',body:n.body||n.text||'',source_type:n.sourceType||'manual',private:true,created_at:iso(n.createdAt||n.updatedAt||Date.now()),updated_at:iso(n.updatedAt||Date.now()),deleted_at:null}));tasks.push(upsertRows('personal_notes',notes));
-  const sessions=(s.studySessions||[]).map(x=>({id:x.id,user_id:uid,concept_id:x.conceptId||null,started_at:iso(x.startedAt||Date.now()),ended_at:iso(x.endedAt),duration_sec:x.durationSec||0}));tasks.push(upsertRows('study_sessions',sessions));
-  const exams=(s.examHistory||[]).map(x=>({id:x.id,user_id:uid,mode:x.mode==='real'?'real':'practice',score:x.score||0,fire_correct:x.fireCorrect||0,ems_correct:x.emsCorrect||0,total_answered:x.totalAnswered||0,created_at:iso(x.at||Date.now())}));tasks.push(upsertRows('exam_history',exams));
-  const tp=s.tutorPreferences||{};tasks.push(upsertRows('tutor_preferences',[{user_id:uid,explanation_level:tp.explanationLevel||'adaptive',emphasize_dangerous_wrong:tp.emphasizeDangerousWrong!==false,use_private_notes:tp.usePrivateNotes!==false,updated_at:iso(tp.updatedAt||Date.now())}]));
+  tasks.push(upsertRows(T.profiles,[{id:uid,exam_year:s.profile?.examYear||null,exam_date:s.profile?.examDate||null,daily_minutes:s.profile?.dailyMinutes||40,level:s.profile?.level||'처음 시작',updated_at:iso(s.profile?.updatedAt||Date.now())}]));
+  const progress=Object.entries(s.progress||{}).map(([concept_id,p])=>({user_id:uid,concept_id,mastery:p.mastery||0,attempts:p.attempts||0,correct_count:p.correct||0,dangerous_wrong:p.dangerousWrong||0,last_study:iso(p.lastStudy),next_review:iso(p.nextReview),updated_at:iso(p.updatedAt||p.lastStudy||Date.now())}));tasks.push(upsertRows(T.user_progress,progress,{onConflict:'user_id,concept_id'}));
+  const events=(s.answerEvents||[]).filter(e=>e?.eventId&&e?.questionId&&Number.isInteger(Number(e.choice))).map(e=>({id:e.eventId,user_id:uid,question_id:e.questionId,concept_id:e.conceptId||'',scope_id:e.scopeId||null,subject:subject(e.subject),choice:Number(e.choice),correct:!!e.correct,confidence:e.confidence||'none',response_ms:e.responseMs==null?null:Number(e.responseMs),answered_at:iso(e.at||Date.now())}));tasks.push(upsertRows(T.user_answers,events));
+  const wrong=(s.wrongs||[]).map(w=>({id:w.id,user_id:uid,question_id:w.questionId,concept_id:w.conceptId||'',confidence:w.confidence||'none',due_at:iso(w.due||Date.now()),interval_days:w.intervalDays||0,resolved:!!w.resolved,wrong_count:w.wrongCount||1,last_wrong_at:iso(w.lastWrongAt),resolved_at:iso(w.resolvedAt),created_at:iso(w.createdAt||w.lastWrongAt||Date.now())}));tasks.push(upsertRows(T.wrong_answers,wrong));
+  const reviews=Object.entries(s.reviewSchedule||{}).map(([concept_id,r])=>({user_id:uid,concept_id,due_at:iso(r.due||Date.now()),interval_days:r.intervalDays||0,mastery:r.mastery||0,updated_at:iso(r.updatedAt||Date.now())}));tasks.push(upsertRows(T.review_schedule,reviews,{onConflict:'user_id,concept_id'}));
+  const notes=(s.notes||[]).map(n=>({id:n.id,user_id:uid,title:n.title||'내 노트',body:n.body||n.text||'',source_type:n.sourceType||'manual',private:true,created_at:iso(n.createdAt||n.updatedAt||Date.now()),updated_at:iso(n.updatedAt||Date.now()),deleted_at:null}));tasks.push(upsertRows(T.personal_notes,notes));
+  const sessions=(s.studySessions||[]).map(x=>({id:x.id,user_id:uid,concept_id:x.conceptId||null,started_at:iso(x.startedAt||Date.now()),ended_at:iso(x.endedAt),duration_sec:x.durationSec||0}));tasks.push(upsertRows(T.study_sessions,sessions));
+  const exams=(s.examHistory||[]).map(x=>({id:x.id,user_id:uid,mode:x.mode==='real'?'real':'practice',score:x.score||0,fire_correct:x.fireCorrect||0,ems_correct:x.emsCorrect||0,total_answered:x.totalAnswered||0,created_at:iso(x.at||Date.now())}));tasks.push(upsertRows(T.exam_history,exams));
+  const tp=s.tutorPreferences||{};tasks.push(upsertRows(T.tutor_preferences,[{user_id:uid,explanation_level:tp.explanationLevel||'adaptive',emphasize_dangerous_wrong:tp.emphasizeDangerousWrong!==false,use_private_notes:tp.usePrivateNotes!==false,updated_at:iso(tp.updatedAt||Date.now())}]));
   await Promise.all(tasks);
   // Only extracted text/metadata sync here. Original PDF/image bytes are never uploaded automatically.
-  if(V.PrivateDocs?.exportForSync){const bundle=await V.PrivateDocs.exportForSync();const docs=(bundle.docs||[]).map(d=>({id:d.id,user_id:uid,title:d.title||d.fileName||'개인자료',file_name:d.fileName||null,mime_type:d.mime||null,page_count:d.pageCount||0,source_hash:d.sourceHash||null,storage_path:null,sync_original:false,created_at:iso(d.createdAt||Date.now()),updated_at:iso(d.updatedAt||d.createdAt||Date.now()),deleted_at:null}));const tomb=(bundle.deleted||[]).map(d=>({id:d.id,user_id:uid,title:'(삭제됨)',file_name:null,mime_type:null,page_count:0,source_hash:null,storage_path:null,sync_original:false,created_at:iso(d.deletedAt),updated_at:iso(d.deletedAt),deleted_at:iso(d.deletedAt)}));await upsertRows('private_documents',[...docs,...tomb]);const liveIds=new Set(docs.map(d=>d.id));const chunks=(bundle.chunks||[]).filter(c=>liveIds.has(c.docId)).map(c=>({id:c.id,user_id:uid,document_id:c.docId,page_no:c.page||null,chunk_index:c.chunkIndex||0,body:c.text||'',created_at:now}));await upsertRows('document_chunks',chunks);await deleteChunksFor(uid,tomb.map(x=>x.id))}
+  if(V.PrivateDocs?.exportForSync){const bundle=await V.PrivateDocs.exportForSync();const docs=(bundle.docs||[]).map(d=>({id:d.id,user_id:uid,title:d.title||d.fileName||'개인자료',file_name:d.fileName||null,mime_type:d.mime||null,page_count:d.pageCount||0,source_hash:d.sourceHash||null,storage_path:null,sync_original:false,created_at:iso(d.createdAt||Date.now()),updated_at:iso(d.updatedAt||d.createdAt||Date.now()),deleted_at:null}));const tomb=(bundle.deleted||[]).map(d=>({id:d.id,user_id:uid,title:'(삭제됨)',file_name:null,mime_type:null,page_count:0,source_hash:null,storage_path:null,sync_original:false,created_at:iso(d.deletedAt),updated_at:iso(d.deletedAt),deleted_at:iso(d.deletedAt)}));await upsertRows(T.private_documents,[...docs,...tomb]);const liveIds=new Set(docs.map(d=>d.id));const chunks=(bundle.chunks||[]).filter(c=>liveIds.has(c.docId)).map(c=>({id:c.id,user_id:uid,document_id:c.docId,page_no:c.page||null,chunk_index:c.chunkIndex||0,body:c.text||'',created_at:now}));await upsertRows(T.document_chunks,chunks);await deleteChunksFor(uid,tomb.map(x=>x.id))}
   s.settings.cloudSync=true;V.Store.save();return true;
 }
 async function adoptUser(next){if(!next)return;user=next;V.Store.switchOwner(next.id);await pullRemoteIntoLocal(next.id);V.Store.migrateGuestToUser(next.id);await syncAllInternal(next.id);lastAdoptedId=next.id;lastAdoptedAt=Date.now();emit()}
@@ -59,6 +60,6 @@ async function signIn(email,password){await init();if(!client)throw Error('MEMBE
 async function signOut(){await init();if(client){const {error}=await client.auth.signOut();if(error)throw error}user=null;V.Store.switchOwner(V.Store.guestId);emit()}
 async function syncAll(){await init();if(!client||!user)throw Error('NOT_SIGNED_IN');await pullRemoteIntoLocal(user.id);return syncAllInternal(user.id)}
 async function pull(){await init();if(!client||!user)throw Error('NOT_SIGNED_IN');return pullRemoteIntoLocal(user.id)}
-V.Auth={init,configured,get client(){return client},get user(){return user},get isGuest(){return !user},signUp,signIn,signOut,syncAll,pull,label(){return user?.email||'게스트'},privacy:'personal-data-is-private-by-default',syncPolicy:{remoteFirstOnSignIn:true,remoteFirstOnManualSync:true,originalFilesAutoUpload:false,extractedTextManualCloudSync:true,deletionTombstones:true}};
+V.Auth={init,configured,get client(){return client},get user(){return user},get isGuest(){return !user},signUp,signIn,signOut,syncAll,pull,label(){return user?.email||'게스트'},privacy:'personal-data-is-private-by-default',syncPolicy:{remoteFirstOnSignIn:true,remoteFirstOnManualSync:true,originalFilesAutoUpload:false,extractedTextManualCloudSync:true,deletionTombstones:true,sharedProjectNamespace:'study_*'}};
 init();
 })();
