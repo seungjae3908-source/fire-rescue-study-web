@@ -136,7 +136,7 @@ jobs:
     timeout-minutes: 30
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: af5fdd6c1973a02e592a5c23387fd5ad2edf443b
+      STUDY_119_EXPECTED_APP_HEAD: f5f257821a8186ceff0097169f9dc864a5cf9e73
       STUDY_119_DISCOVERY_IDS: F06-C01,F06-C02,F06-C03,F06-C04
     steps:
       - uses: actions/checkout@v4
@@ -156,7 +156,7 @@ jobs:
     timeout-minutes: 30
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: af5fdd6c1973a02e592a5c23387fd5ad2edf443b
+      STUDY_119_EXPECTED_APP_HEAD: f5f257821a8186ceff0097169f9dc864a5cf9e73
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -175,7 +175,7 @@ jobs:
     timeout-minutes: 25
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: af5fdd6c1973a02e592a5c23387fd5ad2edf443b
+      STUDY_119_EXPECTED_APP_HEAD: f5f257821a8186ceff0097169f9dc864a5cf9e73
       STUDY_119_INSPECT_ID: F05-C08
       STUDY_119_INSPECT_PAGES: 530,531,532,533,534,535,536,537,538,539,540,541,542,543,544
     steps:
@@ -196,7 +196,7 @@ jobs:
     timeout-minutes: 30
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: af5fdd6c1973a02e592a5c23387fd5ad2edf443b
+      STUDY_119_EXPECTED_APP_HEAD: f5f257821a8186ceff0097169f9dc864a5cf9e73
       STUDY_119_PROXY_RUNTIME_HEAD: e8c29ba9f750b03259b643fa1dfd664c75140fbf
     steps:
       - uses: actions/checkout@v4
@@ -216,7 +216,7 @@ jobs:
     timeout-minutes: 35
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: a762a41bd64e5b49a6e32d987beb855bd1bd1117
+      STUDY_119_EXPECTED_APP_HEAD: f5f257821a8186ceff0097169f9dc864a5cf9e73
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
