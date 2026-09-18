@@ -2,7 +2,8 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const visualKeywords=/스프링클러|플래시오버|백드래프트|롤오버|보일오버|기도|심장|쇼크|해부|부목|화상|분만|소아|제세동|AED|감지기|제연/;
-const calcKeywords=/지정수량|계산|열량|연소|약제|농도|유량|방수/;
+const calcKeywords=/지정수량|계산|열량|농도|유량|방수량|팽창비|혼합비/;
+const explicitCalcIds=new Set(['F05-C01','F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07']);
 const chars=x=>String(x||'').replace(/\s+/g,'').length;
 function questionMeta(id){
   const qs=V.QuestionQuality119?.forConcept?.(id)||(V.questionsForConcept?.(id)||[]).filter(q=>q.examStyle===true);
@@ -15,7 +16,7 @@ function evaluateConcept(id){
   if(!c||!p)return{id,score:0,complete:false,missing:['conceptOrPack']};
   const text=[p.summary,...(p.detail||[]),...(p.deepSections||[]).flatMap(x=>[x.title,x.body,...(x.bullets||[])])].join(' ');
   const qm=questionMeta(id),numericRanges=(c.sourceRanges||[]).filter(r=>Number.isFinite(Number(r.from)));
-  const needsVisual=visualKeywords.test(c.title),needsCalc=calcKeywords.test(c.title)||c.scopeId==='F05';
+  const needsVisual=visualKeywords.test(c.title),needsCalc=explicitCalcIds.has(c.id)||calcKeywords.test(c.title);
   const checks={
     officialScope:!!(c.sourceRanges||[]).length,
     sourcePageAnchor:numericRanges.length>0,

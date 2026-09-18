@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -46,7 +46,12 @@ ok(V.VisualCompletion119.targets.every(id=>{
   const p=V.contentPacks.authored[id];
   return (p?.visuals||[]).length>0&&(p.visuals||[]).some(v=>!!V.Visual119.render(v));
 }),'all 27 required visual concepts render at least one real Visual119 diagram');
-ok(!contentAudit.blockers.visual&&contentAudit.blockers.calculation===9,'visual blocker is closed while calculation remains explicit');
+ok(!contentAudit.blockers.visual,'visual blocker remains closed');
+ok(V.CalculationContract119?.requiredIds?.length===7,'calculation contract explicitly tracks the seven source-applicable hazardous-material concepts');
+ok(V.CalculationContract119.requiredIds.every(id=>(V.contentPacks.authored[id]?.calculations||[]).length>0),'all source-applicable calculation concepts expose a real calculation contract');
+ok(V.CalculationContract119.falsePositiveRemoved.every(id=>V.ContentContract119.evaluateConcept(id).needsCalc===false),'former keyword-only calculation false positives are no longer required');
+ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-applicable contracts, not keyword padding');
+ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'119 content contract reaches truthful 176/176 completion');
 const mock=V.examReadiness();
 ok(mock.ready===(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete),'real mock exam is fail-closed on count + restored-scope coverage');
 ok(mock.fire>=25&&mock.ems>=40,'distinct verified bank reaches 25 fire + 40 EMS');
