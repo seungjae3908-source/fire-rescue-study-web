@@ -15,7 +15,7 @@ try{
   assert(await p.locator('.study-body').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'desktop study body has no horizontal overflow');
   await p.locator('[data-outline]').click();await p.waitForSelector('.outline.open');assert(await p.locator('.outline.open').isVisible(),'desktop TOC drawer opens');
   await p.locator('[data-concept="F03-C06"]').click();await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');assert((await p.locator('.concept-head h2').textContent()).includes('플래시오버'),'TOC selects concept without permanent extra columns');
-  await p.locator('[data-study-tab="compare"]').click();assert((await p.locator('.study-body').textContent()).includes('백드래프트'),'comparison tab renders rich concept content');
+  await p.locator('.tabbar [data-study-tab="compare"]').click();assert((await p.locator('.study-body').textContent()).includes('백드래프트'),'comparison tab renders rich concept content');
   await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C05'));await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C05');assert((await p.locator('.concept-head h2').textContent()).includes('스프링클러'),'complete fire curriculum exposes sprinkler study concept');
   await p.locator('.tabbar [data-study-tab="detail"]').click();await p.waitForSelector('.detail-view');assert((await p.locator('.detail-view').textContent()).includes('상세내용'),'rich detail tab renders for sprinkler');
   assert((await p.locator('.detail-section').count())>=1,'detail tab has structured learning sections');
