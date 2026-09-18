@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 
 globalThis.window={AITUTOR_V9:{}};
 const files=[
@@ -40,7 +41,31 @@ const checks={
   deployedPrivacySessionAcceptance:workflow.includes('deployed_private_session_acceptance:'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
-const stagingLive=String(process.env.STUDY_119_STAGING_RLS_LIVE_PROVEN||'').toLowerCase()==='true';
+const gitBlobSha=path=>{
+  const buf=fs.readFileSync(new URL('../'+path,import.meta.url));
+  const h=createHash('sha1');
+  h.update(Buffer.from('blob '+buf.length+'\\0'));
+  h.update(buf);
+  return h.digest('hex');
+};
+let liveEvidence=null;
+try{liveEvidence=JSON.parse(fs.readFileSync(new URL('./study-staging-live-proof-119.json',import.meta.url),'utf8'))}catch{}
+const liveEvidenceFiles=liveEvidence?.sourceBlobShas||{};
+const liveEvidenceBound=!!liveEvidence&&
+  liveEvidence.version==='119-study-staging-live-proof-v1'&&
+  liveEvidence.projectRef==='petlfbztqguuzkasfpug'&&
+  liveEvidence.productionProjectRef==='bawcbkoyovbeajkrnduq'&&
+  liveEvidence.projectRef!==liveEvidence.productionProjectRef&&
+  liveEvidence.migrationName==='study_v9_release_rls_closed_loop_20260918'&&
+  liveEvidence.assertions?.migrationSuccess===true&&
+  liveEvidence.assertions?.userARoundTrip===true&&
+  liveEvidence.assertions?.userBCannotReadA===true&&
+  liveEvidence.assertions?.userBCannotWriteA===true&&
+  liveEvidence.assertions?.cleanupVerified===true&&
+  liveEvidence.assertions?.investmentProductionTouched===false&&
+  Object.entries(liveEvidence.cleanupCounts||{}).every(([,v])=>Number(v)===0)&&
+  Object.entries(liveEvidenceFiles).every(([path,sha])=>gitBlobSha(path)===sha);
+const stagingLive=liveEvidenceBound;
 const blockers=[];
 for(const [k,v] of Object.entries(checks))if(!v)blockers.push('CONTRACT_'+k);
 if(!stagingLive)blockers.push('STUDY_STAGING_AUTH_SYNC_RLS_LIVE_PROOF_MISSING');
@@ -52,6 +77,7 @@ const result={
   realMock:{ready:mock.ready,missingFireScopes:mock.missingFireScopes},
   checks,
   stagingLiveRlsProven:stagingLive,
+  stagingLiveEvidence:stagingLive?{projectRef:liveEvidence.projectRef,migrationVersion:liveEvidence.migrationVersion,migrationName:liveEvidence.migrationName,verifiedAtUtc:liveEvidence.verifiedAtUtc}:null,
   blockers,
   releaseReady:blockers.length===0,
   productionRootPromotionAllowed:blockers.length===0
