@@ -13,6 +13,8 @@ const add=(id,x)=>{
   if(x.deepSections)p.deepSections=[...(p.deepSections||[]),...x.deepSections].filter((r,i,a)=>a.findIndex(z=>String(z?.title)===String(r?.title)&&String(z?.body)===String(r?.body))===i);
   if(x.calculations)p.calculations=[...(p.calculations||[]),...x.calculations].filter((r,i,a)=>a.findIndex(z=>String(z?.title)===String(r?.title)&&String(z?.formula)===String(r?.formula))===i);if(x.visuals)p.visuals=uniq([...(p.visuals||[]),...x.visuals]);
   if(x.officialLinks)p.officialLinks=[...(p.officialLinks||[]),...x.officialLinks].filter((r,i,a)=>a.findIndex(z=>String(z?.url)===String(r?.url))===i);
+  if(x.specialCombustibles)p.specialCombustibles=x.specialCombustibles;
+  if(x.specialCombustibleStorage)p.specialCombustibleStorage=x.specialCombustibleStorage;
   if(x.source)p.source=x.source;
   p.depthEnriched=true;
 };
@@ -22,6 +24,62 @@ function rename(id,title){
   const sc=V.curriculum.scopeById?.[c.scopeId],idx=Number(id.split('-C')[1])-1;
   if(sc?.concepts?.[idx]!==undefined)sc.concepts[idx]=title;
 }
+
+rename('F05-C01','위험물 정의·류별 분류·특수가연물');
+add('F05-C01',{
+  source:'화재예방법 · 화재예방법 시행령 제19조·별표2·별표3 · 국가법령정보센터',
+  detail:[
+    '화재예방법 시행령 제19조는 화재 시 불길이 빠르게 번지는 고무류·플라스틱류·석탄 및 목탄 등 중 별표 2의 품명별 수량 이상을 특수가연물로 규정한다.',
+    '특수가연물은 위험물안전관리법상의 제1류~제6류 위험물 분류와 같은 체계가 아니다. 시험에서는 “위험물 류별 지정수량”과 “화재예방법상 특수가연물 품명별 수량”을 별개 표로 구분해야 한다.',
+    '시행령 별표 3은 특수가연물을 품명별로 구분해 쌓도록 하고, 소화설비 조건에 따라 저장 높이와 쌓는 부분 바닥면적을 제한하며 실외 저장 시 대지경계선·도로·인접 건축물과 일정 간격을 두도록 규정한다.'
+  ],
+  must:[
+    '특수가연물 → 화재예방법 시행령 제19조 · 별표2의 품명별 기준수량 이상',
+    '면화류 200kg · 나무껍질/대팻밥 400kg',
+    '넝마/종이부스러기·사류·볏짚류 각 1,000kg',
+    '가연성고체류 3,000kg · 석탄/목탄류 10,000kg',
+    '가연성액체류 2㎥ · 목재가공품/나무부스러기 10㎥',
+    '고무류·플라스틱류 → 발포 20㎥ / 그 밖의 것 3,000kg'
+  ],
+  traps:[
+    '특수가연물을 위험물 제1류~제6류와 같은 법적 분류라고 보지 않는다.',
+    '특수가연물의 기준을 모두 kg 단위로 외우지 않는다. 가연성액체류·목재가공품·발포 플라스틱류 등은 ㎥ 기준이 있다.',
+    '특수가연물은 품명만 해당하면 되는 것이 아니라 시행령 별표 2의 기준수량 이상인지 함께 확인한다.'
+  ],
+  compare:[
+    ['위험물','위험물안전관리법의 제1류~제6류 · 류별 지정수량 체계'],
+    ['특수가연물','화재예방법 · 화재 확대가 빠른 가연물 · 별표2 품명별 수량 기준']
+  ],
+  specialCombustibles:[
+    ['면화류','200 kg 이상'],
+    ['나무껍질·대팻밥','400 kg 이상'],
+    ['넝마·종이부스러기','1,000 kg 이상'],
+    ['사류','1,000 kg 이상'],
+    ['볏짚류','1,000 kg 이상'],
+    ['가연성고체류','3,000 kg 이상'],
+    ['석탄·목탄류','10,000 kg 이상'],
+    ['가연성액체류','2 ㎥ 이상'],
+    ['목재가공품·나무부스러기','10 ㎥ 이상'],
+    ['고무류·플라스틱류(발포)','20 ㎥ 이상'],
+    ['고무류·플라스틱류(그 밖의 것)','3,000 kg 이상']
+  ],
+  specialCombustibleStorage:[
+    '품명별로 구분하여 쌓아 저장',
+    '살수설비 또는 방사범위 내 대형수동식소화기 설치 시 높이 15m 이하',
+    '그 밖의 경우 높이 10m 이하',
+    '실외 저장 시 대지경계선·도로·인접 건축물과 최소 6m 이상 간격'
+  ],
+  deepSections:[
+    sec('위험물과 특수가연물을 먼저 분리','둘 다 화재 위험 물질이지만 적용 법령과 분류축이 다르다. 위험물은 제1~6류와 지정수량을, 특수가연물은 화재예방법 시행령 별표2의 품명과 기준수량을 본다.'),
+    sec('수량표를 단위까지 암기','kg와 ㎥가 섞여 있으므로 숫자만 외우지 말고 품명-수량-단위를 한 묶음으로 기억한다. 특히 가연성액체류 2㎥, 목재가공품·나무부스러기 10㎥, 발포 고무·플라스틱류 20㎥를 구분한다.'),
+    sec('저장·취급 기준','별표3은 품명별 구분, 적치 높이·바닥면적, 실외 이격 등으로 화재확대 위험을 줄이도록 한다. 소화설비 설치 여부에 따라 허용 높이·면적이 달라질 수 있다.')
+  ],
+  officialLinks:[
+    {label:'화재예방법 시행령 제19조 · 특수가연물',url:'https://law.go.kr/lsLinkCommonInfo.do?lspttninfSeq=177853'},
+    {label:'시행령 별표2 · 특수가연물 품명별 수량',url:'https://www.law.go.kr/lsBylInfoPLinkR.do?bylBrNo=00&bylCls=BE&bylNo=0002&lsNm=%ED%99%94%EC%9E%AC%EC%9D%98+%EC%98%88%EB%B0%A9+%EB%B0%8F+%EC%95%88%EC%A0%84%EA%B4%80%EB%A6%AC%EC%97%90+%EA%B4%80%ED%95%9C+%EB%B2%95%EB%A5%A0+%EC%8B%9C%ED%96%89%EB%A0%B9'},
+    {label:'시행령 별표3 · 특수가연물 저장·취급 기준',url:'https://www.law.go.kr/lbook/lbFileDownload.do?flExt=pdf&lbookConflSeq=104873&lbookSeq=105457'}
+  ]
+});
 
 rename('E01-C03','응급구조사 법적책임·119구급대 법령');
 add('E01-C03',{
