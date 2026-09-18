@@ -261,6 +261,42 @@ try{
   assert(await buildingLinks.count()>=3,'building-fire source tab exposes official Building Act links');
   await noX(m,'mobile building-fire law');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C05'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C05');
+  assert((await m.locator('.concept-head h2').innerText()).includes('건축구조'),'fire progression lesson exposes construction type comparison');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const constructionText=await m.locator('.book-section').innerText();
+  assert(constructionText.includes('목조건축물')&&constructionText.includes('내화구조 건축물')&&constructionText.includes('HVAC'),'wood vs fire-resistive construction lesson explains spread and smoke-path differences');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E11-C02'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E11-C02');
+  assert((await m.locator('.concept-head h2').innerText()).includes('심전도 리듬'),'cardiac lesson exposes ECG rhythm study');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const ecgText=await m.locator('.book-section').innerText();
+  assert(ecgText.includes('좁은 QRS')&&ecgText.includes('넓은 QRS')&&ecgText.includes('2도')&&ecgText.includes('3도 방실차단'),'ECG lesson covers NFA rhythm categories and QRS-width approach');
+  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
+  const cprLinks=await m.locator('.book-section .source-law-links a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
+  assert(cprLinks.some(x=>/^https:\/\/(www\.)?kacpr\.org\//.test(x)),'ECG source tab links the official 2020 KACPR guideline');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E11-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E11-C03');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const arrestDrugText=await m.locator('.book-section').innerText();
+  assert(arrestDrugText.includes('1mg')&&arrestDrugText.includes('3~5분')&&arrestDrugText.includes('300mg')&&arrestDrugText.includes('150mg'),'adult arrest lesson includes 2020-guideline epinephrine and amiodarone anchors');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E11-C05'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E11-C05');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const rhythmDrugText=await m.locator('.book-section').innerText();
+  assert(rhythmDrugText.includes('아데노신')&&rhythmDrugText.includes('0.1mg/kg')&&rhythmDrugText.includes('아트로핀')&&rhythmDrugText.includes('0.02mg/kg'),'rhythm lesson includes 2020-guideline adenosine and atropine anchors');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E03-C04'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E03-C04');
+  assert((await m.locator('.concept-head h2').innerText()).includes('패혈증'),'infection curriculum surfaces sepsis caution without inventing a full treatment algorithm');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const infectionText=await m.locator('.book-section').innerText();
+  assert(infectionText.includes('손위생')&&infectionText.includes('PPE')&&infectionText.includes('패혈증')&&infectionText.includes('전신상태'),'infection lesson connects PPE, exposure control and conservative sepsis warning assessment');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E01-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E01-C03');
   assert((await m.locator('.concept-head h2').innerText()).includes('119구급대 법령'),'EMS curriculum exposes the current 119-law lesson');
