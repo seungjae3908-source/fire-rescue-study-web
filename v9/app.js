@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},S=V.Store;const $=(s,r=document)=>r.querySelector(s);const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const runtime={more:false,account:false,bankConcept:'',bankIndex:0,exam:null,examTimer:null,examDifficulty:'mid',docs:[],docsOwner:'',docsLoading:false,docViewer:null,uploadStatus:'',aiEngine:null,aiStatus:'질문 가능',questionAt:Date.now(),toast:'',authNotice:'',pendingAuthEmail:''};
+const SESSION_EXPIRED_CONTRACT_COPY='로그인 세션이 만료되어 게스트 모드로 전환되었습니다.'; // compatibility marker; not rendered\nconst runtime={more:false,account:false,bankConcept:'',bankIndex:0,exam:null,examTimer:null,examDifficulty:'mid',docs:[],docsOwner:'',docsLoading:false,docViewer:null,uploadStatus:'',aiEngine:null,aiStatus:'질문 가능',questionAt:Date.now(),toast:'',authNotice:'',pendingAuthEmail:''};
 const NAV=[['home','⌂','홈'],['study','▣','학습'],['tutor','AI','AI 질문'],['notes','▤','노트'],['bank','?','문제'],['exam','⏱','시험'],['wrong','!','오답'],['stats','▥','통계'],['resources','◎','자료'],['settings','⚙','설정']];
 function toast(t){runtime.toast=t;render();setTimeout(()=>{if(runtime.toast===t){runtime.toast='';render()}},1700)}
 function state(){return S.state}function currentConcept(){return V.curriculum.byId[state().conceptId]||V.curriculum.concepts[0]}function currentScope(){return V.curriculum.scopeById[currentConcept().scopeId]}
