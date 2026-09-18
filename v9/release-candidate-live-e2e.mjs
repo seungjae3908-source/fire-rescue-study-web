@@ -80,7 +80,7 @@ try{
   assert(truth.mock.ready===false,'real mock remains fail-closed');
   await enter(dp,'F07-C05');await noX(dp,'release desktop study');
   assert(await dp.locator('.study-rail').isVisible(),'desktop 119 assistant rail visible');
-  await dp.locator('[data-study-tab="detail"]').click();
+  await dp.locator('.concept-head [data-study-tab="detail"]').click();
   assert(await dp.locator('.concept-visual').count()>=1,'desktop sprinkler detail renders visual diagram');
   assert(derr.length===0,'desktop runtime errors = 0 '+derr.join(' | '));
   await desktop.close();
@@ -90,7 +90,7 @@ try{
   await boot(tp);await enter(tp,'E04-C02');await noX(tp,'release tablet study');
   assert(await tp.locator('.study-mainpane').isVisible(),'tablet textbook pane visible');
   assert(await tp.locator('.study-rail').isHidden(),'tablet desktop rail hidden');
-  await tp.locator('[data-study-tab="detail"]').click();
+  await tp.locator('.concept-head [data-study-tab="detail"]').click();
   assert(await tp.locator('.concept-visual').count()>=1,'tablet anatomy concept renders grounded visual');
   assert(terr.length===0,'tablet runtime errors = 0 '+terr.join(' | '));
   await tablet.close();
