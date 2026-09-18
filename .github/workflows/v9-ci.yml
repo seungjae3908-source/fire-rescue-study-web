@@ -411,3 +411,22 @@ jobs:
         run: node v9/pdf-e2e.mjs
       - name: Production image OCR + owner restore QA
         run: node v9/image-ocr-e2e.mjs
+
+  real_mock_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'real mock live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 60fb20b333cc20d5342ed680d4824480cd22fcd3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real mock browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify deployed real mock evidence pool
+        run: node v9/real-mock-live-e2e.mjs
