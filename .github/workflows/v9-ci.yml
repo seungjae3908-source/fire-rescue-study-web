@@ -209,3 +209,22 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify eight deployed fire-phenomena exact-page anchors
         run: node v9/fire-phenomena-live-e2e.mjs
+
+  hazmat_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'hazmat live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: a762a41bd64e5b49a6e32d987beb855bd1bd1117
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install hazardous-material browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify eight deployed hazardous-material exact-page anchors
+        run: node v9/hazmat-live-e2e.mjs
