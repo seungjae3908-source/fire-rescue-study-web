@@ -76,6 +76,17 @@ try{
   assert(result.noRefresh.events.some(x=>x.event==='SIGNED_OUT'&&!x.hasSession),'expired/no-refresh session emits SIGNED_OUT');
   assert(refreshCalls===1,'only the scenario with a refresh token calls the refresh endpoint once');
   assert(rest401>=2&&passwordCalls===2,'both invalid-session scenarios exercise protected REST after sign-in');
+  const ux=await page.evaluate(async()=>{
+    const V=window.AITUTOR_V9;
+    window.dispatchEvent(new CustomEvent('aitutor-auth-change',{detail:{user:null,reason:'session-expired'}}));
+    await new Promise(r=>setTimeout(r,30));
+    const expired={notice:V.App.runtime.authNotice,toast:V.App.runtime.toast};
+    window.dispatchEvent(new CustomEvent('aitutor-auth-change',{detail:{user:null,reason:'manual-signout'}}));
+    await new Promise(r=>setTimeout(r,30));
+    return{expired,afterManual:{notice:V.App.runtime.authNotice,toast:V.App.runtime.toast}};
+  });
+  assert(/세션이 만료/.test(ux.expired.notice)&&/다시 로그인/.test(ux.expired.toast),'session-expired UI exposes persistent re-login notice plus immediate toast');
+  assert(ux.afterManual.notice==='','manual sign-out clears session-expired warning instead of mislabeling user logout');
   assert(errors.length===0,'session-expiry browser runtime errors = 0 ('+errors.join(' | ')+')');
   console.log('V9_AUTH_SESSION_EXPIRY_QA_SUCCESS',JSON.stringify({result,refreshCalls,rest401,passwordCalls}));
   await context.close();
