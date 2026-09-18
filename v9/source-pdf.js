@@ -50,5 +50,5 @@ async function render(key,pageNum,host,queries=[]){const {pdf,name}=await openPd
   const meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=`${name} · ${pageNo}/${pdf.numPages}쪽 · 하이라이트 ${hits}개`;host.prepend(meta);
   return{page:pageNo,pages:pdf.numPages,hits,name};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,openPdf,clearPdfCache,locate,render,sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-range-cache-timeout-overlay-v3'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,openPdf,clearPdfCache,locate,render,sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-text-coordinate-overlay-v3-range-cache-timeout'};
 })();
