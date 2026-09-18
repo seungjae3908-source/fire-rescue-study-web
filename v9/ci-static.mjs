@@ -48,7 +48,10 @@ ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'||p.stat
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored study pack');
 ok(V.curriculum.byId['F05-C05']&&V.curriculum.byId['F07-C05'],'hazardous materials and sprinkler scopes exist');
 ok(V.contentPacks.authored['F05-C05']?.deepSections?.length>0&&V.contentPacks.authored['F07-C05']?.deepSections?.length>0,'new fire scopes have rich detail sections');
-ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope expansion adds 27 concepts');\nok(V.curriculumDepth119?.addedConcepts===14,'119 depth syllabus adds 14 granular fire/sprinkler concepts');\nok(V.FireDepth119?.concepts?.length===14,'14 new deep fire concepts have textbook packs');\nok(V.FireQuestions119?.added===13,'deep fire batch adds 13 sourced practice questions with option explanations');
+ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope expansion adds 27 concepts');
+ok(V.curriculumDepth119?.addedConcepts===14,'119 depth syllabus adds 14 granular fire/sprinkler concepts');
+ok(V.FireDepth119?.concepts?.length===14,'14 new deep fire concepts have textbook packs');
+ok(V.FireQuestions119?.added===13,'deep fire batch adds 13 sourced practice questions with option explanations');
 ok(V.emsRich2026?.scopes===24&&V.emsRich2026?.concepts===107,'all 24 EMS chapters / 107 concepts receive structured rich detail');
 ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
 ok(!!V.depthEnrichment2,'source-depth enrichment batch 2 is loaded');
