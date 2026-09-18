@@ -78,14 +78,16 @@ async function renderPdfEvidence(id,pageOverride=null){
   const root=document.querySelector('#pdfEvidence');if(!root)return;
   const c=V.curriculum.byId[id],p=V.contentPacks.get(id),range=(c?.sourceRanges||[])[0],key=range?.doc||'',host=root.querySelector('#pdfEvidenceHost'),badge=root.querySelector('[data-pdf-page-label]'),queries=evidenceQueries(p);
   if(!key||!V.SourcePDF){host.innerHTML='<div class="empty">연결된 원문이 없습니다.</div>';return}
-  const availability=await V.SourcePDF.availability(key),official=availability.officialPage||V.SourcePDF.sourcePage(key);
+  const availability=await V.SourcePDF.availability(key),official=availability.officialPage||V.SourcePDF.sourcePage(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static';
   if(!availability.local&&!availability.direct){badge.textContent='공식 원문';host.innerHTML=`<div class="source-connect official-fallback"><b>원문을 바로 불러올 수 없습니다.</b>${official?`<a class="btn primary block" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div>`;root.querySelector('.pdf-pager')?.classList.add('hidden');return}
-  host.innerHTML=`<div class="pdf-loading"><b>${availability.local?'저장된 교재 여는 중…':'공식 교재를 이 기기에 저장하는 중…'}</b><small>처음 한 번 저장하면 다음부터 같은 교재는 바로 열립니다.</small><div class="progressbar"><i data-pdf-progress style="width:${availability.local?100:4}%"></i></div><span data-pdf-progress-label>${availability.local?'교재 확인 중':'다운로드 준비 중'}</span></div>`;
+  host.innerHTML=staticRange
+    ?'<div class="pdf-loading"><b>공식 교재 여는 중…</b><small>필요한 페이지만 빠르게 불러옵니다.</small><div class="progressbar"><i style="width:35%"></i></div><span>원문 준비 중</span></div>'
+    :`<div class="pdf-loading"><b>${availability.local?'저장된 교재 여는 중…':'공식 교재를 이 기기에 저장하는 중…'}</b><small>처음 한 번 저장하면 다음부터 같은 교재는 바로 열립니다.</small><div class="progressbar"><i data-pdf-progress style="width:${availability.local?100:4}%"></i></div><span data-pdf-progress-label>${availability.local?'교재 확인 중':'다운로드 준비 중'}</span></div>`;
   try{
     let page=Number(pageOverride)||Number(root.dataset.page)||Number(range?.from)||0;
     const progress=({loaded,total,percent})=>{const bar=root.querySelector('[data-pdf-progress]'),label=root.querySelector('[data-pdf-progress-label]');if(bar&&percent!=null)bar.style.width=Math.max(4,percent)+'%';if(label)label.textContent=percent!=null?`교재 저장 중 ${percent}%`:`교재 저장 중 · ${Math.max(1,Math.round((loaded||0)/1048576))}MB`};
     if(!page){badge.textContent='근거 위치 찾는 중…';const located=await V.SourcePDF.locate(key,queries);page=located.page;root.dataset.autoLocated='true'}
-    badge.textContent=availability.local?'저장된 교재 여는 중…':'교재 저장 중…';
+    badge.textContent=staticRange?'공식 교재 여는 중…':(availability.local?'저장된 교재 여는 중…':'교재 저장 중…');
     const result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:90000,onProgress:progress});
     root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);
     badge.textContent=`${result.page}/${result.pages}쪽 · 근거 ${result.hits}개`;
