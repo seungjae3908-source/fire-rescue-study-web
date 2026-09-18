@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_PREVIEW_URL||'https://study-119-preview.vercel.app/';
-const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'8c78205f1157d0c6187f5482b8027ed43e8237e6';
+const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'8840391550625e0ca8d05bc29780f9d7cf94c42d';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
 function observe(page){const errors=[];page.on('pageerror',e=>errors.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('console:'+m.text())});page.on('requestfailed',r=>errors.push('requestfailed:'+r.url()+' '+(r.failure()?.errorText||'')));return errors}
@@ -40,8 +40,8 @@ try{
       await page.locator('.study-body-mobile .source-only [data-source-concept]').click();
       await page.waitForSelector('#pdfEvidence canvas',{timeout:180000});
       const firstMs=Date.now()-started;
-      const source=await page.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.availability(key),p=await V.SourcePDF.openPdf(key);return{local:a.local,origin:p.origin,key}});
-      assert(source.local&&/local-cache/.test(source.origin),'official textbook is persisted to browser cache before reading');
+      const source=await page.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.availability(key),p=await V.SourcePDF.openPdf(key),catalog=V.SourceCatalog119.get(key);return{local:a.local,origin:p.origin,key,transport:catalog.transport,url:catalog.directPdf}});
+      assert(source.transport==='range-static'&&source.origin==='official-static-range','mirrored official textbook uses range-capable static source instead of the slow dynamic proxy');
       const closeBox=await page.locator('#pdfEvidence [data-pdf-close]').boundingBox();
       assert(closeBox&&closeBox.height<60,'PDF close button remains compact');
       await page.locator('#pdfEvidence [data-pdf-close]').click();
