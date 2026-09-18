@@ -154,7 +154,7 @@ try{
   await m.waitForSelector('.question-card');
   const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형');return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id)}}); 
   assert(calcBank.filter==='calc'&&calcBank.count>=8&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with at least the eight source-backed drills');
-  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===8,'calculation practice includes all eight new source-backed calculation drills');
+  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===13,'calculation practice includes all thirteen source-backed calculation drills');
   await noX(m,'mobile calculation practice');
   await go(m,'exam');await m.waitForSelector('.exam-start');
   const realStart=m.locator('[data-exam-start="real"]');
