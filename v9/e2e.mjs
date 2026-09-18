@@ -231,6 +231,19 @@ try{
   const parklandText=await m.locator('.book-section').innerText();
   assert(parklandText.includes('Parkland')&&parklandText.includes('4 mL × 체중(kg) × 2·3도 화상 TBSA(%)')&&parklandText.includes('7,200mL'),'burn lesson exposes Parkland formula, timing and worked example');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const firePhenomenaText=await m.locator('.book-section').innerText();
+  for(const term of ['플레임오버','롤오버','플래시오버','백드래프트'])assert(firePhenomenaText.includes(term),'four-way fire comparison includes '+term);
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C10'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C10');
+  assert((await m.locator('.concept-head h2').innerText()).trim()==='플레임오버','flameover has its own curriculum lesson title');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const flameoverText=await m.locator('.book-section').innerText();
+  assert(flameoverText.includes('벽면')&&flameoverText.includes('천장')&&flameoverText.includes('롤오버와 비교'),'flameover lesson teaches wall-to-ceiling flame spread separately from rollover');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C07'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C07');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
