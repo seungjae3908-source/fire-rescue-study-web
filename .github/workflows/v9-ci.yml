@@ -90,9 +90,6 @@ jobs:
           exit 1
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
         run: node v9/e2e.mjs
-      - name: One-pass fire science missing-scope source audit
-        continue-on-error: true
-        run: node v9/fire-science-gap-audit.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
