@@ -12,6 +12,8 @@ const add=(id,x)=>{
   if(x.flow)p.flow=uniq([...(p.flow||[]),...(x.flow||[])]);
   if(x.deepSections)p.deepSections=[...(p.deepSections||[]),...x.deepSections].filter((r,i,a)=>a.findIndex(z=>String(z?.title)===String(r?.title)&&String(z?.body)===String(r?.body))===i);
   if(x.calculations)p.calculations=[...(p.calculations||[]),...x.calculations].filter((r,i,a)=>a.findIndex(z=>String(z?.title)===String(r?.title)&&String(z?.formula)===String(r?.formula))===i);if(x.visuals)p.visuals=uniq([...(p.visuals||[]),...x.visuals]);
+  if(x.officialLinks)p.officialLinks=[...(p.officialLinks||[]),...x.officialLinks].filter((r,i,a)=>a.findIndex(z=>String(z?.url)===String(r?.url))===i);
+  if(x.source)p.source=x.source;
   p.depthEnriched=true;
 };
 function rename(id,title){
@@ -20,6 +22,47 @@ function rename(id,title){
   const sc=V.curriculum.scopeById?.[c.scopeId],idx=Number(id.split('-C')[1])-1;
   if(sc?.concepts?.[idx]!==undefined)sc.concepts[idx]=title;
 }
+
+rename('E01-C03','응급구조사 법적책임·119구급대 법령');
+add('E01-C03',{
+  source:'119구조ㆍ구급에 관한 법률 · 119법 시행령 · 국가법령정보센터',
+  detail:[
+    '119법 시행령은 119구급대를 일반구급대와 고속국도구급대로 구분해 편성·운영하도록 규정한다. 일반구급대는 원칙적으로 소방서마다 1개 대 이상 설치하며, 소방서가 없는 시·군·구는 중심지의 119안전센터에 설치할 수 있다.',
+    '구급대원 자격은 소방공무원 중 의료인, 1급 응급구조사, 2급 응급구조사 또는 소방청장이 실시하는 구급업무 교육을 받은 사람으로 규정된다. 다만 교육만 받은 사람은 구급차 운전과 구급 보조업무만 할 수 있다.',
+    '119법은 위급상황에서 구조·구급대를 신속히 출동시켜 인명구조, 응급처치와 이송 등 필요한 활동을 하도록 하고, 시행령은 비응급환자의 경우 병력·증상·주변상황을 종합해 응급 여부를 판단한 뒤 일정 요건에서 출동 요청을 거절할 수 있도록 규정한다.',
+    '119구급상황관리센터는 의료인 또는 1·2급 응급구조사 자격을 가진 사람을 배치해 24시간 근무체제를 유지한다.',
+    '항공구조구급대는 초고층 건축물 등의 인명구조나 도서·벽지 응급환자의 긴급 이송을 위해 편성·운영한다. 시행령은 국제구조·국제구급대원의 파견 전 감염병 대비 조치와 철수 후 부상·감염병·외상 후 스트레스 장애 등에 대한 검진도 규정한다.'
+  ],
+  must:[
+    '구급대원 자격 → 의료인 · 1급 응급구조사 · 2급 응급구조사 · 소방청 구급교육 이수자',
+    '구급교육 이수자만 해당 → 구급차 운전 + 구급 보조업무',
+    '일반구급대 → 원칙적으로 소방서마다 1개 대 이상',
+    '119구급상황관리센터 → 의료인/1·2급 응급구조사 배치 · 24시간 근무',
+    '항공구조구급대 → 초고층 인명구조 · 도서/벽지 응급환자 긴급 이송'
+  ],
+  traps:[
+    '소방청 구급교육만 받은 대원이 의료인·응급구조사와 동일한 범위의 응급처치를 한다고 보지 않는다.',
+    '비응급이라는 이유만으로 자동 거절하는 것이 아니다. 시행령은 병력·증상·주변상황을 종합해 응급 여부를 판단하도록 한다.',
+    '119구급상황관리센터의 자격 인력을 주간에만 배치한다고 보지 않는다. 시행령은 24시간 근무체제를 규정한다.'
+  ],
+  compare:[
+    ['일반구급대','원칙적으로 소방서마다 1개 대 이상'],
+    ['고속국도구급대','교통사고 발생빈도 등을 고려해 소방청·시도본부·관할 소방서에 설치 가능'],
+    ['항공구조구급대','초고층 등 인명구조 · 도서/벽지 응급환자 긴급이송'],
+    ['119구급상황관리센터','의료인·1급·2급 응급구조사 자격 인력 · 24시간']
+  ],
+  deepSections:[
+    sec('구급대원 자격과 업무범위','시험에서는 “누가 구급대원이 될 수 있는가”와 “교육 이수자에게 허용되는 업무가 무엇인가”를 분리해 읽는다. 의료인·1급·2급 응급구조사와 달리 소방청 구급교육 이수자는 구급차 운전과 구급 보조업무만 할 수 있다.'),
+    sec('출동과 비응급 거절','119법은 위급상황 출동을 원칙으로 두고, 시행령은 비응급환자 거절 가능 사유를 별도로 둔다. 비응급 여부는 병력·증상·주변상황을 종합해 판단한다.'),
+    sec('항공·국제구급','항공구조구급대는 초고층·도서·벽지 등 지상대 접근이 어렵거나 긴급 이송이 필요한 상황과 연결된다. 국제구급대원은 파견 전 감염병 대비와 철수 후 건강검진 규정도 함께 본다.')
+  ],
+  officialLinks:[
+    {label:'119법 · 구조·구급활동(제13조)',url:'https://law.go.kr/LSW/lsLinkCommonInfo.do?lsJoLnkSeq=1032838931'},
+    {label:'119법 시행령 · 구급대 편성·자격·이송(제10~12조)',url:'https://law.go.kr/lsLinkCommonInfo.do?lspttninfSeq=104191'},
+    {label:'119법 시행령 · 구급상황관리센터·재외국민 서비스',url:'https://law.go.kr/lsLinkCommonInfo.do?lspttninfSeq=104193'},
+    {label:'119법 시행령 · 비응급 구조·구급 요청 거절',url:'https://law.go.kr/lsLinkCommonInfo.do?lspttninfSeq=104196'}
+  ]
+});
 
 rename('E05-C04','기록지·중증도 분류');
 
@@ -323,5 +366,5 @@ add('E11-C05',{
   traps:['“VT = 무조건 제세동”으로 단순 암기하지 않는다.']
 });
 
-V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v4',conceptIds:['E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
+V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v5',conceptIds:['E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
 })();
