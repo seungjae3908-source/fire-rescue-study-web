@@ -6,7 +6,7 @@ const files=[
   'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js',
   'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js',
-  'questions-facilities-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js',
+  'questions-facilities-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-restored-fire-verified-119.js',
   'question-difficulty.js','question-quality-119.js',
   'depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js',
   'fire-depth-119.js','governance-depth-119.js','investigation-depth-119.js','facilities-depth-119.js',
