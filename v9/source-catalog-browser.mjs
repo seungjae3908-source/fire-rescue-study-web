@@ -33,6 +33,13 @@ try{
       await p.waitForTimeout(700);
     }
     console.log('BROWSER_SOURCE_CATALOG',JSON.stringify({key:def.key,title:def.title,detailUrl,ok,attachments:data},null,2));
+    if(ok&&def.key==='fire1'){
+      const fns=await p.evaluate(()=>({
+        openPdfViewer:typeof window.openPdfViewer==='function'?window.openPdfViewer.toString():'',
+        download:typeof window.Jnit_boardDownload==='function'?window.Jnit_boardDownload.toString():''
+      }));
+      console.log('PDF_VIEWER_FUNCTIONS',JSON.stringify(fns,null,2));
+    }
   }
   await p.close();
   const local=await browser.newPage();
