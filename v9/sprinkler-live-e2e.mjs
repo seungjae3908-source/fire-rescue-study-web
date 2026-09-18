@@ -4,6 +4,7 @@ const base=process.env.STUDY_119_PREVIEW_URL||'https://study-119-preview.vercel.
 const expected=process.env.STUDY_119_EXPECTED_APP_HEAD||'';
 const spec={
   'F07-C05':284,
+  'F07-C16':288,
   'F07-C17':288,
   'F07-C18':284,
   'F07-C19':284,
@@ -62,7 +63,7 @@ try{
     await page.waitForFunction(()=>!document.querySelector('#pdfEvidence'));
   }
 
-  assert(proxyFetches===1,'prevention1 PDF network fetch occurs once and is reused for all six anchors');
+  assert(proxyFetches===1,'prevention1 PDF network fetch occurs once and is reused for all seven anchors');
   assert(errors.length===0,'mobile runtime errors = 0 '+errors.join(' | '));
   console.log('SPRINKLER_LIVE_ACCEPTANCE_SUCCESS',JSON.stringify({proxyFetches,spec}));
   await ctx.close();
