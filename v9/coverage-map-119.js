@@ -12,12 +12,12 @@ const topics=[
   T('F-DIS-03','fire','재난관리','긴급구조·현장지휘·상황실·보고','covered',['F02-C06','F02-C07'],{recent:'high'}),
 
   // FIRE — science / combustion / fire dynamics
-  T('F-SCI-01','fire','소방과학','원자·분자·원자량·분자량','partial',['F03-C03'],{calc:true}),
+  T('F-SCI-01','fire','소방과학','원자·분자·원자량·분자량','covered',['F03-C03'],{calc:true,evidence:'2026-NFA-molecule+ScienceAll-atomic-molecular-mass'}),
   T('F-SCI-02','fire','소방과학','화학결합·화학반응식·산화환원','covered',['F03-C03'],{calc:true,evidence:'2026-fire1-12-16+fire2-191-299'}),
   T('F-SCI-03','fire','소방과학','물질상태·상변화·감열·잠열','covered',['F03-C02'],{calc:true,evidence:'2026-fire1-9+fire2-190+309+345'}),
-  T('F-SCI-04','fire','소방과학','기체법칙·이상기체·mol','partial',['F03-C03'],{calc:true,recent:'2026'}),
-  T('F-SCI-05','fire','소방과학','열량·비열·열용량 계산','partial',['F03-C02'],{calc:true}),
-  T('F-SCI-06','fire','소방과학','전도·대류·복사와 복사열 계산','partial',['F03-C02'],{calc:true,recent:'2026'}),
+  T('F-SCI-04','fire','소방과학','기체법칙·이상기체·mol','covered',['F03-C03'],{calc:true,recent:'2026',evidence:'2026-NFA-mol+KOSHA-Boyle-Charles+ScienceAll-ideal-gas'}),
+  T('F-SCI-05','fire','소방과학','열량·비열·열용량 계산','covered',['F03-C02'],{calc:true,evidence:'2026-NFA-fire2-190+ScienceAll-specific-heat-capacity'}),
+  T('F-SCI-06','fire','소방과학','전도·대류·복사와 복사열 계산','covered',['F03-C02'],{calc:true,recent:'2026',evidence:'2026-NFA-heat-transfer+KOSHA-Stefan-Boltzmann'}),
   T('F-COMB-01','fire','연소이론','연소 4요소·연소형태·완전/불완전연소','covered',['F03-C03']),
   T('F-COMB-02','fire','연소이론','이론산소량·이론공기량·연소반응식 계산','covered',['F03-C03'],{calc:true,evidence:'2026-fire2-299-302'}),
   T('F-COMB-03','fire','연소이론','인화점·연소점·발화점','covered',['F03-C03'],{evidence:'2026-fire2-303-306'}),
