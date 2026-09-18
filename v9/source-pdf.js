@@ -88,7 +88,7 @@ function evidenceLines(items,viewport,p,queries=[]){
     if(overlaps)continue;
     selected.push(line);if(selected.length>=3)break;
   }
-  if(!selected.length&&lines[0]&&lines[0].score>=10)selected.push(lines[0]);
+  if(!selected.length&&lines[0]&&lines[0].score>0)selected.push(lines[0]);
   return selected.sort((a,b)=>a.top-b.top);
 }
 async function render(key,pageNum,host,queries=[],opts={}){
