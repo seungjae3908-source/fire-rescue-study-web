@@ -112,7 +112,7 @@ try{
   assert(await m.locator('.question-card .choice').count()===4,'practice exam renders one four-choice question at a time');
   await noX(m,'mobile exam question');
 
-  await go(m,'notes');await m.waitForSelector('#personalFile');
+  await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
   await cleanPage(m,'mobile notes');
   const notesText=await m.locator('.page').innerText();
   assert(notesText.includes('PDF / 사진')&&notesText.includes('내 자료'),'notes page prioritizes study actions');
