@@ -2,7 +2,7 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const P=V.contentPacks?.authored;if(!P)return;
-const put=(id,x)=>{P[id]={status:'verified',compare:[],flow:[],must:[],traps:[],...x,detail:(x.detail||[]),deepSections:x.deepSections||[]}};
+const put=(id,x)=>{P[id]={status:'scope-verified',compare:[],flow:[],must:[],traps:[],...x,detail:(x.detail||[]),deepSections:x.deepSections||[],sourcePrecision:'official-scope-pending-page-anchor'}};
 const sec=(title,body,bullets=[])=>({title,body,bullets});
 
 put('F05-C01',{summary:'위험물은 화재·폭발 위험 특성에 따라 제1류부터 제6류까지 구분하고, 류별 성상과 소화원칙을 함께 이해해야 한다.',detail:['위험물 학습은 이름 암기보다 산화성·가연성·금수성·인화성·자기반응성 같은 위험 특성을 먼저 구분하는 것이 핵심이다.','같은 류 안에서도 품목별 물과의 반응성·비중·용해성 등이 달라 소화방법을 무조건 하나로 일반화하면 안 된다.'],must:['1류 산화성고체','2류 가연성고체','3류 자연발화성·금수성','4류 인화성액체','5류 자기반응성','6류 산화성액체'],traps:['“몇 류 = 무조건 물 사용/금지” 식의 단순 암기는 예외에서 틀리기 쉽다.'],source:'소방학개론 공식 출제범위 · 2026 예방실무/소방법령',deepSections:[sec('분류를 먼저 잡기','위험물 문제는 물질명보다 위험 특성을 먼저 분류하면 소화방법과 저장상 주의점을 연결하기 쉬워진다.'),sec('시험 접근','류별 이름 → 대표 위험성 → 물과 반응 → 기본 소화방향 순으로 묶어 암기한다.')]});
@@ -48,5 +48,5 @@ function ensureDeep(pack,concept){
   pack.studyDepth='expanded-2026';
 }
 for(const c of V.curriculum.concepts)ensureDeep(P[c.id]||V.contentPacks.get(c.id),c);
-V.contentRich2026={version:'2026-rich-study-v1',deepConcepts:V.curriculum.concepts.filter(c=>(P[c.id]||{}).deepSections?.length).length,fireAdded:['F05','F06','F07']};
+V.contentRich2026={version:'2026-rich-study-v1',deepConcepts:V.curriculum.concepts.filter(c=>(P[c.id]||{}).deepSections?.length).length,fireAdded:['F05','F06','F07'],pageAnchorPending:V.curriculum.concepts.filter(c=>['F05','F06','F07'].includes(c.scopeId)).map(c=>c.id)};
 })();
