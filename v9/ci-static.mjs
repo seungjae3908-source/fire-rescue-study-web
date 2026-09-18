@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','ems-rich-2026.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -39,6 +39,7 @@ ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curricul
 ok(V.curriculum.byId['F05-C05']&&V.curriculum.byId['F07-C05'],'hazardous materials and sprinkler scopes exist');
 ok(V.contentPacks.authored['F05-C05']?.deepSections?.length>0&&V.contentPacks.authored['F07-C05']?.deepSections?.length>0,'new fire scopes have rich detail sections');
 ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope expansion adds 27 concepts');
+ok(V.emsRich2026?.scopes===24&&V.emsRich2026?.concepts===108,'all 24 EMS chapters / 108 concepts receive structured rich detail');
 ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
 ok(!!V.depthEnrichment2,'source-depth enrichment batch 2 is loaded');
 
@@ -48,7 +49,7 @@ const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 ok(sw.includes("const PREFIX='ai-tutor-v9-'"),'v9 service worker uses a dedicated cache prefix');
 ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names');
 ok(sw.includes("'./sync-merge.js'")&&sw.includes("'./sync-ui.js'"),'v9 sync hardening files are offline-cached');
-ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'")&&sw.includes("'./content-rich-2026.js'"),'v9 depth enrichments are offline-cached');
+ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'")&&sw.includes("'./content-rich-2026.js'")&&sw.includes("'./ems-rich-2026.js'"),'v9 depth enrichments are offline-cached');
 ok(sw.includes("'./curriculum-complete-2026.js'"),'complete curriculum expansion is offline-cached');
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
