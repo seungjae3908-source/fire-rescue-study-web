@@ -3,12 +3,12 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
 const V=window.AITUTOR_V9;
-ok(V.curriculum.totalConcepts===176,'176 complete concepts');
+ok(V.curriculum.totalConcepts===176,'176 current curriculum nodes load successfully');
 ok(V.MasterSyllabus119?.groups?.fire?.length===6&&V.MasterSyllabus119?.groups?.ems?.length===10,'119 master syllabus groups fire/EMS into exam-oriented parts');
 ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content completion contract is loaded');
 ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style question quality gate is loaded');
@@ -23,6 +23,8 @@ ok(reviewed119.length>=29,'119 manually-authored/reviewed exam-question bank rem
 ok(reviewed119.every(V.QuestionQuality119.isExamStyle),'every manually-authored 119 question passes the full exam-style quality contract');
 ok(V.QuestionFactory119?.generated===generated119.length&&generated119.length>0,'grounded factory reports exactly the generated practice questions it added');
 ok(generated119.every(q=>q.grade==='P'&&q.generatedBy==='119-grounded-question-factory-v1'&&V.QuestionQuality119.isExamStyle(q)),'factory questions stay P-grade practice and pass the exam-style contract');
+ok(generated119.every(q=>!/(다음 심화 설명을 가장 정확히|교재형 상세 설명|30초 핵심 설명|학습노드)/.test(String(q.q||''))),'generated practice stems use concise exam language without internal/meta wording');
+
 const questionContractRows=V.curriculum.concepts.map(c=>{const qs=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const q of qs)d[q.difficulty]=(d[q.difficulty]||0)+1;return{id:c.id,n:qs.length,...d}});
 ok(questionContractRows.every(x=>x.n>=6&&x.low>=1&&x.mid>=2&&x.high>=1),'all 176 concepts satisfy >=6 exam-style questions with low>=1 mid>=2 high>=1');
 ok(V.QuestionQuality119.audit().duplicateTexts.length===0,'post-factory exam-style question text duplicates = 0');
@@ -36,7 +38,7 @@ ok(new Set(V.questions.map(q=>q.id)).size===V.questions.length,'unique question 
 ok(V.questions.every(q=>Number.isInteger(q.a)&&q.a>=0&&q.a<4),'single valid answer index');
 ok(V.questions.every(q=>!/(기출|실제 출제|과거시험)/.test(String(q.q||''))),'no generated question is mislabeled as past exam');
 const contentAudit=V.ContentContract119.audit();
-ok(contentAudit.total===176&&contentAudit.complete===176&&contentAudit.incomplete===0,'content audit truthfully reaches 176/176 complete concepts');
+ok(contentAudit.total===176&&contentAudit.complete===176&&contentAudit.incomplete===0,'current 176-node curriculum contract is internally complete');
 ok(Object.keys(contentAudit.blockers||{}).length===0,'119 content contract has no remaining blockers');
 ok(!contentAudit.blockers.questionsEnough&&!contentAudit.blockers.difficultyLow&&!contentAudit.blockers.difficultyMid&&!contentAudit.blockers.difficultyHigh&&!contentAudit.blockers.choiceExplanations,'question-count, difficulty-mix and option-explanation blockers are closed without weakening the contract');
 ok(V.TextbookGrounded119?.depthClosed===131&&V.TextbookGrounded119?.sectionsClosed===8&&V.TextbookGrounded119?.trapsClosed===62&&V.TextbookGrounded119?.memoryClosed===13,'grounded textbook layer closes only the audited depth/section/trap/memory shortfalls');
@@ -51,7 +53,14 @@ ok(V.CalculationContract119?.requiredIds?.length===7,'calculation contract expli
 ok(V.CalculationContract119.requiredIds.every(id=>(V.contentPacks.authored[id]?.calculations||[]).length>0),'all source-applicable calculation concepts expose a real calculation contract');
 ok(V.CalculationContract119.falsePositiveRemoved.every(id=>V.ContentContract119.evaluateConcept(id).needsCalc===false),'former keyword-only calculation false positives are no longer required');
 ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-applicable contracts, not keyword padding');
-ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'119 content contract reaches truthful 176/176 completion');
+const fullCoverage=V.CoverageMap119?.audit?.();
+ok(!!fullCoverage&&fullCoverage.total>70,'full exam Coverage Map is loaded as a separate truth layer');
+ok(fullCoverage.missing>0&&fullCoverage.partial>0&&fullCoverage.implementationPercent<100,'full exam Coverage Map truthfully exposes remaining partial/missing areas');
+ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='missing'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='missing','fire-science and building-fire gaps stay explicit until implemented');
+ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='missing'&&fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='missing','ECG/ACLS and mass-casualty gaps stay explicit until implemented');
+ok(fullCoverage.calcMissing.includes('E-CALC-01')&&fullCoverage.calcMissing.includes('E-BURN-02'),'oxygen-cylinder and Parkland calculations remain tracked gaps');
+
+ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'current 176-node content contract reaches 176/176 without claiming full exam coverage');
 const mock=V.examReadiness();
 const restoredVerifiedIds=['119-ver-f05-c04-a','119-ver-f05-c05-a','119-ver-f06-c01-a','119-ver-f06-c03-a','119-ver-f07-c05-a','119-ver-f07-c11-a'];
 const restoredVerified=restoredVerifiedIds.map(id=>V.questionById[id]);
@@ -156,6 +165,8 @@ ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names')
 ok(sw.includes("'./sync-merge.js'")&&sw.includes("'./sync-ui.js'"),'v9 sync hardening files are offline-cached');
 ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'")&&sw.includes("'./content-rich-2026.js'")&&sw.includes("'./ems-rich-2026.js'"),'v9 depth enrichments are offline-cached');
 ok(sw.includes("'./curriculum-complete-2026.js'"),'complete curriculum expansion is offline-cached');
+ok(sw.includes("'./coverage-map-119.js'"),'full exam Coverage Map is offline-cached');
+
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
 ok(v9index.indexOf('./curriculum-complete-2026.js')>v9index.indexOf('./curriculum.js')&&v9index.indexOf('./curriculum-complete-2026.js')<v9index.indexOf('./content-packs.js'),'complete curriculum loads before content packs');
@@ -165,6 +176,8 @@ ok(v9index.indexOf('./sync-merge.js')<v9index.indexOf('./auth.js'),'conflict-saf
 ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sync API loads before member auth');
 ok(v9index.indexOf('./source-catalog-119.js')>v9index.indexOf('./pdf.js')&&v9index.indexOf('./source-catalog-119.js')<v9index.indexOf('./source-pdf.js'),'official source catalog loads before PDF engine');
 ok(v9index.indexOf('./source-pdf.js')>v9index.indexOf('./source-catalog-119.js')&&v9index.indexOf('./source-pdf.js')<v9index.indexOf('./app.js'),'official PDF highlight engine loads before app UI');
+ok(v9index.indexOf('./coverage-map-119.js')>v9index.indexOf('./calculation-contract-119.js')&&v9index.indexOf('./coverage-map-119.js')<v9index.indexOf('./store.js'),'full exam Coverage Map loads after content/question contracts and before runtime state');
+
 
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
 const studyTables=['study_profiles','study_user_progress','study_user_answers','study_wrong_answers','study_review_schedule','study_personal_notes','study_private_documents','study_document_chunks','study_sessions','study_exam_history','study_tutor_preferences'];
