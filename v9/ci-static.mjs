@@ -282,7 +282,8 @@ ok(officialProxy.includes('resolveSource(doc')&&officialProxy.includes('extractA
 ok(officialProxy.includes("const BASE='https://www.nfa.go.kr'")&&officialProxy.includes("/nfsa/releaseinformation/archive/materials/"),'official PDF proxy resolver is pinned to NFA official materials');
 
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
-ok(sourcePdf.includes('pdfjs-text-coordinate-overlay'),'official PDF evidence uses a text-coordinate highlight overlay');
+ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
+ok(sourcePdf.includes('devicePixelRatio')&&sourcePdf.includes('outputScale'),'official PDF canvas uses device-pixel scaling for crisp mobile rendering');
 ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs are never server-uploaded and remain unmodified');
 ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialRemotePreferred:true'),'PDF evidence prefers official remote sources and never requires user upload');
 ok(sourcePdf.includes('SOURCE_REMOTE_UNRESOLVED'),'unresolved direct PDFs fail closed to official-page fallback');
