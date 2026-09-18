@@ -80,7 +80,7 @@ const topics=[
   T('E-ACLS-03','ems','전문심장소생술','제세동·동기화 심율동전환·경피조율','covered',['E11-C04','E11-C05','E11-C06'],{visual:true,recent:'very-high',evidence:'2020-KACPR-adult-ALS-140-145+pediatric-table8-table9+2026-NFA-EMS-210-215'}),
   T('E-ACLS-04','ems','전문심장소생술','에피네프린·아미오다론·아데노신·아트로핀 등 약물','covered',['E11-C03','E11-C05'],{recent:'very-high'}),
   T('E-ACLS-05','ems','전문심장소생술','Hs & Ts·ROSC 후 처치','covered',['E11-C03'],{evidence:'2020-KACPR-144-145+235-257-2026-exam-standard'}),
-  T('E-CARD-01','ems','내과응급','ACS·STEMI/NSTEMI·급성폐부종·심인성쇼크','partial',['E11-C01','E11-C02'],{visual:true}),
+  T('E-CARD-01','ems','내과응급','ACS·STEMI/NSTEMI·급성폐부종·심인성쇼크','covered',['E11-C01','E11-C02'],{visual:true,evidence:'2026-NFA-EMS-200-205+487-505+KDCA-AMI+KDCA-pulmonary-edema+KDCA-cardiogenic-shock'}),
 
   // EMS — trauma / medical / special
   T('E-SHOCK-01','ems','쇼크','저혈량·심인성·폐쇄성·분포성 쇼크 비교','partial',['E13-C01','E13-C02','E13-C03','E13-C04','E13-C05']),

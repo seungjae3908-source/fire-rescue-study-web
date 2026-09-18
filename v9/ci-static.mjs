@@ -38,9 +38,9 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===66,'sixty-six building ECG rhythm electrical-therapy disaster CBRN transport newborn trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.added===70,'seventy building ECG rhythm electrical-therapy disaster CBRN transport cardiovascular newborn trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===66&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===70&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAclsExamStandard=finalGapPractice.filter(q=>/^119-finalgap-acls-0[1-4]$/.test(q.id||''));
 ok(adultAclsExamStandard.length===4&&adultAclsExamStandard.every(q=>/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the 2020 KACPR source mandated by the 2026 exam plan');
@@ -307,6 +307,11 @@ ok(transportIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.
 ok((V.contentPacks.authored['E06-C01']?.must||[]).some(x=>/치료 적합성/.test(x)&&/최단 이송시간/.test(x)),'hospital-selection lesson exposes treatment suitability and minimum transport-time fallback');
 ok((V.contentPacks.authored['E06-C04']?.must||[]).some(x=>/장비 선택/.test(x))&&(V.contentPacks.authored['E07-C04']?.must||[]).some(x=>/이송장비 사용 전/.test(x)),'transport equipment lessons connect equipment choice and pre-move safety checks');
 ok((V.contentPacks.authored['E01-C03']?.must||[]).some(x=>/119항공대/.test(x))&&(V.contentPacks.authored['E01-C03']?.must||[]).some(x=>/국제구급대/.test(x))&&(V.contentPacks.authored['E01-C03']?.must||[]).some(x=>/선박\/항공기/.test(x)),'air/international lesson covers 119 aviation international EMS and ship/aircraft support');
+const cardiacEmergencyIds=['119-finalgap-card-01','119-finalgap-card-02','119-finalgap-card-03','119-finalgap-card-04'];
+ok(cardiacEmergencyIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'four cardiovascular emergency drills remain P-grade exam-style practice');
+ok((V.contentPacks.authored['E11-C02']?.compare||[]).some(x=>x?.[0]==='STEMI')&&(V.contentPacks.authored['E11-C02']?.compare||[]).some(x=>x?.[0]==='NSTEMI'),'cardiac emergency lesson explicitly distinguishes STEMI and NSTEMI');
+ok((V.contentPacks.authored['E11-C02']?.compare||[]).some(x=>x?.[0]==='심인성쇼크')&&(V.contentPacks.authored['E11-C02']?.compare||[]).some(x=>x?.[0]==='심인성 폐부종'),'cardiac emergency lesson directly compares cardiogenic shock and cardiogenic pulmonary edema');
+ok((V.contentPacks.authored['E11-C02']?.officialLinks||[]).some(x=>/cntnts_sn=6770/.test(x.url||''))&&(V.contentPacks.authored['E11-C02']?.officialLinks||[]).some(x=>/cntnts_sn=3167/.test(x.url||'')),'cardiac emergency lesson links current KDCA AMI and pulmonary-edema sources');
 ok(['E-LAW-01','E-LAW-02','E-LAW-03'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'all three EMS law rows close only after current official statute rule and annex evidence');
 ok(['E-TRN-01','E-TRN-02'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'ground ambulance hospital-selection and air/international transport rows close only after current-law and exact textbook evidence');
 ok(fullCoverage.rows.find(x=>x.id==='F-HAZ-04')?.status==='covered','special-combustible gap is closed by current-law definition, quantity table and storage rules');
@@ -322,7 +327,7 @@ ok(fullCoverage.rows.find(x=>x.id==='E-ECG-02')?.status==='partial'&&fullCoverag
 ok(fullCoverage.rows.find(x=>x.id==='E-INF-01')?.status==='partial','infection/sepsis coverage is source-backed partial without inventing a full sepsis treatment algorithm');
 ok(fullCoverage.rows.find(x=>x.id==='E-SHOCK-01')?.status==='partial','multi-type shock remains partial because direct cardiogenic obstructive and distributive source coverage is incomplete');
 ok(fullCoverage.rows.find(x=>x.id==='E-TRM-02')?.status==='partial','chest-trauma row remains partial because hemothorax and cardiac-tamponade direct evidence is incomplete');
-ok(fullCoverage.rows.find(x=>x.id==='E-CARD-01')?.status==='partial','cardiovascular emergency row remains partial because direct cardiogenic-shock coverage is incomplete');
+ok(fullCoverage.rows.find(x=>x.id==='E-CARD-01')?.status==='covered','ACS STEMI/NSTEMI pulmonary-edema and cardiogenic-shock row closes only after NFA textbook plus current KDCA evidence');
 ok(fullCoverage.missing===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='partial','oxygen-cylinder and IV-drip calculations are no longer blank, but remain explicitly partial/nonverified');
 ok(V.curriculum.byId['E03-C05']?.title==='위험물·CBRN 현장 구급·제독','CBRN/decontamination is visible in the EMS curriculum');
 ok(V.curriculum.byId['E21-C04']?.title==='기도·호흡·소아소생 기초','pediatric resuscitation basics are visible in the EMS curriculum');
