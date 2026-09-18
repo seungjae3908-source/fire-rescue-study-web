@@ -82,7 +82,20 @@ jobs:
         run: node v9/sync-e2e.mjs
 
 
-  source_browser_probe:
+  official_pdf_proxy_contract:
+    name: official_pdf_proxy_contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deterministic NFA attachment candidate selection
+        run: node v9/official-pdf-proxy-test.mjs
+
+  source_browser_diagnostic:
+    name: source_browser_diagnostic (non-release proof)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     continue-on-error: true
