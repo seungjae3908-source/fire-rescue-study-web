@@ -87,7 +87,7 @@ window.addEventListener('aitutor-auth-change',e=>{
   runtime.docsOwner='';
   const reason=e.detail?.reason||'';
   if(reason==='session-expired'){
-    runtime.authNotice='로그인이 만료되었습니다. 다시 로그인하면 저장한 학습 기록을 이어서 사용할 수 있습니다.';
+    runtime.authNotice='로그인 세션이 만료되었습니다. 다시 로그인하면 저장한 학습 기록을 이어서 사용할 수 있습니다.';
     runtime.pendingAuthEmail='';
     toast('로그인 세션 만료 · 다시 로그인해주세요');
     return
