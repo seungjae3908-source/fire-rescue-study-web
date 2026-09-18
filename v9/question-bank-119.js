@@ -128,6 +128,29 @@ function pickForConcept(c,p){
   return picked.slice(0,needed);
 }
 
+function uniqueQuestionText(text,c,kind,existingTexts){
+  const original=String(text||'').trim(),quoteAt=original.indexOf('“'),quote=quoteAt>=0?original.slice(quoteAt):'';
+  const titleKinds=new Set(['summary','detail-a','detail-b','deep']);
+  const variants=titleKinds.has(kind)
+    ?[
+      `다음 내용에 해당하는 개념은? ${quote}`,
+      `다음 설명이 나타내는 것은? ${quote}`,
+      `다음 내용이 가리키는 것은? ${quote}`,
+      `다음 설명에 가장 알맞은 것은? ${quote}`,
+      `다음 내용으로 판단할 수 있는 개념은? ${quote}`
+    ]
+    :[
+      original,
+      `다음 중 ${c.title}에 대한 설명으로 옳은 것은?`,
+      `다음 중 ${c.title}과 관련된 내용으로 적절한 것은?`,
+      `다음 중 ${c.title}에 관한 연결로 옳은 것은?`,
+      `다음 중 ${c.title}의 핵심 내용으로 가장 적절한 것은?`,
+      `${c.scopeTitle}에서 ${c.title}에 대한 설명으로 옳은 것은?`
+    ];
+  for(const v of [original,...variants]){const k=norm(v);if(k&&!existingTexts.has(k))return v}
+  throw new Error('QUESTION_FACTORY_NO_NATURAL_UNIQUE_STEM '+c.id+' '+kind);
+}
+
 const existingIds=new Set(V.questions.map(q=>q.id)),existingTexts=new Set(V.questions.map(q=>norm(q.q))),generated=[];
 for(const c of concepts){
   const p=V.contentPacks.authored[c.id],ranges=c.sourceRanges||[];
@@ -138,12 +161,12 @@ for(const c of concepts){
     if(existingIds.has(id))continue;
     const q={
       id,grade:'P',subject:c.subject,scopeId:c.scopeId,conceptId:c.id,
-      q:cand.q,choices:cand.choices,a:cand.a,ex:cand.choiceExplanations[cand.a],
+      q:uniqueQuestionText(cand.q,c,cand.kind,existingTexts),choices:cand.choices,a:cand.a,ex:cand.choiceExplanations[cand.a],
       difficulty:cand.difficulty,type:cand.type,choiceExplanations:cand.choiceExplanations,
       source:p.source,examStyle:true,questionClass:'exam-style',
       generatedPractice:true,generatedBy:'119-grounded-question-factory-v1'
     };
-    const qt=norm(q.q);if(existingTexts.has(qt))throw new Error('QUESTION_FACTORY_DUPLICATE_TEXT '+c.id+' '+cand.kind);
+    const qt=norm(q.q);if(existingTexts.has(qt))throw new Error('QUESTION_FACTORY_DUPLICATE_TEXT_AFTER_UNIQUIFY '+c.id+' '+cand.kind);
     if(!V.QuestionQuality119.isExamStyle(q))throw new Error('QUESTION_FACTORY_CONTRACT_FAIL '+c.id+' '+cand.kind);
     existingIds.add(id);existingTexts.add(qt);V.questions.push(q);generated.push(q);
   }
