@@ -109,7 +109,7 @@ jobs:
         run: node v9/source-catalog-browser.mjs
 
   live_preview_acceptance:
-    if: github.event.head_commit.message == 'ci(v9): run real deployed preview acceptance'
+    if: "${{ contains(github.event.head_commit.message, 'live preview acceptance') }}"
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
