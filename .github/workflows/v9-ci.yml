@@ -312,3 +312,22 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify grounded question bank in deployed Preview
         run: node v9/question-bank-live-e2e.mjs
+
+  release_candidate_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'release candidate live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 2dcd0a1b8b120c4eb07229e78838786aaaf67385
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install release-candidate browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify deployed release-candidate product
+        run: node v9/release-candidate-live-e2e.mjs
