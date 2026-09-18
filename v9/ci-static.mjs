@@ -38,14 +38,15 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===20,'twenty building ECG drug infection adult-ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.added===21,'twenty-one building ECG drug infection adult-ACLS and post-ROSC source-backed practice questions are loaded');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===20&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===21&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAcls2025=finalGapPractice.filter(q=>/^119-finalgap-acls25-/.test(q.id||''));
 ok(adultAcls2025.length===4&&adultAcls2025.every(q=>/2025 한국 심폐소생술 가이드라인 제4장/.test(String(q.source||''))&&/10\.15441\/ceem\.26\.073/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the current 2025 Korean ALS guideline DOI');
 const postRosc2025=finalGapPractice.filter(q=>/^119-finalgap-acls25-0[5-8]$/.test(q.id||''));
 ok(postRosc2025.length===4&&postRosc2025.every(q=>/2025 한국 심폐소생술 가이드라인 Part/.test(String(q.source||''))),'four reversible-cause/post-ROSC drills are bound to current 2025 guideline parts');
+ok(V.questionById['119-finalgap-acls25-09']?.difficulty==='low'&&/5H/.test(V.questionById['119-finalgap-acls25-09']?.q||''),'E11-C03 retains an explicit low-difficulty current-guideline recall item');
 ok((V.contentPacks.authored['E11-C03']?.must||[]).some(x=>/5H/.test(x)&&/저혈량/.test(x))&&(V.contentPacks.authored['E11-C03']?.must||[]).some(x=>/5T/.test(x)&&/긴장성 기흉/.test(x)),'E-ACLS-05 exposes the current 5H/5T reversible-cause checklist');
 ok((V.contentPacks.authored['E11-C03']?.must||[]).some(x=>/94~98%/.test(x))&&(V.contentPacks.authored['E11-C03']?.must||[]).some(x=>/60~65mmHg/.test(x))&&(V.contentPacks.authored['E11-C03']?.must||[]).some(x=>/33~37\.5℃/.test(x)&&/24시간/.test(x)),'post-ROSC lesson carries current oxygen, MAP and TTM targets');
 ok((V.contentPacks.authored['E11-C03']?.officialLinks||[]).some(x=>/ceem\.26\.075/.test(x.url||'')),'post-ROSC lesson links the current Part 6 published guideline');
