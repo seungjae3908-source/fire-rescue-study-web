@@ -6,7 +6,7 @@ if(!X?.data||!X?.render||!P||!C)return;
 const targets=[
 'F03-C06','F07-C05',
 'E04-C01','E04-C02','E07-C01','E09-C01','E10-C01','E10-C04',
-'E11-C01','E11-C03','E11-C04','E11-C05','E12-C01','E14-C03',
+'E11-C01','E11-C02','E11-C03','E11-C04','E11-C05','E12-C01','E14-C03',
 'E15-C01','E15-C03','E16-C01','E20-C01','E20-C02','E20-C03','E20-C04',
 'E21-C01','E21-C02','E21-C04','E22-C01','E24-C02','E24-C05'
 ];
@@ -14,6 +14,7 @@ const preferred={
 'F03-C06':['flashover-flow','backdraft-flow','rollover-flow'],
 'F07-C05':['sprinkler-system'],
 'E09-C01':['ems-airway-open'],
+'E11-C02':['ems-ecg-nonarrest-rhythms'],
 'E11-C04':['ems-ecg-arrest-rhythms'],
 'E11-C05':['ems-ecg-arrest-rhythms','ems-electrical-therapy'],
 'E11-C06':['ems-electrical-therapy'],
