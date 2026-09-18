@@ -76,7 +76,10 @@ function extractAttachmentCandidates(html,expected){
   return null;
 }
 function toOfficialUrl(path){
-  const u=new URL(path,BASE);
+  const raw=String(path||'');
+  const trailing=(raw.match(/ +$/)||[''])[0];
+  const prepared=trailing?raw.slice(0,-trailing.length)+'%20'.repeat(trailing.length):raw;
+  const u=new URL(prepared,BASE);
   if(u.origin!==BASE)throw new Error('OFFICIAL_SOURCE_BAD_ORIGIN');
   if(!u.pathname.startsWith('/board/file/'))throw new Error('OFFICIAL_SOURCE_BAD_PATH');
   return u.href;
