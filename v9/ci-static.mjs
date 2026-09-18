@@ -204,7 +204,7 @@ const officialProxy=fs.readFileSync(new URL('./api/official-pdf.js',import.meta.
 ok(officialProxy.includes("const SOURCES=Object.freeze")&&['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'].every(k=>officialProxy.includes(k+":")),'official PDF proxy uses a fixed ten-document allowlist');
 ok(!/req\.query\?\.url|req\.query\.url|new URL\(.*req\.query/i.test(officialProxy),'official PDF proxy accepts no arbitrary upstream URL');
 ok(officialProxy.includes("req.headers.range")&&officialProxy.includes("'content-range'")&&officialProxy.includes("'accept-ranges'"),'official PDF proxy forwards byte-range semantics for PDF.js');
-ok(officialProxy.includes('resolveSource(doc')&&officialProxy.includes('extractAttachment(html')&&officialProxy.includes('pdfFileDownload'),'official PDF proxy resolves session-bound NFA PDF endpoints server-side');
+ok(officialProxy.includes('resolveSource(doc')&&officialProxy.includes('extractAttachmentCandidates')&&officialProxy.includes('selectWorkingCandidate')&&officialProxy.includes('pdfProbe')&&officialProxy.includes('jsessionid'),'official PDF proxy resolves and verifies session-bound NFA PDF endpoint candidates server-side');
 ok(officialProxy.includes("const BASE='https://www.nfa.go.kr'")&&officialProxy.includes("/nfsa/releaseinformation/archive/materials/"),'official PDF proxy resolver is pinned to NFA official materials');
 
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
