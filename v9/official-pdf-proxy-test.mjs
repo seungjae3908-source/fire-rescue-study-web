@@ -38,4 +38,27 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   assert.ok(a.paths.every(x=>x.includes('FILE_F1')));
 }
 
+{
+  let calls=0;
+  const row={
+    doc:'ems',
+    name:'13. 소방전술3(구급)-저용량.pdf',
+    detailUrl:'https://www.nfa.go.kr/detail',
+    cookie:'JSESSIONID=abc',
+    urls:['https://www.nfa.go.kr/board/file/bbs/5/FILE_EMS/ems']
+  };
+  const result=await P.fetchFirstWorkingCandidate(
+    row,
+    {method:'GET',headers:{}},
+    false,
+    async ()=>{
+      calls++;
+      if(calls>1)return miss();
+      return pdf();
+    }
+  );
+  assert.equal(calls,1,'a session-sensitive valid candidate must be requested only once');
+  assert.match(await result.upstream.text(),/^%PDF-/,'the first valid PDF response remains streamable after magic validation');
+}
+
 console.log('PASS official PDF proxy deterministic candidate-selection contract');
