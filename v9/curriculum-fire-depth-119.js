@@ -7,9 +7,14 @@ add('F07',['스프링클러 구성요소','습식 스프링클러','건식 스�
 V.curriculum.scopes=[...V.curriculum.fire,...V.curriculum.ems];V.curriculum.scopeById=Object.fromEntries(V.curriculum.scopes.map(x=>[x.id,x]));
 V.curriculum.concepts=V.curriculum.scopes.flatMap(scope=>scope.concepts.map((title,index)=>{const id=`${scope.id}-C${String(index+1).padStart(2,'0')}`;return{id,scopeId:scope.id,scopeTitle:scope.title,subject:scope.subject,title,index,sourceRanges:V.curriculum.ranges[id]||[]}}));
 V.curriculum.byId=Object.fromEntries(V.curriculum.concepts.map(x=>[x.id,x]));V.curriculum.totalConcepts=V.curriculum.concepts.length;V.curriculum.version='2026-study119-depth-v1';
-const R=V.curriculum.ranges;const n=(id,doc,label,note)=>R[id]=[{doc,label,note}];
+const R=V.curriculum.ranges;const n=(id,doc,label,note)=>R[id]=[{doc,label,note}];const a=(id,doc,label,from,to=from)=>R[id]=[{doc,label,from,to}];
 for(let i=9;i<=16;i++)n(`F03-C${String(i).padStart(2,'0')}`,'fire1','2026 소방전술1','화재성장·특수현상·위험물탱크 화재 공식 원문 page anchor 확장중');
 for(let i=16;i<=21;i++)n(`F07-C${String(i).padStart(2,'0')}`,'prevention1','2026 예방실무1','스프링클러 구성·종류·작동원리 공식 원문 page anchor 확장중');
+a('F07-C17','prevention1','2026 예방실무1',288);
+a('F07-C18','prevention1','2026 예방실무1',284);
+a('F07-C19','prevention1','2026 예방실무1',284);
+a('F07-C20','prevention1','2026 예방실무1',302);
+a('F07-C21','prevention1','2026 예방실무1',287);
 for(const c of V.curriculum.concepts)c.sourceRanges=R[c.id]||[];
 V.curriculumDepth119={addedConcepts:14,firePhenomena:['F03-C09','F03-C10','F03-C11','F03-C12','F03-C13','F03-C14','F03-C15','F03-C16'],sprinkler:['F07-C16','F07-C17','F07-C18','F07-C19','F07-C20','F07-C21']};
 })();
