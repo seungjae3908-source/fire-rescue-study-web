@@ -67,7 +67,7 @@ ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-a
 const fullCoverage=V.CoverageMap119?.audit?.();
 ok(!!fullCoverage&&fullCoverage.total>70,'full exam Coverage Map is loaded as a separate truth layer');
 ok(fullCoverage.missing>0&&fullCoverage.partial>0&&fullCoverage.implementationPercent<100,'full exam Coverage Map truthfully exposes remaining partial/missing areas');
-ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='missing','fire-science enrichment is partial while building-fire gaps remain explicit');
+ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='partial','fire-science and building-fire enrichments remain honestly partial until all subtopics are closed');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='partial','ECG and mass-casualty topics remain explicitly partial after source-backed VF/VT and START enrichment');
 ok(fullCoverage.calcMissing.includes('E-CALC-01')&&!fullCoverage.calcMissing.includes('E-BURN-02'),'oxygen-cylinder calculation remains open while Parkland is source-backed and closed');
 
