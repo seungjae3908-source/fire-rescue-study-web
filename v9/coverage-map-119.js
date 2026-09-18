@@ -83,7 +83,7 @@ const topics=[
   T('E-CARD-01','ems','내과응급','ACS·STEMI/NSTEMI·급성폐부종·심인성쇼크','covered',['E11-C01','E11-C02'],{visual:true,evidence:'2026-NFA-EMS-200-205+487-505+KDCA-AMI+KDCA-pulmonary-edema+KDCA-cardiogenic-shock'}),
 
   // EMS — trauma / medical / special
-  T('E-SHOCK-01','ems','쇼크','저혈량·심인성·폐쇄성·분포성 쇼크 비교','partial',['E13-C01','E13-C02','E13-C03','E13-C04','E13-C05']),
+  T('E-SHOCK-01','ems','쇼크','저혈량·심인성·폐쇄성·분포성 쇼크 비교','covered',['E13-C01','E13-C02','E13-C03','E13-C04','E13-C05'],{evidence:'2026-NFA-EMS-hypovolemic+KDCA-hypotension-cardiogenic+KDCA-PE-pneumothorax+KDCA-sepsis-anaphylaxis+2020-KACPR-5H5T'}),
   T('E-TRM-01','ems','외상','손상기전·연부조직·근골격·머리·척추','covered',['E14-C01','E14-C02','E15-C01','E15-C02','E15-C03','E16-C01','E16-C02','E16-C03','E16-C04']),
   T('E-TRM-02','ems','외상','흉부외상: 긴장기흉·혈흉·심장압전·연가양흉','partial',['E14-C02'],{recent:'high'}),
   T('E-TRM-03','ems','외상','복부·골반외상·대량출혈·중증외상 이송','covered',['E13-C04','E13-C05','E14-C02'],{recent:'2026',evidence:'2026-NFA-EMS-250-251+471-473+485'}),

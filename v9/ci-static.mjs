@@ -38,9 +38,9 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===82,'eighty-two building ECG rhythm electrical-therapy disaster CBRN transport cardiovascular endocrine sepsis toxicology newborn trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.added===86,'eighty-six building ECG rhythm electrical-therapy disaster CBRN transport cardiovascular shock endocrine sepsis toxicology newborn trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===82&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===86&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAclsExamStandard=finalGapPractice.filter(q=>/^119-finalgap-acls-0[1-4]$/.test(q.id||''));
 ok(adultAclsExamStandard.length===4&&adultAclsExamStandard.every(q=>/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the 2020 KACPR source mandated by the 2026 exam plan');
@@ -331,6 +331,11 @@ ok(toxIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExam
 ok((V.contentPacks.authored['E18-C01']?.must||[]).some(x=>/날록손/.test(x))&&(V.contentPacks.authored['E18-C01']?.must||[]).some(x=>/아트로핀.*2-PAM/.test(x)),'toxicology lesson exposes opioid and organophosphate antidote anchors');
 ok((V.contentPacks.authored['E18-C01']?.compare||[]).some(x=>/오피오이드/.test(String(x?.[0])))&&(V.contentPacks.authored['E18-C01']?.compare||[]).some(x=>/콜린성/.test(String(x?.[0]))),'toxicology lesson compares opioid and cholinergic symptom patterns without claiming textbook toxidrome terminology');
 ok((V.contentPacks.authored['E18-C02']?.must||[]).some(x=>/에피네프린 근육주사/.test(x))&&(V.contentPacks.authored['E18-C02']?.officialLinks||[]).some(x=>/cntnts_sn=6684/.test(x.url||'')),'anaphylaxis lesson binds intramuscular epinephrine to current KDCA evidence');
+const shockIds=['119-finalgap-shock-01','119-finalgap-shock-02','119-finalgap-shock-03','119-finalgap-shock-04'];
+ok(shockIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'four multi-type shock drills remain P-grade exam-style practice');
+ok(['저혈량성','심인성','폐쇄성','분포성'].every(k=>(V.contentPacks.authored['E13-C05']?.compare||[]).some(x=>x?.[0]===k)),'shock lesson directly compares all four required shock mechanisms');
+ok((V.contentPacks.authored['E13-C05']?.must||[]).some(x=>/긴장성 기흉.*심장압전.*대량 폐색전증/.test(x)),'obstructive-shock lesson exposes all three high-yield mechanical causes');
+ok((V.contentPacks.authored['E13-C05']?.officialLinks||[]).some(x=>/cntnts_sn=5259/.test(x.url||''))&&(V.contentPacks.authored['E13-C05']?.officialLinks||[]).some(x=>/cntnts_sn=6540/.test(x.url||'')),'shock comparison is bound to official KDCA hypotension and pulmonary-embolism sources');
 ok(['E-LAW-01','E-LAW-02','E-LAW-03'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'all three EMS law rows close only after current official statute rule and annex evidence');
 ok(['E-TRN-01','E-TRN-02'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'ground ambulance hospital-selection and air/international transport rows close only after current-law and exact textbook evidence');
 ok(fullCoverage.rows.find(x=>x.id==='F-HAZ-04')?.status==='covered','special-combustible gap is closed by current-law definition, quantity table and storage rules');
@@ -345,7 +350,7 @@ ok(fullCoverage.rows.find(x=>x.id==='F-BLD-01')?.status==='covered','wood-vs-fir
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-ACLS-04')?.status==='covered','ECG remains partial while the named ACLS drug set is covered by 2026 NFA + official 2020 KACPR');
 ok(fullCoverage.rows.find(x=>x.id==='E-ENDO-01')?.status==='covered','hypoglycemia DKA and HHS row closes only after current KDCA source comparison');
 ok(fullCoverage.rows.find(x=>x.id==='E-INF-01')?.status==='covered','sepsis/infectious-emergency row closes only after current KDCA definition warning-sign and shock-progression evidence');
-ok(fullCoverage.rows.find(x=>x.id==='E-SHOCK-01')?.status==='partial','multi-type shock remains partial because direct cardiogenic obstructive and distributive source coverage is incomplete');
+ok(fullCoverage.rows.find(x=>x.id==='E-SHOCK-01')?.status==='covered','four-type shock comparison closes only after textbook plus official KDCA/KACPR evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-TOX-01')?.status==='covered','toxicology antidote toxidrome-pattern and anaphylaxis row closes only after NFA KDCA and E-GEN official evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-TRM-02')?.status==='partial','chest-trauma row remains partial because hemothorax and cardiac-tamponade direct evidence is incomplete');
 ok(fullCoverage.rows.find(x=>x.id==='E-CARD-01')?.status==='covered','ACS STEMI/NSTEMI pulmonary-edema and cardiogenic-shock row closes only after NFA textbook plus current KDCA evidence');
