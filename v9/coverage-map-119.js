@@ -35,11 +35,11 @@ const topics=[
   T('F-FIRE-08','fire','특수화재','BLEVE·파이어볼·풀파이어·제트파이어','partial',['F03-C15','F03-C16']),
   T('F-EXP-01','fire','폭발','폭연·폭굉','partial',['F03-C08']),
   T('F-EXP-02','fire','폭발','분진폭발·가스폭발·분해폭발','partial',['F03-C08']),
-  T('F-EXP-03','fire','폭발','증기운폭발(VCE)·폭발방호','missing',[]),
+  T('F-EXP-03','fire','폭발','증기운폭발(VCE)·폭발방호','partial',['F03-C08']),
   T('F-BLD-01','fire','건축화재·방재','목조건축물 vs 내화건축물 화재','missing',[],{recent:'2024'}),
   T('F-BLD-02','fire','건축화재·방재','방화구획·방화벽·방화문','missing',[],{recent:'2024'}),
   T('F-BLD-03','fire','건축화재·방재','불연·준불연·난연재료·내화구조','missing',[],{recent:'2024'}),
-  T('F-BLD-04','fire','건축화재·방재','연돌효과·연기이동·피난계획','missing',[],{recent:'2024'}),
+  T('F-BLD-04','fire','건축화재·방재','연돌효과·연기이동·피난계획','partial',['F03-C07'],{recent:'2024'}),
   T('F-BLD-05','fire','특수화재','주방·전기·가스·금속화재','partial',['F03-C01'],{recent:'2026'}),
 
   // FIRE — suppression / hazardous materials / facilities / investigation
@@ -64,7 +64,7 @@ const topics=[
   T('E-LAW-03','ems','법령','의료지도·동의·기록·비밀유지·윤리','partial',['E01-C03','E05-C04']),
   T('E-TRN-01','ems','이송','구급차 운용·장비·병원선정','partial',['E06-C01','E06-C04','E07-C04']),
   T('E-TRN-02','ems','이송','항공이송·국제구급','missing',[],{recent:'2025'}),
-  T('E-MCI-01','ems','재난의료','대량재난·START 분류','missing',[],{recent:'2024'}),
+  T('E-MCI-01','ems','재난의료','대량재난·START 분류','partial',['E05-C04'],{recent:'2024'}),
   T('E-MCI-02','ems','재난의료','재난통신·지휘체계·특수재난·CBRN·제독','missing',[],{recent:'2024'}),
   T('E-SAFE-01','ems','총론','대원안전·스트레스·감염·PPE','covered',['E02-C01','E02-C02','E03-C01','E03-C02','E03-C03','E03-C04','E03-C05']),
   T('E-ASS-01','ems','환자평가','현장확인·1차·2차·SAMPLE·재평가','covered',['E08-C01','E08-C02','E08-C03','E08-C04','E08-C05','E08-C06']),
@@ -73,13 +73,13 @@ const topics=[
   T('E-BLS-01','ems','소생술','성인·소아·영아 BLS·기도이물','covered',['E24-C01','E24-C02','E24-C03','E24-C04','E24-C05']),
 
   // EMS — ACLS / ECG
-  T('E-ACLS-01','ems','전문심장소생술','심정지 알고리즘·shockable/non-shockable','missing',[],{recent:'very-high'}),
-  T('E-ECG-01','ems','전문심장소생술','VF·무맥성 VT·PEA·asystole 판독','missing',[],{visual:true,recent:'very-high'}),
+  T('E-ACLS-01','ems','전문심장소생술','심정지 알고리즘·shockable/non-shockable','partial',['E11-C03','E11-C04','E11-C05'],{recent:'very-high'}),
+  T('E-ECG-01','ems','전문심장소생술','VF·무맥성 VT·PEA·asystole 판독','partial',['E11-C04','E11-C05'],{visual:true,recent:'very-high'}),
   T('E-ECG-02','ems','전문심장소생술','SVT·AF·VT·서맥·AV block 판독','missing',[],{visual:true,recent:'very-high'}),
   T('E-ACLS-02','ems','전문심장소생술','안정/불안정 빈맥·서맥 알고리즘','partial',['E11-C02'],{recent:'very-high'}),
   T('E-ACLS-03','ems','전문심장소생술','제세동·동기화 심율동전환·경피조율','partial',['E11-C04','E11-C05','E11-C06'],{visual:true,recent:'2025'}),
   T('E-ACLS-04','ems','전문심장소생술','에피네프린·아미오다론·아데노신·아트로핀 등 약물','missing',[],{recent:'very-high'}),
-  T('E-ACLS-05','ems','전문심장소생술','Hs & Ts·ROSC 후 처치','missing',[]),
+  T('E-ACLS-05','ems','전문심장소생술','Hs & Ts·ROSC 후 처치','partial',['E11-C03']),
   T('E-CARD-01','ems','내과응급','ACS·STEMI/NSTEMI·급성폐부종·심인성쇼크','partial',['E11-C01','E11-C02'],{visual:true}),
 
   // EMS — trauma / medical / special
@@ -88,7 +88,7 @@ const topics=[
   T('E-TRM-02','ems','외상','흉부외상: 긴장기흉·혈흉·심장압전·연가양흉','missing',[],{recent:'high'}),
   T('E-TRM-03','ems','외상','복부·골반외상·대량출혈·중증외상 이송','missing',[]),
   T('E-BURN-01','ems','외상','화상 깊이·TBSA·특수화상','partial',['E14-C03']),
-  T('E-BURN-02','ems','계산','Parkland 수액량 계산','missing',[],{calc:true,recent:'2025'}),
+  T('E-BURN-02','ems','계산','Parkland 수액량 계산','covered',['E14-C03'],{calc:true,recent:'2025'}),
   T('E-CALC-01','ems','계산','산소통 사용시간 계산','missing',[],{calc:true,recent:'2024'}),
   T('E-CALC-02','ems','계산','수액 적하속도·시간당 주입량','missing',[],{calc:true,recent:'2025'}),
   T('E-NEURO-01','ems','내과응급','의식장애·경련·뇌졸중','covered',['E17-C01','E17-C02','E17-C03','E17-C04']),
