@@ -208,19 +208,30 @@ async function resolveSource(doc,force=false){
   }
   throw new Error('OFFICIAL_SOURCE_RESOLVE_FAILED_'+last);
 }
-async function fetchPdf(doc,req,meta=false,force=false){
-  const row=await resolveSource(doc,force);
-  try{
-    const result=await fetchFirstWorkingCandidate(row,req,meta);
-    cache.set(doc,{...result.row,expires:Date.now()+10*60*1000});
-    return result;
-  }catch(e){
-    if(!force){
+function isRefreshableCandidateError(e){
+  return /^OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_(403|404)$/.test(String((e&&e.message)||e||''));
+}
+async function fetchPdfWith(doc,req,meta=false,deps={}){
+  const resolveImpl=deps.resolveImpl||resolveSource;
+  const candidateImpl=deps.candidateImpl||fetchFirstWorkingCandidate;
+  const sleepImpl=deps.sleepImpl||sleep;
+  const maxRefresh=Number.isInteger(deps.maxRefresh)?deps.maxRefresh:3;
+  for(let refresh=0;refresh<=maxRefresh;refresh++){
+    const row=await resolveImpl(doc,refresh>0);
+    try{
+      const result=await candidateImpl(row,req,meta);
+      cache.set(doc,{...result.row,expires:Date.now()+10*60*1000});
+      return result;
+    }catch(e){
+      if(!isRefreshableCandidateError(e)||refresh>=maxRefresh)throw e;
       cache.delete(doc);
-      return fetchPdf(doc,req,meta,true);
+      await sleepImpl(Math.min(500,100+refresh*100));
     }
-    throw e;
   }
+  throw new Error('OFFICIAL_SOURCE_REFRESH_EXHAUSTED');
+}
+async function fetchPdf(doc,req,meta=false){
+  return fetchPdfWith(doc,req,meta);
 }
 
 module.exports=async function handler(req,res){
@@ -288,4 +299,6 @@ module.exports.selectWorkingCandidate=selectWorkingCandidate;
 module.exports.officialCandidateUrls=officialCandidateUrls;
 module.exports.fetchFirstWorkingCandidate=fetchFirstWorkingCandidate;
 module.exports.fetchDetailWithSession=fetchDetailWithSession;
+module.exports.isRefreshableCandidateError=isRefreshableCandidateError;
+module.exports.fetchPdfWith=fetchPdfWith;
 module.exports.pdfProbe=pdfProbe;

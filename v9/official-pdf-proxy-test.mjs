@@ -79,4 +79,65 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   assert.ok(resolved.a?.paths?.length>0,'second same-session detail response yields attachment candidates');
 }
 
+{
+  let resolves=0,candidates=0;
+  const result=await P.fetchPdfWith(
+    'prevention2',
+    {method:'GET',headers:{}},
+    false,
+    {
+      maxRefresh:3,
+      sleepImpl:async()=>{},
+      resolveImpl:async (_doc,force)=>{
+        resolves++;
+        return{doc:'prevention2',name:'2.예방실무2.pdf',detailUrl:'https://www.nfa.go.kr/detail',cookie:'JSESSIONID='+(force?'fresh'+resolves:'initial'),urls:['https://www.nfa.go.kr/board/file/bbs/10/FILE_PREV2/prevention2']};
+      },
+      candidateImpl:async row=>{
+        candidates++;
+        if(candidates<3)throw new Error('OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_404');
+        return{row,upstream:pdf()};
+      }
+    }
+  );
+  assert.equal(resolves,3,'candidate 404 performs bounded fresh-session re-resolution');
+  assert.equal(candidates,3,'candidate fetch stops immediately after fresh-session recovery');
+  assert.match(await result.upstream.text(),/^%PDF-/,'fresh-session recovery returns the valid PDF response');
+}
+{
+  let resolves=0;
+  await assert.rejects(
+    ()=>P.fetchPdfWith(
+      'prevention2',
+      {method:'GET',headers:{}},
+      false,
+      {
+        maxRefresh:3,
+        sleepImpl:async()=>{},
+        resolveImpl:async()=>{resolves++;return{doc:'prevention2',name:'2.예방실무2.pdf',detailUrl:'https://www.nfa.go.kr/detail',cookie:'',urls:['https://www.nfa.go.kr/board/file/test']}},
+        candidateImpl:async()=>{throw new Error('OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_500')}
+      }
+    ),
+    /OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_500/
+  );
+  assert.equal(resolves,1,'non-403/404 candidate failures do not retry');
+}
+{
+  let candidates=0;
+  await assert.rejects(
+    ()=>P.fetchPdfWith(
+      'prevention2',
+      {method:'GET',headers:{}},
+      false,
+      {
+        maxRefresh:3,
+        sleepImpl:async()=>{},
+        resolveImpl:async()=>({doc:'prevention2',name:'2.예방실무2.pdf',detailUrl:'https://www.nfa.go.kr/detail',cookie:'',urls:['https://www.nfa.go.kr/board/file/test']}),
+        candidateImpl:async()=>{candidates++;throw new Error('OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_404')}
+      }
+    ),
+    /OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_404/
+  );
+  assert.equal(candidates,4,'initial candidate attempt plus at most three fresh-session retries');
+}
+
 console.log('PASS official PDF proxy deterministic candidate-selection contract');
