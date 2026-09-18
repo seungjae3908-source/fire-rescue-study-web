@@ -11,7 +11,7 @@ const files=[
   'depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js',
   'fire-depth-119.js','governance-depth-119.js','investigation-depth-119.js','facilities-depth-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','suppression-depth-119.js','ems-rich-2026.js','ems-depth-119.js',
-  'question-bank-119.js','content-contract-119.js'
+  'question-bank-119.js','textbook-grounded-119.js','content-contract-119.js'
 ];
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 const V=window.AITUTOR_V9,chars=x=>String(x||'').replace(/\s+/g,'').length;

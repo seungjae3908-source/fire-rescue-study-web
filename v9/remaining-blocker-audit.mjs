@@ -9,7 +9,7 @@ const files=[
 'fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js',
 'facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js',
 'suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js',
-'question-bank-119.js','content-contract-119.js'];
+'question-bank-119.js','textbook-grounded-119.js','content-contract-119.js'];
 for(const f of files)vm.runInThisContext(fs.readFileSync(new URL('./'+f,import.meta.url),'utf8'),{filename:f});
 const V=window.AITUTOR_V9,a=V.ContentContract119.audit(),by={};
 for(const r of a.rows)for(const m of r.missing)(by[m]||(by[m]=[])).push({id:r.id,title:r.title,scopeId:r.scopeId,subject:r.subject,score:r.score});
