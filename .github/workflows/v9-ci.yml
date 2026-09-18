@@ -92,3 +92,19 @@ jobs:
           node-version: '22'
       - name: Extract official NFA PDF attachment metadata
         run: node v9/source-catalog-probe.mjs
+
+  source_browser_probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install source browser probe dependency
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Resolve official NFA PDF paths in Chromium
+        run: node v9/source-browser-probe.mjs
