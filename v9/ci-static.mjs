@@ -83,6 +83,17 @@ ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='partial'&&fullCoverag
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='partial','ECG and mass-casualty topics remain explicitly partial after source-backed VF/VT and START enrichment');
 const newlyClosedFireRows=['F-COMB-02','F-FIRE-03','F-EXP-01','F-BLD-01','F-BLD-02','F-BLD-03'];
 ok(newlyClosedFireRows.every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'six source-backed fire rows are promoted only after explicit evidence closure');
+const phaseACombustionRows=['F-COMB-03','F-COMB-05','F-COMB-06'];
+ok(phaseACombustionRows.every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'Phase A ignition-range-MOC rows are promoted only after exact-page source closure');
+ok(V.FireTerminologyQuestions119?.added===8,'eight exact-page fire terminology practice questions are loaded');
+const phaseAFireTermIds=['119-fireterm-01','119-fireterm-02','119-fireterm-03','119-fireterm-04','119-fireterm-05','119-fireterm-06','119-fireterm-07','119-fireterm-08'];
+ok(phaseAFireTermIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'Phase A ignition-range-MOC focused questions remain P-grade exam-style practice');
+ok(['119-fireterm-01','119-fireterm-02','119-fireterm-07','119-fireterm-08'].every(id=>/화재2\) 303~306쪽/.test(V.questionById[id]?.source||'')),'flash-fire-autoignition closure is bound to exact textbook pages 303~306');
+ok(['119-fireterm-03','119-fireterm-04'].every(id=>/화재2\) 306~307쪽/.test(V.questionById[id]?.source||'')),'flammability-range closure is bound to exact textbook pages 306~307');
+ok(['119-fireterm-05','119-fireterm-06'].every(id=>/화재2\) 226쪽/.test(V.questionById[id]?.source||'')),'MOC closure is bound to exact textbook page 226');
+const ignitionPack=V.contentPacks.authored['F03-C03'],mocPack=V.contentPacks.authored['F04-C06'];
+ok(['인화점','연소점','발화점','연소하한','연소상한'].every(k=>(ignitionPack?.compare||[]).some(x=>String(x?.[0]||'').includes(k))),'ignition-temperature and flammability-range content keeps the required direct comparison');
+ok((mocPack?.must||[]).some(x=>/MOC/.test(x))&&(mocPack?.traps||[]).some(x=>/호흡|안전 산소농도/.test(x)),'MOC content keeps the combustion-limit definition and human-oxygen trap separated');
 const combustionCalc=V.contentPacks.authored['F03-C03']?.calculations||[];
 ok(['이론공기량','이론산소량','과잉공기량','공기비'].every(k=>combustionCalc.some(x=>String(x.title||'').includes(k))),'combustion-air lesson contains all four calculation contracts');
 ok(['119-calc-comb-01','119-calc-comb-02','119-calc-comb-03','119-calc-comb-04'].every(id=>!!V.questionById[id]),'combustion-air closure has four source-backed calculation drills');
