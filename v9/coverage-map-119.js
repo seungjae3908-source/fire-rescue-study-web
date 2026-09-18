@@ -73,7 +73,7 @@ const topics=[
   T('E-BLS-01','ems','소생술','성인·소아·영아 BLS·기도이물','covered',['E24-C01','E24-C02','E24-C03','E24-C04','E24-C05']),
 
   // EMS — ACLS / ECG
-  T('E-ACLS-01','ems','전문심장소생술','심정지 알고리즘·shockable/non-shockable','partial',['E11-C03','E11-C04','E11-C05'],{recent:'very-high'}),
+  T('E-ACLS-01','ems','전문심장소생술','심정지 알고리즘·shockable/non-shockable','covered',['E11-C03','E11-C04','E11-C05'],{recent:'very-high',evidence:'2025-KCPR-Part4-DOI-10.15441/ceem.26.073'}),
   T('E-ECG-01','ems','전문심장소생술','VF·무맥성 VT·PEA·asystole 판독','partial',['E11-C04','E11-C05'],{visual:true,recent:'very-high'}),
   T('E-ECG-02','ems','전문심장소생술','SVT·AF·VT·서맥·AV block 판독','partial',['E11-C02','E11-C05'],{visual:true,recent:'very-high'}),
   T('E-ACLS-02','ems','전문심장소생술','안정/불안정 빈맥·서맥 알고리즘','partial',['E11-C02'],{recent:'very-high'}),

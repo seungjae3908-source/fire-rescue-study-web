@@ -38,10 +38,15 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===12,'twelve building ECG drug and infection source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.added===16,'sixteen building ECG drug infection and 2025 adult-ACLS source-backed practice questions are loaded');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===12&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===16&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
+const adultAcls2025=finalGapPractice.filter(q=>/^119-finalgap-acls25-/.test(q.id||''));
+ok(adultAcls2025.length===4&&adultAcls2025.every(q=>/2025 한국 심폐소생술 가이드라인 제4장/.test(String(q.source||''))&&/10\.15441\/ceem\.26\.073/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the current 2025 Korean ALS guideline DOI');
+ok((V.contentPacks.authored['E11-C03']?.compare||[]).some(x=>x?.[0]==='VF')&&(V.contentPacks.authored['E11-C03']?.compare||[]).some(x=>x?.[0]==='PEA'),'adult arrest lesson explicitly compares shockable and non-shockable rhythms');
+ok((V.contentPacks.authored['E11-C03']?.flow||[]).some(x=>/VF\/pVT → 제세동/.test(x))&&(V.contentPacks.authored['E11-C03']?.flow||[]).some(x=>/PEA\/무수축 → CPR\+조기 에피네프린/.test(x)),'adult arrest lesson exposes both 2025 algorithm branches');
+ok((V.contentPacks.authored['E11-C03']?.officialLinks||[]).some(x=>/309908/.test(x.url||''))&&(V.contentPacks.authored['E11-C03']?.officialLinks||[]).some(x=>/10\.15441\/ceem\.26\.073/.test(x.url||'')),'adult ACLS lesson links both the official KDCA 2025 guideline page and the published Part 4 source');
 ok(V.PALSAdvancedQuestions119?.added===7,'seven official-2020 pediatric ALS practice questions are loaded');
 const palsAdvanced=(V.questions||[]).filter(q=>/^119-pals-adv-/.test(q.id||''));
 ok(palsAdvanced.length===7&&palsAdvanced.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'advanced pediatric ALS questions remain practice-only and pass the exam-style gate');
@@ -84,6 +89,8 @@ ok(fullCoverage.rows.find(x=>x.id==='F-SCI-02')?.status==='covered','Phase A che
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-03')?.status==='covered','Phase A state-change sensible/latent-heat row closes only after exact textbook examples and calculations');
 ok(['F-SCI-01','F-SCI-04','F-SCI-05','F-SCI-06'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='partial'),'remaining unresolved fire-science rows stay fail-closed after F-SCI-02/F-SCI-03 closure');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='partial','ECG and mass-casualty topics remain explicitly partial after source-backed VF/VT and START enrichment');
+ok(fullCoverage.rows.find(x=>x.id==='E-ACLS-01')?.status==='covered','adult shockable/non-shockable cardiac-arrest algorithm closes on the current 2025 Korean CPR guideline');
+ok(['E-ECG-01','E-ECG-02','E-ACLS-02','E-ACLS-03','E-ACLS-05'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='partial'),'adjacent ECG brady/tachy electrical-therapy and post-arrest rows remain fail-closed');
 const newlyClosedFireRows=['F-COMB-02','F-FIRE-03','F-EXP-01','F-BLD-01','F-BLD-02','F-BLD-03'];
 ok(newlyClosedFireRows.every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'six source-backed fire rows are promoted only after explicit evidence closure');
 const phaseACombustionRows=['F-COMB-03','F-COMB-04','F-COMB-05','F-COMB-06','F-COMB-07'];
@@ -265,7 +272,7 @@ ok((V.contentPacks.authored['E03-C05']?.visuals||[]).includes('ems-hazmat-zones'
 ok((V.contentPacks.authored['E21-C04']?.visuals||[]).includes('ems-pediatric-resuscitation')&&!!V.Visual119.render('ems-pediatric-resuscitation'),'pediatric resuscitation flow renders as a real study visual');
 ok(V.curriculum.byId['F03-C05']?.title==='화재 진행 영향요인·건축구조'&&(V.contentPacks.authored['F03-C05']?.compare||[]).some(x=>/목조건축물/.test(String(x?.[0]))),'building-fire lesson compares wood and fire-resistive construction');
 ok(V.curriculum.byId['E11-C02']?.title==='심질환·심전도 리듬'&&(V.contentPacks.authored['E11-C02']?.detail||[]).some(x=>/좁은 QRS/.test(x)&&/방실차단/.test(x)),'ECG lesson includes NFA three-lead categories and QRS-based rhythm approach');
-ok((V.contentPacks.authored['E11-C03']?.detail||[]).some(x=>/1mg.*3~5분/.test(x))&&(V.contentPacks.authored['E11-C05']?.detail||[]).some(x=>/아데노신.*0\.1mg\/kg/.test(x)),'ACLS drug lesson includes 2020-guideline epinephrine and adenosine dosing anchors');
+ok((V.contentPacks.authored['E11-C03']?.detail||[]).some(x=>/2025.*에피네프린 1mg.*3~5분/.test(x))&&(V.contentPacks.authored['E11-C05']?.detail||[]).some(x=>/아데노신.*0\.1mg\/kg/.test(x)),'adult ACLS epinephrine content uses current 2025 guideline while retained pediatric dosing remains source-labeled');
 ok(V.curriculum.byId['E03-C04']?.title==='감염 관리·패혈증 주의'&&(V.contentPacks.authored['E03-C04']?.detail||[]).some(x=>/패혈증/.test(x)),'infection lesson adds conservative source-backed sepsis warning content');
 ok(V.curriculum.byId['F07-C01']?.title==='소방시설 5분류·건축방재','building-fire fundamentals are visible in the facilities curriculum title');
 ok((V.contentPacks.authored['F07-C01']?.officialLinks||[]).length>=3,'building-fire lesson exposes official Building Act source links');
