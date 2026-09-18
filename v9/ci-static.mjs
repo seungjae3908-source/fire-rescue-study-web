@@ -160,7 +160,7 @@ ok(V.HazmatQuestions119?.added===7,'hazardous-material depth batch adds seven so
 ok(V.HazmatDepth119.concepts.every(id=>V.contentPacks.authored[id]?.calculations?.length>0),'all hazardous-material class lessons expose designated-quantity calculation contract');
 ok(V.EMSDepth119?.concepts?.length===9,'nine high-yield EMS concepts receive textbook-depth enrichment');
 const examGapIds=V.ExamGapEnrichment119?.conceptIds||[];
-ok(['E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05'].every(id=>examGapIds.includes(id))&&new Set(examGapIds).size===examGapIds.length,'source-backed high-yield exam gap enrichment is loaded');
+ok(['F05-C01','F07-C01','E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05'].every(id=>examGapIds.includes(id))&&new Set(examGapIds).size===examGapIds.length,'source-backed high-yield exam gap enrichment is loaded');
 ok(V.curriculum.byId['E05-C04']?.title==='기록지·중증도 분류','E05-C04 student title includes START triage instead of hiding it under records only');
 ok((V.contentPacks.authored['E14-C03']?.calculations||[]).some(x=>/4 mL/.test(x.formula||'')),'burn lesson exposes the source-backed Parkland calculation');
 ok((V.contentPacks.authored['E14-C02']?.detail||[]).some(x=>/긴장성 기흉/.test(x)),'soft-tissue/chest lesson includes source-backed tension-pneumothorax deterioration and dressing response');
@@ -168,6 +168,9 @@ ok(V.curriculum.byId['E01-C03']?.title==='응급구조사 법적책임·119구�
 ok((V.contentPacks.authored['E01-C03']?.officialLinks||[]).length>=4,'119-law lesson exposes current official law source links');
 ok(fullCoverage.rows.find(x=>x.id==='E-LAW-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-TRN-02')?.status==='partial','119-law and air/international EMS gaps are truthfully partial after source-backed enrichment');
 ok(fullCoverage.rows.find(x=>x.id==='F-HAZ-04')?.status==='covered','special-combustible gap is closed by current-law definition, quantity table and storage rules');
+ok(fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-03')?.status==='partial','building compartment and fire-material topics remain honestly partial after current-law enrichment');
+ok(V.curriculum.byId['F07-C01']?.title==='소방시설 5분류·건축방재','building-fire fundamentals are visible in the facilities curriculum title');
+ok((V.contentPacks.authored['F07-C01']?.officialLinks||[]).length>=3,'building-fire lesson exposes official Building Act source links');
 ok((V.contentPacks.authored['F05-C01']?.specialCombustibles||[]).length===11,'special-combustible lesson exposes the eleven current law quantity rows');
 ok(V.curriculum.byId['E20-C03']?.title==='정상분만·신생아 초기처치','newborn initial care is visible in the obstetric curriculum title');
 ok((V.contentPacks.authored['E20-C03']?.detail||[]).some(x=>/아프가\(Apgar\).*1분.*5분/.test(x)),'newborn lesson includes exact-source Apgar 1- and 5-minute assessment');
