@@ -248,3 +248,22 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Find fire-investigation source document and pages
         run: node v9/cross-doc-fire-investigation.mjs
+
+  facility_source_search:
+    if: "${{ contains(github.event.head_commit.message, 'facility source search') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install facility source search browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Search entire Prevention1 PDF for remaining facility anchors
+        run: node v9/facility-source-search.mjs
