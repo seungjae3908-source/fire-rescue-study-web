@@ -218,3 +218,28 @@
   .pdf-pager{margin:6px 0 2px;gap:7px}
   .pdf-pager .btn{min-height:42px;font-size:13px}
 }
+
+
+/* Student-first UX V4 — exam density, hazardous-material mobile rows, compact more menu */
+@media(max-width:720px){
+  .question-card{padding:14px!important}
+  .question-card h2{font-size:18px!important;line-height:1.55!important;margin:12px 0 14px!important;word-break:keep-all;overflow-wrap:break-word}
+  .question-card .toolbar{gap:5px}
+  .question-card .tag{font-size:10px;padding:5px 7px}
+  .choice{font-size:16px!important;line-height:1.48!important;min-height:50px!important;padding:12px!important}
+  .confidence{margin-top:8px!important}
+  .confidence button{min-height:38px!important;font-size:12px!important;padding:7px 10px!important}
+
+  .hazmat-reference .table-scroll{overflow:visible}
+  .hazmat-reference .hazmat-table{min-width:0!important;display:block;border:0}
+  .hazmat-reference .hazmat-table thead{display:none}
+  .hazmat-reference .hazmat-table tbody{display:grid;gap:8px}
+  .hazmat-reference .hazmat-table tr{display:grid;grid-template-columns:minmax(0,1fr) auto;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#091827}
+  .hazmat-reference .hazmat-table td{display:block;border:0!important;padding:11px 12px!important;font-size:14px!important;line-height:1.5}
+  .hazmat-reference .hazmat-table td:first-child{min-width:0;word-break:keep-all;overflow-wrap:break-word;background:#10223a}
+  .hazmat-reference .hazmat-table td:last-child{min-width:76px;text-align:right!important;white-space:nowrap;font-size:15px!important;font-weight:850}
+
+  .menu-modal{width:min(520px,100%)}
+  .menu-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
+  .menu-list .btn{min-height:58px!important;font-size:16px!important;padding:10px!important}
+}
