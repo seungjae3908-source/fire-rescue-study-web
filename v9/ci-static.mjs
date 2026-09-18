@@ -116,7 +116,13 @@ ok(v9index.indexOf('./auth.js')<v9index.indexOf('./auth-membership-guard.js')&&v
 const preview=fs.readFileSync(new URL('./preview.html',import.meta.url),'utf8');
 ok(preview.includes('enableCloudSync:true')&&preview.includes('previewOnly:true'),'real cloud sync is enabled only on the explicit v9 preview surface');
 ok(preview.includes('./auth-membership-guard.js'),'preview uses the same membership guard as v9');
-ok(auth.includes('@supabase/supabase-js@2.116.0'),'Supabase browser SDK is pinned to an exact reviewed version');
+ok(!auth.includes('esm.sh')&&!auth.includes('cdn.jsdelivr.net')&&!auth.includes('unpkg.com'),'member auth has no external runtime SDK dependency');
+const supabaseLite=fs.readFileSync(new URL('./supabase-lite.js',import.meta.url),'utf8');
+ok(supabaseLite.includes("/auth/v1/signup"),'same-origin auth client implements signup');
+ok(supabaseLite.includes("/auth/v1/token?grant_type=password"),'same-origin auth client implements password sign-in');
+ok(supabaseLite.includes("/auth/v1/resend"),'same-origin auth client implements confirmation resend');
+ok(supabaseLite.includes("/rest/v1/"),'same-origin auth client implements RLS Data API calls');
+ok(v9index.indexOf('./supabase-lite.js')<v9index.indexOf('./auth.js'),'same-origin auth client loads before member auth');
 ok(!auth.includes('service_role')&&!auth.includes('sb_secret_'),'browser auth contains no privileged Supabase key');
 const configExample=fs.readFileSync(new URL('./config.example.js',import.meta.url),'utf8');
 ok(configExample.includes('supabasePublishableKey'),'config example uses a publishable key');
