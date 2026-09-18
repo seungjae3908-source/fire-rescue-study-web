@@ -62,16 +62,53 @@ async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCach
   try{const pdf=await Promise.race([task.promise,timer]),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await task.destroy?.().catch?.(()=>{});throw err}
 }
 async function locate(key,queries=[]){const {pdf}=await openPdf(key),tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};let best={page:1,score:-1,pages:pdf.numPages};for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
-async function render(key,pageNum,host,queries=[],opts={}){const {pdf,name,origin}=await openPdf(key,opts),p=await pdfjs(),pageNo=Math.max(1,Math.min(Number(pageNum)||1,pdf.numPages)),pg=await pdf.getPage(pageNo),base=pg.getViewport({scale:1});const maxWidth=Math.max(280,(host?.clientWidth||720)-16),scale=Math.min(1.7,maxWidth/base.width),viewport=pg.getViewport({scale});
+function evidenceLines(items,viewport,p,queries=[]){
+  const rawQueries=(queries||[]).map(x=>String(x||'').trim()).filter(Boolean),tokens=queryTokens(rawQueries);
+  const rows=[];
+  for(const item of items||[]){
+    const raw=String(item.str||'').trim();if(!raw)continue;
+    const tx=p.Util.transform(viewport.transform,item.transform),h=Math.max(8,Math.hypot(tx[2],tx[3])),w=Math.max(2,Math.abs(Number(item.width)||0)*viewport.scale);
+    const row={raw,n: norm(raw),x:tx[4],y:tx[5],top:tx[5]-h,h,w};
+    let line=rows.find(x=>Math.abs(x.y-row.y)<=Math.max(3,Math.min(7,row.h*.38)));
+    if(!line){line={y:row.y,items:[]};rows.push(line)}
+    line.items.push(row);
+  }
+  const lines=rows.map(line=>{
+    const its=line.items.sort((a,b)=>a.x-b.x),text=its.map(x=>x.raw).join(' ').replace(/\s+/g,' ').trim(),n=norm(text);
+    const left=Math.min(...its.map(x=>x.x)),right=Math.max(...its.map(x=>x.x+x.w)),top=Math.min(...its.map(x=>x.top)),bottom=Math.max(...its.map(x=>x.top+x.h));
+    const matched=tokens.filter(t=>n.includes(t)),phraseStrong=rawQueries.some(q=>{const qn=norm(q);return qn.length>=16&&(qn.includes(n)&&n.length>=12||n.includes(qn))});
+    const score=matched.reduce((s,t)=>s+Math.min(14,t.length),0)+(matched.length>=2?matched.length*8:0)+(phraseStrong?80:0);
+    return{text,n,left,right,top,bottom,score,matched,phraseStrong};
+  }).filter(x=>x.n.length>=4&&x.score>0).sort((a,b)=>b.score-a.score);
+  const selected=[];
+  for(const line of lines){
+    const strong=line.phraseStrong||line.matched.length>=2||line.matched.some(t=>t.length>=5);
+    if(!strong)continue;
+    const overlaps=selected.some(x=>Math.abs(x.top-line.top)<6||x.n===line.n);
+    if(overlaps)continue;
+    selected.push(line);if(selected.length>=3)break;
+  }
+  if(!selected.length&&lines[0]&&lines[0].score>=10)selected.push(lines[0]);
+  return selected.sort((a,b)=>a.top-b.top);
+}
+async function render(key,pageNum,host,queries=[],opts={}){
+  const {pdf,name,origin}=await openPdf(key,opts),p=await pdfjs(),pageNo=Math.max(1,Math.min(Number(pageNum)||1,pdf.numPages)),pg=await pdf.getPage(pageNo),base=pg.getViewport({scale:1});
+  const maxWidth=Math.max(280,(host?.clientWidth||720)-16),scale=Math.min(1.7,maxWidth/base.width),viewport=pg.getViewport({scale});
+  const outputScale=Math.min(2.5,Math.max(1,Number(window.devicePixelRatio)||1));
   host.innerHTML='';host.classList.add('pdf-render-host');host.style.setProperty('--pdf-width',viewport.width+'px');
   const wrap=document.createElement('div');wrap.className='pdf-canvas-wrap';wrap.style.width=viewport.width+'px';wrap.style.height=viewport.height+'px';
-  const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);canvas.style.width=viewport.width+'px';canvas.style.height=viewport.height+'px';wrap.appendChild(canvas);
+  const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width*outputScale);canvas.height=Math.ceil(viewport.height*outputScale);canvas.style.width=viewport.width+'px';canvas.style.height=viewport.height+'px';wrap.appendChild(canvas);
   const overlay=document.createElement('div');overlay.className='pdf-highlight-layer';overlay.style.width=viewport.width+'px';overlay.style.height=viewport.height+'px';wrap.appendChild(overlay);host.appendChild(wrap);
-  await pg.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
-  const tc=await pg.getTextContent(),tokens=queryTokens(queries);let hits=0;
-  for(const item of tc.items||[]){const str=norm(item.str);if(!str||!tokens.some(q=>str.includes(q)||q.includes(str)))continue;const tx=p.Util.transform(viewport.transform,item.transform),h=Math.max(8,Math.hypot(tx[2],tx[3])),w=Math.max(8,Math.abs(Number(item.width)||0)*scale),mark=document.createElement('div');mark.className='pdf-highlight-box';mark.style.left=tx[4]+'px';mark.style.top=(tx[5]-h)+'px';mark.style.width=w+'px';mark.style.height=(h*1.15)+'px';mark.title=item.str;overlay.appendChild(mark);hits++}
-  const meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=`${name} · ${pageNo}/${pdf.numPages}쪽 · 하이라이트 ${hits}개`;host.prepend(meta);
-  return{page:pageNo,pages:pdf.numPages,hits,name,origin};
+  const ctx=canvas.getContext('2d',{alpha:false}),transform=outputScale===1?undefined:[outputScale,0,0,outputScale,0,0];
+  await pg.render({canvasContext:ctx,viewport,transform}).promise;
+  const tc=await pg.getTextContent(),evidence=evidenceLines(tc.items||[],viewport,p,queries);
+  for(const line of evidence){
+    const mark=document.createElement('div');mark.className='pdf-evidence-line';
+    mark.style.left=Math.max(0,line.left-3)+'px';mark.style.top=Math.max(0,line.top-2)+'px';mark.style.width=Math.min(viewport.width-line.left+3,line.right-line.left+6)+'px';mark.style.height=Math.max(10,line.bottom-line.top+4)+'px';
+    mark.title=line.text;overlay.appendChild(mark);
+  }
+  const meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=`${name} · ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거 '+evidence.length+'곳':'공식 원문'}`;host.prepend(meta);
+  return{page:pageNo,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.text),name,origin,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,render,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-text-coordinate-overlay-v5-static-range-or-persistent-cache'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,render,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v6-hires-evidence-line-range'};
 })();
