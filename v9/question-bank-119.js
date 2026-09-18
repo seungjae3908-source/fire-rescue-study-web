@@ -74,7 +74,8 @@ function pairChoice(c,p,kind='pair-a',difficulty='high',shift=0){
     {text:`${pv[0].text} · ${pv[1].text}`,explanation:`오답. 두 항목 모두 다른 학습개념에서 가져온 내용으로 ‘${c.title}’의 2개 핵심 조합이 아니다.`}
   ];
   const ar=arrange(c.id,kind,correct,distractors,`정답. 두 항목 모두 ‘${c.title}’의 exact-page 교재 pack에 함께 포함된 핵심 포인트다.`);
-  return ar?{kind,difficulty,type:'복합조합형',q:`[${identity(c)}] 다음 조합 중 이 학습노드의 핵심 포인트 두 개가 모두 올바르게 묶인 것은?`,...ar}:null;
+  const stem=kind==='pair-b'?`[${identity(c)}] 다음 중 두 항목 모두 이 학습노드의 공식 핵심에 속하는 조합은?`:`[${identity(c)}] 다음 조합 중 이 학습노드의 핵심 포인트 두 개가 모두 올바르게 묶인 것은?`;
+  return ar?{kind,difficulty,type:'복합조합형',q:stem,...ar}:null;
 }
 function trapChoice(c,p){
   const correct=clip((p.traps||[])[0],130);if(!correct)return null;
