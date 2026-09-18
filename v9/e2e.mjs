@@ -164,6 +164,26 @@ try{
   await go(m,'stats');await cleanPage(m,'mobile stats');
   assert(!(await m.locator('.page').innerText()).includes('검증문제 커버'),'stats removes engineering validation metrics');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
+  for(const tab of ['core','detail','quiz','source']){
+    await m.evaluate(tab=>{window.AITUTOR_V9.Store.state.studyTab=tab;window.AITUTOR_V9.Store.save();window.AITUTOR_V9.App.render?.()},tab).catch(()=>{});
+    if((await m.evaluate(()=>window.AITUTOR_V9.Store.state.page))!=='study')await go(m,'study');
+    await m.evaluate(tab=>{window.AITUTOR_V9.Store.state.studyTab=tab;window.AITUTOR_V9.Store.save();window.AITUTOR_V9.App.runtime.more=false;},tab);
+    await m.evaluate(()=>window.AITUTOR_V9.App.go('study'));
+    await m.waitForSelector('.book-jumpbar');
+    await noX(m,'mobile study tab '+tab);
+  }
+  await m.locator('.book-jumpbar [data-study-tab="core"]').click();
+  assert(await m.locator('.book-section .lesson>h3').count()===0,'core tab avoids repeating the selected tab title as a body heading');
+  await m.locator('.book-jumpbar [data-study-tab="quiz"]').click();
+  assert(await m.locator('.book-section .lesson>h3').count()===0,'quiz tab avoids repeating the selected tab title as a body heading');
+
+  for(const route of ['home','study','tutor','notes','bank','exam','wrong','stats','resources','settings']){
+    await go(m,route);
+    await m.waitForSelector('.page');
+    await noX(m,'mobile route '+route);
+  }
+
   assert(merr.length===0,'mobile runtime errors = 0 '+merr.join(' | '));
   await mobile.close();
 
