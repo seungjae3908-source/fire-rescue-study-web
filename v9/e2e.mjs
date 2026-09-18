@@ -1,6 +1,8 @@
 import { chromium } from 'playwright';
+import fs from 'node:fs';
 
 const base='http://127.0.0.1:4173/v9/index.html';
+const officialPdfFixture=fs.readFileSync(new URL('./fixtures/private-sample.pdf',import.meta.url));
 function assert(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,`${label}: no page horizontal overflow (${JSON.stringify(r)})`)}
 async function errors(page){const arr=[];page.on('pageerror',e=>arr.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))arr.push('console:'+m.text())});return arr}
@@ -48,7 +50,9 @@ try{
   const tablet=await browser.newContext({viewport:{width:900,height:1180},isMobile:false});const tp=await tablet.newPage(),terr=await errors(tp);await tp.goto(base,{waitUntil:'domcontentloaded'});await tp.waitForSelector('.app');
   assert((await tp.locator('.brand').textContent()).includes('119'),'tablet keeps 119 brand identity');await tp.locator('[data-go="study"]').first().click();await tp.waitForSelector('.workspace');assert(await tp.locator('.study-mainpane').isVisible(),'tablet keeps wide textbook pane');assert(await tp.locator('.study-rail').isHidden(),'tablet hides desktop assistant rail to preserve reading width');await noX(tp,'tablet study');assert(terr.length===0,`tablet runtime errors = 0 (${terr.join(' | ')})`);await tablet.close();
 
-  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true});const m=await mobile.newPage();const merr=await errors(m);await m.goto(base,{waitUntil:'domcontentloaded'});await m.waitForSelector('.mobile-nav');await noX(m,'mobile home');
+  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+  await mobile.route(/\/api\/official-pdf\?/,async route=>{await route.fulfill({status:200,headers:{'content-type':'application/pdf','access-control-allow-origin':'*','accept-ranges':'bytes'},body:officialPdfFixture})});
+  const m=await mobile.newPage();const merr=await errors(m);await m.goto(base,{waitUntil:'domcontentloaded'});await m.waitForSelector('.mobile-nav');await noX(m,'mobile home');
   assert((await m.locator('.mobile-nav').textContent()).includes('119'),'mobile bottom navigation exposes 119 tutor');
 
   // User-reported global menu/close regression: exercise the real taps.
@@ -140,7 +144,9 @@ try{
   await m.locator('.book-source [data-source-concept]').click();await m.waitForSelector('#pdfEvidence');assert(await m.locator('#pdfEvidence').isVisible(),'official evidence opens PDF viewer in one click');
   assert(await m.locator('#sourceModal').count()===0,'one-click official evidence removes intermediate source modal');
   assert(await m.locator('#pdfEvidence [data-source-pdf-file]').count()===0,'official evidence never asks user to upload a PDF');
-  const evidenceText=await m.locator('#pdfEvidence').textContent();assert(evidenceText.includes('중앙소방학교')||evidenceText.includes('공식 PDF'),'official evidence uses NFA source/fallback');
+  await m.waitForSelector('#pdfEvidence canvas');
+  assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence renders the proxied PDF through PDF.js');
+  const evidenceText=await m.locator('#pdfEvidence').textContent();assert(evidenceText.includes('쪽')||evidenceText.includes('하이라이트'),'official evidence exposes PDF page/highlight status');
   await m.locator('#pdfEvidence [data-pdf-close]').click();assert(await m.locator('#pdfEvidence').count()===0,'PDF evidence close button works');
 
   const mobileType=await m.evaluate(()=>({lesson:parseFloat(getComputedStyle(document.querySelector('.book-section>p')).fontSize),jump:parseFloat(getComputedStyle(document.querySelector('.book-jumpbar button')).fontSize),nav:parseFloat(getComputedStyle(document.querySelector('.mobile-nav button')).fontSize)}));assert(mobileType.lesson>=16&&mobileType.jump>=11&&mobileType.nav>=12,`mobile textbook typography is readable (${JSON.stringify(mobileType)})`);await noX(m,'mobile rich detail');
