@@ -145,9 +145,10 @@ ok(V.HazmatDepth119?.concepts?.length===6,'all six hazardous-material classes re
 ok(V.HazmatQuestions119?.added===7,'hazardous-material depth batch adds seven sourced questions');
 ok(V.HazmatDepth119.concepts.every(id=>V.contentPacks.authored[id]?.calculations?.length>0),'all hazardous-material class lessons expose designated-quantity calculation contract');
 ok(V.EMSDepth119?.concepts?.length===9,'nine high-yield EMS concepts receive textbook-depth enrichment');
-ok(V.ExamGapEnrichment119?.conceptIds?.length===8,'source-backed high-yield exam gap enrichment is loaded');
+ok(V.ExamGapEnrichment119?.conceptIds?.length===9,'source-backed high-yield exam gap enrichment is loaded');
 ok(V.curriculum.byId['E05-C04']?.title==='기록지·중증도 분류','E05-C04 student title includes START triage instead of hiding it under records only');
 ok((V.contentPacks.authored['E14-C03']?.calculations||[]).some(x=>/4 mL/.test(x.formula||'')),'burn lesson exposes the source-backed Parkland calculation');
+ok((V.contentPacks.authored['E14-C02']?.detail||[]).some(x=>/긴장성 기흉/.test(x)),'soft-tissue/chest lesson includes source-backed tension-pneumothorax deterioration and dressing response');
 ok((V.contentPacks.authored['F03-C07']?.compare||[]).some(x=>/굴뚝|연돌/.test(String(x?.[0]))),'smoke/Flow Path lesson compares stack-effect smoke movement');
 ok((V.contentPacks.authored['F03-C08']?.compare||[]).some(x=>/UVCE/.test(String(x?.[0]))),'explosion lesson compares UVCE with other explosion mechanisms');
 ok(V.EMSQuestions119?.added===9,'nine page-grounded EMS exam-style questions are loaded');
