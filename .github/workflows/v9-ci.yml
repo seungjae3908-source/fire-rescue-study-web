@@ -129,3 +129,23 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Real deployed 119 preview official-PDF acceptance
         run: node v9/live-preview-e2e.mjs
+
+  page_anchor_discovery:
+    if: "${{ contains(github.event.head_commit.message, 'page anchor discovery') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: aa8e11269cba310c1812dc577be3ac109c135d76
+      STUDY_119_DISCOVERY_IDS: F05-C01,F05-C08,F07-C05
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install page-anchor discovery browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Discover official PDF page anchors with source text
+        run: node v9/page-anchor-discovery.mjs
