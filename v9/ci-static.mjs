@@ -229,7 +229,7 @@ ok(auth.includes("V.Auth?.hasStudyMembership&&!(await V.Auth.hasStudyMembership(
 ok(guard.includes('membershipPreflightBeforeAdopt:true'),'membership preflight contract is recorded in sync policy');
 ok(v9index.indexOf('./auth.js')<v9index.indexOf('./auth-membership-guard.js')&&v9index.indexOf('./auth-membership-guard.js')<v9index.indexOf('./app.js'),'Study membership guard loads after auth and before app UI');
 const preview=fs.readFileSync(new URL('./preview.html',import.meta.url),'utf8');
-ok(preview.includes('enableCloudSync:true')&&preview.includes('previewOnly:true'),'real cloud sync is enabled only on the explicit v9 preview surface');
+ok(preview.includes('enableCloudSync:true')&&preview.includes('previewOnly:true'),'preview keeps real cloud sync enabled and remains explicitly preview-only');
 ok(preview.includes('./auth-membership-guard.js'),'preview uses the same membership guard as v9');
 ok(preview.indexOf('./supabase-lite.js')<preview.indexOf('./auth.js'),'preview loads same-origin auth client before member auth');
 ok(auth.includes("clientRuntime:'same-origin-lite'")&&auth.includes('externalSdkRequired:false'),'auth runtime contract forbids external SDK dependency');
@@ -245,7 +245,9 @@ const configExample=fs.readFileSync(new URL('./config.example.js',import.meta.ur
 ok(configExample.includes('supabasePublishableKey'),'config example uses a publishable key');
 ok(!/supabase(?:ServiceRole|Secret|Service)_?Key\s*:/i.test(configExample)&&!/sb_secret_[A-Za-z0-9]/.test(configExample),'config example never configures a privileged key');
 const config=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
-ok(config.includes('enableCloudSync:false'),'checked-in v9 config keeps real cloud sync disabled');
+ok(config.includes('enableCloudSync:true'),'release-ready v9 config enables real Study cloud sync');
+ok(config.includes("officialPdfProxyBase:'https://study-119-pdf-proxy.vercel.app'"),'release-ready v9 config pins the verified official PDF proxy');
+ok(!config.includes('bawcbkoyovbeajkrnduq'),'release-ready v9 config never points at Investment Production');
 ok(config.includes("supabaseUrl:'https://petlfbztqguuzkasfpug.supabase.co'"),'checked-in v9 config pins the approved shared Supabase URL');
 ok(/supabasePublishableKey:'sb_publishable_[A-Za-z0-9_-]+'/.test(config),'checked-in v9 config uses a browser-safe publishable key');
 ok(!/sb_secret_[A-Za-z0-9_-]+/.test(config)&&!/service_role/i.test(config),'checked-in v9 config contains no privileged Supabase key');
