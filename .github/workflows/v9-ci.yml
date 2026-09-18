@@ -116,7 +116,7 @@ jobs:
     timeout-minutes: 35
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: 88fd5530a785d9fb9c297a029622a6de19b6abec
+      STUDY_119_EXPECTED_APP_HEAD: 7090a90d9885f6f0177e33aaeed66b6771bca61a
       STUDY_119_PROXY_RUNTIME_HEAD: f7c1b971966e5cae90d4009c8257af1b79144128
     steps:
       - uses: actions/checkout@v4
@@ -136,7 +136,7 @@ jobs:
     timeout-minutes: 30
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: aa8e11269cba310c1812dc577be3ac109c135d76
+      STUDY_119_EXPECTED_APP_HEAD: 7090a90d9885f6f0177e33aaeed66b6771bca61a
       STUDY_119_DISCOVERY_IDS: F07-C05,F07-C16,F07-C17,F07-C18,F07-C19,F07-C20,F07-C21
     steps:
       - uses: actions/checkout@v4
@@ -149,3 +149,22 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Discover official PDF page anchors with source text
         run: node v9/page-anchor-discovery.mjs
+
+  sprinkler_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'sprinkler live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 7090a90d9885f6f0177e33aaeed66b6771bca61a
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install focused sprinkler browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify six deployed sprinkler exact-page anchors
+        run: node v9/sprinkler-live-e2e.mjs
