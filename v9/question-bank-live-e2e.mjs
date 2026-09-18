@@ -40,8 +40,8 @@ try{
   assert(truth.allExam&&truth.allP&&truth.allGenerated,conceptId+' questions are exam-style but remain generated P-grade practice');
   assert(truth.allFourChoices&&truth.allFourExplanations,conceptId+' every question has 4 unique choices + 4 meaningful explanations');
   assert(!truth.pastExamClaim,conceptId+' generated practice makes no past-exam claim');
-  assert(truth.factoryGenerated===962,'factory generated only the audited 962-question shortfall');
-  assert(truth.readiness.ready===false,'real mock remains fail-closed despite practice bank expansion');
+  assert(truth.factoryGenerated===956,'factory generated only the remaining audited 956-question shortfall');
+  assert(truth.readiness.ready===true&&truth.readiness.scopeComplete===true&&truth.readiness.missingFireScopes.length===0,'real mock becomes ready only after separate B-grade restored-scope evidence');
 
   await page.evaluate(()=>window.AITUTOR_V9.App.go('study'));
   await page.waitForSelector('.workspace');
