@@ -243,3 +243,20 @@
   .menu-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
   .menu-list .btn{min-height:58px!important;font-size:16px!important;padding:10px!important}
 }
+
+
+/* Student-first UX V5 — essential study emphasis + precise PDF evidence */
+.study-must{margin:12px 0 14px;padding:13px 14px;border:1px solid rgba(255,198,109,.30);background:rgba(255,198,109,.055);border-radius:13px}
+.study-must-title{font-size:12px;font-weight:900;color:var(--yellow);margin-bottom:8px}
+.study-must ul{margin:0;padding-left:19px;display:grid;gap:7px}
+.study-must li{font-size:14px;line-height:1.65}
+.study-must li::marker{color:var(--yellow)}
+.study-must li span{text-decoration-line:underline;text-decoration-color:rgba(255,198,109,.58);text-decoration-thickness:2px;text-underline-offset:4px}
+.pdf-highlight-box{display:none!important}
+.pdf-evidence-line{position:absolute;background:rgba(255,213,45,.07);border-bottom:3px solid rgba(255,188,36,.92);box-shadow:inset 0 -7px 0 rgba(255,213,45,.10);border-radius:2px;pointer-events:none}
+
+@media(max-width:720px){
+  .study-must{padding:12px 13px;margin:10px 0 12px}
+  .study-must-title{font-size:13px}
+  .study-must li{font-size:15px;line-height:1.65}
+}
