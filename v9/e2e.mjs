@@ -295,6 +295,7 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   const chestText=await m.locator('.book-section').innerText();
   assert(chestText.includes('긴장성 기흉')&&chestText.includes('삼면드레싱')&&chestText.includes('저혈압'),'chest-trauma enrichment teaches deterioration after occlusive dressing and tension-pneumothorax warning signs');
+  assert(chestText.includes('내장적출')&&chestText.includes('밀어 넣지')&&chestText.includes('골반골 골절'),'same trauma lesson adds abdominal evisceration and severe pelvic-trauma transport cues');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E14-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E14-C03');
