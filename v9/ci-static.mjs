@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','questions-calculation-119.js','questions-law-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -31,6 +31,9 @@ ok(V.LawQuestions119?.added===6,'six current-law practice questions are loaded')
 const lawPractice=(V.questions||[]).filter(q=>/^119-law-/.test(q.id||''));
 ok(lawPractice.length===6&&lawPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'current-law questions stay practice-only and pass the exam-style gate');
 ok(lawPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'current-law practice makes no unsupported past-exam claim');
+ok(V.SpecialCombustibleQuestions119?.added===6,'six current-law special-combustible practice questions are loaded');
+const specialCombustiblePractice=(V.questions||[]).filter(q=>/^119-specialcomb-/.test(q.id||''));
+ok(specialCombustiblePractice.length===6&&specialCombustiblePractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'special-combustible questions stay practice-only and pass the exam-style gate');
 ok(generated119.every(q=>!/(다음 심화 설명을 가장 정확히|교재형 상세 설명|30초 핵심 설명|학습노드)/.test(String(q.q||''))),'generated practice stems use concise exam language without internal/meta wording');
 
 const questionContractRows=V.curriculum.concepts.map(c=>{const qs=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const q of qs)d[q.difficulty]=(d[q.difficulty]||0)+1;return{id:c.id,n:qs.length,...d}});
@@ -164,6 +167,8 @@ ok((V.contentPacks.authored['E14-C02']?.detail||[]).some(x=>/긴장성 기흉/.t
 ok(V.curriculum.byId['E01-C03']?.title==='응급구조사 법적책임·119구급대 법령','119-law content is visible in the EMS curriculum');
 ok((V.contentPacks.authored['E01-C03']?.officialLinks||[]).length>=4,'119-law lesson exposes current official law source links');
 ok(fullCoverage.rows.find(x=>x.id==='E-LAW-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-TRN-02')?.status==='partial','119-law and air/international EMS gaps are truthfully partial after source-backed enrichment');
+ok(fullCoverage.rows.find(x=>x.id==='F-HAZ-04')?.status==='covered','special-combustible gap is closed by current-law definition, quantity table and storage rules');
+ok((V.contentPacks.authored['F05-C01']?.specialCombustibles||[]).length===11,'special-combustible lesson exposes the eleven current law quantity rows');
 ok(V.curriculum.byId['E20-C03']?.title==='정상분만·신생아 초기처치','newborn initial care is visible in the obstetric curriculum title');
 ok((V.contentPacks.authored['E20-C03']?.detail||[]).some(x=>/아프가\(Apgar\).*1분.*5분/.test(x)),'newborn lesson includes exact-source Apgar 1- and 5-minute assessment');
 ok((V.contentPacks.authored['E20-C03']?.must||[]).some(x=>/입 먼저.*코 다음/.test(x)),'newborn lesson preserves textbook mouth-before-nose suction order');
@@ -201,6 +206,7 @@ ok(sw.includes("'./questions-ems-restored-verified-119.js'"),'restored EMS verif
 ok(sw.includes("'./exam-gap-enrichment-119.js'"),'exam gap enrichment is offline-cached');
 ok(sw.includes("'./questions-calculation-119.js'"),'calculation practice bank is offline-cached');
 ok(sw.includes("'./questions-law-119.js'"),'current-law practice bank is offline-cached');
+ok(sw.includes("'./questions-special-combustible-119.js'"),'special-combustible practice bank is offline-cached');
 
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
