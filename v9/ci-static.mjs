@@ -229,11 +229,16 @@ ok(!/^\s*alter\s+default\s+privileges\b/im.test(liveHardening),'live hardening d
 ok(!/^\s*create\s+(?:or\s+replace\s+)?function\b/im.test(liveHardening)&&!/^\s*create\s+trigger\b/im.test(liveHardening),'live hardening adds no project-wide trigger/function');
 ok(liveHardening.includes('c.relrowsecurity'),'live hardening aborts if any Study private table lacks RLS');
 
+const syncMerge=fs.readFileSync(new URL('./sync-merge.js',import.meta.url),'utf8');
+ok(syncMerge.includes('{...clone(prev),...clone(row)}')&&syncMerge.includes('{...clone(row),...clone(prev)}'),'remote summary merges preserve richer local exam-analysis fields without DB mutation');
+
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const appCode=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 ok(auth.includes("event==='SIGNED_OUT'")&&auth.includes('V.Store.switchOwner(V.Store.guestId)'), 'SIGNED_OUT auth events switch runtime ownership back to the guest namespace');
 ok(auth.includes("'session-expired'")&&auth.includes("'manual-signout'"),'auth runtime distinguishes session expiry from explicit logout');
 ok(appCode.includes('로그인 세션이 만료되어 게스트 모드로 전환되었습니다.')&&appCode.includes('로그인 세션 만료 · 다시 로그인해주세요'),'session expiry UX provides persistent and immediate re-login guidance');
+ok(appCode.includes('examReportId')&&appCode.includes('오답·미응답 분석')&&appCode.includes('incorrectQuestionIds'),'post-exam analytics stores the local answer snapshot and renders wrong/unanswered analysis');
+ok(appCode.includes('data-exam-report')&&appCode.includes('data-report-close'),'recent exam history exposes a reopenable local analysis flow');
 for(const [logical,physical] of Object.entries({profiles:'study_profiles',user_progress:'study_user_progress',user_answers:'study_user_answers',wrong_answers:'study_wrong_answers',review_schedule:'study_review_schedule',personal_notes:'study_personal_notes',private_documents:'study_private_documents',document_chunks:'study_document_chunks',study_sessions:'study_sessions',exam_history:'study_exam_history',tutor_preferences:'study_tutor_preferences'})){
   ok(auth.includes(`${logical}:'${physical}'`),`member sync maps ${logical} -> ${physical}`);
 }
