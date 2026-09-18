@@ -123,7 +123,9 @@ function pickForConcept(c,p){
 
 const existingIds=new Set(V.questions.map(q=>q.id)),existingTexts=new Set(V.questions.map(q=>norm(q.q))),generated=[];
 for(const c of concepts){
-  const p=V.contentPacks.authored[c.id];if(!p||p.status!=='verified'||p.sourcePrecision!=='exact-pdf-page-anchor')throw new Error('QUESTION_FACTORY_SOURCE_NOT_EXACT '+c.id);
+  const p=V.contentPacks.authored[c.id],ranges=c.sourceRanges||[];
+  const pageGrounded=ranges.length>0&&ranges.every(r=>r.doc&&Number.isFinite(Number(r.from))&&Number.isFinite(Number(r.to)));
+  if(!p||p.status!=='verified'||!pageGrounded)throw new Error('QUESTION_FACTORY_SOURCE_NOT_PAGE_GROUNDED '+c.id);
   for(const cand of pickForConcept(c,p)){
     const id=`119-factory-${c.id.toLowerCase()}-${cand.kind}`;
     if(existingIds.has(id))continue;
@@ -152,7 +154,7 @@ V.QuestionFactory119={
   generated:generated.length,
   grade:'P',
   pastExamClaim:false,
-  sourcePolicy:'exact-page pack only',
+  sourcePolicy:'verified pack + numeric official sourceRanges only',
   rows
 };
 })();
