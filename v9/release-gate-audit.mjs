@@ -17,7 +17,7 @@ const files=[
 ];
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 const V=window.AITUTOR_V9;
-const audit=V.ContentContract119.audit(),coverage=V.contentPacks.coverage(),qa=V.QuestionQuality119.audit(),mock=V.examReadiness();
+const audit=V.ContentContract119.audit(),coverage=V.contentPacks.coverage(),fullExamCoverage=V.CoverageMap119?.audit?.(),qa=V.QuestionQuality119.audit(),mock=V.examReadiness();
 const perConceptQuestionContract=V.curriculum.concepts.every(c=>{const q=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const x of q)d[x.difficulty]=(d[x.difficulty]||0)+1;return q.length>=6&&d.low>=1&&d.mid>=2&&d.high>=1});
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
@@ -31,6 +31,7 @@ const sql=fs.readFileSync(new URL('../supabase/tests/v9-live-closed-loop.sql',im
 const checks={
   content176:audit.total===176&&audit.complete===176&&audit.incomplete===0&&Object.keys(audit.blockers||{}).length===0,
   pageEvidence176:coverage.verified===176&&coverage.pending===0,
+  fullExamCoverageComplete:!!fullExamCoverage&&fullExamCoverage.missing===0&&fullExamCoverage.partial===0,
   questionContract:qa.examStyle>=1056&&qa.duplicateTexts.length===0&&perConceptQuestionContract,
   realMockVerifiedReady:mock.ready===true&&mock.scopeComplete===true&&mock.fire>=25&&mock.ems>=40&&mock.missingFireScopes.length===0&&mock.missingEmsScopes.length===0,
   pwaOfflineContract:e2e.includes('v9 PWA shell reloads while offline'),
@@ -74,6 +75,7 @@ const result={
   version:'119-release-gate-audit-v1',
   content:{complete:audit.complete,total:audit.total,averageScore:audit.averageScore,blockers:audit.blockers},
   pageEvidence:coverage,
+  fullExamCoverage:fullExamCoverage?{total:fullExamCoverage.total,covered:fullExamCoverage.covered,partial:fullExamCoverage.partial,missing:fullExamCoverage.missing,implementationPercent:fullExamCoverage.implementationPercent}:null,
   questions:{examStyle:qa.examStyle,duplicateTexts:qa.duplicateTexts.length},
   realMock:{ready:mock.ready,fire:mock.fire,ems:mock.ems,missingFireScopes:mock.missingFireScopes,missingEmsScopes:mock.missingEmsScopes},
   checks,
