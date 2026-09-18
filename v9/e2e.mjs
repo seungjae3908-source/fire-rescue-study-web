@@ -54,6 +54,11 @@ try{
   await go(p,'resources');await cleanPage(p,'desktop resources');
   assert((await p.locator('.page').innerText()).includes('공식 자료'),'resources page is student-facing');
   assert(!(await p.locator('.page').innerText()).includes('Gate'),'resources page hides release/content gates');
+  assert(await p.locator('[data-resource-doc]').count()===10,'resources page exposes all ten official textbooks as in-app PDF actions');
+  assert(await p.locator('.resources-119 a[target="_blank"]').count()===0,'resources page no longer sends the normal study flow to an external tab');
+  await p.locator('[data-resource-doc]').first().click();await p.waitForSelector('#resourcePdf canvas',{timeout:60000});
+  assert(await p.locator('#resourcePdf canvas').count()===1,'official resource opens inside the app with the shared PDF renderer');
+  await p.locator('[data-resource-pdf-close]').click();
 
   await go(p,'settings');await cleanPage(p,'desktop settings');
   assert((await p.locator('.page').innerText()).includes('개인 자료'),'settings keeps only user-relevant privacy information');
@@ -84,6 +89,11 @@ try{
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
+  await m.locator('.book-jumpbar [data-study-tab="quiz"]').click();
+  await m.waitForSelector('.book-section .question-card');
+  assert(await m.locator('.book-section .question-card').first().locator('.tag').count()===0,'practice question hides difficulty/evidence badges before the student answers');
+  await m.locator('.book-section .question-card').first().locator('.choice').first().click();
+  assert(await m.locator('.book-section .question-card').first().locator('.question-result-meta .tag').count()===1,'practice question shows only compact difficulty feedback after answering');
   await m.locator('.book-jumpbar [data-study-tab="core"]').click();
   await m.waitForSelector('.book-section .study-must');
   assert((await m.locator('.book-section .study-must-title').innerText()).includes('★ 시험필수'),'core learning exposes a compact exam-essential block');
