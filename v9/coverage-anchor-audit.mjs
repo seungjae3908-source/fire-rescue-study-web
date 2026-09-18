@@ -60,11 +60,11 @@ try{
     },{doc,rows});
     for(const row of result.rows)console.log('COVERAGE_ANCHOR_AUDIT',JSON.stringify({doc:result.doc,pages:result.pages,origin:result.origin,...row}));
   }
-  const gapPages={ems:[25,32,51,72,103]};
+  const gapPages={ems:[43,47,50,59,69,73,90,94,95,97,121,127,133,134,138]};
   for(const [doc,pages] of Object.entries(gapPages)){
     const rows=await page.evaluate(async ({doc,pages})=>{
       const V=window.AITUTOR_V9,pdf=(await V.SourcePDF.openPdf(doc,{timeoutMs:120000})).pdf,out=[];
-      for(const n of pages){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();out.push({page:n,text:text.slice(0,5000)})}
+      for(const n of pages){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();out.push({page:n,bookPage:V.SourcePDF.bookPage?.(doc,n)||0,text:text.slice(0,5000)})}
       return out;
     },{doc,pages});
     for(const row of rows)console.log('COVERAGE_GAP_PAGE',JSON.stringify({doc,...row}));
