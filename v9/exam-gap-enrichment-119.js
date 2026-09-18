@@ -11,7 +11,7 @@ const add=(id,x)=>{
   if(x.compare)p.compare=[...(p.compare||[]),...x.compare].filter((r,i,a)=>a.findIndex(z=>String(z?.[0])===String(r?.[0])&&String(z?.[1])===String(r?.[1]))===i);
   if(x.flow)p.flow=uniq([...(p.flow||[]),...(x.flow||[])]);
   if(x.deepSections)p.deepSections=[...(p.deepSections||[]),...x.deepSections].filter((r,i,a)=>a.findIndex(z=>String(z?.title)===String(r?.title)&&String(z?.body)===String(r?.body))===i);
-  if(x.calculations)p.calculations=[...(p.calculations||[]),...x.calculations].filter((r,i,a)=>a.findIndex(z=>String(z?.title)===String(r?.title)&&String(z?.formula)===String(r?.formula))===i);
+  if(x.calculations)p.calculations=[...(p.calculations||[]),...x.calculations].filter((r,i,a)=>a.findIndex(z=>String(z?.title)===String(r?.title)&&String(z?.formula)===String(r?.formula))===i);if(x.visuals)p.visuals=uniq([...(p.visuals||[]),...x.visuals]);
   p.depthEnriched=true;
 };
 function rename(id,title){
@@ -46,6 +46,38 @@ add('E05-C04',{
   deepSections:[
     sec('START 순서','걷기 가능 여부로 1차 분리한 뒤 호흡·맥박·의식을 빠르게 확인하고 분류한다. 분류표시는 처치 종료가 아니라 다음 처치·이송 우선순위를 정하기 위한 표지다.'),
     sec('시험에서 자주 섞는 포인트','중증도 분류의 목적, 색상 의미, START 확인 순서, 재평가 필요성을 서로 바꿔 놓은 선지를 구분한다.')
+  ]
+});
+
+rename('E20-C03','정상분만·신생아 초기처치');
+add('E20-C03',{
+  detail:[
+    '2026 소방전술3(구급) 교재는 신생아 상태를 아프가(Apgar) 점수로 평가하며 출생 1분과 5분에 각각 확인하도록 제시한다. 평가 항목은 피부색, 맥박, 반사흥분도, 근육의 강도, 호흡이다.',
+    '교재 기준 아프가 8~10점은 기본적인 신생아 관리, 3~7점은 호흡보조·부드러운 자극·입-코 흡인, 0~2점은 심한 질식 상태로 기관내삽관·산소공급·CPR이 필요한 단계로 정리된다.',
+    '신생아 초기처치는 보온 유지와 기도 내 이물질 제거가 먼저이며, 교재는 구형흡입기로 입을 먼저 흡인하고 다음에 코를 흡인하도록 설명한다. 코를 먼저 자극하면 헐떡이거나 호흡을 시작하며 입 안의 물질을 흡인할 위험이 있다는 이유를 함께 제시한다.',
+    '기도를 정리한 뒤 호흡을 평가하고 30초 안에 자발호흡을 시작하지 않으면 등을 부드럽고 활발하게 문지르거나 발바닥을 손가락으로 자극해 호흡을 격려한다. 발바닥을 들어 손바닥으로 때리는 자극은 하지 않도록 설명한다.'
+  ],
+  must:[
+    'Apgar 평가 시점 → 출생 1분 · 5분',
+    'Apgar 5항목 → 피부색 · 맥박 · 반사흥분도 · 근육긴장/활동 · 호흡',
+    '교재 초기처치 → 보온 · 기도정리 · 입 먼저, 코 다음 흡인 · 호흡평가'
+  ],
+  traps:[
+    '교재 기준 흡인 순서를 코 → 입으로 바꾸지 않는다.',
+    '호흡이 있는데 팔다리에 약간의 청색증만 보인다는 이유로 등을 문지르거나 발바닥을 자극한다고 보지 않는다.',
+    'Apgar 1회 점수만 확인하고 5분 재평가를 생략하는 선지를 주의한다.'
+  ],
+  compare:[
+    ['Apgar 8~10점','교재 기준 정상출산 · 기본적인 신생아 관리'],
+    ['Apgar 3~7점','교재 기준 호흡보조 · 부드러운 자극 · 입-코 흡인'],
+    ['Apgar 0~2점','교재 기준 심한 질식 상태 · 기관내삽관 · 산소공급 · CPR']
+  ],
+  flow:['보온','입→코 기도정리','호흡평가','필요 시 부드러운 자극','Apgar 재평가·이송'],
+  visuals:['ems-newborn-initial'],
+  deepSections:[
+    sec('Apgar를 한눈에 보기','Apgar는 Appearance, Pulse, Grimace, Activity, Respiration의 다섯 항목을 각각 0~2점으로 보고 출생 1분과 5분에 반복 평가한다. 점수 자체보다 저점수에서 어떤 호흡·소생 보조가 필요한지를 연결해 읽는다.'),
+    sec('신생아 초기처치 순서','교재 흐름은 보온 유지와 기도 정리 → 입-코 순 흡인 → 호흡 평가 → 필요 시 부드러운 자극으로 이어진다. 정상적으로는 기도 정리 후 30초 안에 자발호흡을 시작하는지를 본다.'),
+    sec('시험 함정','입/코 흡인 순서, Apgar 평가 시점, 3개 점수군의 처치를 서로 바꿔 놓은 선택지를 구분한다.')
   ]
 });
 
@@ -198,5 +230,5 @@ add('E11-C05',{
   traps:['“VT = 무조건 제세동”으로 단순 암기하지 않는다.']
 });
 
-V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v2',conceptIds:['E05-C04','E14-C02','E14-C03','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
+V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v3',conceptIds:['E05-C04','E20-C03','E14-C02','E14-C03','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
 })();
