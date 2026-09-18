@@ -58,7 +58,10 @@ try{
     }
     return targets.map(t=>{
       const row=out[t.id];
-      row.hits=row.hits.slice(0,12);
+      row.hits=row.hits
+        .map(h=>({...h,score:(h.matched||[]).reduce((n,term)=>n+norm(term).length,0)}))
+        .sort((a,b)=>b.score-a.score||a.bookPage-b.bookPage)
+        .slice(0,16);
       return row;
     });
   },{targets,windows});
