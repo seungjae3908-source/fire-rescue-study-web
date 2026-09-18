@@ -305,7 +305,7 @@ ok((V.contentPacks.authored['E20-C03']?.must||[]).some(x=>/입 먼저.*코 다�
 ok((V.contentPacks.authored['E20-C03']?.visuals||[]).includes('ems-newborn-initial')&&!!V.Visual119.render('ems-newborn-initial'),'newborn initial-care flow renders as a real study visual');
 const startIds=['119-finalgap-start-01','119-finalgap-start-02','119-finalgap-start-03','119-finalgap-start-04'];
 const nrpIds=['119-finalgap-nrp-01','119-finalgap-nrp-02','119-finalgap-nrp-03','119-finalgap-nrp-04'];
-ok(startIds.every(id=>V.questionById[id]?.grade==='P'&&/2026 소방전술3\(구급\) 86~87쪽/.test(String(V.questionById[id]?.source||''))),'four START drills remain P-grade and exact-textbook source-bound');
+ok(startIds.every(id=>V.questionById[id]?.grade==='P'&&/2026 소방전술3\(구급\) 86(?:~87)?쪽/.test(String(V.questionById[id]?.source||''))),'four START drills remain P-grade and exact-textbook source-bound');
 ok(nrpIds.every(id=>V.questionById[id]?.grade==='P'&&/2026 소방전술3\(구급\)/.test(String(V.questionById[id]?.source||''))),'four newborn-resuscitation drills remain P-grade and exact-textbook source-bound');
 ok((V.contentPacks.authored['E05-C04']?.must||[]).some(x=>/RPM.*Respiration.*Pulse.*Mental Status/.test(x))&&(V.contentPacks.authored['E05-C04']?.must||[]).some(x=>/10.*30/.test(x)),'START lesson exposes RPM and exact textbook respiratory thresholds');
 ok((V.contentPacks.authored['E05-C04']?.visuals||[]).includes('ems-start-triage')&&!!V.Visual119.render('ems-start-triage'),'START triage renders a dedicated study visual');
