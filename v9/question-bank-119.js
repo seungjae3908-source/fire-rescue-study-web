@@ -80,7 +80,7 @@ function pairChoice(c,p,kind='pair-a',difficulty='high',shift=0){
     {text:`${pv[0].text} · ${pv[1].text}`,explanation:`오답. 두 항목 모두 다른 학습개념에서 가져온 내용으로 ‘${c.title}’의 핵심 조합이 아니다.`}
   ];
   const ar=arrange(c.id,kind,correct,distractors,`정답. 두 항목 모두 ‘${c.title}’의 핵심 내용이다.`);
-  const stem=`다음 중 ${c.title}에 대한 설명으로 옳은 것만 묶은 것은?`;
+  const stem=kind==='pair-b'?`다음 중 ${c.title}에 대해 바르게 연결된 것은?`:`다음 중 ${c.title}에 대한 설명으로 옳은 것만 묶은 것은?`;
   return ar?{kind,difficulty,type:'복합조합형',q:stem,...ar}:null;
 }
 function trapChoice(c,p){
