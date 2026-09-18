@@ -28,12 +28,14 @@ module.exports = async function handler(req,res){
   const src=SOURCES[doc];
   if(!src){res.statusCode=400;return res.end('UNKNOWN_OFFICIAL_DOCUMENT')}
 
+  const meta=one(req.query?.meta)==='1';
   const headers={
     'user-agent':'Mozilla/5.0 119-study-official-source-proxy/1.0',
     'accept':'application/pdf,*/*;q=0.8',
     'referer':'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/'
   };
-  if(req.headers.range)headers.range=req.headers.range;
+  if(meta)headers.range='bytes=0-0';
+  else if(req.headers.range)headers.range=req.headers.range;
   if(req.headers['if-range'])headers['if-range']=req.headers['if-range'];
 
   let upstream;
@@ -43,6 +45,21 @@ module.exports = async function handler(req,res){
   if(!upstream.ok&&upstream.status!==206){
     res.statusCode=upstream.status||502;
     return res.end('OFFICIAL_SOURCE_HTTP_'+(upstream.status||502));
+  }
+
+  if(meta){
+    try{await upstream.body?.cancel?.()}catch{}
+    res.statusCode=200;
+    res.setHeader('Content-Type','application/json; charset=utf-8');
+    res.setHeader('Cache-Control','no-store');
+    return res.end(JSON.stringify({
+      doc,
+      name:src.name,
+      upstreamStatus:upstream.status,
+      contentType:upstream.headers.get('content-type')||'',
+      contentRange:upstream.headers.get('content-range')||'',
+      acceptRanges:upstream.headers.get('accept-ranges')||''
+    }));
   }
 
   res.statusCode=upstream.status;
