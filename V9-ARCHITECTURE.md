@@ -1,4 +1,4 @@
-# AI과외 v9 Architecture
+# 119 v9 Architecture
 
 Status: development branch only. Production v8.6 stays unchanged until all v9 release gates pass.
 
@@ -8,7 +8,7 @@ Status: development branch only. Production v8.6 stays unchanged until all v9 re
 - Desktop: small global navigation + wide learning workspace.
 - Study TOC is a drawer, not a permanent third/fourth column.
 - Study content uses one internal vertical scroll.
-- `AI과외 / 관련문제 / 공식근거` is a fixed learning action bar.
+- `119 / 관련문제 / 공식근거` is a fixed learning action bar.
 - Mobile keeps `홈 / 학습 / AI / 문제 / 전체`, with the study action bar above mobile navigation.
 - Public official curriculum is separated from private member data.
 - Personal PDFs, OCR, notes, wrong answers, progress and tutor context are private by default.
@@ -76,7 +76,7 @@ Every concept has an official source range. A Concept Pack can show detailed cla
 
 - 135/135 detailed Concept Packs verified from official sources
 - 25 distinct fire + 40 distinct EMS verified questions minimum for real mock exam
-- member backend is a dedicated AI과외 project
+- member backend is a dedicated 119 project
 - RLS isolation tests pass with two separate test users
 - private storage access tests pass
 - guest -> member migration passes
