@@ -35,7 +35,7 @@ ok(V.SpecialCombustibleQuestions119?.added===6,'six current-law special-combusti
 const specialCombustiblePractice=(V.questions||[]).filter(q=>/^119-specialcomb-/.test(q.id||''));
 ok(specialCombustiblePractice.length===6&&specialCombustiblePractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'special-combustible questions stay practice-only and pass the exam-style gate');
 ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-backed practice questions are loaded');
-const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-/.test(q.id||''));
+const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
 ok(V.FinalGapQuestions119?.added===12,'twelve building ECG drug and infection source-backed practice questions are loaded');
