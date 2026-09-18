@@ -43,6 +43,7 @@ jobs:
             echo "Checking $f"
             node --check "$f"
           done
+          node --check v9/api/official-pdf.js
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: 176-concept + 119 textbook/content contract depth gate
