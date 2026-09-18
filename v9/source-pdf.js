@@ -18,14 +18,23 @@ function db(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{const r=indexedDB.op
 const done=t=>new Promise((res,rej)=>{t.oncomplete=()=>res();t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)});
 async function attach(key,file){if(!key||!file)throw Error('SOURCE_PDF_REQUIRED');if(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name))throw Error('PDF_ONLY');const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').put({key,name:file.name,mime:file.type||'application/pdf',blob:file,updatedAt:Date.now()});await done(t);return{key,name:file.name,size:file.size}}
 async function get(key){const d=await db(),t=d.transaction('sources','readonly'),r=t.objectStore('sources').get(key);return await new Promise((res,rej)=>{r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error)})}
-async function has(key){return !!(await get(key))}
+async function remoteRow(key){
+  const c=V.SourceCatalog119?.get?.(key);if(!c?.directPdf)throw Error('SOURCE_REMOTE_UNRESOLVED');
+  const res=await fetch(c.directPdf,{credentials:'omit',redirect:'follow'});if(!res.ok)throw Error('SOURCE_REMOTE_HTTP_'+res.status);
+  const blob=await res.blob(),type=(blob.type||res.headers.get('content-type')||'').toLowerCase();
+  if(!type.includes('pdf')&&!/\.pdf(?:$|\?)/i.test(c.directPdf))throw Error('SOURCE_REMOTE_NOT_PDF');
+  return{key,name:c.expectedNames?.[0]||c.label||key,mime:type||'application/pdf',blob,updatedAt:Date.now(),origin:'official-remote',officialPage:c.officialPage,license:c.license};
+}
+async function resolveRow(key){const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};return remoteRow(key)}
+async function availability(key){const local=await get(key),c=V.SourceCatalog119?.get?.(key);return{local:!!local?.blob,direct:!!c?.directPdf,officialPage:c?.officialPage||SOURCE_PAGES[key]||'',license:c?.license||'',label:c?.label||key}}
+async function has(key){const a=await availability(key);return a.local||a.direct}
 async function remove(key){const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').delete(key);await done(t)}
 const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
 const stop=new Set(['그리고','하지만','에서','으로','하는','한다','있다','있으며','대한','통해','경우','확인','중요','필요','환자','설비','화재']);
 function queryTokens(queries){const out=[];for(const q of queries||[]){for(const w of String(q||'').split(/[\s·,()\/→]+/)){const n=norm(w);if(n.length>=2&&!stop.has(n)&&!out.includes(n))out.push(n)}}return out.sort((a,b)=>b.length-a.length).slice(0,24)}
 async function pdfjs(){const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p}
-async function locate(key,queries=[]){const row=await get(key);if(!row?.blob)throw Error('SOURCE_PDF_NOT_ATTACHED');const p=await pdfjs(),pdf=await p.getDocument({data:await row.blob.arrayBuffer()}).promise,tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};let best={page:1,score:-1,pages:pdf.numPages};for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
-async function render(key,pageNum,host,queries=[]){const row=await get(key);if(!row?.blob)throw Error('SOURCE_PDF_NOT_ATTACHED');const p=await pdfjs(),pdf=await p.getDocument({data:await row.blob.arrayBuffer()}).promise,pageNo=Math.max(1,Math.min(Number(pageNum)||1,pdf.numPages)),pg=await pdf.getPage(pageNo),base=pg.getViewport({scale:1});const maxWidth=Math.max(280,(host?.clientWidth||720)-16),scale=Math.min(1.7,maxWidth/base.width),viewport=pg.getViewport({scale});
+async function locate(key,queries=[]){const row=await resolveRow(key);if(!row?.blob)throw Error('SOURCE_PDF_UNAVAILABLE');const p=await pdfjs(),pdf=await p.getDocument({data:await row.blob.arrayBuffer()}).promise,tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};let best={page:1,score:-1,pages:pdf.numPages};for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
+async function render(key,pageNum,host,queries=[]){const row=await resolveRow(key);if(!row?.blob)throw Error('SOURCE_PDF_UNAVAILABLE');const p=await pdfjs(),pdf=await p.getDocument({data:await row.blob.arrayBuffer()}).promise,pageNo=Math.max(1,Math.min(Number(pageNum)||1,pdf.numPages)),pg=await pdf.getPage(pageNo),base=pg.getViewport({scale:1});const maxWidth=Math.max(280,(host?.clientWidth||720)-16),scale=Math.min(1.7,maxWidth/base.width),viewport=pg.getViewport({scale});
   host.innerHTML='';host.classList.add('pdf-render-host');host.style.setProperty('--pdf-width',viewport.width+'px');
   const wrap=document.createElement('div');wrap.className='pdf-canvas-wrap';wrap.style.width=viewport.width+'px';wrap.style.height=viewport.height+'px';
   const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);canvas.style.width=viewport.width+'px';canvas.style.height=viewport.height+'px';wrap.appendChild(canvas);
@@ -36,5 +45,5 @@ async function render(key,pageNum,host,queries=[]){const row=await get(key);if(!
   const meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=`${row.name} · ${pageNo}/${pdf.numPages}쪽 · 하이라이트 ${hits}개`;host.prepend(meta);
   return{page:pageNo,pages:pdf.numPages,hits,name:row.name};
 }
-V.SourcePDF={attach,get,has,remove,locate,render,sourcePage:key=>SOURCE_PAGES[key]||'',privacy:{localOnly:true,serverUpload:false,originalUnmodified:true},runtime:'pdfjs-text-coordinate-overlay'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,locate,render,sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-text-coordinate-overlay-v2'};
 })();
