@@ -49,7 +49,13 @@ function titleChoice(c,quote,kind,difficulty,type,offset=0){
     explanation:`오답. 이 선택지는 ${concept.scopeTitle}의 ‘${concept.title}’ 개념이며 제시문이 직접 설명하는 대상이 아니다.`
   })),`정답. 제시문은 ‘${identity(c)}’의 exact-page 교재 내용과 직접 연결된다.`);
   if(!ar)return null;
-  return{kind,difficulty,type,q:`[${c.scopeTitle}] 다음 설명에 가장 정확히 대응하는 개념은? “${clip(quote,210)}”`,...ar};
+  const stems={
+    summary:`[${c.scopeTitle}] 다음 30초 핵심 설명이 가리키는 개념은? “${clip(quote,210)}”`,
+    'detail-a':`[${c.scopeTitle}] 다음 교재형 상세 설명(1)의 대상 개념은? “${clip(quote,210)}”`,
+    'detail-b':`[${c.scopeTitle}] 다음 교재형 상세 설명(2)와 직접 연결되는 개념은? “${clip(quote,210)}”`,
+    deep:`[${c.scopeTitle}] 다음 심화 설명을 가장 정확히 설명하는 개념은? “${clip(quote,210)}”`
+  };
+  return{kind,difficulty,type,q:stems[kind]||`[${c.scopeTitle}] 다음 설명에 가장 정확히 대응하는 개념은? “${clip(quote,210)}”`,...ar};
 }
 function memoryChoice(c,p,kind='memory',difficulty='low'){
   const correct=clip((p.must||[])[0]||p.summary,110);
