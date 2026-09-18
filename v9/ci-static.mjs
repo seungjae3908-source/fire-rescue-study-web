@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -41,7 +41,12 @@ ok(contentAudit.complete<contentAudit.total,'119 content contract remains fail-c
 ok(!contentAudit.blockers.questionsEnough&&!contentAudit.blockers.difficultyLow&&!contentAudit.blockers.difficultyMid&&!contentAudit.blockers.difficultyHigh&&!contentAudit.blockers.choiceExplanations,'question-count, difficulty-mix and option-explanation blockers are closed without weakening the contract');
 ok(V.TextbookGrounded119?.depthClosed===131&&V.TextbookGrounded119?.sectionsClosed===8&&V.TextbookGrounded119?.trapsClosed===62&&V.TextbookGrounded119?.memoryClosed===13,'grounded textbook layer closes only the audited depth/section/trap/memory shortfalls');
 ok(!contentAudit.blockers.textbookDepth&&!contentAudit.blockers.structuredSections&&!contentAudit.blockers.examTraps&&!contentAudit.blockers.memoryPoints&&!contentAudit.blockers.comparison,'textbook depth, structure, traps, memory and required comparisons are closed');
-ok(contentAudit.blockers.visual===27&&contentAudit.blockers.calculation===9,'visual and calculation remain explicit separate blockers');
+ok(V.VisualCompletion119?.targets?.length===27,'visual completion tracks the audited 27 remaining visual concepts');
+ok(V.VisualCompletion119.targets.every(id=>{
+  const p=V.contentPacks.authored[id];
+  return (p?.visuals||[]).length>0&&(p.visuals||[]).some(v=>!!V.Visual119.render(v));
+}),'all 27 required visual concepts render at least one real Visual119 diagram');
+ok(!contentAudit.blockers.visual&&contentAudit.blockers.calculation===9,'visual blocker is closed while calculation remains explicit');
 const mock=V.examReadiness();
 ok(mock.ready===(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete),'real mock exam is fail-closed on count + restored-scope coverage');
 ok(mock.fire>=25&&mock.ems>=40,'distinct verified bank reaches 25 fire + 40 EMS');
