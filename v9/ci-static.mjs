@@ -152,7 +152,8 @@ ok(V.HazmatDepth119?.concepts?.length===6,'all six hazardous-material classes re
 ok(V.HazmatQuestions119?.added===7,'hazardous-material depth batch adds seven sourced questions');
 ok(V.HazmatDepth119.concepts.every(id=>V.contentPacks.authored[id]?.calculations?.length>0),'all hazardous-material class lessons expose designated-quantity calculation contract');
 ok(V.EMSDepth119?.concepts?.length===9,'nine high-yield EMS concepts receive textbook-depth enrichment');
-ok(V.ExamGapEnrichment119?.conceptIds?.length===10,'source-backed high-yield exam gap enrichment is loaded');
+const examGapIds=V.ExamGapEnrichment119?.conceptIds||[];
+ok(['E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05'].every(id=>examGapIds.includes(id))&&new Set(examGapIds).size===examGapIds.length,'source-backed high-yield exam gap enrichment is loaded');
 ok(V.curriculum.byId['E05-C04']?.title==='기록지·중증도 분류','E05-C04 student title includes START triage instead of hiding it under records only');
 ok((V.contentPacks.authored['E14-C03']?.calculations||[]).some(x=>/4 mL/.test(x.formula||'')),'burn lesson exposes the source-backed Parkland calculation');
 ok((V.contentPacks.authored['E14-C02']?.detail||[]).some(x=>/긴장성 기흉/.test(x)),'soft-tissue/chest lesson includes source-backed tension-pneumothorax deterioration and dressing response');
