@@ -2,6 +2,9 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const DB='aitutor-v9-official-source-pdfs',VER=1;let dbp=null,activeRemote=null;const pdfCache=new Map();
+const PAGE_OFFSETS=Object.freeze({fire1:16,fire2:10,ems:18});
+const pdfPage=(key,bookPage)=>{const n=Number(bookPage);return Number.isFinite(n)&&n>0?n+(PAGE_OFFSETS[key]||0):0};
+const bookPage=(key,pdfPageNo)=>{const n=Number(pdfPageNo),x=n-(PAGE_OFFSETS[key]||0);return Number.isFinite(x)&&x>0?x:0};
 const SOURCE_PAGES={
   ems:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view',
   fire1:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106809&mode=view',
@@ -107,8 +110,8 @@ async function render(key,pageNum,host,queries=[],opts={}){
     mark.style.left=Math.max(0,line.left-3)+'px';mark.style.top=Math.max(0,line.top-2)+'px';mark.style.width=Math.min(viewport.width-line.left+3,line.right-line.left+6)+'px';mark.style.height=Math.max(10,line.bottom-line.top+4)+'px';
     mark.title=line.text;overlay.appendChild(mark);
   }
-  const meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=`${name} · ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거 '+evidence.length+'곳':'공식 원문'}`;host.prepend(meta);
-  return{page:pageNo,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.text),name,origin,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
+  const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
+  return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.text),name,origin,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,render,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v6-hires-evidence-line-range'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,render,pdfPage,bookPage,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v7-book-page-map-hires-evidence'};
 })();
