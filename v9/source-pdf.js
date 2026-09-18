@@ -2,7 +2,6 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const DB='aitutor-v9-official-source-pdfs',VER=1;let dbp=null,activeRemote=null;const pdfCache=new Map();
-const MIRROR_URLS={fire1:'https://study-119-official-pdf.vercel.app/fire1.pdf'};
 const SOURCE_PAGES={
   ems:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view',
   fire1:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106809&mode=view',
@@ -47,7 +46,7 @@ async function cacheOfficial(key,{timeoutMs=90000,onProgress}={}){
 }
 async function remoteRow(key,opts={}){return cacheOfficial(key,opts)}
 async function resolveRow(key,opts={}){const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};return cacheOfficial(key,opts)}
-async function availability(key){const local=await get(key),c=V.SourceCatalog119?.get?.(key),mirror=MIRROR_URLS[key]||'';return{local:!!local?.blob,mirror:!!mirror,mirrorUrl:mirror,direct:!!mirror||!!c?.directPdf,officialPage:c?.officialPage||SOURCE_PAGES[key]||'',license:c?.license||'',label:c?.label||key}}
+async function availability(key){const local=await get(key),c=V.SourceCatalog119?.get?.(key),mirror=c?.transport==='range-static'&&!!c?.directPdf;return{local:!!local?.blob,mirror,mirrorUrl:mirror?c.directPdf:'',direct:!!c?.directPdf,officialPage:c?.officialPage||SOURCE_PAGES[key]||'',license:c?.license||'',label:c?.label||key}}
 async function has(key){const a=await availability(key);return a.local||a.direct}
 async function remove(key){await clearPdfCache(key);const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').delete(key);await done(t);if(activeRemote?.key===key)activeRemote=null}
 const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
@@ -55,9 +54,9 @@ const stop=new Set(['그리고','하지만','에서','으로','하는','한다',
 function queryTokens(queries){const out=[];for(const q of queries||[]){for(const w of String(q||'').split(/[\s·,()\/→]+/)){const n=norm(w);if(n.length>=2&&!stop.has(n)&&!out.includes(n))out.push(n)}}return out.sort((a,b)=>b.length-a.length).slice(0,24)}
 async function pdfjs(){const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p}
 async function clearPdfCache(key){const hit=pdfCache.get(key);pdfCache.delete(key);if(hit?.task)await hit.task.destroy?.().catch?.(()=>{});else if(hit?.pdf)await hit.pdf.destroy?.().catch?.(()=>{})}
-async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCache.get(key);if(cached?.pdf)return cached;const p=await pdfjs(),local=await get(key),mirror=MIRROR_URLS[key]||'';let task,name,origin;
+async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCache.get(key);if(cached?.pdf)return cached;const p=await pdfjs(),local=await get(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static'&&!!catalog?.directPdf;let task,name,origin;
   if(local?.blob){task=p.getDocument({data:await local.blob.arrayBuffer()});name=local.name||key;origin='local-cache'}
-  else if(mirror){task=p.getDocument({url:mirror,withCredentials:false,disableRange:false,disableStream:false,disableAutoFetch:false,rangeChunkSize:262144});name=V.SourceCatalog119?.get?.(key)?.expectedNames?.[0]||key;origin='official-mirror-range'}
+  else if(staticRange){task=p.getDocument({url:catalog.directPdf,withCredentials:false,disableRange:false,disableStream:false,disableAutoFetch:false,rangeChunkSize:262144});name=catalog.expectedNames?.[0]||catalog.label||key;origin='official-static-range'}
   else{const row=await resolveRow(key,{timeoutMs,onProgress});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=row.origin||'local-cache'}
   const timer=new Promise((_,rej)=>setTimeout(()=>rej(Error('SOURCE_PDF_PARSE_TIMEOUT')),Math.min(timeoutMs,45000)));
   try{const pdf=await Promise.race([task.promise,timer]),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await task.destroy?.().catch?.(()=>{});throw err}
@@ -74,5 +73,5 @@ async function render(key,pageNum,host,queries=[],opts={}){const {pdf,name,origi
   const meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=`${name} · ${pageNo}/${pdf.numPages}쪽 · 하이라이트 ${hits}개`;host.prepend(meta);
   return{page:pageNo,pages:pdf.numPages,hits,name,origin};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,render,mirrorUrl:key=>MIRROR_URLS[key]||'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-text-coordinate-overlay-v5-static-range-or-persistent-cache'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,render,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-text-coordinate-overlay-v5-static-range-or-persistent-cache'};
 })();
