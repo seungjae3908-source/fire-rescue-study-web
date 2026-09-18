@@ -3,15 +3,15 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','question-difficulty.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','hazmat-reference-2026.js','ems-rich-2026.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','question-difficulty.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','hazmat-reference-2026.js','ems-rich-2026.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
 const V=window.AITUTOR_V9;
-ok(V.curriculum.totalConcepts===162,'162 complete concepts');
+ok(V.curriculum.totalConcepts===176,'176 complete concepts');
 ok(V.MasterSyllabus119?.groups?.fire?.length===6&&V.MasterSyllabus119?.groups?.ems?.length===10,'119 master syllabus groups fire/EMS into exam-oriented parts');
 ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content completion contract is loaded');
-ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===162,'unique concept ids');
+ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===176,'unique concept ids');
 ok(V.curriculum.concepts.every(x=>x.sourceRanges.length>0),'all concepts have official source ranges');
 ok(V.curriculum.fire.length===7,'seven complete fire scopes');
 ok(V.curriculum.ems.length===24,'twenty-four EMS scopes');
@@ -21,7 +21,7 @@ ok(new Set(V.questions.map(q=>q.id)).size===V.questions.length,'unique question 
 ok(V.questions.every(q=>Number.isInteger(q.a)&&q.a>=0&&q.a<4),'single valid answer index');
 ok(V.questions.every(q=>!/(기출|실제 출제|과거시험)/.test(String(q.q||''))),'no generated question is mislabeled as past exam');
 const contentAudit=V.ContentContract119.audit();
-ok(contentAudit.total===162&&contentAudit.incomplete>0,'content audit reports real incomplete work instead of fake 100%');
+ok(contentAudit.total===176&&contentAudit.incomplete>0,'content audit reports real incomplete work instead of fake 100%');
 ok(contentAudit.complete<contentAudit.total,'119 content contract remains fail-closed until every concept reaches textbook/question/source quality');
 const mock=V.examReadiness();
 ok(mock.ready===(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete),'real mock exam is fail-closed on count + restored-scope coverage');
@@ -38,17 +38,17 @@ const extra=Object.keys(V.contentPacks.authored).filter(id=>!V.curriculum.byId[i
 console.log('VERIFIED_COVERAGE',coverage);
 console.log('MISSING_VERIFIED_CONCEPTS',missing);
 console.log('EXTRA_AUTHORED_CONCEPTS',extra);
-ok(coverage.total===162,'content coverage denominator is 162');
-ok(scopeVerified.length===27&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)),`27 newly-added fire concepts remain fail-closed until page anchors; actual=${scopeVerified.length}`);
-ok(missing.length===27&&missing.every(id=>scopeVerified.includes(id)),`only the 27 page-anchor-pending concepts are not fully verified; missing=${missing.join(',')||'none'}`);
-ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===162,'exactly 162 valid authored concept packs');
-ok(coverage.verified===135&&coverage.pending===27,'release truth stays 135 page-verified + 27 page-anchor-pending');
+ok(coverage.total===176,'content coverage denominator is 176');
+ok(scopeVerified.length===41&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)),`41 page-anchor-pending fire concepts remain fail-closed; actual=${scopeVerified.length}`);
+ok(missing.length===41&&missing.every(id=>scopeVerified.includes(id)),`only the 41 page-anchor-pending concepts are not fully verified; missing=${missing.join(',')||'none'}`);
+ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===176,'exactly 162 valid authored concept packs');
+ok(coverage.verified===135&&coverage.pending===41,'release truth stays 135 page-verified + 41 page-anchor-pending');
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'||p.status==='scope-verified'),'every authored content pack has an explicit verified/scope-verified truth state');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored study pack');
 ok(V.curriculum.byId['F05-C05']&&V.curriculum.byId['F07-C05'],'hazardous materials and sprinkler scopes exist');
 ok(V.contentPacks.authored['F05-C05']?.deepSections?.length>0&&V.contentPacks.authored['F07-C05']?.deepSections?.length>0,'new fire scopes have rich detail sections');
-ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope expansion adds 27 concepts');
+ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope expansion adds 27 concepts');\nok(V.curriculumDepth119?.addedConcepts===14,'119 depth syllabus adds 14 granular fire/sprinkler concepts');\nok(V.FireDepth119?.concepts?.length===14,'14 new deep fire concepts have textbook packs');\nok(V.FireQuestions119?.added===13,'deep fire batch adds 13 sourced practice questions with option explanations');
 ok(V.emsRich2026?.scopes===24&&V.emsRich2026?.concepts===107,'all 24 EMS chapters / 107 concepts receive structured rich detail');
 ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
 ok(!!V.depthEnrichment2,'source-depth enrichment batch 2 is loaded');
