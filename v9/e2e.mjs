@@ -33,7 +33,7 @@ try{
   assert((await p.locator('.concept-head h2').textContent()).includes('보일오버'),'granular fire syllabus exposes boilover concept');
   await p.locator('.tabbar [data-study-tab="detail"]').click();
   assert(await p.locator('.concept-visual').count()>=1,'boilover detail renders learning diagram');
-  const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.total===176&&coverage.verified===162&&coverage.pending===14,'browser runtime preserves 162 page-verified + 14 page-anchor-pending truth');
+  const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.total===176&&coverage.verified===176&&coverage.pending===0,'browser runtime preserves 176 page-verified + 0 page-anchor-pending truth');
   const sprinklerAnchors=await p.evaluate(()=>{
     const V=window.AITUTOR_V9,spec={'F07-C05':284,'F07-C16':288,'F07-C17':288,'F07-C18':284,'F07-C19':284,'F07-C20':302,'F07-C21':287};
     return Object.entries(spec).map(([id,page])=>({id,page,from:Number(V.curriculum.byId[id]?.sourceRanges?.[0]?.from)||0,status:V.contentPacks.authored[id]?.status,precision:V.contentPacks.authored[id]?.sourcePrecision}));
@@ -67,6 +67,18 @@ try{
     }));
   });
   assert(investigationAnchors.every(x=>x.status==='verified'&&x.precision==='exact-pdf-page-anchor'&&x.rows.length===2&&x.rows.every((r,i)=>r.doc==='fire2'&&Number(r.from)===x.pages[i])),'browser runtime exposes four verified fire-investigation multi-page anchors');
+
+  const facilityAnchors=await p.evaluate(()=>{
+    const V=window.AITUTOR_V9,singles={'F07-C01':17,'F07-C02':207,'F07-C03':247,'F07-C04':273,'F07-C07':328,'F07-C08':347,'F07-C09':432,'F07-C10':415,'F07-C11':23,'F07-C12':18,'F07-C13':465,'F07-C14':201};
+    return{
+      singles:Object.entries(singles).map(([id,page])=>({id,page,rows:V.curriculum.byId[id]?.sourceRanges||[],status:V.contentPacks.authored[id]?.status,precision:V.contentPacks.authored[id]?.sourcePrecision})),
+      c06:{rows:V.curriculum.byId['F07-C06']?.sourceRanges||[],status:V.contentPacks.authored['F07-C06']?.status,precision:V.contentPacks.authored['F07-C06']?.sourcePrecision},
+      c15:{rows:V.curriculum.byId['F07-C15']?.sourceRanges||[],status:V.contentPacks.authored['F07-C15']?.status,precision:V.contentPacks.authored['F07-C15']?.sourcePrecision}
+    };
+  });
+  assert(facilityAnchors.singles.every(x=>x.rows.length===1&&x.rows[0]?.doc==='prevention1'&&Number(x.rows[0]?.from)===x.page&&x.status==='verified'&&x.precision==='exact-pdf-page-anchor'),'browser runtime exposes twelve exact non-sprinkler facility anchors');
+  assert(facilityAnchors.c06.rows.length===2&&[321,333].every((n,i)=>Number(facilityAnchors.c06.rows[i]?.from)===n)&&facilityAnchors.c06.status==='verified'&&facilityAnchors.c06.precision==='exact-pdf-page-anchor','browser runtime preserves simple/ESFR dual-page facility evidence');
+  assert(facilityAnchors.c15.rows.length===4&&[167,174,433,482].every((n,i)=>Number(facilityAnchors.c15.rows[i]?.from)===n)&&facilityAnchors.c15.status==='verified'&&facilityAnchors.c15.precision==='exact-pdf-page-anchor','browser runtime preserves firefighter-support four-page evidence');
 
   const readiness=await p.evaluate(()=>window.AITUTOR_V9.examReadiness());
   await p.locator('[data-go="exam"]').first().click();await p.waitForSelector('.page');const examText=await p.locator('.page').textContent();assert(await p.locator('[data-exam-start="practice"]').count()===1,'practice mode remains available');

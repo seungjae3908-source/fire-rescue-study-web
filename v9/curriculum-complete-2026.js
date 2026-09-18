@@ -92,7 +92,29 @@ R['F06-C04']=[
   {doc:'fire2',from:294,to:294,label:V.curriculum.docs.fire2.label}
 ];
 for(let i=1;i<=15;i++)note(`F07-C${String(i).padStart(2,'0')}`,'prevention1','소방시설 종류·작동원리·사용법 중심(구체 설치기준 제외)');
+anchor('F07-C01','prevention1',17);
+anchor('F07-C02','prevention1',207);
+anchor('F07-C03','prevention1',247);
+anchor('F07-C04','prevention1',273);
 anchor('F07-C05','prevention1',284);
+R['F07-C06']=[
+  {doc:'prevention1',from:321,to:321,label:V.curriculum.docs.prevention1.label},
+  {doc:'prevention1',from:333,to:333,label:V.curriculum.docs.prevention1.label}
+];
+anchor('F07-C07','prevention1',328);
+anchor('F07-C08','prevention1',347);
+anchor('F07-C09','prevention1',432);
+anchor('F07-C10','prevention1',415);
+anchor('F07-C11','prevention1',23);
+anchor('F07-C12','prevention1',18);
+anchor('F07-C13','prevention1',465);
+anchor('F07-C14','prevention1',201);
+R['F07-C15']=[
+  {doc:'prevention1',from:167,to:167,label:V.curriculum.docs.prevention1.label},
+  {doc:'prevention1',from:174,to:174,label:V.curriculum.docs.prevention1.label},
+  {doc:'prevention1',from:433,to:433,label:V.curriculum.docs.prevention1.label},
+  {doc:'prevention1',from:482,to:482,label:V.curriculum.docs.prevention1.label}
+];
 for(const c of V.curriculum.concepts)c.sourceRanges=R[c.id]||[];
 
 const old=V.sourceLabel;
