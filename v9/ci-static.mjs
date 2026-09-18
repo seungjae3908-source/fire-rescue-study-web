@@ -116,6 +116,8 @@ ok(v9index.indexOf('./auth.js')<v9index.indexOf('./auth-membership-guard.js')&&v
 const preview=fs.readFileSync(new URL('./preview.html',import.meta.url),'utf8');
 ok(preview.includes('enableCloudSync:true')&&preview.includes('previewOnly:true'),'real cloud sync is enabled only on the explicit v9 preview surface');
 ok(preview.includes('./auth-membership-guard.js'),'preview uses the same membership guard as v9');
+ok(preview.indexOf('./supabase-lite.js')<preview.indexOf('./auth.js'),'preview loads same-origin auth client before member auth');
+ok(auth.includes("clientRuntime:'same-origin-lite'")&&auth.includes('externalSdkRequired:false'),'auth runtime contract forbids external SDK dependency');
 ok(!auth.includes('esm.sh')&&!auth.includes('cdn.jsdelivr.net')&&!auth.includes('unpkg.com'),'member auth has no external runtime SDK dependency');
 const supabaseLite=fs.readFileSync(new URL('./supabase-lite.js',import.meta.url),'utf8');
 ok(supabaseLite.includes("/auth/v1/signup"),'same-origin auth client implements signup');
