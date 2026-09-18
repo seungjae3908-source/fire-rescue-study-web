@@ -42,7 +42,7 @@ ok(V.FinalGapQuestions119?.added===21,'twenty-one building ECG drug infection ad
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
 ok(finalGapPractice.length===21&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
-const adultAcls2025=finalGapPractice.filter(q=>/^119-finalgap-acls25-/.test(q.id||''));
+const adultAcls2025=finalGapPractice.filter(q=>/^119-finalgap-acls25-0[1-4]$/.test(q.id||''));
 ok(adultAcls2025.length===4&&adultAcls2025.every(q=>/2025 한국 심폐소생술 가이드라인 제4장/.test(String(q.source||''))&&/10\.15441\/ceem\.26\.073/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the current 2025 Korean ALS guideline DOI');
 const postRosc2025=finalGapPractice.filter(q=>/^119-finalgap-acls25-0[5-8]$/.test(q.id||''));
 ok(postRosc2025.length===4&&postRosc2025.every(q=>/2025 한국 심폐소생술 가이드라인 Part/.test(String(q.source||''))),'four reversible-cause/post-ROSC drills are bound to current 2025 guideline parts');
