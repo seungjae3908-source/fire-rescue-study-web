@@ -5,15 +5,15 @@ const base='https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/';
 const C={
   ems:{
     key:'ems',label:'2026 소방전술3(구급)',officialPage:base+'?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view&pageIdx=&searchCondition=&searchKeyword=',
-    license:'KOGL-1',licenseLabel:'공공누리 제1유형',directPdf:'https://www.nfa.go.kr/board/file/bbs_0000000000000035/106811/FILE_000000000026802/2026031719261801627/pdfFileDownload',expectedNames:['13. 소방전술3(구급)-저용량.pdf']
+    license:'KOGL-1',licenseLabel:'공공누리 제1유형',directPdf:'/api/official-pdf?doc=ems',proxyDoc:'ems',expectedNames:['13. 소방전술3(구급)-저용량.pdf']
   },
   fire1:{
     key:'fire1',label:'2026 소방전술1(화재1)',officialPage:base+'?boardId=bbs_0000000000000035&category=&cntId=106809&mode=view&pageIdx=&searchCondition=&searchKeyword=',
-    license:'KOGL-1',licenseLabel:'공공누리 제1유형',directPdf:'https://www.nfa.go.kr/board/file/bbs_0000000000000035/677306/FILE_000000000026799/2026031714344588990/pdfFileDownload',expectedNames:['10. 소방전술1(화재1).pdf']
+    license:'KOGL-1',licenseLabel:'공공누리 제1유형',directPdf:'/api/official-pdf?doc=fire1',proxyDoc:'fire1',expectedNames:['10. 소방전술1(화재1).pdf']
   },
   fire2:{
     key:'fire2',label:'2026 소방전술1(화재2)',officialPage:base+'?boardId=bbs_0000000000000035&category=&cntId=106809&mode=view&pageIdx=&searchCondition=&searchKeyword=',
-    license:'KOGL-1',licenseLabel:'공공누리 제1유형',directPdf:'https://www.nfa.go.kr/board/file/bbs_0000000000000035/677306/FILE_000000000026798/2026031714344462168/pdfFileDownload',expectedNames:['11. 소방전술1(화재2).pdf']
+    license:'KOGL-1',licenseLabel:'공공누리 제1유형',directPdf:'/api/official-pdf?doc=fire2',proxyDoc:'fire2',expectedNames:['11. 소방전술1(화재2).pdf']
   },
   prevention1:{
     key:'prevention1',label:'2026 예방실무1',officialPage:base+'?boardId=bbs_0000000000000035&category=&cntId=106805&mode=view&pageIdx=&searchCondition=&searchKeyword=',
@@ -34,5 +34,5 @@ function resolveForConcept(id){const c=V.curriculum?.byId?.[id],r=c?.sourceRange
 function canDirect(key){return !!get(key)?.directPdf}
 function withDirect(key,url,meta={}){if(!C[key])return false;C[key]={...C[key],directPdf:url||'',...meta};return true}
 function audit(){const rows=Object.values(C);return{total:rows.length,direct:rows.filter(x=>x.directPdf).length,fallback:rows.filter(x=>!x.directPdf).length,licenseOk:rows.every(x=>x.license==='KOGL-1'),rows}}
-V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true}};
+V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true,sameOriginProxy:true,arbitraryUrlProxy:false}};
 })();
