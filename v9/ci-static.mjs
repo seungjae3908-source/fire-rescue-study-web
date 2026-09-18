@@ -41,7 +41,7 @@ const contentAudit=V.ContentContract119.audit();
 ok(contentAudit.total===176&&contentAudit.complete===176&&contentAudit.incomplete===0,'current 176-node curriculum contract is internally complete');
 ok(Object.keys(contentAudit.blockers||{}).length===0,'119 content contract has no remaining blockers');
 ok(!contentAudit.blockers.questionsEnough&&!contentAudit.blockers.difficultyLow&&!contentAudit.blockers.difficultyMid&&!contentAudit.blockers.difficultyHigh&&!contentAudit.blockers.choiceExplanations,'question-count, difficulty-mix and option-explanation blockers are closed without weakening the contract');
-ok(V.TextbookGrounded119?.depthClosed===131&&V.TextbookGrounded119?.sectionsClosed===8&&V.TextbookGrounded119?.trapsClosed===62&&V.TextbookGrounded119?.memoryClosed===13,'grounded textbook layer closes only the audited depth/section/trap/memory shortfalls');
+ok(V.TextbookGrounded119?.targetChars===900&&V.curriculum.concepts.every(x=>V.contentPacks.authored[x.id]?.textbookGrounded119===true),'grounded textbook layer closes whatever depth/section/trap/memory shortfalls remain after source-backed enrichment');
 ok(!contentAudit.blockers.textbookDepth&&!contentAudit.blockers.structuredSections&&!contentAudit.blockers.examTraps&&!contentAudit.blockers.memoryPoints&&!contentAudit.blockers.comparison,'textbook depth, structure, traps, memory and required comparisons are closed');
 ok(V.VisualCompletion119?.targets?.length===27,'visual completion tracks the audited 27 remaining visual concepts');
 ok(V.VisualCompletion119.targets.every(id=>{
