@@ -44,7 +44,7 @@ const checks={
 const gitBlobSha=path=>{
   const buf=fs.readFileSync(new URL('../'+path,import.meta.url));
   const h=createHash('sha1');
-  h.update(Buffer.from('blob '+buf.length+'\\0'));
+  h.update(Buffer.from('blob '+buf.length+'\0'));
   h.update(buf);
   return h.digest('hex');
 };
