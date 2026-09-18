@@ -238,6 +238,18 @@ try{
   assert(hazRow.cells.length>=2&&Math.abs(hazRow.cells[0].y-hazRow.cells[1].y)<3,'hazardous-material name and designated quantity appear on the same mobile row');
   await noX(m,'mobile hazardous-material detail');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
+  assert((await m.locator('.concept-head h2').innerText()).includes('특수가연물'),'hazardous-material curriculum exposes the special-combustible distinction');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.special-combustible-reference .hazmat-table tbody tr');
+  assert(await m.locator('.special-combustible-reference .hazmat-table tbody tr').count()===11,'special-combustible detail renders all eleven current-law quantity rows');
+  const specialText=await m.locator('.special-combustible-reference').innerText();
+  assert(specialText.includes('면화류')&&specialText.includes('200 kg')&&specialText.includes('가연성액체류')&&specialText.includes('2 ㎥')&&specialText.includes('최소 6m'),'special-combustible lesson shows quantity units and outdoor storage distance');
+  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
+  assert(await m.locator('.book-section .source-law-links a').count()>=3,'special-combustible source tab links the current law article and annexes');
+  await noX(m,'mobile special-combustible law');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E01-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E01-C03');
   assert((await m.locator('.concept-head h2').innerText()).includes('119구급대 법령'),'EMS curriculum exposes the current 119-law lesson');
