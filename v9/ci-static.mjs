@@ -132,6 +132,13 @@ ok(pdf.includes('exportForSync')&&pdf.includes('importFromSync'),'private extrac
 ok(pdf.includes('deletedDocuments')&&pdf.includes('deletionTombstones:true'),'local private-document deletion uses owner-scoped tombstones');
 ok(pdf.includes('serverUpload:false')&&pdf.includes('crossUserSharing:false'),'personal document defaults remain private/no-share');
 
+const liveClosedLoop=fs.readFileSync(new URL('../supabase/tests/v9-live-closed-loop.sql',import.meta.url),'utf8');
+for(const table of ['study_user_progress','study_user_answers','study_wrong_answers','study_review_schedule','study_personal_notes','study_private_documents','study_document_chunks','study_sessions','study_exam_history']){
+  ok(liveClosedLoop.includes('public.'+table),`live closed-loop covers ${table}`);
+}
+ok(liveClosedLoop.includes("set_config('request.jwt.claim.sub', a::text, true)")&&liveClosedLoop.includes("set_config('request.jwt.claim.sub', b::text, true)"),'live closed-loop tests two distinct Study identities');
+ok(liveClosedLoop.includes('B_CAN_READ_A_DOC')&&liveClosedLoop.includes('B_CAN_INSERT_FOR_A'),'live closed-loop locks cross-owner negative cases');
+ok(liveClosedLoop.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),'live closed-loop includes explicit cleanup');
 const root=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 ok(!root.includes('/v9/')&&!root.includes('v9/app.js'),'production root remains v8.6 during development');
 console.log(JSON.stringify({concepts:135,verifiedPacks:coverage.verified,enrichedPacks:Object.values(V.contentPacks.authored).filter(p=>p.depthEnriched).length,questions:V.questions.length,mock,studyTables},null,2));
