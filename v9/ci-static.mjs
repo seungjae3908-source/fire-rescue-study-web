@@ -93,6 +93,27 @@ ok(!auth.includes('.storage.from('),'auth sync has no original-file storage uplo
 ok(auth.includes('sharedProjectNamespace:\'study_*\''),'sync contract records the Study shared-project namespace');
 ok(auth.includes('supabasePublishableKey'),'browser auth prefers the Supabase publishable key');
 ok(auth.includes('enableCloudSync===true'),'backend connection is feature-gated until explicitly enabled');
+ok(auth.includes("client.auth.resend({type:'signup',email})"),'signup confirmation email can be resent without changing project-wide auth settings');
+ok(auth.includes('pendingEmailConfirmation:true'),'unconfirmed signup is represented as a pending state instead of a false failure');
+const appCode=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ok(appCode.includes('data-resend-confirmation'),'account UI exposes confirmation-email resend');
+ok(appCode.includes('Email not confirmed'),'account UI explains unconfirmed-email sign-in failures');
+
+const membershipSql=fs.readFileSync(new URL('../supabase/v9-study-membership-trigger.sql',import.meta.url),'utf8');
+ok(membershipSql.includes('create table if not exists public.study_memberships'),'Study membership registry is migration-controlled');
+ok(membershipSql.includes("source text not null default 'study-v9' check (source = 'study-v9')"),'Study membership source is constrained');
+ok(membershipSql.includes('grant select on table public.study_memberships to authenticated'),'clients can only read their own membership through RLS');
+ok(membershipSql.includes('revoke all on function public.handle_new_study_v9_user() from public, anon, authenticated'),'Study bootstrap SECURITY DEFINER is not client-callable');
+ok(membershipSql.includes('create policy study_membership_gate on public.%I as restrictive for all to authenticated'),'every Study table receives a restrictive membership gate');
+ok(membershipSql.includes("bucket_id='study-private-v9'")&&membershipSql.includes('from public.study_memberships m'),'Study Storage policies require both owner folder and Study membership');
+
+const guard=fs.readFileSync(new URL('./auth-membership-guard.js',import.meta.url),'utf8');
+ok(guard.includes("from('study_memberships')"),'browser session guard checks server-created Study membership');
+ok(guard.includes('STUDY_ACCOUNT_REQUIRED'),'non-Study shared-auth sessions fail closed');
+ok(v9index.indexOf('./auth.js')<v9index.indexOf('./auth-membership-guard.js')&&v9index.indexOf('./auth-membership-guard.js')<v9index.indexOf('./app.js'),'Study membership guard loads after auth and before app UI');
+const preview=fs.readFileSync(new URL('./preview.html',import.meta.url),'utf8');
+ok(preview.includes('enableCloudSync:true')&&preview.includes('previewOnly:true'),'real cloud sync is enabled only on the explicit v9 preview surface');
+ok(preview.includes('./auth-membership-guard.js'),'preview uses the same membership guard as v9');
 ok(auth.includes('@supabase/supabase-js@2.116.0'),'Supabase browser SDK is pinned to an exact reviewed version');
 ok(!auth.includes('service_role')&&!auth.includes('sb_secret_'),'browser auth contains no privileged Supabase key');
 const configExample=fs.readFileSync(new URL('./config.example.js',import.meta.url),'utf8');
