@@ -156,6 +156,22 @@ try{
 
   assert(merr.length===0,'mobile runtime errors = 0 '+merr.join(' | '));
   await mobile.close();
+
+  for(const [width,height] of [[360,800],[412,915]]){
+    const ctx=await browser.newContext({viewport:{width,height},isMobile:true});
+    const page=await ctx.newPage(),errs=collectErrors(page);
+    await boot(page);
+    await noX(page,`mobile ${width} home`);
+    await go(page,'study');await page.waitForSelector('.book-mobile');
+    await noX(page,`mobile ${width} study`);
+    assert(await page.locator('.book-jumpbar button').count()===4,`mobile ${width} keeps four study tabs`);
+    const action=await page.locator('.page-study .actionbar').boundingBox(),nav=await page.locator('.mobile-nav').boundingBox();
+    assert(action&&nav&&action.y+action.height<=nav.y+2,`mobile ${width} study controls stay above bottom navigation`);
+    await go(page,'exam');await noX(page,`mobile ${width} exam`);
+    assert(errs.length===0,`mobile ${width} runtime errors = 0 ${errs.join(' | ')}`);
+    await ctx.close();
+  }
+
   console.log('V9_STUDENT_UX_E2E_SUCCESS');
 }finally{
   await browser.close();
