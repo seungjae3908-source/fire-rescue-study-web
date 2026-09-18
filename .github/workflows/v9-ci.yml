@@ -45,7 +45,7 @@ jobs:
           done
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
-      - name: 162-concept + 119 content contract depth gate
+      - name: 176-concept + 119 content contract depth gate
         run: node v9/content-depth.mjs
 
   browser:
@@ -76,3 +76,15 @@ jobs:
         run: node v9/pdf-e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
         run: node v9/sync-e2e.mjs
+
+  source_catalog_probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Extract official NFA PDF attachment metadata
+        run: node v9/source-catalog-probe.mjs
