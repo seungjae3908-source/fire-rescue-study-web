@@ -46,16 +46,16 @@ function titleChoice(c,quote,kind,difficulty,type,offset=0){
   const peers=peerTitles(c,3,offset);if(peers.length<3||!quote)return null;
   const ar=arrange(c.id,kind,c.title,peers.map(({text,concept})=>({
     text,
-    explanation:`오답. 이 선택지는 ${concept.scopeTitle}의 ‘${concept.title}’ 개념이며 제시문이 직접 설명하는 대상이 아니다.`
-  })),`정답. 제시문은 ‘${identity(c)}’의 exact-page 교재 내용과 직접 연결된다.`);
+    explanation:`오답. 이 선택지는 ${concept.scopeTitle}의 ‘${concept.title}’ 개념이며 제시문이 설명하는 개념과 다르다.`
+  })),`정답. 제시문은 ‘${c.title}’의 핵심 내용을 설명한다.`);
   if(!ar)return null;
   const stems={
-    summary:`[${c.scopeTitle}] 다음 30초 핵심 설명이 가리키는 개념은? “${clip(quote,210)}”`,
-    'detail-a':`[${c.scopeTitle}] 다음 교재형 상세 설명(1)의 대상 개념은? “${clip(quote,210)}”`,
-    'detail-b':`[${c.scopeTitle}] 다음 교재형 상세 설명(2)와 직접 연결되는 개념은? “${clip(quote,210)}”`,
-    deep:`[${c.scopeTitle}] 다음 심화 설명을 가장 정확히 설명하는 개념은? “${clip(quote,210)}”`
+    summary:`다음 설명에 해당하는 것은? “${clip(quote,210)}”`,
+    'detail-a':`다음 설명에 해당하는 개념은? “${clip(quote,210)}”`,
+    'detail-b':`다음 설명과 가장 관련 있는 것은? “${clip(quote,210)}”`,
+    deep:`다음 설명에 해당하는 것은? “${clip(quote,210)}”`
   };
-  return{kind,difficulty,type,q:stems[kind]||`[${c.scopeTitle}] 다음 설명에 가장 정확히 대응하는 개념은? “${clip(quote,210)}”`,...ar};
+  return{kind,difficulty,type,q:stems[kind]||`다음 설명에 해당하는 것은? “${clip(quote,210)}”`,...ar};
 }
 function memoryChoice(c,p,kind='memory',difficulty='low'){
   const correct=clip((p.must||[])[0]||p.summary,110);
@@ -63,9 +63,9 @@ function memoryChoice(c,p,kind='memory',difficulty='low'){
   if(peers.length<3)return null;
   const ar=arrange(c.id,kind,correct,peers.map(({text,concept})=>({
     text,
-    explanation:`오답. 이 항목은 ‘${concept.title}’ 쪽의 핵심 포인트로 분류되며 ‘${c.title}’의 직접 기억항목이 아니다.`
-  })),`정답. 이 항목은 ‘${c.title}’ 교재 pack의 반드시 기억할 핵심으로 직접 정리되어 있다.`);
-  return ar?{kind,difficulty,type:'핵심기억형',q:`[${identity(c)}] 다음 중 이 개념의 핵심 기억 포인트로 직접 정리된 것은?`,...ar}:null;
+    explanation:`오답. 이 항목은 ‘${concept.title}’ 쪽의 핵심 포인트로 분류되며 ‘${c.title}’의 핵심 내용과 다르다.`
+  })),`정답. 이 항목은 ‘${c.title}’에서 반드시 기억해야 할 핵심이다.`);
+  return ar?{kind,difficulty,type:'핵심기억형',q:`다음 중 ${c.title}의 핵심 내용으로 옳은 것은?`,...ar}:null;
 }
 function pairChoice(c,p,kind='pair-a',difficulty='high',shift=0){
   const own=uniq([...(p.must||[]),...(p.flow||[])]).map(x=>clip(x,62));
@@ -77,10 +77,10 @@ function pairChoice(c,p,kind='pair-a',difficulty='high',shift=0){
   const distractors=[
     {text:`${a} · ${pv[0].text}`,explanation:`오답. 두 번째 항목은 ‘${pv[0].concept.title}’의 포인트가 섞인 조합이다.`},
     {text:`${pv[1].text} · ${b}`,explanation:`오답. 첫 번째 항목은 ‘${pv[1].concept.title}’의 포인트가 섞인 조합이다.`},
-    {text:`${pv[0].text} · ${pv[1].text}`,explanation:`오답. 두 항목 모두 다른 학습개념에서 가져온 내용으로 ‘${c.title}’의 2개 핵심 조합이 아니다.`}
+    {text:`${pv[0].text} · ${pv[1].text}`,explanation:`오답. 두 항목 모두 다른 학습개념에서 가져온 내용으로 ‘${c.title}’의 핵심 조합이 아니다.`}
   ];
-  const ar=arrange(c.id,kind,correct,distractors,`정답. 두 항목 모두 ‘${c.title}’의 exact-page 교재 pack에 함께 포함된 핵심 포인트다.`);
-  const stem=kind==='pair-b'?`[${identity(c)}] 다음 중 두 항목 모두 이 학습노드의 공식 핵심에 속하는 조합은?`:`[${identity(c)}] 다음 조합 중 이 학습노드의 핵심 포인트 두 개가 모두 올바르게 묶인 것은?`;
+  const ar=arrange(c.id,kind,correct,distractors,`정답. 두 항목 모두 ‘${c.title}’의 핵심 내용이다.`);
+  const stem=`다음 중 ${c.title}에 대한 설명으로 옳은 것만 묶은 것은?`;
   return ar?{kind,difficulty,type:'복합조합형',q:stem,...ar}:null;
 }
 function trapChoice(c,p){
@@ -89,9 +89,9 @@ function trapChoice(c,p){
   if(peers.length<3)return null;
   const ar=arrange(c.id,'trap',correct,peers.map(({text,concept})=>({
     text,
-    explanation:`오답. 이 주의점은 ‘${concept.title}’에서 다루는 혼동 포인트이며 현재 노드의 직접 함정으로 기록된 문장은 아니다.`
-  })),`정답. 이 문장은 ‘${c.title}’ 교재 pack에서 시험 함정·혼동으로 직접 경계하도록 기록된 내용이다.`);
-  return ar?{kind:'trap',difficulty:'high',type:'함정식별형',q:`[${identity(c)}] 다음 중 이 학습노드에서 시험 함정·혼동으로 직접 경계한 내용은?`,...ar}:null;
+    explanation:`오답. 이 주의점은 ‘${concept.title}’에서 다루는 혼동 포인트이며 현재 개념의 주의점과 다르다.`
+  })),`정답. 이 내용은 ‘${c.title}’에서 혼동하기 쉬운 핵심 주의점이다.`);
+  return ar?{kind:'trap',difficulty:'high',type:'함정식별형',q:`다음 중 ${c.title}과 관련해 주의해야 할 설명으로 옳은 것은?`,...ar}:null;
 }
 function deepChoice(c,p){
   const quote=(p.deepSections||[]).map(x=>x.body).find(Boolean);return titleChoice(c,quote,'deep','mid','심화식별형',15);
