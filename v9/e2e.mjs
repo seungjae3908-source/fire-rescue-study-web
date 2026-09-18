@@ -149,6 +149,14 @@ try{
   await cleanPage(m,'mobile exam');
   const mexam=await m.locator('.page').innerText();
   assert(mexam.includes('65문항 · 65분'),'mobile exam starts with real exam format instead of validation diagnostics');
+  assert(await m.locator('[data-calc-bank]').count()===1,'exam landing exposes a dedicated calculation practice action');
+  await m.locator('[data-calc-bank]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='bank');
+  await m.waitForSelector('.question-card');
+  const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형');return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id)}}); 
+  assert(calcBank.filter==='calc'&&calcBank.count>=8&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with at least the eight source-backed drills');
+  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===8,'calculation practice includes all eight new source-backed calculation drills');
+  await noX(m,'mobile calculation practice');
+  await go(m,'exam');await m.waitForSelector('.exam-start');
   const realStart=m.locator('[data-exam-start="real"]');
   assert(await realStart.count()===1,'real mock start is enabled only after verified fire+EMS scope coverage closes');
   await realStart.click();await m.waitForSelector('.question-card');
