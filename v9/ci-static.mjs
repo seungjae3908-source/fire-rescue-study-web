@@ -192,6 +192,7 @@ ok(!/^\s*create\s+(?:or\s+replace\s+)?function\b/im.test(liveHardening)&&!/^\s*c
 ok(liveHardening.includes('c.relrowsecurity'),'live hardening aborts if any Study private table lacks RLS');
 
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
+ok(auth.includes("event==='SIGNED_OUT'")&&auth.includes('V.Store.switchOwner(V.Store.guestId)'), 'SIGNED_OUT auth events switch runtime ownership back to the guest namespace');
 for(const [logical,physical] of Object.entries({profiles:'study_profiles',user_progress:'study_user_progress',user_answers:'study_user_answers',wrong_answers:'study_wrong_answers',review_schedule:'study_review_schedule',personal_notes:'study_personal_notes',private_documents:'study_private_documents',document_chunks:'study_document_chunks',study_sessions:'study_sessions',exam_history:'study_exam_history',tutor_preferences:'study_tutor_preferences'})){
   ok(auth.includes(`${logical}:'${physical}'`),`member sync maps ${logical} -> ${physical}`);
 }
