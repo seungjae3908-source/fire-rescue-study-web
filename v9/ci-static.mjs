@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','question-difficulty.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','hazmat-reference-2026.js','ems-rich-2026.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','question-difficulty.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','hazmat-reference-2026.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -52,6 +52,9 @@ ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope ex
 ok(V.curriculumDepth119?.addedConcepts===14,'119 depth syllabus adds 14 granular fire/sprinkler concepts');
 ok(V.FireDepth119?.concepts?.length===14,'14 new deep fire concepts have textbook packs');
 ok(V.FireQuestions119?.added===13,'deep fire batch adds 13 sourced practice questions with option explanations');
+ok(V.EMSDepth119?.concepts?.length===9,'nine high-yield EMS concepts receive textbook-depth enrichment');
+ok(V.EMSQuestions119?.added===9,'nine page-grounded EMS exam-style questions are loaded');
+ok(V.EMSDepth119.concepts.every(id=>V.contentPacks.authored[id]?.visuals?.length>0),'high-yield EMS depth concepts have learning diagrams');
 ok(V.emsRich2026?.scopes===24&&V.emsRich2026?.concepts===107,'all 24 EMS chapters / 107 concepts receive structured rich detail');
 ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
 ok(!!V.depthEnrichment2,'source-depth enrichment batch 2 is loaded');
