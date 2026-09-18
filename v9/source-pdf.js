@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
-const DB='aitutor-v9-official-source-pdfs',VER=1;let dbp=null;
+const DB='aitutor-v9-official-source-pdfs',VER=1;let dbp=null,activeRemote=null;
 const SOURCE_PAGES={
   ems:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view',
   fire1:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106809&mode=view',
@@ -19,16 +19,19 @@ const done=t=>new Promise((res,rej)=>{t.oncomplete=()=>res();t.onerror=()=>rej(t
 async function attach(key,file){if(!key||!file)throw Error('SOURCE_PDF_REQUIRED');if(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name))throw Error('PDF_ONLY');const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').put({key,name:file.name,mime:file.type||'application/pdf',blob:file,updatedAt:Date.now()});await done(t);return{key,name:file.name,size:file.size}}
 async function get(key){const d=await db(),t=d.transaction('sources','readonly'),r=t.objectStore('sources').get(key);return await new Promise((res,rej)=>{r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error)})}
 async function remoteRow(key){
+  if(activeRemote?.key===key&&activeRemote?.row?.blob)return activeRemote.row;
   const c=V.SourceCatalog119?.get?.(key);if(!c?.directPdf)throw Error('SOURCE_REMOTE_UNRESOLVED');
   const res=await fetch(c.directPdf,{credentials:'omit',redirect:'follow'});if(!res.ok)throw Error('SOURCE_REMOTE_HTTP_'+res.status);
   const blob=await res.blob(),type=(blob.type||res.headers.get('content-type')||'').toLowerCase();
   if(!type.includes('pdf')&&!/\.pdf(?:$|\?)/i.test(c.directPdf))throw Error('SOURCE_REMOTE_NOT_PDF');
-  return{key,name:c.expectedNames?.[0]||c.label||key,mime:type||'application/pdf',blob,updatedAt:Date.now(),origin:'official-remote',officialPage:c.officialPage,license:c.license};
+  const row={key,name:c.expectedNames?.[0]||c.label||key,mime:type||'application/pdf',blob,updatedAt:Date.now(),origin:'official-remote',officialPage:c.officialPage,license:c.license};
+  activeRemote={key,row};
+  return row;
 }
 async function resolveRow(key){const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};return remoteRow(key)}
 async function availability(key){const local=await get(key),c=V.SourceCatalog119?.get?.(key);return{local:!!local?.blob,direct:!!c?.directPdf,officialPage:c?.officialPage||SOURCE_PAGES[key]||'',license:c?.license||'',label:c?.label||key}}
 async function has(key){const a=await availability(key);return a.local||a.direct}
-async function remove(key){const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').delete(key);await done(t)}
+async function remove(key){const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').delete(key);await done(t);if(activeRemote?.key===key)activeRemote=null}
 const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
 const stop=new Set(['그리고','하지만','에서','으로','하는','한다','있다','있으며','대한','통해','경우','확인','중요','필요','환자','설비','화재']);
 function queryTokens(queries){const out=[];for(const q of queries||[]){for(const w of String(q||'').split(/[\s·,()\/→]+/)){const n=norm(w);if(n.length>=2&&!stop.has(n)&&!out.includes(n))out.push(n)}}return out.sort((a,b)=>b.length-a.length).slice(0,24)}
