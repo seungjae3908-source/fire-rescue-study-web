@@ -228,3 +228,23 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify eight deployed hazardous-material exact-page anchors
         run: node v9/hazmat-live-e2e.mjs
+
+  cross_doc_fire_investigation:
+    if: "${{ contains(github.event.head_commit.message, 'cross doc fire investigation') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: f5f257821a8186ceff0097169f9dc864a5cf9e73
+      STUDY_119_CROSS_DOCS: fire2,prevention2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install cross-document source probe
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Find fire-investigation source document and pages
+        run: node v9/cross-doc-fire-investigation.mjs
