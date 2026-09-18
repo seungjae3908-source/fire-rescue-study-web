@@ -430,3 +430,23 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify deployed real mock evidence pool
         run: node v9/real-mock-live-e2e.mjs
+
+
+  student_ux_live_smoke:
+    name: student_ux_live_smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_RUNTIME_HEAD: 6aa6eddffae43b3a88dbfb8fed6102c79c12fd38
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify deployed preview boots on mobile and desktop
+        run: node v9/live-student-ux-smoke.mjs
