@@ -211,11 +211,11 @@ ok(V.curriculum.byId['E01-C03']?.title==='응급구조사 법적책임·119구�
 ok((V.contentPacks.authored['E01-C03']?.officialLinks||[]).length>=4,'119-law lesson exposes current official law source links');
 ok(fullCoverage.rows.find(x=>x.id==='E-LAW-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-TRN-02')?.status==='partial','119-law and air/international EMS gaps are truthfully partial after source-backed enrichment');
 ok(fullCoverage.rows.find(x=>x.id==='F-HAZ-04')?.status==='covered','special-combustible gap is closed by current-law definition, quantity table and storage rules');
-ok(fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-03')?.status==='partial','building compartment and fire-material topics remain honestly partial after current-law enrichment');
+ok(fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='F-BLD-03')?.status==='covered','building compartmentation and fire-material topics are source-closed by current Building Act evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-TRM-03')?.status==='partial','abdominal/pelvic trauma and severe-transport coverage is explicitly partial after source-backed enrichment');
 ok(fullCoverage.rows.find(x=>x.id==='E-MCI-02')?.status==='partial','CBRN/decontamination coverage is partial rather than falsely complete');
 ok(fullCoverage.rows.find(x=>x.id==='E-PALS-01')?.status==='covered','pediatric resuscitation is covered by 2026 NFA basics plus official 2020 KACPR arrest/brady/tachy algorithms');
-ok(fullCoverage.rows.find(x=>x.id==='F-BLD-01')?.status==='partial','wood-vs-fire-resistive building coverage is source-backed but remains partial');
+ok(fullCoverage.rows.find(x=>x.id==='F-BLD-01')?.status==='covered','wood-vs-fire-resistive building coverage is closed by direct textbook comparison and focused drills');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-ACLS-04')?.status==='covered','ECG remains partial while the named ACLS drug set is covered by 2026 NFA + official 2020 KACPR');
 ok(fullCoverage.rows.find(x=>x.id==='E-INF-01')?.status==='partial','infection/sepsis coverage is source-backed partial without inventing a full sepsis treatment algorithm');
 ok(fullCoverage.missing===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='partial','oxygen-cylinder and IV-drip calculations are no longer blank, but remain explicitly partial/nonverified');
