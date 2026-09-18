@@ -176,8 +176,8 @@ jobs:
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
       STUDY_119_EXPECTED_APP_HEAD: af5fdd6c1973a02e592a5c23387fd5ad2edf443b
-      STUDY_119_INSPECT_ID: F03-C11
-      STUDY_119_INSPECT_PAGES: 318,319,320,321,452,453,454,455
+      STUDY_119_INSPECT_ID: F05-C01
+      STUDY_119_INSPECT_PAGES: 345,385,407,428,449,496,523,530,531
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
