@@ -15,7 +15,7 @@ const files=[
   'facilities-depth-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js',
   'suppression-depth-119.js','suppression-visuals-119.js',
-  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js',
+  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js',
   'content-contract-119.js'
 ];
 for(const file of files){
