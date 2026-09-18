@@ -14,8 +14,8 @@ const preferred={
 'F03-C06':['flashover-flow','backdraft-flow','rollover-flow'],
 'F07-C05':['sprinkler-system'],
 'E09-C01':['ems-airway-open'],
-'E11-C04':['ems-aed'],
-'E11-C05':['ems-aed'],
+'E11-C04':['ems-ecg-arrest-rhythms'],
+'E11-C05':['ems-ecg-arrest-rhythms'],
 'E24-C02':['ems-airway-open']
 };
 const clean=x=>String(x||'').replace(/\s+/g,' ').trim();

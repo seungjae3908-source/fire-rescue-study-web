@@ -74,7 +74,7 @@ const topics=[
 
   // EMS — ACLS / ECG
   T('E-ACLS-01','ems','전문심장소생술','심정지 알고리즘·shockable/non-shockable','covered',['E11-C03','E11-C04','E11-C05'],{recent:'very-high',evidence:'2020-KACPR-140-145-2026-exam-standard'}),
-  T('E-ECG-01','ems','전문심장소생술','VF·무맥성 VT·PEA·asystole 판독','partial',['E11-C04','E11-C05'],{visual:true,recent:'very-high'}),
+  T('E-ECG-01','ems','전문심장소생술','VF·무맥성 VT·PEA·asystole 판독','covered',['E11-C04','E11-C05'],{visual:true,recent:'very-high',evidence:'2020-KACPR-140-145+2026-NFA-EMS-208-209+study-waveform-schematic'}),
   T('E-ECG-02','ems','전문심장소생술','SVT·AF·VT·서맥·AV block 판독','partial',['E11-C02','E11-C05'],{visual:true,recent:'very-high'}),
   T('E-ACLS-02','ems','전문심장소생술','안정/불안정 빈맥·서맥 알고리즘','partial',['E11-C02'],{recent:'very-high'}),
   T('E-ACLS-03','ems','전문심장소생술','제세동·동기화 심율동전환·경피조율','partial',['E11-C04','E11-C05','E11-C06'],{visual:true,recent:'2025'}),
