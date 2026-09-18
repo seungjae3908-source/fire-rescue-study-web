@@ -38,8 +38,12 @@ const merged=[...V.questions];const seen=new Set(merged.map(q=>norm(q.q)));for(c
 V.questions=merged;V.questionById=Object.fromEntries(merged.map(q=>[q.id,q]));V.questionsForConcept=id=>merged.filter(q=>q.conceptId===id);
 V.examReadiness=()=>{
   const verified=merged.filter(q=>q.grade==='A'||q.grade==='B'),fire=verified.filter(q=>q.subject==='fire'),ems=verified.filter(q=>q.subject==='ems');
-  const fireCount=new Set(fire.map(q=>q.id)).size,emsCount=new Set(ems.map(q=>q.id)).size,requiredFireScopes=V.curriculum.fire.map(x=>x.id),coveredFireScopes=new Set(fire.map(q=>q.scopeId)),missingFireScopes=requiredFireScopes.filter(x=>!coveredFireScopes.has(x));
-  return{fire:fireCount,ems:emsCount,ready:fireCount>=25&&emsCount>=40&&missingFireScopes.length===0,fireNeed:Math.max(0,25-fireCount),emsNeed:Math.max(0,40-emsCount),missingFireScopes,scopeComplete:missingFireScopes.length===0,practiceScopeQuestions:P.length};
+  const fireCount=new Set(fire.map(q=>q.id)).size,emsCount=new Set(ems.map(q=>q.id)).size;
+  const requiredFireScopes=V.curriculum.fire.map(x=>x.id),requiredEmsScopes=V.curriculum.ems.map(x=>x.id);
+  const coveredFireScopes=new Set(fire.map(q=>q.scopeId)),coveredEmsScopes=new Set(ems.map(q=>q.scopeId));
+  const missingFireScopes=requiredFireScopes.filter(x=>!coveredFireScopes.has(x)),missingEmsScopes=requiredEmsScopes.filter(x=>!coveredEmsScopes.has(x));
+  const scopeComplete=missingFireScopes.length===0&&missingEmsScopes.length===0;
+  return{fire:fireCount,ems:emsCount,ready:fireCount>=25&&emsCount>=40&&scopeComplete,fireNeed:Math.max(0,25-fireCount),emsNeed:Math.max(0,40-emsCount),missingFireScopes,missingEmsScopes,scopeComplete,practiceScopeQuestions:P.length};
 };
 V.scopePractice2026={questions:P.length,grade:'P',economicTruth:'practice-only-not-real-exam-credit',scopes:['F05','F06','F07']};
 })();
