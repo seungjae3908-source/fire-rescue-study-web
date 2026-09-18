@@ -1888,5 +1888,47 @@ add('E11-C02',{
   ]
 });
 
-V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v9',conceptIds:['F03-C02','E07-C03','E03-C04','E11-C02','F03-C05','E21-C04','E03-C05','F05-C01','F07-C01','E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
+
+add('E17-C02',{
+  source:'질병관리청 국가건강정보포털 · 저혈당 · 당뇨병 급성합병증 · 고혈당',
+  detail:[
+    '저혈당은 당뇨병 치료 중 흔한 급성 합병증으로 손떨림·불안·식은땀·공복감 같은 자율신경 증상과 어지럼·쇠약·의식변화 같은 중추신경 증상이 나타날 수 있다.',
+    '질병관리청은 혈당이 70mg/dL 미만이고 의식이 있는 환자에게 포도당 15~20g을 섭취시키고 약 15분 뒤 혈당을 다시 측정하는 방법을 제시한다. 의식이 없는 환자에게는 음식이나 음료를 억지로 먹이지 않는다.',
+    'DKA(당뇨병성 케톤산증)는 인슐린 결핍으로 고혈당과 케톤산 과다생성, 대사산증이 나타나는 급성 합병증이다. 오심·구토·복통, 탈수와 함께 빠르고 깊은 쿠스마울 호흡, 과일 냄새의 호흡이 나타날 수 있다.',
+    'HHS(고혈당 고삼투질 상태)는 주로 2형 당뇨병에서 심한 고혈당과 심한 탈수, 의식변화가 서서히 진행하는 형태로 나타난다. DKA에 비해 케톤산증과 쿠스마울 호흡은 없거나 경미한 경우가 많다.',
+    'DKA와 HHS는 모두 생명을 위협할 수 있는 응급상황이며 감염, 약물 중단, 심근경색·뇌졸중 등이 유발요인이 될 수 있다. 병원 전 단계에서는 ABC, 의식, 혈당, 탈수·쇼크징후를 확인하고 신속히 이송한다.'
+  ],
+  must:[
+    '저혈당 → 식은땀·떨림·공복감 + 의식변화 가능',
+    '의식 있음 + 혈당 <70mg/dL → 포도당 15~20g → 15분 후 재측정',
+    '의식 없음 → 음식·음료 강제 경구투여 금지',
+    'DKA → 고혈당 + 케톤산증 + 탈수 + 쿠스마울호흡/과일냄새 가능',
+    'HHS → 매우 심한 고혈당 + 심한 탈수 + 의식변화 · 케톤산증은 없거나 경미',
+    'DKA/HHS → 응급질환 · 신속 이송'
+  ],
+  traps:[
+    '의식이 없는 저혈당 환자에게 사탕이나 음료를 억지로 먹이지 않는다.',
+    'DKA와 HHS를 둘 다 반드시 쿠스마울호흡이 나타나는 상태로 보지 않는다.',
+    'HHS는 케톤산증이 항상 심하다고 보지 않는다.',
+    '혈당수치 하나만 보고 기도·호흡·순환과 의식평가를 생략하지 않는다.'
+  ],
+  compare:[
+    ['저혈당','혈당 저하 · 발한/떨림/공복감·신경증상 · 의식 있으면 경구 당질'],
+    ['DKA','주로 1형 · 케톤산증 · 쿠스마울호흡/복통/구토 · 탈수'],
+    ['HHS','주로 2형 · 극심한 고혈당·고삼투·심한 탈수·의식변화 · 케톤 적음']
+  ],
+  flow:['ABC·의식','혈당 측정','저혈당 vs 고혈당성 위기 구분','탈수·호흡·신경상태 평가','응급처치','신속 이송'],
+  deepSections:[
+    sec('DKA와 HHS를 한눈에','DKA는 케톤산과 대사산증이 핵심이라 쿠스마울호흡·복통이 잘 연결되고, HHS는 극심한 고혈당과 고삼투·탈수가 더 두드러진다. 둘 다 의식저하와 쇼크로 악화할 수 있다.'),
+    sec('저혈당은 의식부터','먹일 수 있는 상태인지 먼저 판단한다. 의식이 명료해 삼킬 수 있으면 빠른 당질을 주고 재측정하지만, 의식이 없으면 흡인 위험 때문에 경구투여하지 않는다.')
+  ],
+  officialLinks:[
+    {label:'질병관리청 · 저혈당',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=2350'},
+    {label:'질병관리청 · 당뇨병 급성합병증',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=2347'},
+    {label:'질병관리청 · 당뇨병(DKA/HHS)',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=5305'},
+    {label:'질병관리청 · 고혈당 응급상황',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=5304'}
+  ]
+});
+
+V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v9',conceptIds:['E17-C02','F03-C02','E07-C03','E03-C04','E11-C02','F03-C05','E21-C04','E03-C05','F05-C01','F07-C01','E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
 })();

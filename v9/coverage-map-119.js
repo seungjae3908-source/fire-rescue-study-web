@@ -92,7 +92,7 @@ const topics=[
   T('E-CALC-01','ems','계산','산소통 사용시간 계산','partial',['E09-C07'],{calc:true,recent:'2024-reconstructed',evidence:'reconstructed-practice'}),
   T('E-CALC-02','ems','계산','수액 적하속도·시간당 주입량','partial',['E07-C03'],{calc:true,recent:'prep-standard',evidence:'standard-education-practice'}),
   T('E-NEURO-01','ems','내과응급','의식장애·경련·뇌졸중','covered',['E17-C01','E17-C02','E17-C03','E17-C04']),
-  T('E-ENDO-01','ems','내과응급','저혈당·DKA·HHS','partial',['E17-C02'],{recent:'2025'}),
+  T('E-ENDO-01','ems','내과응급','저혈당·DKA·HHS','covered',['E17-C02'],{recent:'2025',evidence:'KDCA-hypoglycemia+diabetes-acute-complications+hyperglycemia-current'}),
   T('E-GI-01','ems','내과응급','급성복통·위장관 출혈·복부 응급','covered',['E12-C01','E12-C02','E12-C03','E12-C04','E12-C05'],{evidence:'2026-NFA-EMS-216-224'}),
   T('E-INF-01','ems','내과응급','패혈증·감염성 응급','partial',['E03-C04']),
   T('E-TOX-01','ems','중독·알레르기','중독유형·toxidrome·해독제·아나필락시스','partial',['E18-C01','E18-C02']),
