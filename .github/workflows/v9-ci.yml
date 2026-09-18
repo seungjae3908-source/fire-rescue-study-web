@@ -107,3 +107,22 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Resolve official NFA PDF paths in Chromium
         run: node v9/source-catalog-browser.mjs
+
+  live_preview_acceptance:
+    if: github.event.head_commit.message == 'ci(v9): run real deployed preview acceptance'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 1b6befad9265b4e5e9f1e82b5bfe7cf7cae2b224
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install live browser QA dependency
+        run: npm install --no-save playwright@1.55.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Real deployed 119 preview official-PDF acceptance
+        run: node v9/live-preview-e2e.mjs
