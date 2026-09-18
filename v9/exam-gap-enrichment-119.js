@@ -466,5 +466,5 @@ add('E11-C05',{
   traps:['“VT = 무조건 제세동”으로 단순 암기하지 않는다.']
 });
 
-V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v5',conceptIds:['E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
+V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v6',conceptIds:['F05-C01','F07-C01','E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
 })();
