@@ -9,7 +9,17 @@ const targets=[
   {id:'E-ECG-02-AVB',title:'AV block',terms:['방실차단','방실 차단','2도 방실','3도 방실','완전 방실차단','atrioventricular block','AV block']},
   {id:'E-ACLS-02-UNSTABLE',title:'불안정 징후',terms:['저혈압','의식변화','의식 변화','실신','쇼크','불안정']},
   {id:'E-CARD-01-ACS',title:'ACS/STEMI/NSTEMI',terms:['급성관상동맥증후군','급성 관상동맥 증후군','STEMI','NSTEMI','심근경색']},
-  {id:'E-CARD-01-PULM',title:'폐부종/심인성쇼크',terms:['폐부종','심인성쇼크','심인성 쇼크']}
+  {id:'E-CARD-01-PULM',title:'폐부종/심인성쇼크',terms:['폐부종','심인성쇼크','심인성 쇼크']},
+  {id:'E-MCI-01-START',title:'대량재난/START',terms:['START','대량재난','대량 재난','중증도 분류','중증도분류','재난 분류']},
+  {id:'E-MCI-02-CBRN',title:'CBRN/제독',terms:['CBRN','화생방','제독','오염구역','오염 통제구역','안전구역']},
+  {id:'E-TRM-02-CHEST',title:'중증 흉부외상',terms:['긴장성 기흉','긴장기흉','혈흉','심장압전','연가양흉','연가양 흉곽','flail chest']},
+  {id:'E-TRM-03-ABDP',title:'복부/골반/중증외상',terms:['복부 외상','복부손상','복부 손상','골반 외상','골반손상','골반 손상','대량출혈','중증외상','중증 외상']},
+  {id:'E-ENDO-01-DM',title:'저혈당/DKA/HHS',terms:['저혈당','당뇨병성 케톤산증','당뇨병성케톤산증','DKA','고삼투압성 고혈당 상태','고삼투압성고혈당','HHS']},
+  {id:'E-INF-01-SEPSIS',title:'패혈증',terms:['패혈증','sepsis','감염성 쇼크','패혈성 쇼크']},
+  {id:'E-TOX-01-TOX',title:'중독/해독제/아나필락시스',terms:['toxidrome','해독제','중독','아나필락시스','과민성 쇼크','에피네프린 자동주사']},
+  {id:'E-NRP-01',title:'신생아소생',terms:['신생아 소생','신생아소생','양압환기','가슴압박','3:1','심박수 60','심박수 100']},
+  {id:'E-CALC-01-O2',title:'산소통 사용시간',terms:['산소통 사용시간','산소통사용시간','실린더 상수','실린더상수','잔압','산소용기 사용시간']},
+  {id:'E-CALC-02-IV',title:'수액 적하속도',terms:['적하속도','적하 속도','gtt/min','gtt','drop factor','분당 방울','시간당 주입량']}
 ];
 
 const browser=await chromium.launch({headless:true});
