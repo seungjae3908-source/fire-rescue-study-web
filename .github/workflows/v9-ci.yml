@@ -359,3 +359,27 @@ jobs:
           exit 1
       - name: Real image OCR + owner isolation + restore acceptance
         run: node v9/image-ocr-e2e.mjs
+
+  deployed_private_session_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'deployed privacy session acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: dcb991893fbecfdc3f03395a4ad311e05201033c
+      STUDY_119_PDF_FIXTURE_URL: https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/dcb991893fbecfdc3f03395a4ad311e05201033c/v9/fixtures/private-sample.pdf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install deployed privacy/session browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Deployed expired-session fail-closed QA
+        run: node v9/auth-session-e2e.mjs
+      - name: Deployed personal PDF extraction/isolation QA
+        run: node v9/pdf-e2e.mjs
+      - name: Deployed image OCR + owner restore QA
+        run: node v9/image-ocr-e2e.mjs

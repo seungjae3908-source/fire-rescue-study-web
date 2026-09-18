@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 
-const base='http://127.0.0.1:4173/v9/index.html';
+const base=process.env.STUDY_119_PREVIEW_URL||'http://127.0.0.1:4173/v9/index.html';
+const expectedAppHead=process.env.STUDY_119_EXPECTED_APP_HEAD||'';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 const owner='qa-image-owner';
 
@@ -10,6 +11,7 @@ try{
   const page=await ctx.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');
+  if(expectedAppHead)assert(await page.evaluate(()=>window.AITUTOR_V9_CONFIG?.exactHead||'')===expectedAppHead,'image OCR QA serves expected deployed head '+expectedAppHead);
   page.setDefaultTimeout(300000);
 
   const first=await page.evaluate(async owner=>{
@@ -59,6 +61,7 @@ try{
   const restorePage=await restoreCtx.newPage(),restoreErrors=[];
   restorePage.on('pageerror',e=>restoreErrors.push(e.message));
   await restorePage.goto(base,{waitUntil:'domcontentloaded'});await restorePage.waitForSelector('.app');
+  if(expectedAppHead)assert(await restorePage.evaluate(()=>window.AITUTOR_V9_CONFIG?.exactHead||'')===expectedAppHead,'image restore QA serves expected deployed head '+expectedAppHead);
   const restored=await restorePage.evaluate(async ({owner,bundle})=>{
     const V=window.AITUTOR_V9;V.Store.switchOwner(owner);
     const imported=await V.PrivateDocs.importFromSync(bundle.docs,bundle.chunks);

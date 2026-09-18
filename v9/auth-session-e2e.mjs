@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 
-const base='http://127.0.0.1:4173/v9/index.html';
+const base=process.env.STUDY_119_PREVIEW_URL||'http://127.0.0.1:4173/v9/index.html';
+const expectedAppHead=process.env.STUDY_119_EXPECTED_APP_HEAD||'';
 const TEST='https://session-expiry.test';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS','content-type':'application/json'};
@@ -43,6 +44,7 @@ try{
   });
 
   await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');
+  if(expectedAppHead)assert(await page.evaluate(()=>window.AITUTOR_V9_CONFIG?.exactHead||'')===expectedAppHead,'session QA serves expected deployed head '+expectedAppHead);
   const result=await page.evaluate(async TEST=>{
     const V=window.AITUTOR_V9,key=V.SupabaseLite.sessionKey;
     const run=async(email)=>{
