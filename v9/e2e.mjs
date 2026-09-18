@@ -53,6 +53,14 @@ try{
   assert(hazmatAnchors.simple.every(x=>x.doc==='prevention2'&&x.from===x.page&&x.status==='verified'&&x.precision==='exact-pdf-page-anchor'),'browser runtime exposes six exact hazardous-material class page anchors');
   assert(hazmatAnchors.c01.length===2&&Number(hazmatAnchors.c01[0]?.from)===345&&Number(hazmatAnchors.c01[1]?.from)===385&&hazmatAnchors.s01==='verified'&&hazmatAnchors.p01==='exact-pdf-page-anchor','browser runtime preserves hazardous definition/classification dual-page evidence');
   assert(hazmatAnchors.c08.length===2&&hazmatAnchors.c08[0]?.doc==='fire1'&&Number(hazmatAnchors.c08[0]?.from)===319&&hazmatAnchors.c08[1]?.doc==='prevention2'&&Number(hazmatAnchors.c08[1]?.from)===536&&hazmatAnchors.s08==='verified'&&hazmatAnchors.p08==='exact-pdf-page-anchor','browser runtime preserves hazardous special-phenomenon + response dual-source evidence');
+  await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
+  await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
+  const calcTruth=await p.evaluate(()=>{
+    const V=window.AITUTOR_V9,p=V.contentPacks.authored['F05-C01'];
+    return{rows:p?.calculations||[],scope:V.curriculum.byId['F05-C01']?.scopeId||''};
+  });
+  assert(calcTruth.scope==='F05'&&calcTruth.rows.length>=1&&String(calcTruth.rows[0]?.formula||'').includes('Σ('),'F05-C01 exposes verified designated-quantity calculation contract');
+  assert(await p.locator('.calc-lab').count()>=1,'browser UI renders verified calculation contract as calculation lab');
   const investigationAnchors=await p.evaluate(()=>{
     const V=window.AITUTOR_V9,spec={
       'F06-C01':[269,270],
