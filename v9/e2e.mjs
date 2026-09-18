@@ -51,8 +51,12 @@ try{
   assert((await tp.locator('.brand').textContent()).includes('119'),'tablet keeps 119 brand identity');await tp.locator('[data-go="study"]').first().click();await tp.waitForSelector('.workspace');assert(await tp.locator('.study-mainpane').isVisible(),'tablet keeps wide textbook pane');assert(await tp.locator('.study-rail').isHidden(),'tablet hides desktop assistant rail to preserve reading width');await noX(tp,'tablet study');assert(terr.length===0,`tablet runtime errors = 0 (${terr.join(' | ')})`);await tablet.close();
 
   const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
-  await mobile.route(/\/api\/official-pdf\?/,async route=>{await route.fulfill({status:200,headers:{'content-type':'application/pdf','access-control-allow-origin':'*','accept-ranges':'bytes'},body:officialPdfFixture})});
+  let officialPdfRequests=0;
+  await mobile.route(/\/api\/official-pdf\?/,async route=>{officialPdfRequests++;await route.fulfill({status:200,headers:{'content-type':'application/pdf','access-control-allow-origin':'*','accept-ranges':'bytes'},body:officialPdfFixture})});
   const m=await mobile.newPage();const merr=await errors(m);await m.goto(base,{waitUntil:'domcontentloaded'});await m.waitForSelector('.mobile-nav');await noX(m,'mobile home');
+  const cacheStart=officialPdfRequests;
+  await m.evaluate(async()=>{await window.AITUTOR_V9.SourcePDF.resolveRow('ems');await window.AITUTOR_V9.SourcePDF.resolveRow('ems')});
+  assert(officialPdfRequests===cacheStart+1,'official PDF active-document cache avoids duplicate network fetches');
   assert((await m.locator('.mobile-nav').textContent()).includes('119'),'mobile bottom navigation exposes 119 tutor');
 
   // User-reported global menu/close regression: exercise the real taps.
