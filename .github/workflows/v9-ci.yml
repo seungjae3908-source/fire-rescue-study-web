@@ -45,7 +45,7 @@ jobs:
           done
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
-      - name: 176-concept + 119 content contract depth gate
+      - name: 176-concept + 119 textbook/content contract depth gate
         run: node v9/content-depth.mjs
 
   browser:
@@ -70,7 +70,7 @@ jobs:
           done
           cat /tmp/aitutor-v9-http.log
           exit 1
-      - name: PC/tablet/mobile 119 learning flow QA
+      - name: PC/tablet/mobile 119 textbook + evidence flow QA
         run: node v9/e2e.mjs
       - name: Inspect official PDF attachment metadata in Chromium
         continue-on-error: true
