@@ -165,6 +165,29 @@ async function seedSession(attempt){
     return cookie;
   }catch{return ''}
 }
+async function fetchDetailWithSession(src,attempt,seed='',fetchImpl=fetch){
+  const url=detailUrl(src,attempt);
+  let cookie=seed,last='';
+  for(let pass=0;pass<3;pass++){
+    try{
+      const res=await fetchImpl(url,{redirect:'follow',headers:{
+        'user-agent':UA,'accept':'text/html,application/xhtml+xml','accept-language':'ko-KR,ko;q=0.9',
+        'cache-control':'no-cache','pragma':'no-cache',
+        'referer':pass===0?LIST:url,
+        ...(cookie?{cookie}:{})
+      }});
+      const html=await res.text();
+      cookie=mergeCookies(cookie,cookieFrom(res));
+      last='HTTP_'+res.status+'_LEN_'+html.length+'_PASS_'+pass;
+      if(res.ok){
+        const a=extractAttachmentCandidates(html,src.name);
+        if(a&&a.paths&&a.paths.length)return{url,cookie,a,last};
+      }
+    }catch(e){last=String((e&&e.message)||e)}
+    if(pass<2)await sleep(120+pass*80);
+  }
+  return{url,cookie,a:null,last};
+}
 async function resolveSource(doc,force=false){
   const src=SOURCES[doc];if(!src)throw new Error('UNKNOWN_OFFICIAL_DOCUMENT');
   const cached=cache.get(doc);
@@ -172,25 +195,16 @@ async function resolveSource(doc,force=false){
   let last='';
   for(let attempt=0;attempt<14;attempt++){
     const seed=await seedSession(attempt);
-    const url=detailUrl(src,attempt);
-    try{
-      const res=await fetch(url,{redirect:'follow',headers:{
-        'user-agent':UA,'accept':'text/html,application/xhtml+xml','accept-language':'ko-KR,ko;q=0.9',
-        'cache-control':'no-cache','pragma':'no-cache','referer':LIST,...(seed?{cookie:seed}:{})
-      }});
-      const html=await res.text(),cookie=mergeCookies(seed,cookieFrom(res));
-      last='HTTP_'+res.status+'_LEN_'+html.length;
-      if(!res.ok||html.length<8000||!norm(html).includes(norm(src.name))){
-        await sleep(Math.min(1200,350+attempt*75));continue;
-      }
-      const a=extractAttachmentCandidates(html,src.name);
-      if(!a||!a.paths||!a.paths.length){last='ATTACHMENT_PATH_MISSING';await sleep(Math.min(1200,350+attempt*75));continue}
-      const urls=officialCandidateUrls(a.paths);
-      if(!urls.length){last='ATTACHMENT_CANDIDATES_INVALID';await sleep(Math.min(1200,350+attempt*75));continue}
-      const row={doc,name:a.name||src.name,urls,detailUrl:url,cookie,expires:Date.now()+10*60*1000};
-      cache.set(doc,row);return row;
-    }catch(e){last=String((e&&e.message)||e)}
-    await sleep(Math.min(1200,350+attempt*75));
+    const detail=await fetchDetailWithSession(src,attempt,seed);
+    last=detail.last||'DETAIL_SESSION_EMPTY';
+    const a=detail.a;
+    if(!a||!a.paths||!a.paths.length){
+      await sleep(Math.min(1200,350+attempt*75));continue;
+    }
+    const urls=officialCandidateUrls(a.paths);
+    if(!urls.length){last='ATTACHMENT_CANDIDATES_INVALID';await sleep(Math.min(1200,350+attempt*75));continue}
+    const row={doc,name:a.name||src.name,urls,detailUrl:detail.url,cookie:detail.cookie,expires:Date.now()+10*60*1000};
+    cache.set(doc,row);return row;
   }
   throw new Error('OFFICIAL_SOURCE_RESOLVE_FAILED_'+last);
 }
@@ -273,4 +287,5 @@ module.exports.stripSessionPath=stripSessionPath;
 module.exports.selectWorkingCandidate=selectWorkingCandidate;
 module.exports.officialCandidateUrls=officialCandidateUrls;
 module.exports.fetchFirstWorkingCandidate=fetchFirstWorkingCandidate;
+module.exports.fetchDetailWithSession=fetchDetailWithSession;
 module.exports.pdfProbe=pdfProbe;

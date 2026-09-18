@@ -65,4 +65,18 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   assert.match(await result.upstream.text(),/^%PDF-/,'the first valid PDF response remains streamable after magic validation');
 }
 
+{
+  let calls=0,secondCookie='';
+  const shell=new Response('<html><body>session shell</body></html>',{status:200,headers:{'content-type':'text/html','set-cookie':'JSESSIONID=handshake; Path=/'}});
+  const full=new Response(html('13. 소방전술3(구급)-저용량.pdf','/board/file/bbs/9/FILE_EMS/ems'),{status:200,headers:{'content-type':'text/html'}});
+  const resolved=await P.fetchDetailWithSession(P.SOURCES.ems,0,'',async (_url,options)=>{
+    calls++;
+    if(calls===2)secondCookie=options.headers.cookie||'';
+    return calls===1?shell:full;
+  });
+  assert.equal(calls,2,'detail resolver retries the same session after a shell response');
+  assert.match(secondCookie,/JSESSIONID=handshake/,'detail resolver reuses the cookie issued by the shell response');
+  assert.ok(resolved.a?.paths?.length>0,'second same-session detail response yields attachment candidates');
+}
+
 console.log('PASS official PDF proxy deterministic candidate-selection contract');
