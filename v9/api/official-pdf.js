@@ -49,8 +49,11 @@ function stripSessionPath(s){
 function candidateVariants(paths){
   const out=[];
   for(const raw of paths||[]){
-    const normalized=normalizeDownloadPath(raw);
-    for(const p of [normalized,stripSessionPath(normalized)]){
+    const original=strip(raw);
+    const originalNoSession=original.replace(/;jsessionid=[^?'"()\\s]+/gi,'');
+    const normalized=normalizeDownloadPath(original);
+    const normalizedNoSession=stripSessionPath(normalized);
+    for(const p of [original,originalNoSession,normalized,normalizedNoSession]){
       if(p&&!out.includes(p))out.push(p);
     }
   }
