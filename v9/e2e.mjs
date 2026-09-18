@@ -273,6 +273,20 @@ try{
   assert(merr.length===0,'mobile runtime errors = 0 '+merr.join(' | '));
   await mobile.close();
 
+  {
+    const tablet=await browser.newContext({viewport:{width:768,height:1024}});
+    const t=await tablet.newPage(),terrs=collectErrors(t);
+    await boot(t);
+    await noX(t,'tablet 768 home');
+    await go(t,'study');await t.waitForSelector('.workspace');
+    await noX(t,'tablet 768 study');
+    assert(await t.locator('.tabbar button').count()===4||await t.locator('.book-jumpbar button').count()===4,'tablet 768 keeps four learning tabs');
+    await go(t,'exam');await noX(t,'tablet 768 exam');
+    await go(t,'resources');await noX(t,'tablet 768 resources');
+    assert(terrs.length===0,'tablet 768 runtime errors = 0 '+terrs.join(' | '));
+    await tablet.close();
+  }
+
   for(const [width,height] of [[360,800],[412,915]]){
     const ctx=await browser.newContext({viewport:{width,height},isMobile:true});
     const page=await ctx.newPage(),errs=collectErrors(page);
