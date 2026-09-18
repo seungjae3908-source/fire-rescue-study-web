@@ -198,6 +198,14 @@ ok(!/sb_secret_[A-Za-z0-9_-]+/.test(config)&&!/service_role/i.test(config),'chec
 const sourceCatalog=fs.readFileSync(new URL('./source-catalog-119.js',import.meta.url),'utf8');
 ok(sourceCatalog.includes('noUserUploadRequired:true'),'official source catalog forbids user-upload requirement');
 ok(sourceCatalog.includes('officialPageFallback:true'),'official source catalog has official-page fallback');
+ok(sourceCatalog.includes("directPdf:'/api/official-pdf?doc=fire1'")&&sourceCatalog.includes("directPdf:'/api/official-pdf?doc=fire2'")&&sourceCatalog.includes("directPdf:'/api/official-pdf?doc=ems'"),'verified official PDFs use the same-origin PDF proxy');
+ok(sourceCatalog.includes('sameOriginProxy:true')&&sourceCatalog.includes('arbitraryUrlProxy:false'),'official source catalog forbids arbitrary URL proxying');
+const officialProxy=fs.readFileSync(new URL('./api/official-pdf.js',import.meta.url),'utf8');
+ok(officialProxy.includes("const SOURCES = Object.freeze")&&officialProxy.includes("fire1:")&&officialProxy.includes("fire2:")&&officialProxy.includes("ems:"),'official PDF proxy uses a fixed document allowlist');
+ok(!/req\.query\?\.url|req\.query\.url|new URL\(.*req\.query/i.test(officialProxy),'official PDF proxy accepts no arbitrary upstream URL');
+ok(officialProxy.includes("req.headers.range")&&officialProxy.includes("'content-range'")&&officialProxy.includes("'accept-ranges'"),'official PDF proxy forwards byte-range semantics for PDF.js');
+ok(officialProxy.includes("'https://www.nfa.go.kr/board/file/"),'official PDF proxy upstream is pinned to NFA');
+
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
 ok(sourcePdf.includes('pdfjs-text-coordinate-overlay'),'official PDF evidence uses a text-coordinate highlight overlay');
 ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs are never server-uploaded and remain unmodified');
