@@ -56,6 +56,8 @@ jobs:
         run: node v9/textbook-depth-audit.mjs
       - name: 119 remaining blocker detail report
         run: node v9/remaining-blocker-audit.mjs
+      - name: 119 final release gate audit
+        run: node v9/release-gate-audit.mjs
 
   browser:
     runs-on: ubuntu-latest
