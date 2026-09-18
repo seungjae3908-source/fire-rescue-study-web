@@ -81,6 +81,22 @@ ok(!!fullCoverage&&fullCoverage.total>70,'full exam Coverage Map is loaded as a 
 ok(fullCoverage.missing===0&&fullCoverage.partial>0&&fullCoverage.implementationPercent<100,'full exam Coverage Map has no fully missing topic but still exposes partial areas before 100-point release');
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='partial','fire-science and building-fire enrichments remain honestly partial until all subtopics are closed');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='partial','ECG and mass-casualty topics remain explicitly partial after source-backed VF/VT and START enrichment');
+const newlyClosedFireRows=['F-COMB-02','F-FIRE-03','F-EXP-01','F-BLD-01','F-BLD-02','F-BLD-03'];
+ok(newlyClosedFireRows.every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'six source-backed fire rows are promoted only after explicit evidence closure');
+const combustionCalc=V.contentPacks.authored['F03-C03']?.calculations||[];
+ok(['이론공기량','이론산소량','과잉공기량','공기비'].every(k=>combustionCalc.some(x=>String(x.title||'').includes(k))),'combustion-air lesson contains all four calculation contracts');
+ok(['119-calc-comb-01','119-calc-comb-02','119-calc-comb-03','119-calc-comb-04'].every(id=>!!V.questionById[id]),'combustion-air closure has four source-backed calculation drills');
+const neutralPack=V.contentPacks.authored['F03-C07'];
+ok((neutralPack?.must||[]).some(x=>/중성대 위/.test(x))&&(neutralPack?.must||[]).some(x=>/중성대 아래/.test(x))&&(neutralPack?.detail||[]).some(x=>/개구부/.test(x)),'middle-plane closure covers pressure/opening-driven inflow and exhaust');
+const explosionPack=V.contentPacks.authored['F03-C08'];
+ok((explosionPack?.compare||[]).some(x=>x?.[0]==='폭연')&&(explosionPack?.compare||[]).some(x=>x?.[0]==='폭굉'),'deflagration/detonation closure contains an explicit comparison');
+const buildingPack=V.contentPacks.authored['F03-C05'];
+ok((buildingPack?.compare||[]).some(x=>/목조건축물/.test(String(x?.[0])))&&(buildingPack?.compare||[]).some(x=>/내화/.test(String(x?.[0]))),'wood-vs-fire-resistant building closure contains a direct comparison');
+ok(['119-finalgap-bld-01','119-finalgap-bld-02','119-finalgap-bld-03'].every(id=>!!V.questionById[id]),'building-fire closure has three focused exam-style drills');
+const passivePack=V.contentPacks.authored['F07-C01'];
+ok((passivePack?.compare||[]).some(x=>x?.[0]==='방화구획')&&(passivePack?.compare||[]).some(x=>x?.[0]==='방화벽'),'passive-fire closure distinguishes compartmentation and fire walls');
+ok(['내화구조','불연재료','준불연재료','난연재료'].every(k=>(passivePack?.compare||[]).some(x=>x?.[0]===k)),'passive-fire closure distinguishes structural fire resistance from material combustibility classes');
+ok((passivePack?.officialLinks||[]).length>=3,'passive-fire closure keeps current Building Act source links');
 ok(fullCoverage.calcMissing.length===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-BURN-02')?.status==='covered','no calculation topic is blank: oxygen/drip remain partial while Parkland is source-backed covered');
 
 ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'current 176-node content contract reaches 176/176 without claiming full exam coverage');
