@@ -57,6 +57,11 @@ try{
 
   await go(p,'settings');await cleanPage(p,'desktop settings');
   assert((await p.locator('.page').innerText()).includes('개인 자료'),'settings keeps only user-relevant privacy information');
+
+  await go(p,'tutor');await cleanPage(p,'desktop AI question');
+  const tutorText=await p.locator('.page').innerText();
+  assert(!/F\d\d-C\d\d/.test(tutorText)&&!tutorText.includes('WebGPU'),'AI question screen hides internal concept ids and engine jargon');
+
   assert(derr.length===0,'desktop runtime errors = 0 '+derr.join(' | '));
   await desktop.close();
 
