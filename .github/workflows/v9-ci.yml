@@ -115,6 +115,7 @@ jobs:
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
       STUDY_119_EXPECTED_APP_HEAD: 88fd5530a785d9fb9c297a029622a6de19b6abec
+      STUDY_119_PROXY_RUNTIME_HEAD: f7c1b971966e5cae90d4009c8257af1b79144128
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
