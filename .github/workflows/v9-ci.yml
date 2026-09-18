@@ -385,3 +385,29 @@ jobs:
         run: node v9/pdf-e2e.mjs
       - name: Deployed image OCR + owner restore QA
         run: node v9/image-ocr-e2e.mjs
+
+  production_root_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'production root live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      STUDY_119_PREVIEW_URL: https://fire-rescue-study-web.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 1f38cbd7f57d035ccdf993a8b1eed5d66a75fdb1
+      STUDY_119_PDF_FIXTURE_URL: https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/1f38cbd7f57d035ccdf993a8b1eed5d66a75fdb1/v9/fixtures/private-sample.pdf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install production browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Production 119 release-candidate acceptance
+        run: node v9/release-candidate-live-e2e.mjs
+      - name: Production expired-session fail-closed QA
+        run: node v9/auth-session-e2e.mjs
+      - name: Production personal PDF extraction/isolation QA
+        run: node v9/pdf-e2e.mjs
+      - name: Production image OCR + owner restore QA
+        run: node v9/image-ocr-e2e.mjs
