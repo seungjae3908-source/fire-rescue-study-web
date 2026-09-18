@@ -34,13 +34,17 @@ function calculationBlocks(c,pack){
   if(!rows.length)return'';
   return rows.map((x,i)=>`<section class="calc-lab" data-calculation-index="${i}"><div class="lesson-heading"><div><span class="eyebrow">계산문제</span><h3>${esc(x.title||'공식 계산')}</h3></div></div><div class="calc-formula">${esc(x.formula)}</div>${x.note?`<div class="calc-example"><b>계산 원칙</b><p>${esc(x.note)}</p>${x.example?`<p><code>${esc(x.example)}</code></p>`:''}</div>`:''}</section>`).join('');
 }
+function mustBlock(pack){
+  const rows=uniqueTextRows(pack?.must||[]).slice(0,3);if(!rows.length)return'';
+  return `<section class="study-must"><div class="study-must-title">★ 시험필수</div><ul>${rows.map(x=>`<li><span>${esc(x)}</span></li>`).join('')}</ul></section>`;
+}
 function comparisonBlock(pack){return pack.compare?.length?`<section class="detail-compare"><h3>비슷한 개념 비교</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>핵심</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`:''}
 function sourceBlock(c,pack){return `<div class="lesson source-only"><p class="lead">${esc(V.sourceLabel(c.id)||pack.source||'공식교재')}</p><button class="btn primary block" data-source-concept="${c.id}">원문 페이지 열기</button></div>`}
 function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.id)||[],detail=pack.detail||[],sections=uniqueSections(pack.deepSections||[]),coreRows=uniqueTextRows(detail,pack.summary);
   if(tab==='detail'){const detailRows=sections.length?sections:[{title:'개념',body:uniqueTextRows(detail).join(' '),bullets:pack.must||[]}];return `<div class="lesson detail-view">${detailRows.map(detailSection).join('')}${visualBlocks(pack)}${hazmatBlock(c)}${calculationBlocks(c,pack)}${comparisonBlock(pack)}${(pack.must?.length||pack.traps?.length)?`<section class="detail-check"><h3>시험 포인트</h3><div class="detail-check-grid">${pack.must?.length?`<div><span>꼭 기억</span><ul>${uniqueTextRows(pack.must).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${pack.traps?.length?`<div><span>헷갈림 주의</span><ul>${uniqueTextRows(pack.traps).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}</div></section>`:''}</div>`}
   if(tab==='quiz')return `<div class="lesson">${qs.length?qs.map(q=>qcard(q,true)).join(''):'<div class="empty book-empty">아직 준비된 문제가 없습니다.</div>'}</div>`;
   if(tab==='source')return sourceBlock(c,pack);
-  return `<div class="lesson"><p class="lead">${esc(pack.summary)}</p>${coreRows.slice(0,3).map(x=>`<div class="core-line"><p>${esc(x)}</p></div>`).join('')}</div>`;
+  return `<div class="lesson"><p class="lead">${esc(pack.summary)}</p>${mustBlock(pack)}${coreRows.slice(0,3).map(x=>`<div class="core-line"><p>${esc(x)}</p></div>`).join('')}</div>`;
 }
 function lessonBook(c,pack){const tab=['core','detail','quiz','source'].includes(state().studyTab)?state().studyTab:'core';return `<article class="book-mobile"><nav class="book-jumpbar">${[['core','핵심'],['detail','상세'],['quiz','문제'],['source','원문']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-study-tab="${k}">${l}</button>`).join('')}</nav><section class="book-section">${lessonContent(c,pack,tab)}</section></article>`}
 function studyRail(c,pack,st){return `<aside class="study-rail"><section class="rail-card"><h3>${esc(c.title)}</h3><div class="rail-actions"><button class="btn primary" data-tutor-concept="${c.id}">AI 질문</button><button class="btn" data-bank-concept="${c.id}">문제</button><button class="btn ghost" data-source-concept="${c.id}">원문</button></div></section></aside>`}
@@ -90,7 +94,7 @@ async function renderPdfEvidence(id,pageOverride=null){
     badge.textContent=staticRange?'공식 교재 여는 중…':(availability.local?'저장된 교재 여는 중…':'교재 저장 중…');
     const result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:90000,onProgress:progress});
     root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);
-    badge.textContent=`${result.page}/${result.pages}쪽 · 근거 ${result.hits}개`;
+    badge.textContent=`${result.page}/${result.pages}쪽 · 공식 근거`;
     const prev=root.querySelector('[data-pdf-page="-1"]'),next=root.querySelector('[data-pdf-page="1"]');if(prev)prev.disabled=result.page<=1;if(next)next.disabled=result.page>=result.pages;
     root.querySelector('.pdf-pager')?.classList.remove('hidden')
   }catch(err){
