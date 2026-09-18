@@ -260,3 +260,41 @@
   .study-must-title{font-size:13px}
   .study-must li{font-size:15px;line-height:1.65}
 }
+
+
+/* Student-first UX V6 — post-exam analysis */
+.exam-report{display:grid;gap:12px;max-width:980px;margin:0 auto;padding-bottom:20px}
+.exam-report-top{position:sticky;top:0;z-index:6;padding:6px 0;background:#081524}
+.exam-report-summary h2{font-size:34px;margin:0 0 12px}
+.exam-report-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.exam-report-grid>div{display:grid;gap:4px;border:1px solid var(--line);border-radius:12px;background:#081524;padding:12px}
+.exam-report-grid span{font-size:10px;color:var(--muted)}
+.exam-report-grid b{font-size:18px}
+.weak-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.weak-chip{border:1px solid rgba(255,198,109,.28);background:rgba(255,198,109,.07);border-radius:999px;padding:7px 10px;font-size:12px}
+.exam-miss-list{display:grid;gap:10px;margin-top:10px}
+.exam-miss{border:1px solid var(--line);background:#081524;border-radius:14px;padding:14px}
+.exam-miss-head{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:11px}
+.exam-miss h3{font-size:17px;line-height:1.55;margin:9px 0 12px;word-break:keep-all}
+.exam-answer-line{display:grid;grid-template-columns:54px minmax(0,1fr);gap:9px;padding:9px 10px;border-radius:10px;margin:6px 0;font-size:13px;line-height:1.55}
+.exam-answer-line b{font-size:11px}
+.wrong-answer{background:rgba(255,133,128,.06);border:1px solid rgba(255,133,128,.17)}
+.right-answer{background:rgba(118,221,166,.06);border:1px solid rgba(118,221,166,.20)}
+.exam-why{font-size:13px;line-height:1.65;color:#dce7f3;margin:9px 0}
+.exam-why b{color:#fff}
+.exam-history-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.exam-history-row>div{min-width:0}
+
+@media(max-width:720px){
+  .exam-report{gap:9px;padding-bottom:14px}
+  .exam-report-summary h2{font-size:30px}
+  .exam-report-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .exam-report-grid b{font-size:16px}
+  .exam-miss{padding:12px}
+  .exam-miss h3{font-size:16px}
+  .exam-answer-line{grid-template-columns:48px minmax(0,1fr);font-size:13px}
+  .exam-miss .toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .exam-miss .toolbar .btn:last-child{grid-column:1/-1}
+  .exam-history-row{align-items:stretch}
+  .exam-history-row .btn{flex:0 0 auto}
+}
