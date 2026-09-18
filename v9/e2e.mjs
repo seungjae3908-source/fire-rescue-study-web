@@ -17,7 +17,7 @@ try{
   await p.locator('[data-concept="F03-C06"]').click();await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');assert((await p.locator('.concept-head h2').textContent()).includes('플래시오버'),'TOC selects concept without permanent extra columns');
   await p.locator('[data-study-tab="compare"]').click();assert((await p.locator('.study-body').textContent()).includes('백드래프트'),'comparison tab renders rich concept content');
   await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C05'));await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C05');assert((await p.locator('.concept-head h2').textContent()).includes('스프링클러'),'complete fire curriculum exposes sprinkler study concept');
-  await p.locator('[data-study-tab="detail"]').click();await p.waitForSelector('.detail-view');assert((await p.locator('.detail-view').textContent()).includes('상세내용'),'rich detail tab renders for sprinkler');
+  await p.locator('.tabbar [data-study-tab="detail"]').click();await p.waitForSelector('.detail-view');assert((await p.locator('.detail-view').textContent()).includes('상세내용'),'rich detail tab renders for sprinkler');
   assert((await p.locator('.detail-section').count())>=1,'detail tab has structured learning sections');
   const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.verified===162&&coverage.total===162,'browser runtime sees 162/162 verified concept packs');
 
@@ -44,7 +44,7 @@ try{
   await noX(m,'mobile study');
   const boxes=await m.evaluate(()=>{const a=document.querySelector('.actionbar').getBoundingClientRect(),n=document.querySelector('.mobile-nav').getBoundingClientRect();return{a:{top:a.top,bottom:a.bottom},n:{top:n.top,bottom:n.bottom},vw:innerWidth}});assert(boxes.a.bottom<=boxes.n.top+1,`mobile study action bar sits above global nav (${JSON.stringify(boxes)})`);assert(await m.locator('.actionbar').isVisible(),'mobile AI/문제/근거 action bar visible');
 
-  await m.locator('[data-study-tab="detail"]').click();await m.waitForSelector('.detail-view');assert((await m.locator('.detail-view').textContent()).includes('상세내용'),'mobile rich detail tab opens');
+  await m.locator('.tabbar [data-study-tab="detail"]').click();await m.waitForSelector('.detail-view');assert((await m.locator('.detail-view').textContent()).includes('상세내용'),'mobile rich detail tab opens');
   await m.locator('.detail-view [data-source-concept]').click();await m.waitForSelector('#sourceModal');assert(await m.locator('#sourceModal').isVisible(),'source evidence modal opens');
   await m.locator('#sourceModal [data-pdf-evidence]').click();await m.waitForSelector('#pdfEvidence');assert(await m.locator('#pdfEvidence').isVisible(),'PDF evidence viewer opens from explanation');
   await m.locator('#pdfEvidence [data-pdf-close]').click();assert(await m.locator('#pdfEvidence').count()===0,'PDF evidence close button works');
