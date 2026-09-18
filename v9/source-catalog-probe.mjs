@@ -1,26 +1,49 @@
-const sources=[
-  {key:'ems',url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view&pageIdx=&searchCondition=&searchKeyword=',expect:['소방전술3','pdf']},
-  {key:'fire1',url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106809&mode=view&pageIdx=&searchCondition=&searchKeyword=',expect:['소방전술1','pdf']},
-  {key:'prevention',url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106805&mode=view&pageIdx=&searchCondition=&searchKeyword=',expect:['예방실무','pdf']},
-  {key:'laws',url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106806&mode=view&pageIdx=&searchCondition=&searchKeyword=',expect:['소방법령','pdf']}
+const base='https://www.nfa.go.kr';
+const board='bbs_0000000000000035';
+const defs=[
+  {key:'ems',cnt:'106811',markers:['소방전술3','pdf']},
+  {key:'fire1',cnt:'106809',markers:['소방전술1','pdf']},
+  {key:'prevention',cnt:'106805',markers:['예방실무','pdf']},
+  {key:'laws',cnt:'106806',markers:['소방법령','pdf']}
 ];
-const clean=s=>String(s||'').replace(/\s+/g,' ').trim();
-for(const src of sources){
-  const res=await fetch(src.url,{headers:{'user-agent':'Mozilla/5.0 119-study-source-probe/1.0'}});
-  const html=await res.text();
-  console.log('\nSOURCE',src.key,'HTTP',res.status,'BYTES',html.length);
-  for(const e of src.expect)if(!html.toLowerCase().includes(e.toLowerCase()))throw new Error(`${src.key}: expected marker missing: ${e}`);
-  const snippets=[];
-  for(const m of html.matchAll(/\.pdf/gi)){
-    const a=Math.max(0,m.index-900),b=Math.min(html.length,m.index+1400);
-    const sn=clean(html.slice(a,b));
-    if(!snippets.includes(sn))snippets.push(sn);
+const clean=x=>String(x||'').replace(/\s+/g,' ').trim();
+const stripSession=x=>x.replace(/;jsessionid=[^?'"\s]+/gi,'');
+function urls(cnt){return[
+  `${base}/nfsa/releaseinformation/archive/materials/?boardId=${board}&category=&cntId=${cnt}&mode=view&pageIdx=&searchCondition=&searchKeyword=`,
+  `${base}/nfsa/releaseinformation/archive/materials/?boardId=${board}&cntId=${cnt}&mode=view`,
+  `${base}/nfsa/releaseinformation/archive/materials/?cntId=${cnt}&mode=view`
+]}
+for(const def of defs){
+  let html='',used='',status=0;
+  for(const url of urls(def.cnt)){
+    try{
+      const res=await fetch(url,{headers:{'user-agent':'Mozilla/5.0 119-study-source-probe/2.0','accept-language':'ko-KR,ko;q=0.9'}});
+      const body=await res.text();
+      if(res.ok&&def.markers.every(x=>body.toLowerCase().includes(x.toLowerCase()))){html=body;used=url;status=res.status;break}
+      console.log('SOURCE_ATTEMPT',def.key,res.status,url);
+    }catch(e){console.log('SOURCE_ATTEMPT_ERROR',def.key,String(e?.message||e))}
   }
-  console.log('PDF_SNIPPETS',src.key,JSON.stringify(snippets.slice(0,12),null,2));
-  const attrs=[];
-  for(const m of html.matchAll(/(?:href|src|action|onclick|value)\s*=\s*["']([^"']+)["']/gi)){
-    const v=m[1];
-    if(/pdf|file|down|attach|atch|preview/i.test(v))attrs.push(v);
+  if(!html){console.log('SOURCE_UNRESOLVED',def.key);continue}
+  console.log('\nSOURCE',def.key,'HTTP',status,'BYTES',html.length,'URL',used);
+  const direct=[];
+  for(const m of html.matchAll(/Jnit_boardDownload\(\s*['"]([^'"]+)['"]/gi)){
+    const p=stripSession(clean(m[1]));
+    if(p.includes('/board/file/'))direct.push(p);
   }
-  console.log('CANDIDATE_ATTRS',src.key,JSON.stringify([...new Set(attrs)].slice(0,80),null,2));
+  for(const m of html.matchAll(/openPdfViewer\(\s*['"][^'"]+['"]\s*,\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+\.pdf)['"]/gi)){
+    console.log('VIEWER_FILENAME',def.key,m[1]);
+  }
+  const unique=[...new Set(direct)];
+  console.log('DIRECT_CANDIDATES',def.key,JSON.stringify(unique,null,2));
+  for(const p of unique){
+    const url=p.startsWith('http')?p:base+p;
+    let res;
+    try{res=await fetch(url,{method:'HEAD',redirect:'follow',headers:{'user-agent':'Mozilla/5.0 119-study-source-probe/2.0'}})}catch{}
+    if(!res||!res.ok){
+      try{res=await fetch(url,{redirect:'follow',headers:{Range:'bytes=0-32','user-agent':'Mozilla/5.0 119-study-source-probe/2.0'}})}catch{}
+    }
+    console.log('DIRECT_VERIFY',def.key,JSON.stringify({url,status:res?.status||0,type:res?.headers?.get('content-type')||'',length:res?.headers?.get('content-length')||''}));
+  }
+  const snippets=[];for(const m of html.matchAll(/\.pdf/gi)){const sn=clean(html.slice(Math.max(0,m.index-650),Math.min(html.length,m.index+900)));if(!snippets.includes(sn))snippets.push(sn)}
+  console.log('PDF_SNIPPETS',def.key,JSON.stringify(snippets.slice(0,6),null,2));
 }
