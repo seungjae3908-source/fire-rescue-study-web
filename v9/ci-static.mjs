@@ -53,7 +53,7 @@ ok(V.VisualCompletion119.targets.every(id=>{
   return (p?.visuals||[]).length>0&&(p.visuals||[]).some(v=>!!V.Visual119.render(v));
 }),'all 27 required visual concepts render at least one real Visual119 diagram');
 ok(!contentAudit.blockers.visual,'visual blocker remains closed');
-ok(V.CalculationContract119?.requiredIds?.length===7,'calculation contract explicitly tracks the seven source-applicable hazardous-material concepts');
+ok(V.CalculationContract119?.requiredIds?.length===9&&V.CalculationContract119.requiredIds.includes('F03-C03')&&V.CalculationContract119.requiredIds.includes('E14-C03'),'calculation contract tracks hazardous-material, combustion-air and Parkland source-applicable concepts');
 ok(V.CalculationContract119.requiredIds.every(id=>(V.contentPacks.authored[id]?.calculations||[]).length>0),'all source-applicable calculation concepts expose a real calculation contract');
 ok(V.CalculationContract119.falsePositiveRemoved.every(id=>V.ContentContract119.evaluateConcept(id).needsCalc===false),'former keyword-only calculation false positives are no longer required');
 ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-applicable contracts, not keyword padding');
