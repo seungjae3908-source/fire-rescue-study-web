@@ -3,5 +3,7 @@ window.AITUTOR_V9_CONFIG={
   supabasePublishableKey:'sb_publishable_CxNMo2idqoaYJvbm8FTX8w_hre1kQ-c',
   enableCloudSync:true,
   officialPdfProxyBase:'https://study-119-pdf-proxy.vercel.app',
+  officialPdfMirrorBase:'https://study-119-official-pdf.vercel.app',
+  officialPdfMirrorDocs:['fire1','fire2','ems'],
   study119:true
 };
