@@ -10,6 +10,9 @@ try{
   const desktop=await browser.newContext({viewport:{width:1440,height:900}});const p=await desktop.newPage();const err=await errors(p);
   await p.goto(base,{waitUntil:'domcontentloaded'});await p.waitForSelector('.app');await noX(p,'desktop home');
   await p.locator('[data-go="study"]').first().click();await p.waitForSelector('.workspace');await noX(p,'desktop study');
+  assert(await p.locator('.study-rail').isVisible(),'desktop study exposes 119 assistant rail');
+  assert((await p.locator('.study-rail').textContent()).includes('119 학습도우미'),'desktop rail is branded as 119');
+  assert(await p.locator('.study-mainpane').isVisible(),'desktop electronic textbook pane is visible');
   assert(await p.locator('.actionbar').isVisible(),'desktop fixed study action bar visible');
   const action=await p.locator('.actionbar').boundingBox(),vp=p.viewportSize();assert(action&&action.y+action.height<=vp.height+1,'desktop action bar inside viewport');
   assert(await p.locator('.study-body').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'desktop study body has no horizontal overflow');
@@ -33,6 +36,8 @@ try{
   const sw=await p.evaluate(async()=>{const reg=await navigator.serviceWorker.ready;return{scope:reg.scope,controller:!!navigator.serviceWorker.controller,manifest:document.querySelector('link[rel="manifest"]')?.getAttribute('href')}});assert(sw.scope.endsWith('/v9/'),'v9 service worker scope is limited to /v9/');assert(sw.manifest==='./manifest.webmanifest','v9 manifest is linked');await p.reload({waitUntil:'domcontentloaded'});await p.waitForSelector('.app');assert(await p.evaluate(()=>!!navigator.serviceWorker.controller),'v9 service worker controls the page after reload');await desktop.setOffline(true);await p.reload({waitUntil:'domcontentloaded'});await p.waitForSelector('.app');assert(await p.locator('.app').isVisible(),'v9 PWA shell reloads while offline');await p.locator('[data-go="settings"]').first().click();await p.waitForSelector('.settings-page');assert(await p.locator('.settings-account').isVisible(),'desktop settings account controls are inline');assert(await p.locator('[data-profile-save]').isVisible(),'desktop profile-save visible');await noX(p,'desktop settings');await noX(p,'desktop offline PWA');await desktop.setOffline(false);
   assert(err.length===0,`desktop runtime errors = 0 (${err.join(' | ')})`);await desktop.close();
 
+  const tablet=await browser.newContext({viewport:{width:900,height:1180},isMobile:false});const tp=await tablet.newPage(),terr=await errors(tp);await tp.goto(base,{waitUntil:'domcontentloaded'});await tp.waitForSelector('.app');await tp.locator('[data-go="study"]').first().click();await tp.waitForSelector('.workspace');assert(await tp.locator('.study-mainpane').isVisible(),'tablet keeps wide textbook pane');assert(await tp.locator('.study-rail').isHidden(),'tablet hides desktop assistant rail to preserve reading width');await noX(tp,'tablet study');assert(terr.length===0,`tablet runtime errors = 0 (${terr.join(' | ')})`);await tablet.close();
+
   const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true});const m=await mobile.newPage();const merr=await errors(m);await m.goto(base,{waitUntil:'domcontentloaded'});await m.waitForSelector('.mobile-nav');await noX(m,'mobile home');
 
   // User-reported global menu/close regression: exercise the real taps.
@@ -41,6 +46,7 @@ try{
   await m.locator('[data-more]').click();await m.waitForSelector('.menu-modal');await m.locator('.menu-modal [data-close-more]').click();await m.waitForFunction(()=>!window.AITUTOR_V9.App.runtime.more);assert(await m.locator('.menu-modal').count()===0,'whole-menu close button works');
 
   await m.locator('.mobile-nav [data-go="study"]').click();await m.waitForSelector('.workspace');
+  assert(await m.locator('.study-rail').isHidden(),'mobile hides desktop assistant rail');
   assert(await m.locator('.page-study .top').isHidden(),'mobile study removes duplicated global header');
   assert(await m.locator('.page-study .actionbar').isHidden(),'mobile study removes duplicated bottom action bar');
   const visibleTabs=await m.locator('.page-study .tabbar button:visible').count();assert(visibleTabs===3,'mobile study exposes only 핵심/상세/문제 primary tabs');
