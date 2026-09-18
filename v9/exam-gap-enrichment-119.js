@@ -2046,5 +2046,111 @@ add('E18-C02',{
   ]
 });
 
+
+add('F03-C15',{
+  source:'2026 소방전술1(화재2) 354~357쪽 · 한국산업안전보건공단 화재·폭발 기술자료',
+  detail:[
+    'BLEVE는 액화가스처럼 압력 아래 액체로 저장된 물질의 용기가 외부화재 등으로 가열되면서 내부 압력이 상승하고 용기 강도가 저하되어 파열한 뒤, 액체가 급격히 기화·팽창하는 현상이다.',
+    '저장물이 가연성이면 파열 뒤 대량 방출된 증기가 주변 공기와 혼합되어 점화될 수 있고, 이때 큰 구형 화염인 Fire Ball이 형성될 수 있다.',
+    '교재는 BLEVE의 직접 위험을 폭발압력·용기파편과 연결하고, Fire Ball은 특히 강한 복사열 피해와 연결해 구분한다.',
+    '한국산업안전보건공단 공식 기술자료는 인화성 가스·액체 누출사고의 화재형태를 액면화재(Pool Fire), 제트화재(Jet Fire), 플래시화재 등으로 구분하고, 폭발형태를 BLEVE·VCE 등과 구분한다.'
+  ],
+  must:[
+    'BLEVE → 가압 액체 용기 가열 · 압력상승/강도저하 · 파열 · 급기화',
+    'Fire Ball → 대량 가연성 증기 점화 · 구형 화염 · 강한 복사열',
+    'BLEVE 자체 위험 → 폭발압력·파편 + 가연성일 때 Fire Ball 가능',
+    'Pool Fire → 누출 액체가 고인 액면에서 증기가 연소',
+    'Jet Fire → 가압 가스/증기가 연속 분출되며 형성하는 방향성 화염'
+  ],
+  traps:[
+    'BLEVE와 Fire Ball을 완전히 같은 현상으로 보지 않는다.',
+    'Pool Fire를 가압가스 분출화염으로 설명하지 않는다.',
+    'Jet Fire를 고여 있는 액면 전체의 연소로 설명하지 않는다.',
+    'BLEVE는 저장물질이 반드시 가연성이어야만 성립한다고 단정하지 않는다.'
+  ],
+  compare:[
+    ['BLEVE','가압 액체 용기 파열 + 급격한 기화·팽창'],
+    ['Fire Ball','대량 가연성 증기 점화 후 구형 화염 · 복사열'],
+    ['Pool Fire','고인 인화성 액체의 액면 증기 연소'],
+    ['Jet Fire','가압 누출 가스/증기의 방향성 분출화염']
+  ],
+  deepSections:[
+    sec('사고형태를 원인부터 구분','용기 자체가 파열하고 급기화하면 BLEVE, 고인 액면이 타면 Pool Fire, 가압 누출이 분출하며 타면 Jet Fire, 대량 증기가 구형으로 타면 Fire Ball로 구분한다.'),
+    sec('BLEVE와 Fire Ball','BLEVE는 용기파열·급기화 메커니즘이고, Fire Ball은 방출된 가연성 증기의 연소형태다. 한 사고에서 연속해 나타날 수 있지만 같은 정의는 아니다.'),
+    sec('Pool Fire와 Jet Fire','Pool Fire는 액체가 고인 면적과 복사열 영향이 중요하고, Jet Fire는 누출압력·방향·분출 지속 여부가 중요하다.')
+  ],
+  officialLinks:[
+    {label:'KOSHA 중대산업사고 기술자료 · Pool/Jet Fire·BLEVE·VCE',url:'https://www.kosha.or.kr/kosha/data/seriousAccident.do?articleNo=274159&attachNo=146919&mode=download'},
+    {label:'KOSHA 화재·폭발·누출사고 예방 가이드북',url:'https://oshri.kosha.or.kr/kosha/data/screening_e.do?article.offset=0&articleLimit=10&articleNo=235128&mode=view'}
+  ]
+});
+
+add('F03-C16',{
+  source:'한국산업안전보건공단 공식 화재·폭발 기술자료 · 2026 소방전술1 BLEVE/Fire Ball 연계',
+  detail:[
+    'Pool Fire는 누출된 인화성 액체가 바닥·방유제 등 일정 면적에 고여 형성한 액면에서 증기가 발생하고 그 증기가 연소하는 화재다.',
+    'Jet Fire는 가압 상태의 가연성 가스나 증기가 배관·밸브·용기 개구부 등으로 연속 분출되면서 점화되어 형성하는 방향성 화염이다.',
+    'Pool Fire는 연소면적이 커질수록 복사열 영향범위가 커질 수 있고, Jet Fire는 분출방향과 압력 때문에 특정 설비·구조물에 강한 열부하를 줄 수 있다.',
+    '둘 다 단순 “불꽃 모양”이 아니라 누출물질의 상태와 방출조건으로 구분하는 것이 핵심이다.'
+  ],
+  must:[
+    'Pool Fire → 액체 누출 · 고임 · 액면 증기 연소',
+    'Jet Fire → 가압 가스/증기 누출 · 연속분출 · 방향성 화염',
+    'Pool Fire 핵심 → 연소면적·복사열',
+    'Jet Fire 핵심 → 분출압력·방향·지속시간'
+  ],
+  traps:[
+    '가압가스 분출화염을 Pool Fire로 분류하지 않는다.',
+    '고여 있는 액면 연소를 Jet Fire로 분류하지 않는다.',
+    'BLEVE 용기파열 자체를 Pool Fire나 Jet Fire와 같은 정의로 보지 않는다.'
+  ],
+  compare:[
+    ['Pool Fire','고인 액체의 액면 연소 · 넓은 복사열원'],
+    ['Jet Fire','가압 누출의 방향성 화염 · 국부 고열부하'],
+    ['Fire Ball','순간적으로 큰 구형 화염 · 강한 복사열']
+  ],
+  officialLinks:[
+    {label:'KOSHA 중대산업사고 기술자료 · 화재/폭발 형태',url:'https://www.kosha.or.kr/kosha/data/seriousAccident.do?articleNo=274159&attachNo=146919&mode=download'},
+    {label:'KOSHA 정량적 위험성평가 연구 · Pool/Jet Fire',url:'https://oshri.kosha.or.kr/oshri/publication/researchReportSearch.do?articleNo=419747&attachNo=237051&mode=download'}
+  ]
+});
+
+add('F03-C08',{
+  source:'2026 소방전술1(화재2) 354~357쪽 · 한국산업안전보건공단 폭발사고 예방자료 · 산업안전보건기준',
+  detail:[
+    '증기운폭발(VCE/UVCE)은 대량의 가연성 가스 또는 인화성 액체 증기가 공기와 혼합해 가연성 증기운을 형성한 뒤 점화되어 폭발하는 현상이다. 교재는 개방된 대기 중에서 발생하는 형태를 UVCE로 설명한다.',
+    '폭발방호는 사고가 난 뒤 압력만 견디는 개념으로 한정하지 않는다. KOSHA 공식자료는 폭발예방 기본대책으로 폭발범위 농도 축적을 막는 환기, 공기·산소 혼입을 막는 불활성가스 봉입, 점화원 제거·억제를 제시한다.',
+    '산업안전보건기준 관련 KOSHA 자료는 과압으로 인한 폭발을 방지하기 위해 안전밸브 또는 파열판 같은 과압방호장치를 두는 원칙을 제시한다.',
+    '시험에서는 VCE 발생 메커니즘과 폭발방호 대책을 분리해 묻는 선지에 주의한다. VCE는 증기운 형성·혼합·점화가 핵심이고, 방호는 농도·산소·점화원·과압을 관리하는 개념이다.'
+  ],
+  must:[
+    'VCE/UVCE → 대량 가연성 증기운 + 공기 혼합 + 점화',
+    '폭발예방 → 환기해 폭발범위 농도 축적 방지',
+    '폭발예방 → 불활성가스 등으로 산소 혼입 차단',
+    '폭발예방 → 점화원 제거·억제',
+    '과압방호 → 안전밸브·파열판 등으로 설비 과압 방지'
+  ],
+  traps:[
+    'VCE를 용기 내부 액체의 급격한 비등·파열인 BLEVE와 같은 것으로 보지 않는다.',
+    '환기만 하면 점화원 관리가 필요 없다고 보지 않는다.',
+    '불활성화는 가연물 자체를 제거하는 것과 같은 개념이 아니다.',
+    '안전밸브·파열판을 화재 감지기와 같은 장치로 보지 않는다.'
+  ],
+  compare:[
+    ['VCE/UVCE','가연성 증기운이 공기와 혼합된 뒤 점화되어 폭발'],
+    ['BLEVE','가압 액체 용기 파열 + 급기화'],
+    ['예방 방호','환기 · 불활성화 · 점화원 제거'],
+    ['과압 방호','안전밸브 · 파열판 등']
+  ],
+  deepSections:[
+    sec('VCE 발생순서','누출 → 증발/확산 → 공기와 가연성 증기운 형성 → 점화 → 화염전파·과압 발생 순서로 본다.'),
+    sec('폭발방호 4축','농도(환기), 산소(불활성화), 점화원(제거), 압력(안전밸브·파열판)으로 나누면 방호대책 선지를 빠르게 분류할 수 있다.')
+  ],
+  officialLinks:[
+    {label:'KOSHA 중대산업사고 기술자료 · 폭발방지 기본대책',url:'https://www.kosha.or.kr/kosha/data/seriousAccident.do?articleNo=274159&attachNo=146919&mode=download'},
+    {label:'KOSHA 산업안전보건기준 · 안전밸브/파열판 과압방호',url:'https://www.kosha.or.kr/ebook/fcatalog/access/ecatalogt.jsp?Dir=633&callmode=normal&catimage=&eclang=ko&start=114&um=s'}
+  ]
+});
+
 V.ExamGapEnrichment119={version:'2026-exam-gap-enrichment-v9',conceptIds:['E17-C02','F03-C02','E07-C03','E03-C04','E11-C02','F03-C05','E21-C04','E03-C05','F05-C01','F07-C01','E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05']};
 })();
