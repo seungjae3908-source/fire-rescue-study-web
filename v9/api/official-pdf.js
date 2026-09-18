@@ -109,6 +109,47 @@ async function selectWorkingCandidate(paths,referer,cookie,fetchImpl=fetch){
   }
   return '';
 }
+function officialCandidateUrls(paths){
+  const out=[];
+  for(const path of candidateVariants(paths)){
+    try{const url=toOfficialUrl(path);if(!out.includes(url))out.push(url)}catch{}
+  }
+  return out;
+}
+function typeLooksPdf(res){
+  const type=String((res&&res.headers&&res.headers.get&&res.headers.get('content-type'))||'').toLowerCase();
+  return type.includes('pdf')||type.includes('octet-stream');
+}
+async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
+  const baseHeaders={'user-agent':UA,'accept':'application/pdf,*/*;q=0.8','referer':row.detailUrl,'cache-control':'no-cache'};
+  if(row.cookie)baseHeaders.cookie=row.cookie;
+  const range=meta?'bytes=0-63':(req.headers&&req.headers.range)||'';
+  if(range)baseHeaders.range=range;
+  if(req.headers&&req.headers['if-range'])baseHeaders['if-range']=req.headers['if-range'];
+  let lastStatus=0;
+  for(const url of row.urls||[]){
+    let upstream;
+    try{upstream=await fetchImpl(url,{method:req.method||'GET',headers:baseHeaders,redirect:'follow'})}
+    catch{continue}
+    lastStatus=upstream.status||0;
+    const statusOk=upstream.ok||upstream.status===206;
+    if(!statusOk||!typeLooksPdf(upstream)){
+      try{await upstream.body?.cancel?.()}catch{}
+      continue;
+    }
+    const canCheckMagic=(req.method||'GET')!=='HEAD'&&(!range||/^bytes=0-/i.test(range));
+    if(canCheckMagic){
+      let magicOk=false;
+      try{magicOk=await pdfProbe(upstream.clone())}catch{}
+      if(!magicOk){
+        try{await upstream.body?.cancel?.()}catch{}
+        continue;
+      }
+    }
+    return{row:{...row,url,urls:[url,...(row.urls||[]).filter(x=>x!==url)]},upstream};
+  }
+  throw new Error('OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_'+lastStatus);
+}
 async function seedSession(attempt){
   try{
     const r=await fetch(LIST+'?_119seed='+Date.now()+'-'+attempt,{redirect:'follow',headers:{
@@ -140,9 +181,9 @@ async function resolveSource(doc,force=false){
       }
       const a=extractAttachmentCandidates(html,src.name);
       if(!a||!a.paths||!a.paths.length){last='ATTACHMENT_PATH_MISSING';await sleep(Math.min(1200,350+attempt*75));continue}
-      const working=await selectWorkingCandidate(a.paths,url.split('&_119=')[0],cookie);
-      if(!working){last='ATTACHMENT_CANDIDATES_UNREACHABLE';await sleep(Math.min(1200,350+attempt*75));continue}
-      const row={doc,name:a.name||src.name,url:working,detailUrl:url.split('&_119=')[0],cookie,expires:Date.now()+10*60*1000};
+      const urls=officialCandidateUrls(a.paths);
+      if(!urls.length){last='ATTACHMENT_CANDIDATES_INVALID';await sleep(Math.min(1200,350+attempt*75));continue}
+      const row={doc,name:a.name||src.name,urls,detailUrl:url.split('&_119=')[0],cookie,expires:Date.now()+10*60*1000};
       cache.set(doc,row);return row;
     }catch(e){last=String((e&&e.message)||e)}
     await sleep(Math.min(1200,350+attempt*75));
@@ -151,18 +192,17 @@ async function resolveSource(doc,force=false){
 }
 async function fetchPdf(doc,req,meta=false,force=false){
   const row=await resolveSource(doc,force);
-  const headers={'user-agent':UA,'accept':'application/pdf,*/*;q=0.8','referer':row.detailUrl};
-  if(row.cookie)headers.cookie=row.cookie;
-  if(meta)headers.range='bytes=0-63';
-  else if(req.headers.range)headers.range=req.headers.range;
-  if(req.headers['if-range'])headers['if-range']=req.headers['if-range'];
-  const upstream=await fetch(row.url,{method:req.method,headers,redirect:'follow'});
-  if((upstream.status===403||upstream.status===404)&&!force){
-    try{await upstream.body?.cancel?.()}catch{}
-    cache.delete(doc);
-    return fetchPdf(doc,req,meta,true);
+  try{
+    const result=await fetchFirstWorkingCandidate(row,req,meta);
+    cache.set(doc,{...result.row,expires:Date.now()+10*60*1000});
+    return result;
+  }catch(e){
+    if(!force){
+      cache.delete(doc);
+      return fetchPdf(doc,req,meta,true);
+    }
+    throw e;
   }
-  return{row,upstream};
 }
 
 module.exports=async function handler(req,res){
@@ -220,4 +260,6 @@ module.exports.candidateVariants=candidateVariants;
 module.exports.normalizeDownloadPath=normalizeDownloadPath;
 module.exports.stripSessionPath=stripSessionPath;
 module.exports.selectWorkingCandidate=selectWorkingCandidate;
+module.exports.officialCandidateUrls=officialCandidateUrls;
+module.exports.fetchFirstWorkingCandidate=fetchFirstWorkingCandidate;
 module.exports.pdfProbe=pdfProbe;
