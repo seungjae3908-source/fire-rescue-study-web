@@ -20,6 +20,8 @@ const targets=[
   {id:'E-ENDO-01-DM',title:'저혈당/DKA/HHS',terms:['저혈당','당뇨병성 케톤산증','당뇨병성케톤산증','DKA','고삼투압성 고혈당 상태','고삼투압성고혈당','HHS']},
   {id:'E-INF-01-SEPSIS',title:'패혈증',terms:['패혈증','sepsis','감염성 쇼크','패혈성 쇼크']},
   {id:'E-TOX-01-TOX',title:'중독/해독제/아나필락시스',terms:['toxidrome','해독제','중독','아나필락시스','과민성 쇼크','에피네프린 자동주사']},
+  {id:'E-TOX-01-ANTIDOTE',title:'대표 해독제',terms:['날록손','naloxone','Naloxone','마약 길항제','아트로핀','atropine','프랄리독심','pralidoxime','활성탄','activated charcoal']},
+  {id:'E-TOX-01-PATTERN',title:'중독 패턴/징후',terms:['동공 수축','동공수축','축동','동공 이완','동공이완','서맥','빈맥','발한','침분비','타액분비','호흡억제','의식저하','경련','구토']},
   {id:'E-NRP-01',title:'신생아소생',terms:['신생아 소생','신생아소생','양압환기','가슴압박','3:1','심박수 60','심박수 100']},
   {id:'E-CALC-01-O2',title:'산소통 사용시간',terms:['산소통 사용시간','산소통사용시간','실린더 상수','실린더상수','잔압','산소용기 사용시간']},
   {id:'E-CALC-02-IV',title:'수액 적하속도',terms:['적하속도','적하 속도','gtt/min','gtt','drop factor','분당 방울','시간당 주입량']},
