@@ -6,7 +6,7 @@ const fixture=fs.readFileSync(new URL('./fixtures/private-sample.pdf',import.met
 const forbidden=['fail-closed','page-verified','Release Gate','검증문제·범위 검증 진행 중','DRM 우회','서버 원본 업로드','RLS','Supabase'];
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
-function collectErrors(page){const out=[];page.on('pageerror',e=>out.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon|404.*official-pdf/i.test(m.text()))out.push('console:'+m.text())});return out}
+function collectErrors(page){const out=[];page.on('pageerror',e=>out.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon|404.*official-pdf/i.test(m.text()))out.push('console:'+m.text())});page.on('requestfailed',r=>{const u=r.url();if(/cdn\.jsdelivr\.net|tesseract|pdf\.worker|pdf\.min\.mjs/i.test(u))out.push('requestfailed:'+u+' '+(r.failure()?.errorText||''))});return out}
 async function boot(page){await page.route('**/api/official-pdf?**',async route=>{await route.fulfill({status:200,contentType:'application/pdf',headers:{'accept-ranges':'bytes','cache-control':'no-store'},body:fixture})});await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');await page.waitForFunction(()=>!!window.AITUTOR_V9?.App)}
 async function cleanPage(page,label){const text=await page.locator('body').innerText();for(const x of forbidden)assert(!text.includes(x),label+' hides internal text: '+x);await noX(page,label)}
 async function go(page,id){await page.evaluate(id=>window.AITUTOR_V9.App.go(id),id);await page.waitForFunction(id=>window.AITUTOR_V9.Store.state.page===id,id)}
@@ -211,8 +211,18 @@ try{
   assert(notesText.includes('PDF / 사진')&&notesText.includes('내 자료'),'notes page prioritizes study actions');
   assert(!notesText.includes('DRM')&&!notesText.includes('브라우저에서 텍스트/OCR 처리'),'notes page removes technical/copyright implementation prose');
   await m.locator('#personalFile').setInputFiles({name:'private-sample.pdf',mimeType:'application/pdf',buffer:fixture});
-  await m.waitForFunction(()=>document.querySelector('[data-upload-status]')?.textContent?.includes('분석 완료'),null,{timeout:60000});
-  assert((await m.locator('[data-upload-status]').innerText()).includes('분석 완료'),'personal PDF reports visible analysis completion');
+  try{
+    await m.waitForFunction(()=>/분석 완료|분석 실패/.test(document.querySelector('[data-upload-status]')?.textContent||''),null,{timeout:60000});
+  }catch(err){
+    const diag=await m.evaluate(()=>({
+      uploadStatus:document.querySelector('[data-upload-status]')?.textContent||'',
+      docs:(window.AITUTOR_V9?.App?.runtime?.docs||[]).map(x=>({title:x.title,pageCount:x.pageCount,extractedChars:x.extractedChars})),
+      docsLoading:!!window.AITUTOR_V9?.App?.runtime?.docsLoading
+    }));
+    throw new Error('PERSONAL_PDF_UI_TIMEOUT '+JSON.stringify(diag)+' BROWSER_ERRORS '+merr.join(' | '),{cause:err});
+  }
+  const uploadStatus=(await m.locator('[data-upload-status]').innerText()).trim();
+  assert(uploadStatus.includes('분석 완료'),'personal PDF reports visible analysis completion; status='+uploadStatus+'; errors='+merr.join(' | '));
   await m.waitForSelector('[data-doc-open]');
   await m.locator('[data-doc-open]').first().click();await m.waitForSelector('.doc-viewer');
   const viewer=await m.locator('.doc-viewer-text').innerText();
