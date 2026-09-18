@@ -267,3 +267,22 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Search entire Prevention1 PDF for remaining facility anchors
         run: node v9/facility-source-search.mjs
+
+  facilities_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'facilities live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 3bde71785ee42808f67f7a2e67474982f3883ffb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install facility live browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify remaining facility exact-page evidence in deployed Preview
+        run: node v9/facilities-live-e2e.mjs
