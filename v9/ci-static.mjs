@@ -3,12 +3,14 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','question-difficulty.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','hazmat-reference-2026.js','ems-rich-2026.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','question-difficulty.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','hazmat-reference-2026.js','ems-rich-2026.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
 const V=window.AITUTOR_V9;
 ok(V.curriculum.totalConcepts===162,'162 complete concepts');
+ok(V.MasterSyllabus119?.groups?.fire?.length===6&&V.MasterSyllabus119?.groups?.ems?.length===10,'119 master syllabus groups fire/EMS into exam-oriented parts');
+ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content completion contract is loaded');
 ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===162,'unique concept ids');
 ok(V.curriculum.concepts.every(x=>x.sourceRanges.length>0),'all concepts have official source ranges');
 ok(V.curriculum.fire.length===7,'seven complete fire scopes');
@@ -18,6 +20,9 @@ ok(V.questions.every(q=>new Set(q.choices).size===4),'no duplicate choices insid
 ok(new Set(V.questions.map(q=>q.id)).size===V.questions.length,'unique question ids');
 ok(V.questions.every(q=>Number.isInteger(q.a)&&q.a>=0&&q.a<4),'single valid answer index');
 ok(V.questions.every(q=>!/(기출|실제 출제|과거시험)/.test(String(q.q||''))),'no generated question is mislabeled as past exam');
+const contentAudit=V.ContentContract119.audit();
+ok(contentAudit.total===162&&contentAudit.incomplete>0,'content audit reports real incomplete work instead of fake 100%');
+ok(contentAudit.complete<contentAudit.total,'119 content contract remains fail-closed until every concept reaches textbook/question/source quality');
 const mock=V.examReadiness();
 ok(mock.ready===(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete),'real mock exam is fail-closed on count + restored-scope coverage');
 ok(mock.fire>=25&&mock.ems>=40,'distinct verified bank reaches 25 fire + 40 EMS');
