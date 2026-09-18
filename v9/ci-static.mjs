@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -34,6 +34,10 @@ ok(lawPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''
 ok(V.SpecialCombustibleQuestions119?.added===6,'six current-law special-combustible practice questions are loaded');
 const specialCombustiblePractice=(V.questions||[]).filter(q=>/^119-specialcomb-/.test(q.id||''));
 ok(specialCombustiblePractice.length===6&&specialCombustiblePractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'special-combustible questions stay practice-only and pass the exam-style gate');
+ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-backed practice questions are loaded');
+const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-/.test(q.id||''));
+ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
+ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
 ok(generated119.every(q=>!/(다음 심화 설명을 가장 정확히|교재형 상세 설명|30초 핵심 설명|학습노드)/.test(String(q.q||''))),'generated practice stems use concise exam language without internal/meta wording');
 
 const questionContractRows=V.curriculum.concepts.map(c=>{const qs=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const q of qs)d[q.difficulty]=(d[q.difficulty]||0)+1;return{id:c.id,n:qs.length,...d}});
@@ -160,7 +164,7 @@ ok(V.HazmatQuestions119?.added===7,'hazardous-material depth batch adds seven so
 ok(V.HazmatDepth119.concepts.every(id=>V.contentPacks.authored[id]?.calculations?.length>0),'all hazardous-material class lessons expose designated-quantity calculation contract');
 ok(V.EMSDepth119?.concepts?.length===9,'nine high-yield EMS concepts receive textbook-depth enrichment');
 const examGapIds=V.ExamGapEnrichment119?.conceptIds||[];
-ok(['F05-C01','F07-C01','E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05'].every(id=>examGapIds.includes(id))&&new Set(examGapIds).size===examGapIds.length,'source-backed high-yield exam gap enrichment is loaded');
+ok(['E03-C05','E21-C04','F05-C01','F07-C01','E01-C03','E05-C04','E20-C03','E14-C02','E14-C03','F03-C03','F04-C06','F03-C07','F03-C08','E09-C07','E11-C03','E11-C04','E11-C05'].every(id=>examGapIds.includes(id))&&new Set(examGapIds).size===examGapIds.length,'source-backed high-yield exam gap enrichment is loaded');
 ok(V.curriculum.byId['E05-C04']?.title==='기록지·중증도 분류','E05-C04 student title includes START triage instead of hiding it under records only');
 ok((V.contentPacks.authored['E14-C03']?.calculations||[]).some(x=>/4 mL/.test(x.formula||'')),'burn lesson exposes the source-backed Parkland calculation');
 ok((V.contentPacks.authored['E14-C02']?.detail||[]).some(x=>/긴장성 기흉/.test(x)),'soft-tissue/chest lesson includes source-backed tension-pneumothorax deterioration and dressing response');
@@ -170,6 +174,12 @@ ok(fullCoverage.rows.find(x=>x.id==='E-LAW-01')?.status==='partial'&&fullCoverag
 ok(fullCoverage.rows.find(x=>x.id==='F-HAZ-04')?.status==='covered','special-combustible gap is closed by current-law definition, quantity table and storage rules');
 ok(fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-03')?.status==='partial','building compartment and fire-material topics remain honestly partial after current-law enrichment');
 ok(fullCoverage.rows.find(x=>x.id==='E-TRM-03')?.status==='partial','abdominal/pelvic trauma and severe-transport coverage is explicitly partial after source-backed enrichment');
+ok(fullCoverage.rows.find(x=>x.id==='E-MCI-02')?.status==='partial','CBRN/decontamination coverage is partial rather than falsely complete');
+ok(fullCoverage.rows.find(x=>x.id==='E-PALS-01')?.status==='partial','pediatric resuscitation coverage is partial until full advanced brady/tachy algorithms are officially grounded');
+ok(V.curriculum.byId['E03-C05']?.title==='위험물·CBRN 현장 구급·제독','CBRN/decontamination is visible in the EMS curriculum');
+ok(V.curriculum.byId['E21-C04']?.title==='기도·호흡·소아소생 기초','pediatric resuscitation basics are visible in the EMS curriculum');
+ok((V.contentPacks.authored['E03-C05']?.visuals||[]).includes('ems-hazmat-zones')&&!!V.Visual119.render('ems-hazmat-zones'),'CBRN three-zone/decon flow renders as a real study visual');
+ok((V.contentPacks.authored['E21-C04']?.visuals||[]).includes('ems-pediatric-resuscitation')&&!!V.Visual119.render('ems-pediatric-resuscitation'),'pediatric resuscitation flow renders as a real study visual');
 ok(V.curriculum.byId['F07-C01']?.title==='소방시설 5분류·건축방재','building-fire fundamentals are visible in the facilities curriculum title');
 ok((V.contentPacks.authored['F07-C01']?.officialLinks||[]).length>=3,'building-fire lesson exposes official Building Act source links');
 ok((V.contentPacks.authored['F05-C01']?.specialCombustibles||[]).length===11,'special-combustible lesson exposes the eleven current law quantity rows');
@@ -211,6 +221,7 @@ ok(sw.includes("'./exam-gap-enrichment-119.js'"),'exam gap enrichment is offline
 ok(sw.includes("'./questions-calculation-119.js'"),'calculation practice bank is offline-cached');
 ok(sw.includes("'./questions-law-119.js'"),'current-law practice bank is offline-cached');
 ok(sw.includes("'./questions-special-combustible-119.js'"),'special-combustible practice bank is offline-cached');
+ok(sw.includes("'./questions-ems-gap-practice-119.js'"),'CBRN/PALS practice bank is offline-cached');
 
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
