@@ -74,10 +74,10 @@ try{
   assert(truth.audit.total===176&&truth.audit.complete===176&&truth.audit.incomplete===0&&truth.audit.avg===100&&Object.keys(truth.audit.blockers).length===0,'ContentContract119 = 176/176, blockers 0');
   assert(truth.coverage.verified===176&&truth.coverage.pending===0,'page evidence = 176 verified / 0 pending');
   assert(truth.questions.examStyle===1056&&truth.questions.duplicateTexts===0,'exam-style bank = 1056 and duplicate texts = 0');
-  assert(truth.questionFactory===962,'factory added only audited 962 P-practice shortfall');
+  assert(truth.questionFactory===956,'factory added only the remaining audited 956 P-practice shortfall after six reviewed B questions');
   assert(truth.visualTargets===27&&truth.visualRendered===27,'all 27 required visuals actually render');
   assert(truth.calcRequired.length===7,'source-applicable calculation contract requires seven hazardous-material concepts');
-  assert(truth.mock.ready===false,'real mock remains fail-closed');
+  assert(truth.mock.ready===true&&truth.mock.scopeComplete===true&&truth.mock.missingFireScopes.length===0,'real mock is verified-ready with full restored fire-scope coverage');
   await enter(dp,'F07-C05');await noX(dp,'release desktop study');
   assert(await dp.locator('.study-rail').isVisible(),'desktop 119 assistant rail visible');
   await dp.locator('.concept-head [data-study-tab="detail"]').click();
