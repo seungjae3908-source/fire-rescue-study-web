@@ -331,6 +331,7 @@ ok(syncMerge.includes('{...clone(prev),...clone(row)}')&&syncMerge.includes('{..
 
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const appCode=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ok(appCode.includes('data-doc-list')&&appCode.includes('refreshDocsList()'),'personal-doc hydration updates only the document list and preserves the file input');
 ok(auth.includes("event==='SIGNED_OUT'")&&auth.includes('V.Store.switchOwner(V.Store.guestId)'), 'SIGNED_OUT auth events switch runtime ownership back to the guest namespace');
 ok(auth.includes("'session-expired'")&&auth.includes("'manual-signout'"),'auth runtime distinguishes session expiry from explicit logout');
 ok(appCode.includes('로그인 세션이 만료되어 게스트 모드로 전환되었습니다.')&&appCode.includes('로그인 세션 만료 · 다시 로그인해주세요'),'session expiry UX provides persistent and immediate re-login guidance');

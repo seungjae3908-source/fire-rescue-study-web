@@ -206,6 +206,12 @@ try{
   assert(await m.locator('[data-exam-report]').count()>=1,'recent exam history keeps an analysis action for locally detailed results');
 
   await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
+  const fileInputStable=await m.evaluate(async()=>{
+    const first=document.querySelector('#personalFile');
+    for(let i=0;i<80&&window.AITUTOR_V9.App.runtime.docsLoading;i++)await new Promise(r=>setTimeout(r,25));
+    return !!first&&first===document.querySelector('#personalFile')&&!window.AITUTOR_V9.App.runtime.docsLoading;
+  });
+  assert(fileInputStable,'async personal-doc hydration preserves the file input DOM node');
   await cleanPage(m,'mobile notes');
   const notesText=await m.locator('.page').innerText();
   assert(notesText.includes('PDF / 사진')&&notesText.includes('내 자료'),'notes page prioritizes study actions');
