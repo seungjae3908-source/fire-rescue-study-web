@@ -36,8 +36,8 @@ ok(new Set(V.questions.map(q=>q.id)).size===V.questions.length,'unique question 
 ok(V.questions.every(q=>Number.isInteger(q.a)&&q.a>=0&&q.a<4),'single valid answer index');
 ok(V.questions.every(q=>!/(기출|실제 출제|과거시험)/.test(String(q.q||''))),'no generated question is mislabeled as past exam');
 const contentAudit=V.ContentContract119.audit();
-ok(contentAudit.total===176&&contentAudit.incomplete>0,'content audit reports real incomplete work instead of fake 100%');
-ok(contentAudit.complete<contentAudit.total,'119 content contract remains fail-closed until every concept reaches textbook/question/source quality');
+ok(contentAudit.total===176&&contentAudit.complete===176&&contentAudit.incomplete===0,'content audit truthfully reaches 176/176 complete concepts');
+ok(Object.keys(contentAudit.blockers||{}).length===0,'119 content contract has no remaining blockers');
 ok(!contentAudit.blockers.questionsEnough&&!contentAudit.blockers.difficultyLow&&!contentAudit.blockers.difficultyMid&&!contentAudit.blockers.difficultyHigh&&!contentAudit.blockers.choiceExplanations,'question-count, difficulty-mix and option-explanation blockers are closed without weakening the contract');
 ok(V.TextbookGrounded119?.depthClosed===131&&V.TextbookGrounded119?.sectionsClosed===8&&V.TextbookGrounded119?.trapsClosed===62&&V.TextbookGrounded119?.memoryClosed===13,'grounded textbook layer closes only the audited depth/section/trap/memory shortfalls');
 ok(!contentAudit.blockers.textbookDepth&&!contentAudit.blockers.structuredSections&&!contentAudit.blockers.examTraps&&!contentAudit.blockers.memoryPoints&&!contentAudit.blockers.comparison,'textbook depth, structure, traps, memory and required comparisons are closed');
