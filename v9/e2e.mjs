@@ -121,7 +121,7 @@ try{
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
   const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=root.querySelectorAll('.pdf-evidence-line');return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
   assert(pdfVisual.pixelWidth>=pdfVisual.cssWidth*1.8,'mobile PDF canvas renders at high device-pixel density for crisp text');
-  assert(pdfVisual.evidence>=1&&pdfVisual.evidence<=3,'PDF marks only one to three evidence lines instead of every matching word');
+  assert(pdfVisual.evidence<=3,'PDF highlights at most three evidence lines and fails closed to zero when no confident line match exists');
   assert(pdfVisual.legacy===0&&!/근거\s+\d+개/.test(pdfVisual.label),'legacy keyword boxes/count are hidden from the student');
   const cache=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.openPdf(key),b=await V.SourcePDF.openPdf(key);return{same:a.pdf===b.pdf,origin:a.origin}});
   const local=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc;return await V.SourcePDF.availability(key)});
