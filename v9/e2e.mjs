@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
+import './phase-a-source-audit.mjs';
 
 const base='http://127.0.0.1:4173/v9/index.html';
 const fixture=fs.readFileSync(new URL('./fixtures/private-sample.pdf',import.meta.url));
