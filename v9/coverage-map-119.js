@@ -48,13 +48,13 @@ const topics=[
   T('F-SUP-03','fire','소화약제','포 혼합농도·팽창비·원액량 계산','partial',['F04-C04'],{calc:true}),
   T('F-HAZ-01','fire','위험물','위험물 정의·류별 성상·품명·지정수량','covered',['F05-C01','F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07']),
   T('F-HAZ-02','fire','위험물','지정수량 배수·혼재위험물 계산','covered',['F05-C01','F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07'],{calc:true}),
-  T('F-HAZ-03','fire','위험물','류별 저장·취급금기·소화·예외','partial',['F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07']),
+  T('F-HAZ-03','fire','위험물','류별 저장·취급금기·소화·예외','covered',['F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07'],{evidence:'NFA-hazmat-common-storage-extinguishing-exceptions'}),
   T('F-HAZ-04','fire','위험물','특수가연물','covered',['F05-C01'],{recent:'2026'}),
   T('F-FAC-01','fire','소방시설','소방시설 5분류·소화기구·소화전','covered',['F07-C01','F07-C02','F07-C03','F07-C04']),
   T('F-FAC-02','fire','소방시설','스프링클러 구성·습식·건식·준비작동·일제살수','covered',['F07-C05','F07-C16','F07-C17','F07-C18','F07-C19','F07-C20','F07-C21']),
   T('F-FAC-03','fire','소방시설','간이·ESFR·물분무·미분무·포·가스·분말','covered',['F07-C06','F07-C07','F07-C08','F07-C09','F07-C10']),
-  T('F-FAC-04','fire','소방시설','감지기·자동화재탐지·경보설비 작동논리','partial',['F07-C11','F07-C12']),
-  T('F-FAC-05','fire','소방시설','피난구조·소화용수·제연·연결송수·무선통신보조','partial',['F07-C13','F07-C14','F07-C15']),
+  T('F-FAC-04','fire','소방시설','감지기·자동화재탐지·경보설비 작동논리','covered',['F07-C11','F07-C12'],{evidence:'2026-prevention1-detection-alarm-flow'}),
+  T('F-FAC-05','fire','소방시설','피난구조·소화용수·제연·연결송수·무선통신보조','covered',['F07-C13','F07-C14','F07-C15'],{evidence:'2026-prevention1-evac-water-smoke-standpipe-radio'}),
   T('F-INV-01','fire','화재조사','목적·현장보존·발화부·원인·피해조사','covered',['F06-C01','F06-C02','F06-C03','F06-C04'],{recent:'2025'}),
 
   // EMS — general / law / disaster
