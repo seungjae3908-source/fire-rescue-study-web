@@ -1,8 +1,11 @@
-// Copy to v9/config.js only after creating a dedicated AI과외 backend project.
-// Never point this at the investment-app Supabase project.
-// Use the browser-safe Supabase publishable key (sb_publishable_...), never a secret/service_role key.
+// 119 Study OS browser configuration example.
+// The current Study deployment may use the shared Investment Staging Supabase only through
+// study_* tables, study_memberships and owner RLS. Never point Study at Investment Production.
+// Use only a browser-safe Supabase publishable key (sb_publishable_...), never a secret/service_role key.
 window.AITUTOR_V9_CONFIG={
   supabaseUrl:'',
   supabasePublishableKey:'',
-  enableCloudSync:false
+  enableCloudSync:false,
+  officialPdfProxyBase:'',
+  study119:true
 };
