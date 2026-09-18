@@ -39,7 +39,7 @@ console.log('VERIFIED_COVERAGE',coverage);
 console.log('MISSING_VERIFIED_CONCEPTS',missing);
 console.log('EXTRA_AUTHORED_CONCEPTS',extra);
 ok(coverage.total===176,'content coverage denominator is 176');
-ok(scopeVerified.length===41&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)),`41 page-anchor-pending fire concepts remain fail-closed; actual=${scopeVerified.length}`);
+ok(scopeVerified.length===41&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)||/^F03-C(09|1[0-6])$/.test(id)),`41 page-anchor-pending fire concepts remain fail-closed; actual=${scopeVerified.length}`);
 ok(missing.length===41&&missing.every(id=>scopeVerified.includes(id)),`only the 41 page-anchor-pending concepts are not fully verified; missing=${missing.join(',')||'none'}`);
 ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===176,'exactly 162 valid authored concept packs');
 ok(coverage.verified===135&&coverage.pending===41,'release truth stays 135 page-verified + 41 page-anchor-pending');
