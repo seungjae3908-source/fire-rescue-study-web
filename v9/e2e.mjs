@@ -218,6 +218,15 @@ try{
   const triageText=await m.locator('.page-study').innerText();
   assert(triageText.includes('기록지·중증도 분류')&&triageText.includes('START')&&triageText.includes('호흡 · 맥박 · 의식'),'START triage is a visible learner-facing section instead of a hidden audit gap');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E20-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E20-C03');
+  assert((await m.locator('.concept-head h2').innerText()).includes('신생아 초기처치'),'obstetric curriculum exposes newborn initial care in the lesson title');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const newbornText=await m.locator('.book-section').innerText();
+  assert(newbornText.includes('Apgar')&&newbornText.includes('출생 1분')&&newbornText.includes('5분'),'newborn lesson teaches Apgar timing');
+  assert(newbornText.includes('입을 먼저')&&newbornText.includes('코를 흡인'),'newborn lesson teaches source-backed mouth-before-nose suction sequence');
+  assert(newbornText.includes('8~10점')&&newbornText.includes('3~7점')&&newbornText.includes('0~2점'),'newborn lesson compares all three textbook Apgar score groups');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E14-C02'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E14-C02');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
