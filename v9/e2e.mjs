@@ -238,6 +238,19 @@ try{
   assert(hazRow.cells.length>=2&&Math.abs(hazRow.cells[0].y-hazRow.cells[1].y)<3,'hazardous-material name and designated quantity appear on the same mobile row');
   await noX(m,'mobile hazardous-material detail');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E01-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E01-C03');
+  assert((await m.locator('.concept-head h2').innerText()).includes('119구급대 법령'),'EMS curriculum exposes the current 119-law lesson');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const lawText=await m.locator('.book-section').innerText();
+  assert(lawText.includes('구급차 운전과 구급 보조업무')&&lawText.includes('24시간')&&lawText.includes('항공구조구급대'),'119-law lesson teaches qualification limits, 24-hour situation center and air EMS');
+  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
+  const lawLinks=m.locator('.book-section .source-law-links a');
+  assert(await lawLinks.count()>=4,'119-law source tab exposes current official law links');
+  const lawHrefs=await lawLinks.evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
+  assert(lawHrefs.every(x=>/^https:\/\/law\.go\.kr\//.test(x)),'119-law source links stay on the official National Law Information Center domain');
+  await noX(m,'mobile 119-law source');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E05-C04'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E05-C04');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
