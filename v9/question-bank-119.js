@@ -53,7 +53,7 @@ function titleChoice(c,quote,kind,difficulty,type,offset=0){
     summary:`다음 설명에 해당하는 것은? “${clip(quote,210)}”`,
     'detail-a':`다음 설명에 해당하는 개념은? “${clip(quote,210)}”`,
     'detail-b':`다음 설명과 가장 관련 있는 것은? “${clip(quote,210)}”`,
-    deep:`다음 설명에 해당하는 것은? “${clip(quote,210)}”`
+    deep:`다음 내용이 설명하는 것은? “${clip(quote,210)}”`
   };
   return{kind,difficulty,type,q:stems[kind]||`다음 설명에 해당하는 것은? “${clip(quote,210)}”`,...ar};
 }
