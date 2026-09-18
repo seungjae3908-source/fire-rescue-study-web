@@ -113,10 +113,14 @@ try{
   assert(['auto','scroll'].includes(scrollState.overflow),'mobile study uses one dedicated vertical body scroller');
   await noX(m,'mobile study detail');
 
+  const pageMap=await m.evaluate(()=>{const S=window.AITUTOR_V9.SourcePDF;return{fire1:S.pdfPage('fire1',14),fire2:S.pdfPage('fire2',352),ems:S.pdfPage('ems',72),fire1Back:S.bookPage('fire1',30),fire2Back:S.bookPage('fire2',362),emsBack:S.bookPage('ems',90)}});
+  assert(pageMap.fire1===30&&pageMap.fire2===362&&pageMap.ems===90&&pageMap.fire1Back===14&&pageMap.fire2Back===352&&pageMap.emsBack===72,'official textbook printed pages map to actual PDF pages for fire1/fire2/EMS');
+
   await m.locator('.book-jumpbar [data-study-tab="source"]').click();
   await m.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
   await m.locator('.study-body-mobile .source-only [data-source-concept]').click();
   await m.waitForSelector('#pdfEvidence');
+  assert(Number(await m.locator('#pdfEvidence').getAttribute('data-page'))===30,'F03-C03 opens at mapped PDF page 30 for textbook page 14');
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
   const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=root.querySelectorAll('.pdf-evidence-line');return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
