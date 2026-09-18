@@ -75,6 +75,10 @@ try{
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C05');
   const class4=await m.locator('.book-mobile').textContent();
   assert(class4.includes('내알코올포')&&class4.includes('정전기'),'class-4 lesson includes water-soluble foam and static-electricity hazards');
+  assert(!class4.includes('제4류 위험물 화재를 이해할 때 핵심이 되는 것은?'),'foundation drill is excluded from textbook confirmation questions');
+  assert(class4.includes('제4류 인화성액체의 증기와 관련한 설명'),'exam-style class-4 question is present in textbook');
+  const quality=await m.evaluate(()=>window.AITUTOR_V9.QuestionQuality119.audit());
+  assert(quality.examStyle>0&&quality.duplicateTexts.length===0,'browser question-quality audit has exam-style bank with zero duplicate texts');
   const hazChoice=m.locator('[data-answer^="119-h4-3:"]').first();
   assert(await hazChoice.isVisible(),'hazardous-material high-difficulty question is rendered');
   await hazChoice.click();
