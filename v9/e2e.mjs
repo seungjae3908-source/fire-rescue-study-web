@@ -217,6 +217,12 @@ try{
   const triageText=await m.locator('.page-study').innerText();
   assert(triageText.includes('기록지·중증도 분류')&&triageText.includes('START')&&triageText.includes('호흡 · 맥박 · 의식'),'START triage is a visible learner-facing section instead of a hidden audit gap');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E14-C02'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E14-C02');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const chestText=await m.locator('.book-section').innerText();
+  assert(chestText.includes('긴장성 기흉')&&chestText.includes('삼면드레싱')&&chestText.includes('저혈압'),'chest-trauma enrichment teaches deterioration after occlusive dressing and tension-pneumothorax warning signs');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E14-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E14-C03');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
