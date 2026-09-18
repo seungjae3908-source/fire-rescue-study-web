@@ -23,9 +23,9 @@ ok(reviewed119.length>=29,'119 manually-authored/reviewed exam-question bank rem
 ok(reviewed119.every(V.QuestionQuality119.isExamStyle),'every manually-authored 119 question passes the full exam-style quality contract');
 ok(V.QuestionFactory119?.generated===generated119.length&&generated119.length>0,'grounded factory reports exactly the generated practice questions it added');
 ok(generated119.every(q=>q.grade==='P'&&q.generatedBy==='119-grounded-question-factory-v1'&&V.QuestionQuality119.isExamStyle(q)),'factory questions stay P-grade practice and pass the exam-style contract');
-ok(V.CalculationQuestions119?.added===8,'calculation practice bank adds eight source-backed questions');
+ok(V.CalculationQuestions119?.added===13,'calculation practice bank adds thirteen source-backed questions');
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
-ok(calculationPractice.length===8&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
+ok(calculationPractice.length===13&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
 ok(calculationPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'calculation practice makes no unsupported past-exam claim');
 ok(generated119.every(q=>!/(다음 심화 설명을 가장 정확히|교재형 상세 설명|30초 핵심 설명|학습노드)/.test(String(q.q||''))),'generated practice stems use concise exam language without internal/meta wording');
 
