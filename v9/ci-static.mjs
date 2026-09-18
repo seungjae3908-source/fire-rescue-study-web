@@ -198,8 +198,8 @@ ok(!/sb_secret_[A-Za-z0-9_-]+/.test(config)&&!/service_role/i.test(config),'chec
 const sourceCatalog=fs.readFileSync(new URL('./source-catalog-119.js',import.meta.url),'utf8');
 ok(sourceCatalog.includes('noUserUploadRequired:true'),'official source catalog forbids user-upload requirement');
 ok(sourceCatalog.includes('officialPageFallback:true'),'official source catalog has official-page fallback');
-ok(['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'].every(k=>sourceCatalog.includes(`directPdf:'/api/official-pdf?doc=${k}'`)),'all ten official textbooks use the same-origin PDF proxy');
-ok(sourceCatalog.includes('sameOriginProxy:true')&&sourceCatalog.includes('arbitraryUrlProxy:false'),'official source catalog forbids arbitrary URL proxying');
+ok(sourceCatalog.includes('const proxy=doc=>')&&['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'].every(k=>sourceCatalog.includes(`directPdf:proxy('${k}')`)),'all ten official textbooks use the configured PDF proxy resolver');
+ok(sourceCatalog.includes('arbitraryUrlProxy:false')&&sourceCatalog.includes('allCatalogDocsProxyable:true')&&sourceCatalog.includes('crossOriginProxy:!!proxyBase'),'official source catalog supports dedicated proxy origin while forbidding arbitrary URL proxying');
 const officialProxy=fs.readFileSync(new URL('./api/official-pdf.js',import.meta.url),'utf8');
 ok(officialProxy.includes("const SOURCES=Object.freeze")&&['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'].every(k=>officialProxy.includes(k+":")),'official PDF proxy uses a fixed ten-document allowlist');
 ok(!/req\.query\?\.url|req\.query\.url|new URL\(.*req\.query/i.test(officialProxy),'official PDF proxy accepts no arbitrary upstream URL');
