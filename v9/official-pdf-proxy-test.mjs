@@ -47,17 +47,20 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
     cookie:'JSESSIONID=abc',
     urls:['https://www.nfa.go.kr/board/file/bbs/5/FILE_EMS/ems']
   };
+  let seenHeaders=null;
   const result=await P.fetchFirstWorkingCandidate(
     row,
     {method:'GET',headers:{}},
     false,
-    async ()=>{
+    async (_url,options)=>{
       calls++;
+      seenHeaders=options.headers;
       if(calls>1)return miss();
       return pdf();
     }
   );
   assert.equal(calls,1,'a session-sensitive valid candidate must be requested only once');
+  assert.equal(seenHeaders.range,'bytes=0-','full official PDF fetch uses open-ended range path');
   assert.equal(result.row.detailUrl,'https://www.nfa.go.kr/detail?_119=exact-session-context','exact resolving detail URL must remain the request referer context');
   assert.match(await result.upstream.text(),/^%PDF-/,'the first valid PDF response remains streamable after magic validation');
 }
