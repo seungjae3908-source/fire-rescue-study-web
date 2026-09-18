@@ -79,7 +79,7 @@ ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-a
 const fullCoverage=V.CoverageMap119?.audit?.();
 ok(!!fullCoverage&&fullCoverage.total>70,'full exam Coverage Map is loaded as a separate truth layer');
 ok(fullCoverage.missing===0&&fullCoverage.partial>0&&fullCoverage.implementationPercent<100,'full exam Coverage Map has no fully missing topic but still exposes partial areas before 100-point release');
-ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='partial','fire-science and building-fire enrichments remain honestly partial until all subtopics are closed');
+ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='covered','fire-science gas-law work remains partial while building fire compartmentation is source-closed');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='partial','ECG and mass-casualty topics remain explicitly partial after source-backed VF/VT and START enrichment');
 const newlyClosedFireRows=['F-COMB-02','F-FIRE-03','F-EXP-01','F-BLD-01','F-BLD-02','F-BLD-03'];
 ok(newlyClosedFireRows.every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'six source-backed fire rows are promoted only after explicit evidence closure');
@@ -97,6 +97,18 @@ const passivePack=V.contentPacks.authored['F07-C01'];
 ok((passivePack?.compare||[]).some(x=>x?.[0]==='방화구획')&&(passivePack?.compare||[]).some(x=>x?.[0]==='방화벽'),'passive-fire closure distinguishes compartmentation and fire walls');
 ok(['내화구조','불연재료','준불연재료','난연재료'].every(k=>(passivePack?.compare||[]).some(x=>x?.[0]===k)),'passive-fire closure distinguishes structural fire resistance from material combustibility classes');
 ok((passivePack?.officialLinks||[]).length>=3,'passive-fire closure keeps current Building Act source links');
+const hazmatIds=['F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07'];
+ok(hazmatIds.every(id=>{const p=V.contentPacks.authored[id];const body=(p?.deepSections||[]).map(x=>String(x.title||'')+' '+String(x.body||'')).join(' ');return /저장·취급/.test(body)&&/소화방법/.test(body)&&(p?.traps||[]).length>=1;}),'hazmat closure requires storage/handling, extinguishing and trap coverage for all six hazard classes');
+ok(['119-h1-2','119-h2-2','119-h3-2','119-h4-2','119-h4-3','119-h5-2','119-h6-2'].every(id=>!!V.questionById[id]),'hazmat handling closure has focused exam-style drills including class-specific exceptions');
+const detection=V.contentPacks.authored['F07-C11'],alarms=V.contentPacks.authored['F07-C12'];
+ok((detection?.compare||[]).some(x=>x?.[0]==='열감지')&&(detection?.compare||[]).some(x=>x?.[0]==='연기감지')&&(detection?.deepSections||[]).some(x=>/감지기가.*수신기.*경보/.test(String(x.body||''))),'detection closure covers detector types and detector-to-receiver-to-alarm flow');
+ok((alarms?.compare||[]).some(x=>/비상방송/.test(String(x?.[0])))&&(alarms?.compare||[]).some(x=>/자동화재속보/.test(String(x?.[0]))),'alarm closure distinguishes occupant broadcast and automatic external reporting');
+ok(['119-fac-11a','119-fac-11b','119-fac-12a'].every(id=>!!V.questionById[id]),'detection/alarm closure has sequence and comparison drills');
+const evacuation=V.contentPacks.authored['F07-C13'],water=V.contentPacks.authored['F07-C14'],activity=V.contentPacks.authored['F07-C15'];
+ok((evacuation?.must||[]).some(x=>/유도등/.test(x))&&(evacuation?.must||[]).some(x=>/비상조명/.test(x))&&(evacuation?.must||[]).some(x=>/피난기구/.test(x)),'facility support closure covers evacuation guidance, lighting and escape equipment');
+ok((water?.compare||[]).some(x=>x?.[0]==='소화용수설비')&&(activity?.compare||[]).some(x=>x?.[0]==='연결송수관')&&(activity?.compare||[]).some(x=>x?.[0]==='제연')&&(activity?.compare||[]).some(x=>x?.[0]==='무선통신보조'),'facility support closure distinguishes water supply, standpipe, smoke control and radio assist');
+ok(['119-fac-13a','119-fac-14a','119-fac-15a','119-fac-15b'].every(id=>!!V.questionById[id]),'evacuation/water/firefighter-support closure has focused comparison and purpose drills');
+ok(['F-HAZ-03','F-FAC-04','F-FAC-05'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'hazmat handling and both facility-operation rows are promoted only after evidence checks pass');
 ok(fullCoverage.calcMissing.length===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-BURN-02')?.status==='covered','no calculation topic is blank: oxygen/drip remain partial while Parkland is source-backed covered');
 
 ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'current 176-node content contract reaches 176/176 without claiming full exam coverage');
