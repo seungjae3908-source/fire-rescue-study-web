@@ -27,9 +27,9 @@ ok(V.CalculationQuestions119?.added===17,'calculation practice bank adds sevente
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
 ok(calculationPractice.length===17&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
 ok(calculationPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'calculation practice makes no unsupported past-exam claim');
-ok(V.LawQuestions119?.added===6,'six current-law practice questions are loaded');
+ok(V.LawQuestions119?.added===18,'eighteen current-law practice questions are loaded');
 const lawPractice=(V.questions||[]).filter(q=>/^119-law-/.test(q.id||''));
-ok(lawPractice.length===6&&lawPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'current-law questions stay practice-only and pass the exam-style gate');
+ok(lawPractice.length===18&&lawPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'current-law questions stay practice-only and pass the exam-style gate');
 ok(lawPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'current-law practice makes no unsupported past-exam claim');
 ok(V.SpecialCombustibleQuestions119?.added===6,'six current-law special-combustible practice questions are loaded');
 const specialCombustiblePractice=(V.questions||[]).filter(q=>/^119-specialcomb-/.test(q.id||''));
@@ -297,7 +297,13 @@ ok((V.contentPacks.authored['E14-C02']?.must||[]).some(x=>/SBP <90mmHg/.test(x))
 ok((V.contentPacks.authored['E14-C02']?.must||[]).some(x=>/생리식염수.*멸균드레싱/.test(x)),'evisceration care keeps exact moist sterile dressing rule');
 ok(V.curriculum.byId['E01-C03']?.title==='응급구조사 법적책임·119구급대 법령','119-law content is visible in the EMS curriculum');
 ok((V.contentPacks.authored['E01-C03']?.officialLinks||[]).length>=4,'119-law lesson exposes current official law source links');
-ok(fullCoverage.rows.find(x=>x.id==='E-LAW-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-TRN-02')?.status==='partial','119-law and air/international EMS gaps are truthfully partial after source-backed enrichment');
+ok((V.contentPacks.authored['E01-C03']?.officialLinks||[]).some(x=>/lsId=000218/.test(x.url||''))&&(V.contentPacks.authored['E01-C03']?.officialLinks||[]).some(x=>/144699215/.test(x.url||'')),'law lesson links current Emergency Medical Service Act and EMT scope Annex 14');
+ok((V.contentPacks.authored['E01-C03']?.must||[]).some(x=>/심정지 에피네프린/.test(x))&&(V.contentPacks.authored['E01-C03']?.must||[]).some(x=>/비밀준수/.test(x)),'law lesson includes current first-level EMT expansion and confidentiality duty');
+ok((V.contentPacks.authored['E05-C04']?.must||[]).some(x=>/3년 보관/.test(x))&&(V.contentPacks.authored['E05-C04']?.must||[]).some(x=>/이송거부/.test(x)),'record lesson includes current retention and refusal documentation rules');
+const expandedLawIds=['119-law-ems-07','119-law-ems-08','119-law-ems-09','119-law-ems-10','119-law-ems-11','119-law-ems-12','119-law-ems-13','119-law-ems-14','119-law-ems-15','119-law-ems-16','119-law-ems-17','119-law-ems-18'];
+ok(expandedLawIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'twelve expanded current-law drills remain P-grade exam-style practice');
+ok(['E-LAW-01','E-LAW-02','E-LAW-03'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'all three EMS law rows close only after current official statute rule and annex evidence');
+ok(fullCoverage.rows.find(x=>x.id==='E-TRN-02')?.status==='partial','air/international EMS transport remains partial after law closure');
 ok(fullCoverage.rows.find(x=>x.id==='F-HAZ-04')?.status==='covered','special-combustible gap is closed by current-law definition, quantity table and storage rules');
 ok(fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='F-BLD-03')?.status==='covered','building compartmentation and fire-material topics are source-closed by current Building Act evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-TRM-03')?.status==='covered','abdominal pelvic hemorrhage-risk and severe-trauma transport coverage closes only after exact-page evidence and focused drills');

@@ -59,9 +59,9 @@ const topics=[
 
   // EMS — general / law / disaster
   T('E-GEN-01','ems','총론','응급의료체계·응급구조사 법적책임','covered',['E01-C01','E01-C02','E01-C03']),
-  T('E-LAW-01','ems','법령','119구조·구급법·시행령','partial',['E01-C03'],{recent:'2026'}),
-  T('E-LAW-02','ems','법령','응급의료법·시행규칙·1급 업무범위','partial',['E01-C03'],{recent:'2025'}),
-  T('E-LAW-03','ems','법령','의료지도·동의·기록·비밀유지·윤리','partial',['E01-C03','E05-C04']),
+  T('E-LAW-01','ems','법령','119구조·구급법·시행령','covered',['E01-C03'],{recent:'2026',evidence:'current-119-act+decree+rule-2026'}),
+  T('E-LAW-02','ems','법령','응급의료법·시행규칙·1급 업무범위','covered',['E01-C03'],{recent:'2026',evidence:'Emergency-Medical-Service-Act-36-41+Rule-Annex14-current'}),
+  T('E-LAW-03','ems','법령','의료지도·동의·기록·비밀유지·윤리','covered',['E01-C03','E05-C04'],{evidence:'EMS-Act-9-40-49-52+119-Rule-12-18-current'}),
   T('E-TRN-01','ems','이송','구급차 운용·장비·병원선정','partial',['E06-C01','E06-C04','E07-C04']),
   T('E-TRN-02','ems','이송','항공이송·국제구급','partial',['E01-C03'],{recent:'2026'}),
   T('E-MCI-01','ems','재난의료','대량재난·START 분류','covered',['E05-C04'],{recent:'2024',evidence:'2026-NFA-EMS-85-87-START-RPM'}),
