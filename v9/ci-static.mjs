@@ -192,9 +192,10 @@ ok(!/^\s*create\s+(?:or\s+replace\s+)?function\b/im.test(liveHardening)&&!/^\s*c
 ok(liveHardening.includes('c.relrowsecurity'),'live hardening aborts if any Study private table lacks RLS');
 
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
+const appCode=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 ok(auth.includes("event==='SIGNED_OUT'")&&auth.includes('V.Store.switchOwner(V.Store.guestId)'), 'SIGNED_OUT auth events switch runtime ownership back to the guest namespace');
 ok(auth.includes("'session-expired'")&&auth.includes("'manual-signout'"),'auth runtime distinguishes session expiry from explicit logout');
-ok(app.includes('로그인 세션이 만료되어 게스트 모드로 전환되었습니다.')&&app.includes('로그인 세션 만료 · 다시 로그인해주세요'),'session expiry UX provides persistent and immediate re-login guidance');
+ok(appCode.includes('로그인 세션이 만료되어 게스트 모드로 전환되었습니다.')&&appCode.includes('로그인 세션 만료 · 다시 로그인해주세요'),'session expiry UX provides persistent and immediate re-login guidance');
 for(const [logical,physical] of Object.entries({profiles:'study_profiles',user_progress:'study_user_progress',user_answers:'study_user_answers',wrong_answers:'study_wrong_answers',review_schedule:'study_review_schedule',personal_notes:'study_personal_notes',private_documents:'study_private_documents',document_chunks:'study_document_chunks',study_sessions:'study_sessions',exam_history:'study_exam_history',tutor_preferences:'study_tutor_preferences'})){
   ok(auth.includes(`${logical}:'${physical}'`),`member sync maps ${logical} -> ${physical}`);
 }
@@ -210,7 +211,6 @@ ok(auth.includes('supabasePublishableKey'),'browser auth prefers the Supabase pu
 ok(auth.includes('enableCloudSync===true'),'backend connection is feature-gated until explicitly enabled');
 ok(auth.includes("client.auth.resend({type:'signup',email})"),'signup confirmation email can be resent without changing project-wide auth settings');
 ok(auth.includes('pendingEmailConfirmation:true'),'unconfirmed signup is represented as a pending state instead of a false failure');
-const appCode=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 ok(appCode.includes('data-resend-confirmation'),'account UI exposes confirmation-email resend');
 ok(appCode.includes('Email not confirmed'),'account UI explains unconfirmed-email sign-in failures');
 
