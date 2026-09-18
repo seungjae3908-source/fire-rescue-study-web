@@ -30,7 +30,7 @@ const targets=[
   {id:'E-RESP-01',title:'호흡곤란/천식/COPD/흡입손상',terms:['천식','COPD','만성폐쇄성폐질환','만성 폐쇄성 폐질환','호흡곤란','흡입손상','연기흡입','연기 흡입','기관지경련']},
   {id:'E-SHOCK-01',title:'쇼크 유형',terms:['저혈량 쇼크','저혈량성 쇼크','심인성 쇼크','심인성쇼크','폐쇄성 쇼크','폐쇄성쇼크','분포성 쇼크','분포성쇼크','신경성 쇼크','패혈성 쇼크','과민성 쇼크']},
   {id:'E-GI-01',title:'급성복통/GI bleeding',terms:['급성 복통','복통','위장관 출혈','위장관출혈','토혈','혈변','흑색변','hematemesis','melena']},
-  {id:'E-TRM-02-CHEST-EXTRA',title:'혈흉/심장압전/연가양흉',terms:['혈흉','심장압전','심장 압전','연가양흉','연가양 흉부','동요가슴','flail chest']},
+  {id:'E-TRM-02-CHEST-EXTRA',title:'혈흉/심장압전/연가양흉',terms:['혈흉','피가슴','혈액가슴','hemothorax','haemothorax','심장압전','심장 압전','심낭압전','심장눌림증','cardiac tamponade','pericardial tamponade','연가양흉','연가양 흉부','연가양 흉곽','동요가슴','flail chest']},
   {id:'E-CARD-01-EXTRA',title:'ACS/심인성쇼크 보충',terms:['심인성 쇼크','심인성쇼크','심인성 폐부종','ST 분절 상승 심근경색','STEMI','NSTEMI','급성관상동맥증후군','급성 관상동맥 증후군']}
 ];
 
