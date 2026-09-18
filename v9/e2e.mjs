@@ -66,6 +66,32 @@ try{
   const haz=await m.evaluate(()=>({rows:document.querySelectorAll('.book-mobile .hazmat-table tbody tr').length,text:document.querySelector('.book-mobile .hazmat-reference')?.innerText||'',calc:document.querySelector('.book-mobile .calc-example')?.innerText||'',sections:document.querySelectorAll('.book-mobile .book-section').length}));assert(haz.rows===7&&haz.text.includes('황화린')&&haz.text.includes('인화성고체'),'grade-2 electronic textbook shows official item/quantity table');assert(haz.calc.includes('1.5배'),'hazardous-material calculation example renders');assert(haz.sections>=4,'mobile textbook exposes summary detail quiz and source sections');
   await noX(m,'mobile hazardous-material book');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F04-C04'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F04-C04');
+  const foamBook=await m.locator('.book-mobile').textContent();
+  assert(foamBook.includes('저팽창')&&foamBook.includes('고팽창'),'foam lesson includes expansion-ratio classification');
+  assert(await m.locator('.book-mobile .concept-visual').count()>=1,'foam lesson renders learning diagram');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F04-C05'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F04-C05');
+  const co2Book=await m.locator('.book-mobile').textContent();
+  assert(co2Book.includes('질식')&&co2Book.includes('비전도'),'CO2 lesson includes primary mechanism and electrical property');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F04-C07'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F04-C07');
+  const cleanBook=await m.locator('.book-mobile').textContent();
+  assert(cleanBook.includes('IG-541')&&cleanBook.includes('52%'),'clean-agent lesson includes IG-541 composition');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F04-C08'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F04-C08');
+  const powderBook=await m.locator('.book-mobile').textContent();
+  assert(powderBook.includes('제1인산암모늄')&&powderBook.includes('ABC'),'powder lesson includes class-3 composition and applicability');
+  const supChoice=m.locator('[data-answer^="119-sup-08a:"]').first();
+  assert(await supChoice.isVisible(),'suppression exam-style question is rendered');
+  await supChoice.click();
+  assert(await m.locator('.choice-explanations .choice-explain').count()===4,'suppression question explains all four choices');
+  await noX(m,'mobile suppression textbook');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C04'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C04');
   const class3=await m.locator('.book-mobile').textContent();
