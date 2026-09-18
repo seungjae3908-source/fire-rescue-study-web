@@ -91,8 +91,10 @@ try{
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C19');
   assert((await m.locator('.book-mobile').textContent()).includes('준비작동식'),'mobile textbook includes granular preaction sprinkler lesson');
   await m.waitForSelector('.book-mobile');assert((await m.locator('.book-mobile').textContent()).includes('교재형 상세'),'mobile rich textbook renders');
-  await m.locator('.book-source [data-source-concept]').click();await m.waitForSelector('#sourceModal');assert(await m.locator('#sourceModal').isVisible(),'source evidence modal opens');
-  await m.locator('#sourceModal [data-pdf-evidence]').click();await m.waitForSelector('#pdfEvidence');assert(await m.locator('#pdfEvidence').isVisible(),'PDF evidence viewer opens from explanation');
+  await m.locator('.book-source [data-source-concept]').click();await m.waitForSelector('#pdfEvidence');assert(await m.locator('#pdfEvidence').isVisible(),'official evidence opens PDF viewer in one click');
+  assert(await m.locator('#sourceModal').count()===0,'one-click official evidence removes intermediate source modal');
+  assert(await m.locator('#pdfEvidence [data-source-pdf-file]').count()===0,'official evidence never asks user to upload a PDF');
+  const evidenceText=await m.locator('#pdfEvidence').textContent();assert(evidenceText.includes('중앙소방학교')||evidenceText.includes('공식 PDF'),'official evidence uses NFA source/fallback');
   await m.locator('#pdfEvidence [data-pdf-close]').click();assert(await m.locator('#pdfEvidence').count()===0,'PDF evidence close button works');
 
   const mobileType=await m.evaluate(()=>({lesson:parseFloat(getComputedStyle(document.querySelector('.book-section>p')).fontSize),jump:parseFloat(getComputedStyle(document.querySelector('.book-jumpbar button')).fontSize),nav:parseFloat(getComputedStyle(document.querySelector('.mobile-nav button')).fontSize)}));assert(mobileType.lesson>=16&&mobileType.jump>=11&&mobileType.nav>=12,`mobile textbook typography is readable (${JSON.stringify(mobileType)})`);await noX(m,'mobile rich detail');
