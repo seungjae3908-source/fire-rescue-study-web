@@ -319,7 +319,7 @@ jobs:
     timeout-minutes: 35
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: 2dcd0a1b8b120c4eb07229e78838786aaaf67385
+      STUDY_119_EXPECTED_APP_HEAD: a7d1857a6c4f3bb23c6dcca20584bb3e3a629e35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
