@@ -154,8 +154,17 @@ try{
   await m.waitForSelector('.question-card');
   const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형');return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id)}}); 
   assert(calcBank.filter==='calc'&&calcBank.count>=8&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with at least the eight source-backed drills');
-  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===13,'calculation practice includes all thirteen source-backed calculation drills');
+  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===17,'calculation practice includes thirteen official-source drills plus four clearly labeled oxygen/drip practice drills');
   await noX(m,'mobile calculation practice');
+  const calcEvidence=await m.evaluate(()=>{const V=window.AITUTOR_V9;return{
+    oxygen:(V.contentPacks.authored['E09-C07']?.calculations||[]).map(x=>({formula:x.formula,tier:x.evidenceTier,note:x.note})),
+    drip:(V.contentPacks.authored['E07-C03']?.calculations||[]).map(x=>({formula:x.formula,tier:x.evidenceTier,note:x.note})),
+    oxygenQs:V.questions.filter(q=>/^119-calc-oxygen-/.test(q.id||'')).map(q=>q.grade),
+    dripQs:V.questions.filter(q=>/^119-calc-drip-/.test(q.id||'')).map(q=>q.grade)
+  }});
+  assert(calcEvidence.oxygen.some(x=>x.tier==='reconstructed-exam-practice'&&/P - R/.test(x.formula||'')),'oxygen-cylinder formula is explicitly labeled reconstructed-practice, not official verified');
+  assert(calcEvidence.drip.some(x=>x.tier==='standard-education-practice'&&/gtt\/min/.test(x.formula||'')),'IV-drip formula is explicitly labeled standard-education practice');
+  assert(calcEvidence.oxygenQs.length===2&&calcEvidence.dripQs.length===2&&[...calcEvidence.oxygenQs,...calcEvidence.dripQs].every(x=>x==='P'),'nonofficial calculation drills cannot enter verified real-mock credit');
   await go(m,'exam');await m.waitForSelector('.exam-start');
   const realStart=m.locator('[data-exam-start="real"]');
   assert(await realStart.count()===1,'real mock start is enabled only after verified fire+EMS scope coverage closes');
@@ -289,6 +298,17 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   const rhythmDrugText=await m.locator('.book-section').innerText();
   assert(rhythmDrugText.includes('아데노신')&&rhythmDrugText.includes('0.1mg/kg')&&rhythmDrugText.includes('아트로핀')&&rhythmDrugText.includes('0.02mg/kg'),'rhythm lesson includes 2020-guideline adenosine and atropine anchors');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E21-C04'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E21-C04');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const palsText=await m.locator('.book-section').innerText();
+  assert(palsText.includes('0.01mg/kg')&&palsText.includes('3~5분')&&palsText.includes('0.1mg/kg')&&palsText.includes('0.2mg/kg')&&palsText.includes('0.5~1J/kg'),'pediatric ALS lesson includes official 2020 arrest brady/tachy algorithm anchors');
+  const palsBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,qs=V.questions.filter(q=>/^119-pals-adv-/.test(q.id||''));return{n:qs.length,p:qs.every(q=>q.grade==='P'),source:qs.every(q=>/2020년 한국심폐소생술 가이드라인/.test(q.source||''))}});
+  assert(palsBank.n===7&&palsBank.p&&palsBank.source,'advanced pediatric ALS practice stays P-grade and is bound to the official 2020 guideline');
+  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
+  const palsLinks=await m.locator('.book-section .source-law-links a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
+  assert(palsLinks.some(x=>/^https:\/\/(www\.)?kacpr\.org\//.test(x)),'pediatric ALS source tab exposes the official KACPR guideline');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E03-C04'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E03-C04');
