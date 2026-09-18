@@ -93,3 +93,5 @@
   .source-ref{grid-template-columns:1fr}.source-ref>span,.source-ref>small{font-size:12px}.source-ref>b{font-size:15px}.source-highlight-preview{font-size:14px}.pdf-page-shell{min-height:310px;padding:10px}.pdf-placeholder{min-height:285px;padding:45px 18px 20px}
   .lesson-grid{grid-template-columns:1fr}.split{grid-template-columns:1fr}.split>aside{display:none}.outline{bottom:var(--action-h);width:94%}.outline-head{padding:14px}.outline-list{padding:10px}.scope>button{font-size:14px;padding:12px}.concepts button{font-size:13px;padding:10px}
 }
+
+.hidden{display:none!important}.official-fallback{display:grid;gap:10px}.source-fallback-page{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#081524}.source-fallback-page span{font-size:10px;color:var(--muted)}.source-fallback-page strong{font-size:13px}
