@@ -94,8 +94,8 @@ try{
   await noX(m,'mobile study detail');
 
   await m.locator('.book-jumpbar [data-study-tab="source"]').click();
-  await m.waitForSelector('.source-only [data-source-concept]');
-  await m.locator('.source-only [data-source-concept]').click();
+  await m.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
+  await m.locator('.study-body-mobile .source-only [data-source-concept]').click();
   await m.waitForSelector('#pdfEvidence');
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
