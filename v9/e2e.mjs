@@ -71,6 +71,9 @@ try{
   const navLabels=(await m.locator('.mobile-nav button').allInnerTexts()).map(x=>x.trim());
   assert(JSON.stringify(navLabels)===JSON.stringify(['홈','학습','시험','오답','더보기']),'mobile primary navigation is explicit and student-facing');
   await cleanPage(m,'mobile home');
+  const todayBox=await m.locator('.today-item').first().boundingBox();
+  const todayTitleBox=await m.locator('.today-item').first().locator('b').boundingBox();
+  assert(todayBox&&todayTitleBox&&todayTitleBox.width>Math.min(220,todayBox.width*.55),'today learning title receives the main row width instead of a narrow legacy score column');
 
   await m.locator('.mobile-nav [data-go="study"]').click();await m.waitForSelector('.book-mobile');
   await cleanPage(m,'mobile study');
@@ -79,13 +82,18 @@ try{
   assert(await m.locator('.book-jumpbar button').count()===4,'mobile study has four true content tabs');
   assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문','mobile tabs are 핵심/상세/문제/원문');
 
-  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F01-C04'));
-  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F01-C04');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.book-section .detail-view');
   const detailText=await m.locator('.book-section').innerText();
-  assert(!detailText.includes('개념 구조와 읽는 순서'),'mobile detail removes unnecessary meta heading');
+  assert(!detailText.includes('개념 구조와 읽는 순서')&&!detailText.includes('개념 이해'),'mobile detail simplifies meta headings to 개념');
   assert(await m.locator('.book-section .detail-num').count()===0,'mobile detail has no detached numeric badges');
+  assert(await m.locator('.book-section .detail-view>.lead').count()===0,'detail tab does not repeat the core summary above structured detail');
+  const dup=await m.locator('.book-section .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
+  assert(!dup,'detail tab removes duplicate section bodies');
+  const bodyHeight=await m.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
+  assert(bodyHeight>=320,'mobile study keeps at least 320px for learning content');
 
   await m.locator('[data-outline]').first().click();await m.waitForSelector('.outline.open');
   const mtoc=await m.locator('.outline.open').innerText();
@@ -105,7 +113,7 @@ try{
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
   const cache=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.openPdf(key),b=await V.SourcePDF.openPdf(key);return{same:a.pdf===b.pdf,origin:a.origin}});
-  assert(cache.same&&cache.origin==='official-range','official PDF loader reuses range-streamed document cache');
+  const local=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc;return await V.SourcePDF.availability(key)});\n  assert(cache.same&&/local-cache/.test(cache.origin)&&local.local,'official PDF is persisted locally and reused after first load');\n  const closeBox=await m.locator('#pdfEvidence [data-pdf-close]').boundingBox();\n  assert(closeBox&&closeBox.height<60,'PDF close button stays compact instead of stretching with the header');
   await m.locator('[data-pdf-close]').click();
 
   await m.locator('.mobile-nav [data-go="exam"]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='exam');
