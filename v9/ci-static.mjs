@@ -77,7 +77,7 @@ ok(Object.keys(contentAudit.blockers||{}).length===0,'119 content contract has n
 ok(!contentAudit.blockers.questionsEnough&&!contentAudit.blockers.difficultyLow&&!contentAudit.blockers.difficultyMid&&!contentAudit.blockers.difficultyHigh&&!contentAudit.blockers.choiceExplanations,'question-count, difficulty-mix and option-explanation blockers are closed without weakening the contract');
 ok(V.TextbookGrounded119?.targetChars===900&&V.curriculum.concepts.every(x=>V.contentPacks.authored[x.id]?.textbookGrounded119===true),'grounded textbook layer closes whatever depth/section/trap/memory shortfalls remain after source-backed enrichment');
 ok(!contentAudit.blockers.textbookDepth&&!contentAudit.blockers.structuredSections&&!contentAudit.blockers.examTraps&&!contentAudit.blockers.memoryPoints&&!contentAudit.blockers.comparison,'textbook depth, structure, traps, memory and required comparisons are closed');
-ok(V.VisualCompletion119?.targets?.length===27,'visual completion tracks the audited 27 remaining visual concepts');
+ok(V.VisualCompletion119?.targets?.length===28,'visual completion tracks the audited 28 visual concepts');
 ok(V.VisualCompletion119.targets.every(id=>{
   const p=V.contentPacks.authored[id];
   return (p?.visuals||[]).length>0&&(p.visuals||[]).some(v=>!!V.Visual119.render(v));
