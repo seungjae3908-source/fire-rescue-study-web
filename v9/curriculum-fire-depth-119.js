@@ -2,7 +2,7 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};if(!V.curriculum)return;
 const add=(scopeId,titles)=>{const sc=V.curriculum.scopeById?.[scopeId]||V.curriculum.scopes?.find(x=>x.id===scopeId);if(!sc)return;for(const t of titles)if(!sc.concepts.includes(t))sc.concepts.push(t)};
-add('F03',['플래시오버','롤오버·플레임오버','백드래프트','보일오버','슬롭오버','프로스오버','BLEVE·파이어볼','풀파이어']);
+add('F03',['플래시오버','플레임오버','백드래프트','보일오버','슬롭오버','프로스오버','BLEVE·파이어볼','풀파이어']);
 add('F07',['스프링클러 구성요소','습식 스프링클러','건식 스프링클러','준비작동식 스프링클러','일제살수식 스프링클러','스프링클러 헤드·감열부']);
 V.curriculum.scopes=[...V.curriculum.fire,...V.curriculum.ems];V.curriculum.scopeById=Object.fromEntries(V.curriculum.scopes.map(x=>[x.id,x]));
 V.curriculum.concepts=V.curriculum.scopes.flatMap(scope=>scope.concepts.map((title,index)=>{const id=`${scope.id}-C${String(index+1).padStart(2,'0')}`;return{id,scopeId:scope.id,scopeTitle:scope.title,subject:scope.subject,title,index,sourceRanges:V.curriculum.ranges[id]||[]}}));
@@ -10,7 +10,7 @@ V.curriculum.byId=Object.fromEntries(V.curriculum.concepts.map(x=>[x.id,x]));V.c
 const R=V.curriculum.ranges;const n=(id,doc,label,note)=>R[id]=[{doc,label,note}];const a=(id,doc,label,from,to=from)=>R[id]=[{doc,label,from,to}];
 for(let i=9;i<=16;i++)n(`F03-C${String(i).padStart(2,'0')}`,'fire1','2026 소방전술1','화재성장·특수현상·위험물탱크 화재 공식 원문 page anchor 확장중');
 a('F03-C09','fire1','2026 소방전술1',37);
-a('F03-C10','fire1','2026 소방전술1',49);
+a('F03-C10','fire1','2026 소방전술1',40);
 a('F03-C11','fire1','2026 소방전술1',453);
 a('F03-C12','fire1','2026 소방전술1',319);
 a('F03-C13','fire1','2026 소방전술1',320);
