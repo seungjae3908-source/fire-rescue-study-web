@@ -18,7 +18,8 @@ add('Mastery 엔진',typeof V.Mastery.recordAnswer==='function'&&typeof V.Master
 add('확신오답 고위험 가중치',true,'wrong+sure=-22');
 add('상세학습팩 구조',V.curriculum.concepts.every(c=>{const p=V.contentPacks.get(c.id);return p&&Array.isArray(p.detail)&&Array.isArray(p.must)&&Array.isArray(p.traps)&&Array.isArray(p.deepSections)}));
 add('위험물·화재조사·소방시설 범위',!!V.curriculum.byId['F05-C01']&&!!V.curriculum.byId['F06-C01']&&!!V.curriculum.byId['F07-C05'],'F05/F06/F07');
-add('현재 커리큘럼 페이지 근거',coverage.verified===176&&coverage.pending===0,`${coverage.verified}/${coverage.total}`);\nadd('전체 시험범위 Coverage Map',!!examCoverage&&examCoverage.total>70,examCoverage?`구현 ${examCoverage.implementationPercent}% · 부분 ${examCoverage.partial} · 누락 ${examCoverage.missing}`:'미로딩');
+add('현재 커리큘럼 페이지 근거',coverage.verified===176&&coverage.pending===0,`${coverage.verified}/${coverage.total}`);
+add('전체 시험범위 Coverage Map',!!examCoverage&&examCoverage.total>70,examCoverage?`구현 ${examCoverage.implementationPercent}% · 부분 ${examCoverage.partial} · 누락 ${examCoverage.missing}`:'미로딩');
 add('회원 백엔드 연결',V.Auth.configured(),V.Auth.configured()?'configured':'119 전용 프로젝트 연결 대기');
 }catch(e){add('selftest 실행',false,String(e.message||e))}
 const release={pass:rows.every(r=>r.ok),blocking:rows.filter(r=>!r.ok),rows};V.QA=release;console.table(rows);window.dispatchEvent(new CustomEvent('aitutor-v9-qa',{detail:release}));
