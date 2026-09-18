@@ -110,6 +110,10 @@ try{
   const practice=m.locator('[data-exam-start="practice"]');
   await practice.click();await m.waitForSelector('.question-card');
   assert(await m.locator('.question-card .choice').count()===4,'practice exam renders one four-choice question at a time');
+  const mock=await m.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam,fire=e.qs.filter(q=>q.subject==='fire'),ems=e.qs.filter(q=>q.subject==='ems');return{total:e.qs.length,fire:fire.length,ems:ems.length,unique:new Set(e.qs.map(q=>q.id)).size,fireScopes:new Set(fire.map(q=>q.scopeId)).size,emsScopes:new Set(ems.map(q=>q.scopeId)).size}});
+  assert(mock.total===65&&mock.fire===25&&mock.ems===40&&mock.unique===65,'practice mock blueprint is 25 fire + 40 EMS with no duplicate questions');
+  assert(mock.fireScopes>=7,'practice mock covers every fire scope');
+  assert(mock.emsScopes>=24,'practice mock covers every EMS scope');
   await noX(m,'mobile exam question');
 
   await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
