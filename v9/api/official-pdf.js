@@ -50,7 +50,7 @@ function candidateVariants(paths){
   const out=[];
   for(const raw of paths||[]){
     const original=strip(raw);
-    const originalNoSession=original.replace(/;jsessionid=[^?'"()\\s]+/gi,'');
+    const originalNoSession=original.replace(/;jsessionid=[^?'\"()\s]+/gi,'');
     const normalized=normalizeDownloadPath(original);
     const normalizedNoSession=stripSessionPath(normalized);
     for(const p of [original,originalNoSession,normalized,normalizedNoSession]){
