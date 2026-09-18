@@ -52,6 +52,19 @@ try{
       const secondMs=Date.now()-reopened;
       assert(secondMs<Math.max(8000,firstMs),'second textbook open reuses the cached PDF');
       await page.locator('#pdfEvidence [data-pdf-close]').click();
+
+      for(const doc of ['fire1','fire2','ems']){
+        const id=await page.evaluate(doc=>window.AITUTOR_V9.curriculum.concepts.find(c=>c.sourceRanges?.[0]?.doc===doc)?.id||'',doc);
+        assert(!!id,'found concept backed by mirrored '+doc+' textbook');
+        await page.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
+        await page.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,id);
+        await page.locator('.book-jumpbar [data-study-tab="source"]').click();
+        await page.locator('.study-body-mobile .source-only [data-source-concept]').click();
+        await page.waitForSelector('#pdfEvidence canvas',{timeout:45000});
+        const info=await page.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,p=await V.SourcePDF.openPdf(key),cat=V.SourceCatalog119.get(key);return{key,origin:p.origin,transport:cat.transport,url:cat.directPdf}});
+        assert(info.key===doc&&info.transport==='range-static'&&info.origin==='official-static-range','mirrored '+doc+' textbook opens from static range source');
+        await page.locator('#pdfEvidence [data-pdf-close]').click();
+      }
     }
 
     await page.evaluate(()=>window.AITUTOR_V9.App.go('exam'));
