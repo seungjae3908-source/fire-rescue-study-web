@@ -3,8 +3,8 @@
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const DB='aitutor-v9-official-source-pdfs',VER=1;let dbp=null,activeRemote=null;const pdfCache=new Map();
 const PAGE_OFFSETS=Object.freeze({fire1:16,fire2:10,ems:18});
-const pdfPage=(key,bookPage)=>{const n=Number(bookPage);return Number.isFinite(n)&&n>0?n+(PAGE_OFFSETS[key]||0):0};
-const bookPage=(key,pdfPageNo)=>{const n=Number(pdfPageNo),x=n-(PAGE_OFFSETS[key]||0);return Number.isFinite(x)&&x>0?x:0};
+const pdfPage=(key,bookPage)=>{const n=Number(bookPage);if(!Number.isFinite(n)||n<=0)return 0;return Object.prototype.hasOwnProperty.call(PAGE_OFFSETS,key)?n+PAGE_OFFSETS[key]:n};
+const bookPage=(key,pdfPageNo)=>{if(!Object.prototype.hasOwnProperty.call(PAGE_OFFSETS,key))return 0;const n=Number(pdfPageNo),x=n-PAGE_OFFSETS[key];return Number.isFinite(x)&&x>0?x:0};
 const SOURCE_PAGES={
   ems:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view',
   fire1:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106809&mode=view',
