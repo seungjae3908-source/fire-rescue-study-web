@@ -61,6 +61,6 @@ async function signIn(email,password){await init();if(!client)throw Error('MEMBE
 async function signOut(){await init();if(client){const {error}=await client.auth.signOut();if(error)throw error}user=null;V.Store.switchOwner(V.Store.guestId);emit()}
 async function syncAll(){await init();if(!client||!user)throw Error('NOT_SIGNED_IN');await pullRemoteIntoLocal(user.id);return syncAllInternal(user.id)}
 async function pull(){await init();if(!client||!user)throw Error('NOT_SIGNED_IN');return pullRemoteIntoLocal(user.id)}
-V.Auth={init,configured,get client(){return client},get user(){return user},get isGuest(){return !user},signUp,resendConfirmation,signIn,signOut,syncAll,pull,label(){return user?.email||'게스트'},privacy:'personal-data-is-private-by-default',syncPolicy:{remoteFirstOnSignIn:true,remoteFirstOnManualSync:true,originalFilesAutoUpload:false,extractedTextManualCloudSync:true,deletionTombstones:true,sharedProjectNamespace:'study_*',signupScope:'study-v9'}};
+V.Auth={init,configured,get client(){return client},get user(){return user},get isGuest(){return !user},signUp,resendConfirmation,signIn,signOut,syncAll,pull,label(){return user?.email||'게스트'},privacy:'personal-data-is-private-by-default',syncPolicy:{remoteFirstOnSignIn:true,remoteFirstOnManualSync:true,originalFilesAutoUpload:false,extractedTextManualCloudSync:true,deletionTombstones:true,sharedProjectNamespace:'study_*',signupScope:'study-v9',clientRuntime:'same-origin-lite',externalSdkRequired:false}};
 init();
 })();
