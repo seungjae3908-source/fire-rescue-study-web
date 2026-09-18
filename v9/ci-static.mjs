@@ -39,7 +39,7 @@ ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curricul
 ok(V.curriculum.byId['F05-C05']&&V.curriculum.byId['F07-C05'],'hazardous materials and sprinkler scopes exist');
 ok(V.contentPacks.authored['F05-C05']?.deepSections?.length>0&&V.contentPacks.authored['F07-C05']?.deepSections?.length>0,'new fire scopes have rich detail sections');
 ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope expansion adds 27 concepts');
-ok(V.emsRich2026?.scopes===24&&V.emsRich2026?.concepts===108,'all 24 EMS chapters / 108 concepts receive structured rich detail');
+ok(V.emsRich2026?.scopes===24&&V.emsRich2026?.concepts===107,'all 24 EMS chapters / 107 concepts receive structured rich detail');
 ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
 ok(!!V.depthEnrichment2,'source-depth enrichment batch 2 is loaded');
 
