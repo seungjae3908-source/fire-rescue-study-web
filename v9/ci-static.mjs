@@ -53,8 +53,17 @@ ok(V.emsRich2026?.scopes===24&&V.emsRich2026?.concepts===107,'all 24 EMS chapter
 ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
 ok(!!V.depthEnrichment2,'source-depth enrichment batch 2 is loaded');
 
+const brandFiles=[
+  fs.readFileSync(new URL('./index.html',import.meta.url),'utf8'),
+  fs.readFileSync(new URL('./preview.html',import.meta.url),'utf8'),
+  fs.readFileSync(new URL('./app.js',import.meta.url),'utf8'),
+  fs.readFileSync(new URL('./selftest.js',import.meta.url),'utf8')
+].join('\n');
+ok(!brandFiles.includes('AI과외'),'legacy AI과외 brand is absent from v9 runtime surfaces');
+ok(brandFiles.includes('119'),'119 brand is present in v9 runtime surfaces');
 const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url),'utf8'));
 ok(manifest.start_url==='./'&&manifest.scope==='./','v9 PWA manifest is subpath-scoped');
+ok(manifest.name==='119'&&manifest.short_name==='119','PWA install name is unified as 119');
 const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 ok(sw.includes("const PREFIX='ai-tutor-v9-'"),'v9 service worker uses a dedicated cache prefix');
 ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names');
