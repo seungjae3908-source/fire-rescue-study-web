@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','question-difficulty.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -11,6 +11,12 @@ const V=window.AITUTOR_V9;
 ok(V.curriculum.totalConcepts===176,'176 complete concepts');
 ok(V.MasterSyllabus119?.groups?.fire?.length===6&&V.MasterSyllabus119?.groups?.ems?.length===10,'119 master syllabus groups fire/EMS into exam-oriented parts');
 ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content completion contract is loaded');
+ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style question quality gate is loaded');
+const questionAudit=V.QuestionQuality119.audit();
+ok(questionAudit.examStyle>0,'exam-style question bank is non-empty');
+ok(questionAudit.duplicateTexts.length===0,'exam-style question text duplicates = 0');
+ok((V.questions||[]).filter(V.QuestionQuality119.isExamStyle).every(q=>q.choiceExplanations?.length===4),'every exam-style question explains all four options');
+ok((V.questions||[]).filter(V.QuestionQuality119.isExamStyle).every(q=>q.difficulty&&q.type&&q.source),'every exam-style question has difficulty, type and source');
 ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===176,'unique concept ids');
 ok(V.curriculum.concepts.every(x=>x.sourceRanges.length>0),'all concepts have official source ranges');
 ok(V.curriculum.fire.length===7,'seven complete fire scopes');
@@ -41,7 +47,7 @@ console.log('EXTRA_AUTHORED_CONCEPTS',extra);
 ok(coverage.total===176,'content coverage denominator is 176');
 ok(scopeVerified.length===41&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)||/^F03-C(09|1[0-6])$/.test(id)),`41 page-anchor-pending fire concepts remain fail-closed; actual=${scopeVerified.length}`);
 ok(missing.length===41&&missing.every(id=>scopeVerified.includes(id)),`only the 41 page-anchor-pending concepts are not fully verified; missing=${missing.join(',')||'none'}`);
-ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===176,'exactly 162 valid authored concept packs');
+ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===176,'exactly 176 valid authored concept packs');
 ok(coverage.verified===135&&coverage.pending===41,'release truth stays 135 page-verified + 41 page-anchor-pending');
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'||p.status==='scope-verified'),'every authored content pack has an explicit verified/scope-verified truth state');
