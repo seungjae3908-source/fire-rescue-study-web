@@ -110,6 +110,8 @@ ok(membershipSql.includes("bucket_id='study-private-v9'")&&membershipSql.include
 const guard=fs.readFileSync(new URL('./auth-membership-guard.js',import.meta.url),'utf8');
 ok(guard.includes("from('study_memberships')"),'browser session guard checks server-created Study membership');
 ok(guard.includes('STUDY_ACCOUNT_REQUIRED'),'non-Study shared-auth sessions fail closed');
+ok(auth.includes("V.Auth?.hasStudyMembership&&!(await V.Auth.hasStudyMembership(next.id))"),'member adopt checks Study membership before any remote pull/push');
+ok(guard.includes('membershipPreflightBeforeAdopt:true'),'membership preflight contract is recorded in sync policy');
 ok(v9index.indexOf('./auth.js')<v9index.indexOf('./auth-membership-guard.js')&&v9index.indexOf('./auth-membership-guard.js')<v9index.indexOf('./app.js'),'Study membership guard loads after auth and before app UI');
 const preview=fs.readFileSync(new URL('./preview.html',import.meta.url),'utf8');
 ok(preview.includes('enableCloudSync:true')&&preview.includes('previewOnly:true'),'real cloud sync is enabled only on the explicit v9 preview surface');
