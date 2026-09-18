@@ -110,11 +110,12 @@ ok(/화재1\) 16쪽/.test(V.questionById['119-fireterm-17']?.source||''),'redox 
 ok(/화재2\) 299쪽/.test(V.questionById['119-fireterm-18']?.source||''),'chemical-equation practice is bound to exact textbook page 299');
 ok(/화재1\) 12·40쪽/.test(V.questionById['119-fireterm-19']?.source||''),'oxidation/combustion comparison is bound to exact textbook pages 12 and 40');
 ok(/화재2\) 309쪽/.test(V.questionById['119-fireterm-20']?.source||''),'latent-heat definition practice is bound to exact textbook page 309');
-ok(/화재2\) 190·309쪽/.test(V.questionById['119-fireterm-21']?.source||''),'sensible-vs-latent comparison is bound to exact textbook pages 190 and 309');
+ok(/화재2\) 190·309·345쪽/.test(V.questionById['119-fireterm-21']?.source||''),'sensible-vs-latent comparison is bound to exact textbook pages 190, 309 and direct sensible-heat page 345');
 ok(['119-fireterm-22','119-fireterm-23'].every(id=>/화재2\) 190쪽/.test(V.questionById[id]?.source||'')),'heat calculation drills are bound to the textbook worked values on page 190');
 ok((ignitionPack?.must||[]).some(x=>/극성 공유결합/.test(x))&&(ignitionPack?.detail||[]).some(x=>/산화.*반응|산화.*환원/.test(x)),'F-SCI-02 content exposes chemical-bond and oxidation/reduction evidence in the student lesson');
 const heatPack=V.contentPacks.authored['F03-C02'];
 ok((heatPack?.compare||[]).some(x=>x?.[0]==='감열')&&(heatPack?.compare||[]).some(x=>x?.[0]==='잠열'),'F-SCI-03 lesson directly compares sensible and latent heat');
+ok((heatPack?.detail||[]).some(x=>/현열\(Sensible Heat\)|현열/.test(x)),'F-SCI-03 sensible-heat wording is directly tied to textbook page 345 instead of inference-only wording');
 ok((heatPack?.calculations||[]).some(x=>/Q = m × c × ΔT/.test(x?.formula||''))&&(heatPack?.calculations||[]).some(x=>/Q = m × L/.test(x?.formula||'')),'F-SCI-03 lesson exposes separate temperature-change and phase-change calculation contracts');
 ok((heatPack?.must||[]).some(x=>/79\.7cal\/g/.test(x))&&(heatPack?.must||[]).some(x=>/539\.6cal\/g/.test(x)),'F-SCI-03 keeps the exact textbook water latent-heat values');
 const smokePack=V.contentPacks.authored['F03-C07'];

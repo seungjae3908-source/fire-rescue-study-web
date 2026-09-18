@@ -14,7 +14,7 @@ const topics=[
   // FIRE — science / combustion / fire dynamics
   T('F-SCI-01','fire','소방과학','원자·분자·원자량·분자량','partial',['F03-C03'],{calc:true}),
   T('F-SCI-02','fire','소방과학','화학결합·화학반응식·산화환원','covered',['F03-C03'],{calc:true,evidence:'2026-fire1-12-16+fire2-191-299'}),
-  T('F-SCI-03','fire','소방과학','물질상태·상변화·감열·잠열','covered',['F03-C02'],{calc:true,evidence:'2026-fire1-9+fire2-190+309'}),
+  T('F-SCI-03','fire','소방과학','물질상태·상변화·감열·잠열','covered',['F03-C02'],{calc:true,evidence:'2026-fire1-9+fire2-190+309+345'}),
   T('F-SCI-04','fire','소방과학','기체법칙·이상기체·mol','partial',['F03-C03'],{calc:true,recent:'2026'}),
   T('F-SCI-05','fire','소방과학','열량·비열·열용량 계산','partial',['F03-C02'],{calc:true}),
   T('F-SCI-06','fire','소방과학','전도·대류·복사와 복사열 계산','partial',['F03-C02'],{calc:true,recent:'2026'}),
