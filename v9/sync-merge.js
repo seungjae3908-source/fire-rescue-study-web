@@ -21,6 +21,7 @@ function pickProfile(left,right,preferRight=false){const l={...DEFAULT_PROFILE,.
 }
 function mergeList(left,right,key='id'){const m=new Map();for(const row of [...(left||[]),...(right||[])]){if(!row)continue;const id=row[key]||JSON.stringify(row);const prev=m.get(id);if(!prev||stamp(row)>=stamp(prev))m.set(id,clone(row))}return[...m.values()]}
 function mergeMap(left,right){const out={...(left||{})};for(const [k,v] of Object.entries(right||{})){const prev=out[k];if(!prev||stamp(v)>=stamp(prev))out[k]=clone(v)}return out}
+function mergeStampedObject(left,right){const l=left||{},r=right||{};if(!Object.keys(l).length)return clone(r);if(!Object.keys(r).length)return clone(l);return stamp(r)>=stamp(l)?{...clone(l),...clone(r)}:{...clone(r),...clone(l)}}
 function latestAnswers(events,answers,confidence){const a={...(answers||{})},c={...(confidence||{})};for(const e of [...(events||[])].sort((x,y)=>num(x.at)-num(y.at))){if(!e?.questionId)continue;if(e.choice!==undefined&&e.choice!==null)a[e.questionId]=Number(e.choice);if(e.confidence)c[e.questionId]=e.confidence}return{answers:a,confidence:c}}
 function mergeStateSafe(left,right,ownerId,{preferRightProfile=false}={}){left=clone(left||{});right=clone(right||{});const out={...left,ownerId};
   out.profile=pickProfile(left.profile,right.profile,preferRightProfile);
@@ -34,7 +35,7 @@ function mergeStateSafe(left,right,ownerId,{preferRightProfile=false}={}){left=c
   out.studySessions=mergeList(left.studySessions,right.studySessions,'id');
   out.chat=mergeList(left.chat,right.chat,'id');
   out.settings={...(left.settings||{}),...(right.settings||{})};
-  out.tutorPreferences={...(left.tutorPreferences||{}),...(right.tutorPreferences||{})};
+  out.tutorPreferences=mergeStampedObject(left.tutorPreferences,right.tutorPreferences);
   out.migrations={...(left.migrations||{}),...(right.migrations||{})};
   out.updatedAt=Math.max(num(left.updatedAt),num(right.updatedAt),Date.now());
   return out;
