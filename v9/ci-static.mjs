@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -145,6 +145,8 @@ ok(V.HazmatQuestions119?.added===7,'hazardous-material depth batch adds seven so
 ok(V.HazmatDepth119.concepts.every(id=>V.contentPacks.authored[id]?.calculations?.length>0),'all hazardous-material class lessons expose designated-quantity calculation contract');
 ok(V.EMSDepth119?.concepts?.length===9,'nine high-yield EMS concepts receive textbook-depth enrichment');
 ok(V.EMSQuestions119?.added===9,'nine page-grounded EMS exam-style questions are loaded');
+ok(V.EMSRestoredVerified119?.added===5&&V.EMSRestoredVerified119.scopes.join(',')==='E02,E03,E04,E05,E07','five page-verified EMS scope-gap questions are loaded without past-exam claims');
+ok(V.EMSRestoredVerified119?.questions.every(id=>V.questionById[id]?.grade==='B'&&V.questionById[id]?.restoredVerified===true&&V.questionById[id]?.pastExamClaim===false),'restored EMS gap questions remain manually reviewed B-grade evidence');
 ok(V.EMSDepth119.concepts.every(id=>V.contentPacks.authored[id]?.visuals?.length>0),'high-yield EMS depth concepts have learning diagrams');
 ok(V.emsRich2026?.scopes===24&&V.emsRich2026?.concepts===107,'all 24 EMS chapters / 107 concepts receive structured rich detail');
 ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
@@ -168,6 +170,7 @@ ok(sw.includes("'./sync-merge.js'")&&sw.includes("'./sync-ui.js'"),'v9 sync hard
 ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'")&&sw.includes("'./content-rich-2026.js'")&&sw.includes("'./ems-rich-2026.js'"),'v9 depth enrichments are offline-cached');
 ok(sw.includes("'./curriculum-complete-2026.js'"),'complete curriculum expansion is offline-cached');
 ok(sw.includes("'./coverage-map-119.js'"),'full exam Coverage Map is offline-cached');
+ok(sw.includes("'./questions-ems-restored-verified-119.js'"),'restored EMS verified questions are offline-cached');
 
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
