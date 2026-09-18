@@ -10,6 +10,8 @@ on:
       - 'supabase/v9-live-backend-hardening.sql'
       - 'supabase/v9-shared-auth-routing.sql'
       - 'supabase/v9-study-membership-trigger.sql'
+      - 'supabase/tests/v9-live-closed-loop.sql'
+      - 'supabase/tests/v9-live-closed-loop.sql'
       - 'V9-ARCHITECTURE.md'
       - '.github/workflows/v9-ci.yml'
   pull_request:
