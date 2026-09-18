@@ -11,10 +11,37 @@ function createClient(url,key){
   const headers=(token=session?.access_token)=>({'apikey':key,'Authorization':`Bearer ${token||key}`,'Content-Type':'application/json'});
   const errObj=async r=>{let d=null;try{d=await r.json()}catch{}const e=new Error(d?.msg||d?.message||d?.error_description||d?.error||`HTTP ${r.status}`);e.status=r.status;e.code=d?.code||null;return e};
   const emit=(event)=>{const s=session?{...session,user:session.user||null}:null;for(const fn of listeners){try{fn(event,s)}catch(e){console.warn('auth listener failed',e)}}};
+  function clearSession(event='SIGNED_OUT'){const had=!!session;session=null;writeSession(null);if(had)emit(event);return null}
   function store(raw){if(!raw?.access_token)return null;const claims=decodeJwt(raw.access_token),expiresAt=raw.expires_at?Number(raw.expires_at):claims.exp||Math.floor(Date.now()/1000)+(Number(raw.expires_in)||3600);session={access_token:raw.access_token,refresh_token:raw.refresh_token||session?.refresh_token||'',token_type:raw.token_type||'bearer',expires_at:expiresAt,user:raw.user||session?.user||null};writeSession(session);return session}
-  async function refresh(){if(refreshing)return refreshing;const rt=session?.refresh_token;if(!rt)return null;refreshing=(async()=>{const r=await fetch(url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});if(!r.ok){writeSession(null);session=null;return null}const d=await r.json();return store(d)})().finally(()=>refreshing=null);return refreshing}
-  async function token(){if(!session?.access_token)return null;const exp=Number(session.expires_at)||decodeJwt(session.access_token).exp||0;if(exp&&exp*1000<Date.now()+30000)await refresh();return session?.access_token||null}
-  async function api(path,opt={},retry=true){const t=await token();const r=await fetch(url+path,{...opt,headers:{...headers(t),...(opt.headers||{})}});if(r.status===401&&retry&&session?.refresh_token&&await refresh())return api(path,opt,false);return r}
+  async function refresh(){
+    if(refreshing)return refreshing;
+    const rt=session?.refresh_token;
+    if(!rt)return clearSession();
+    refreshing=(async()=>{
+      const r=await fetch(url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});
+      if(!r.ok)return clearSession();
+      const d=await r.json();return store(d)
+    })().finally(()=>refreshing=null);
+    return refreshing
+  }
+  async function token(){
+    if(!session?.access_token)return null;
+    const exp=Number(session.expires_at)||decodeJwt(session.access_token).exp||0;
+    if(exp&&exp*1000<Date.now()+30000){
+      if(!session.refresh_token)return clearSession();
+      const renewed=await refresh();if(!renewed)return null
+    }
+    return session?.access_token||null
+  }
+  async function api(path,opt={},retry=true){
+    const t=await token();
+    const r=await fetch(url+path,{...opt,headers:{...headers(t),...(opt.headers||{})}});
+    if(r.status===401&&retry){
+      if(session?.refresh_token&&await refresh())return api(path,opt,false);
+      if(session)clearSession()
+    }
+    return r
+  }
   function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,''));if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});history.replaceState(null,'',location.pathname+location.search);return true}}catch{}return false}
   consumeRedirect();
   class Query{
@@ -54,7 +81,7 @@ function createClient(url,key){
     },
     async resend({type,email}){const r=await fetch(url+'/auth/v1/resend',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({type,email})});if(!r.ok)return{data:null,error:await errObj(r)};let d=null;try{d=await r.json()}catch{}return{data:d,error:null}},
     async signInWithPassword({email,password}){const r=await fetch(url+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!r.ok)return{data:null,error:await errObj(r)};const d=await r.json(),s=store(d);emit('SIGNED_IN');return{data:{user:d.user||s?.user||null,session:s},error:null}},
-    async signOut(){const t=session?.access_token;session=null;writeSession(null);emit('SIGNED_OUT');if(t){try{await fetch(url+'/auth/v1/logout',{method:'POST',headers:{'apikey':key,'Authorization':'Bearer '+t,'Content-Type':'application/json'}})}catch{}}return{error:null}}
+    async signOut(){const t=session?.access_token;clearSession();if(t){try{await fetch(url+'/auth/v1/logout',{method:'POST',headers:{'apikey':key,'Authorization':'Bearer '+t,'Content-Type':'application/json'}})}catch{}}return{error:null}}
   };
   return{auth,from(table){return new Query(table)},__runtime:'same-origin-lite'};
 }
