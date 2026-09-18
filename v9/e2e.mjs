@@ -138,6 +138,13 @@ try{
   await cleanPage(m,'mobile exam');
   const mexam=await m.locator('.page').innerText();
   assert(mexam.includes('65문항 · 65분'),'mobile exam starts with real exam format instead of validation diagnostics');
+  const realStart=m.locator('[data-exam-start="real"]');
+  assert(await realStart.count()===1,'real mock start is enabled only after verified fire+EMS scope coverage closes');
+  await realStart.click();await m.waitForSelector('.question-card');
+  const realMock=await m.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam,fire=e.qs.filter(q=>q.subject==='fire'),ems=e.qs.filter(q=>q.subject==='ems');return{mode:e.mode,total:e.qs.length,fire:fire.length,ems:ems.length,verified:e.qs.every(q=>q.grade==='A'||q.grade==='B'),unique:new Set(e.qs.map(q=>q.id)).size}});
+  assert(realMock.mode==='real'&&realMock.total===65&&realMock.fire===25&&realMock.ems===40&&realMock.verified&&realMock.unique===65,'real mock builds 25 verified fire + 40 verified EMS questions with no duplicates');
+  await m.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});
+  await m.waitForSelector('.exam-start');
   const practice=m.locator('[data-exam-start="practice"]');
   await practice.click();await m.waitForSelector('.question-card');
   assert(await m.locator('.question-card .choice').count()===4,'practice exam renders one four-choice question at a time');
