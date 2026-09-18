@@ -53,10 +53,15 @@ ok(Object.entries(exactAnchorBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
 }),'seven sprinkler concepts are exact-page verified from 2026 prevention1 PDF');
-ok(scopeVerified.length===34&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)||/^F03-C(09|1[0-6])$/.test(id)),`34 page-anchor-pending fire concepts remain fail-closed; actual=${scopeVerified.length}`);
-ok(missing.length===34&&missing.every(id=>scopeVerified.includes(id)),`only the 34 page-anchor-pending concepts are not fully verified; missing=${missing.join(',')||'none'}`);
+const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':49,'F03-C11':453,'F03-C12':319,'F03-C13':320,'F03-C14':319,'F03-C15':326,'F03-C16':453};
+ok(Object.entries(exactFirePhenomenaBatch).every(([id,page])=>{
+  const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
+  return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
+}),'eight fire-phenomena concepts are exact-page verified from 2026 fire1 PDF');
+ok(scopeVerified.length===26&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)||/^F03-C(09|1[0-6])$/.test(id)),`26 page-anchor-pending fire concepts remain fail-closed; actual=${scopeVerified.length}`);
+ok(missing.length===26&&missing.every(id=>scopeVerified.includes(id)),`only the 26 page-anchor-pending concepts are not fully verified; missing=${missing.join(',')||'none'}`);
 ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===176,'exactly 176 valid authored concept packs');
-ok(coverage.verified===142&&coverage.pending===34,'release truth advances to 142 page-verified + 34 page-anchor-pending');
+ok(coverage.verified===150&&coverage.pending===26,'release truth advances to 150 page-verified + 26 page-anchor-pending');
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'||p.status==='scope-verified'),'every authored content pack has an explicit verified/scope-verified truth state');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored study pack');

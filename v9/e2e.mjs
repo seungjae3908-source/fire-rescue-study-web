@@ -33,12 +33,17 @@ try{
   assert((await p.locator('.concept-head h2').textContent()).includes('보일오버'),'granular fire syllabus exposes boilover concept');
   await p.locator('.tabbar [data-study-tab="detail"]').click();
   assert(await p.locator('.concept-visual').count()>=1,'boilover detail renders learning diagram');
-  const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.total===176&&coverage.verified===142&&coverage.pending===34,'browser runtime preserves 142 page-verified + 34 page-anchor-pending truth');
+  const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.total===176&&coverage.verified===150&&coverage.pending===26,'browser runtime preserves 150 page-verified + 26 page-anchor-pending truth');
   const sprinklerAnchors=await p.evaluate(()=>{
     const V=window.AITUTOR_V9,spec={'F07-C05':284,'F07-C16':288,'F07-C17':288,'F07-C18':284,'F07-C19':284,'F07-C20':302,'F07-C21':287};
     return Object.entries(spec).map(([id,page])=>({id,page,from:Number(V.curriculum.byId[id]?.sourceRanges?.[0]?.from)||0,status:V.contentPacks.authored[id]?.status,precision:V.contentPacks.authored[id]?.sourcePrecision}));
   });
   assert(sprinklerAnchors.every(x=>x.from===x.page&&x.status==='verified'&&x.precision==='exact-pdf-page-anchor'),'browser runtime exposes seven verified sprinkler page anchors');
+  const firePhenomenaAnchors=await p.evaluate(()=>{
+    const V=window.AITUTOR_V9,spec={'F03-C09':37,'F03-C10':49,'F03-C11':453,'F03-C12':319,'F03-C13':320,'F03-C14':319,'F03-C15':326,'F03-C16':453};
+    return Object.entries(spec).map(([id,page])=>({id,page,from:Number(V.curriculum.byId[id]?.sourceRanges?.[0]?.from)||0,status:V.contentPacks.authored[id]?.status,precision:V.contentPacks.authored[id]?.sourcePrecision}));
+  });
+  assert(firePhenomenaAnchors.every(x=>x.from===x.page&&x.status==='verified'&&x.precision==='exact-pdf-page-anchor'),'browser runtime exposes eight verified fire-phenomena page anchors');
 
   const readiness=await p.evaluate(()=>window.AITUTOR_V9.examReadiness());
   await p.locator('[data-go="exam"]').first().click();await p.waitForSelector('.page');const examText=await p.locator('.page').textContent();assert(await p.locator('[data-exam-start="practice"]').count()===1,'practice mode remains available');

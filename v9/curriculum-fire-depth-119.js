@@ -9,6 +9,14 @@ V.curriculum.concepts=V.curriculum.scopes.flatMap(scope=>scope.concepts.map((tit
 V.curriculum.byId=Object.fromEntries(V.curriculum.concepts.map(x=>[x.id,x]));V.curriculum.totalConcepts=V.curriculum.concepts.length;V.curriculum.version='2026-study119-depth-v1';
 const R=V.curriculum.ranges;const n=(id,doc,label,note)=>R[id]=[{doc,label,note}];const a=(id,doc,label,from,to=from)=>R[id]=[{doc,label,from,to}];
 for(let i=9;i<=16;i++)n(`F03-C${String(i).padStart(2,'0')}`,'fire1','2026 소방전술1','화재성장·특수현상·위험물탱크 화재 공식 원문 page anchor 확장중');
+a('F03-C09','fire1','2026 소방전술1',37);
+a('F03-C10','fire1','2026 소방전술1',49);
+a('F03-C11','fire1','2026 소방전술1',453);
+a('F03-C12','fire1','2026 소방전술1',319);
+a('F03-C13','fire1','2026 소방전술1',320);
+a('F03-C14','fire1','2026 소방전술1',319);
+a('F03-C15','fire1','2026 소방전술1',326);
+a('F03-C16','fire1','2026 소방전술1',453);
 for(let i=16;i<=21;i++)n(`F07-C${String(i).padStart(2,'0')}`,'prevention1','2026 예방실무1','스프링클러 구성·종류·작동원리 공식 원문 page anchor 확장중');
 a('F07-C16','prevention1','2026 예방실무1',288);
 a('F07-C17','prevention1','2026 예방실무1',288);
