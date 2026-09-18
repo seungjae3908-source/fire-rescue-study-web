@@ -92,7 +92,7 @@ async function pdfProbe(res){
     const head=Buffer.from(first.value||[]).subarray(0,64).toString('latin1');
     return head.includes('%PDF-');
   }finally{
-    try{await reader.cancel()}catch{}
+    try{reader.cancel().catch(()=>{})}catch{}
   }
 }
 async function selectWorkingCandidate(paths,referer,cookie,fetchImpl=fetch){
