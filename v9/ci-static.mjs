@@ -34,7 +34,7 @@ ok(missing.length===27&&missing.every(id=>scopeVerified.includes(id)),`only the 
 ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===162,'exactly 162 valid authored concept packs');
 ok(coverage.verified===135&&coverage.pending===27,'release truth stays 135 page-verified + 27 page-anchor-pending');
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
-ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'),'all authored content packs are explicitly verified');
+ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'||p.status==='scope-verified'),'every authored content pack has an explicit verified/scope-verified truth state');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored study pack');
 ok(V.curriculum.byId['F05-C05']&&V.curriculum.byId['F07-C05'],'hazardous materials and sprinkler scopes exist');
 ok(V.contentPacks.authored['F05-C05']?.deepSections?.length>0&&V.contentPacks.authored['F07-C05']?.deepSections?.length>0,'new fire scopes have rich detail sections');
