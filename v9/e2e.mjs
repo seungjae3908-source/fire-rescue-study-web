@@ -113,7 +113,9 @@ try{
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
   const cache=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.openPdf(key),b=await V.SourcePDF.openPdf(key);return{same:a.pdf===b.pdf,origin:a.origin}});
-  const local=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc;return await V.SourcePDF.availability(key)});\n  assert(cache.same&&/local-cache/.test(cache.origin)&&local.local,'official PDF is persisted locally and reused after first load');\n  const closeBox=await m.locator('#pdfEvidence [data-pdf-close]').boundingBox();\n  assert(closeBox&&closeBox.height<60,'PDF close button stays compact instead of stretching with the header');
+  const local=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc;return await V.SourcePDF.availability(key)});
+  assert(cache.same&&/local-cache/.test(cache.origin)&&local.local,'official PDF is persisted locally and reused after first load');\n  const closeBox=await m.locator('#pdfEvidence [data-pdf-close]').boundingBox();
+  assert(closeBox&&closeBox.height<60,'PDF close button stays compact instead of stretching with the header');
   await m.locator('[data-pdf-close]').click();
 
   await m.locator('.mobile-nav [data-go="exam"]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='exam');
