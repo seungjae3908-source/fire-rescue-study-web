@@ -24,7 +24,7 @@ const topics=[
   T('F-COMB-04','fire','연소이론','자연발화·축열·최소점화에너지','covered',['F03-C03'],{evidence:'2026-fire2-295-316'}),
   T('F-COMB-05','fire','연소이론','연소하한·상한·폭발범위·온도/압력 영향','covered',['F03-C03'],{calc:true,evidence:'2026-fire2-306-307'}),
   T('F-COMB-06','fire','연소이론','최소산소농도(MOC)','covered',['F04-C06'],{calc:true,recent:'2026',evidence:'2026-fire2-226'}),
-  T('F-COMB-07','fire','연소이론','연소생성물·CO·CO2·HCN·연기독성','partial',['F03-C07']),
+  T('F-COMB-07','fire','연소이론','연소생성물·CO·CO2·HCN·연기독성','covered',['F03-C03','F03-C07'],{evidence:'2026-fire2-299+330-334'}),
   T('F-FIRE-01','fire','화재이론','화재의 정의·유형·성장단계','covered',['F03-C01','F03-C04']),
   T('F-FIRE-02','fire','화재이론','화재 진행 영향요인·구획화재','covered',['F03-C05']),
   T('F-FIRE-03','fire','화재이론','중성대·압력차·개구부 영향','covered',['F03-C07'],{recent:'2026',evidence:'2026-fire1-middle-plane'}),
