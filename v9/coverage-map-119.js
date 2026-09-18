@@ -85,7 +85,7 @@ const topics=[
   // EMS — trauma / medical / special
   T('E-SHOCK-01','ems','쇼크','저혈량·심인성·폐쇄성·분포성 쇼크 비교','partial',['E13-C01','E13-C02','E13-C03','E13-C04','E13-C05']),
   T('E-TRM-01','ems','외상','손상기전·연부조직·근골격·머리·척추','covered',['E14-C01','E14-C02','E15-C01','E15-C02','E15-C03','E16-C01','E16-C02','E16-C03','E16-C04']),
-  T('E-TRM-02','ems','외상','흉부외상: 긴장기흉·혈흉·심장압전·연가양흉','missing',[],{recent:'high'}),
+  T('E-TRM-02','ems','외상','흉부외상: 긴장기흉·혈흉·심장압전·연가양흉','partial',['E14-C02'],{recent:'high'}),
   T('E-TRM-03','ems','외상','복부·골반외상·대량출혈·중증외상 이송','missing',[]),
   T('E-BURN-01','ems','외상','화상 깊이·TBSA·특수화상','partial',['E14-C03']),
   T('E-BURN-02','ems','계산','Parkland 수액량 계산','covered',['E14-C03'],{calc:true,recent:'2025'}),
