@@ -25,7 +25,12 @@ try{
   await p.locator('.tabbar [data-study-tab="compare"]').click();assert((await p.locator('.study-body-desktop').textContent()).includes('백드래프트'),'comparison tab renders rich concept content');
   await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C05'));await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C05');assert((await p.locator('.concept-head h2').textContent()).includes('스프링클러'),'complete fire curriculum exposes sprinkler study concept');
   await p.locator('.tabbar [data-study-tab="detail"]').click();await p.waitForSelector('.detail-view');assert((await p.locator('.detail-view').textContent()).includes('상세내용'),'rich detail tab renders for sprinkler');
-  assert((await p.locator('.detail-section').count())>=1,'detail tab has structured learning sections');\n  await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C12'));await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C12');assert((await p.locator('.concept-head h2').textContent()).includes('보일오버'),'granular fire syllabus exposes boilover concept');await p.locator('.tabbar [data-study-tab="detail"]').click();assert(await p.locator('.concept-visual').count()>=1,'boilover detail renders learning diagram');
+  assert((await p.locator('.detail-section').count())>=1,'detail tab has structured learning sections');
+  await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C12'));
+  await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C12');
+  assert((await p.locator('.concept-head h2').textContent()).includes('보일오버'),'granular fire syllabus exposes boilover concept');
+  await p.locator('.tabbar [data-study-tab="detail"]').click();
+  assert(await p.locator('.concept-visual').count()>=1,'boilover detail renders learning diagram');
   const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.total===176&&coverage.verified===135&&coverage.pending===41,'browser runtime preserves 135 page-verified + 27 page-anchor-pending truth');
 
   const readiness=await p.evaluate(()=>window.AITUTOR_V9.examReadiness());
