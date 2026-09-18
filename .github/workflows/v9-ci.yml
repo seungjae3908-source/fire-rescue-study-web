@@ -288,3 +288,23 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify remaining facility exact-page evidence in deployed Preview
         run: node v9/facilities-live-e2e.mjs
+
+  question_bank_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'question bank live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 86e9303534d59e22123163ec301781f64b751b36
+      STUDY_119_QUESTION_CONCEPT: E04-C02
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install question-bank live browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify grounded question bank in deployed Preview
+        run: node v9/question-bank-live-e2e.mjs
