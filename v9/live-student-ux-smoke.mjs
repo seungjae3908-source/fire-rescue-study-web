@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_PREVIEW_URL||'https://study-119-preview.vercel.app/';
-const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'6aa6eddffae43b3a88dbfb8fed6102c79c12fd38';
+const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'8c78205f1157d0c6187f5482b8027ed43e8237e6';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
 function observe(page){const errors=[];page.on('pageerror',e=>errors.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('console:'+m.text())});page.on('requestfailed',r=>errors.push('requestfailed:'+r.url()+' '+(r.failure()?.errorText||'')));return errors}
@@ -24,6 +24,35 @@ try{
     const tabCount=vp.isMobile?await page.locator('.book-jumpbar button').count():await page.locator('.tabbar button').count();
     assert(tabCount===4,'study exposes four learning tabs '+vp.width);
     await noX(page,'study '+vp.width);
+
+    if(vp.isMobile){
+      await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
+      await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
+      await page.locator('.book-jumpbar [data-study-tab="detail"]').click();
+      await page.waitForSelector('.book-section .detail-view');
+      assert(await page.locator('.book-section .detail-view>.lead').count()===0,'detail summary is not duplicated above structured content');
+      const bodyHeight=await page.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
+      assert(bodyHeight>=320,'mobile learning body keeps useful reading height');
+
+      await page.locator('.book-jumpbar [data-study-tab="source"]').click();
+      await page.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
+      const started=Date.now();
+      await page.locator('.study-body-mobile .source-only [data-source-concept]').click();
+      await page.waitForSelector('#pdfEvidence canvas',{timeout:180000});
+      const firstMs=Date.now()-started;
+      const source=await page.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.availability(key),p=await V.SourcePDF.openPdf(key);return{local:a.local,origin:p.origin,key}});
+      assert(source.local&&/local-cache/.test(source.origin),'official textbook is persisted to browser cache before reading');
+      const closeBox=await page.locator('#pdfEvidence [data-pdf-close]').boundingBox();
+      assert(closeBox&&closeBox.height<60,'PDF close button remains compact');
+      await page.locator('#pdfEvidence [data-pdf-close]').click();
+
+      const reopened=Date.now();
+      await page.locator('.study-body-mobile .source-only [data-source-concept]').click();
+      await page.waitForSelector('#pdfEvidence canvas',{timeout:30000});
+      const secondMs=Date.now()-reopened;
+      assert(secondMs<Math.max(8000,firstMs),'second textbook open reuses the cached PDF');
+      await page.locator('#pdfEvidence [data-pdf-close]').click();
+    }
 
     await page.evaluate(()=>window.AITUTOR_V9.App.go('exam'));
     await page.waitForSelector('.exam-start',{timeout:30000});
