@@ -38,9 +38,9 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===54,'fifty-four building ECG rhythm electrical-therapy disaster newborn trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.added===58,'fifty-eight building ECG rhythm electrical-therapy disaster CBRN newborn trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===54&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===58&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAclsExamStandard=finalGapPractice.filter(q=>/^119-finalgap-acls-0[1-4]$/.test(q.id||''));
 ok(adultAclsExamStandard.length===4&&adultAclsExamStandard.every(q=>/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the 2020 KACPR source mandated by the 2026 exam plan');
@@ -286,7 +286,7 @@ ok(fullCoverage.rows.find(x=>x.id==='E-TRM-03')?.status==='covered','abdominal p
 ok(fullCoverage.rows.find(x=>x.id==='E-BURN-01')?.status==='covered','burn depth TBSA and special-burn coverage closes only after exact 2026 textbook evidence and focused drills');
 ok(fullCoverage.rows.find(x=>x.id==='E-RESP-01')?.status==='covered','respiratory distress asthma COPD and inhalation-injury coverage closes on exact 2026 textbook evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-GI-01')?.status==='covered','acute abdominal pain GI bleeding and abdominal-emergency coverage closes on exact 2026 textbook evidence');
-ok(fullCoverage.rows.find(x=>x.id==='E-MCI-02')?.status==='partial','CBRN/decontamination coverage is partial rather than falsely complete');
+ok(fullCoverage.rows.find(x=>x.id==='E-MCI-02')?.status==='covered','disaster command communications special-hazard CBRN and decontamination coverage closes only after official cross-source evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-PALS-01')?.status==='covered','pediatric resuscitation is covered by 2026 NFA basics plus official 2020 KACPR arrest/brady/tachy algorithms');
 ok(fullCoverage.rows.find(x=>x.id==='F-BLD-01')?.status==='covered','wood-vs-fire-resistive building coverage is closed by direct textbook comparison and focused drills');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-ACLS-04')?.status==='covered','ECG remains partial while the named ACLS drug set is covered by 2026 NFA + official 2020 KACPR');
@@ -298,6 +298,11 @@ ok(fullCoverage.missing===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.stat
 ok(V.curriculum.byId['E03-C05']?.title==='위험물·CBRN 현장 구급·제독','CBRN/decontamination is visible in the EMS curriculum');
 ok(V.curriculum.byId['E21-C04']?.title==='기도·호흡·소아소생 기초','pediatric resuscitation basics are visible in the EMS curriculum');
 ok((V.contentPacks.authored['E03-C05']?.visuals||[]).includes('ems-hazmat-zones')&&!!V.Visual119.render('ems-hazmat-zones'),'CBRN three-zone/decon flow renders as a real study visual');
+const mci2Ids=['119-finalgap-mci2-01','119-finalgap-mci2-02','119-finalgap-mci2-03','119-finalgap-mci2-04'];
+ok(mci2Ids.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'four disaster-command/CBRN drills remain P-grade exam-style practice');
+ok((V.contentPacks.authored['E03-C05']?.must||[]).some(x=>/사고관리체계/.test(x))&&(V.contentPacks.authored['E03-C05']?.must||[]).some(x=>/현장 무선통신/.test(x)),'E-MCI-02 lesson explicitly covers command and disaster communications');
+ok((V.contentPacks.authored['E03-C05']?.must||[]).some(x=>/CBRN 보강/.test(x))&&(V.contentPacks.authored['E03-C05']?.officialLinks||[]).some(x=>/106743/.test(x.url||'')),'CBRN layer is backed by the official NFSA CBRNE textbook');
+ok((V.contentPacks.authored['E03-C05']?.officialLinks||[]).some(x=>/educationGuide/.test(x.url||'')),'CBRN layer links the current official SafeKorea chemical/biological/radiological education');
 ok((V.contentPacks.authored['E21-C04']?.visuals||[]).includes('ems-pediatric-resuscitation')&&!!V.Visual119.render('ems-pediatric-resuscitation'),'pediatric resuscitation flow renders as a real study visual');
 ok(V.curriculum.byId['F03-C05']?.title==='화재 진행 영향요인·건축구조'&&(V.contentPacks.authored['F03-C05']?.compare||[]).some(x=>/목조건축물/.test(String(x?.[0]))),'building-fire lesson compares wood and fire-resistive construction');
 ok(V.curriculum.byId['E11-C02']?.title==='심질환·심전도 리듬'&&(V.contentPacks.authored['E11-C02']?.detail||[]).some(x=>/좁은 QRS/.test(x)&&/방실차단/.test(x)),'ECG lesson includes NFA three-lead categories and QRS-based rhythm approach');

@@ -65,7 +65,7 @@ const topics=[
   T('E-TRN-01','ems','이송','구급차 운용·장비·병원선정','partial',['E06-C01','E06-C04','E07-C04']),
   T('E-TRN-02','ems','이송','항공이송·국제구급','partial',['E01-C03'],{recent:'2026'}),
   T('E-MCI-01','ems','재난의료','대량재난·START 분류','covered',['E05-C04'],{recent:'2024',evidence:'2026-NFA-EMS-85-87-START-RPM'}),
-  T('E-MCI-02','ems','재난의료','재난통신·지휘체계·특수재난·CBRN·제독','partial',['E03-C05'],{recent:'2024'}),
+  T('E-MCI-02','ems','재난의료','재난통신·지휘체계·특수재난·CBRN·제독','covered',['E03-C05'],{recent:'2024',evidence:'2026-NFA-EMS-44-50+72-84+NFSA-CBRNE+SafeKorea-CBRN'}),
   T('E-SAFE-01','ems','총론','대원안전·스트레스·감염·PPE','covered',['E02-C01','E02-C02','E03-C01','E03-C02','E03-C03','E03-C04','E03-C05']),
   T('E-ASS-01','ems','환자평가','현장확인·1차·2차·SAMPLE·재평가','covered',['E08-C01','E08-C02','E08-C03','E08-C04','E08-C05','E08-C06']),
   T('E-AIR-01','ems','기도·호흡','기도개방·보조기구·흡인·산소·환기','covered',['E09-C01','E09-C02','E09-C03','E09-C04','E09-C05','E09-C06','E09-C07','E09-C08']),
