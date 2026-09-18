@@ -13,7 +13,9 @@
 'ems-hazmat-zones':['현장 위험평가','오염구역','오염통제구역·제독','안전구역','중증도분류·이송'],
 'ems-pediatric-resuscitation':['기도·호흡 평가','산소화·환기','느린맥·저산소 경계','순환·쇼크 평가','심정지 시 CPR·제세동'],
 'ems-ecg-arrest-rhythms':['VF','무맥성 VT','PEA','무수축'],
-'ems-electrical-therapy':['제세동','동기화 심율동전환','경피조율']
+'ems-electrical-therapy':['제세동','동기화 심율동전환','경피조율'],
+'ems-start-triage':['보행 가능 → 비응급 분리','R 호흡: <10 / >30 확인','P 말초맥박 확인','M 의식 확인','분류 후 재평가'],
+'ems-newborn-resuscitation':['보온·입→코','호흡평가','비정상 → 30초 양압환기','맥박 <100 → 환기 지속','맥박 <60 → 압박+환기 3:1','반복 재평가']
 });
 const baseRender=X.render.bind(X);
 const waves=[

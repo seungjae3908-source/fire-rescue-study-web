@@ -64,7 +64,7 @@ const topics=[
   T('E-LAW-03','ems','법령','의료지도·동의·기록·비밀유지·윤리','partial',['E01-C03','E05-C04']),
   T('E-TRN-01','ems','이송','구급차 운용·장비·병원선정','partial',['E06-C01','E06-C04','E07-C04']),
   T('E-TRN-02','ems','이송','항공이송·국제구급','partial',['E01-C03'],{recent:'2026'}),
-  T('E-MCI-01','ems','재난의료','대량재난·START 분류','partial',['E05-C04'],{recent:'2024'}),
+  T('E-MCI-01','ems','재난의료','대량재난·START 분류','covered',['E05-C04'],{recent:'2024',evidence:'2026-NFA-EMS-85-87-START-RPM'}),
   T('E-MCI-02','ems','재난의료','재난통신·지휘체계·특수재난·CBRN·제독','partial',['E03-C05'],{recent:'2024'}),
   T('E-SAFE-01','ems','총론','대원안전·스트레스·감염·PPE','covered',['E02-C01','E02-C02','E03-C01','E03-C02','E03-C03','E03-C04','E03-C05']),
   T('E-ASS-01','ems','환자평가','현장확인·1차·2차·SAMPLE·재평가','covered',['E08-C01','E08-C02','E08-C03','E08-C04','E08-C05','E08-C06']),
@@ -100,7 +100,7 @@ const topics=[
   T('E-OB-01','ems','산과','임신·정상분만·합병증·산과응급','covered',['E20-C01','E20-C02','E20-C03','E20-C04','E20-C05','E20-C06']),
   T('E-PED-01','ems','소아','소아 평가·기도·호흡·내과·외상','covered',['E21-C01','E21-C02','E21-C03','E21-C04','E21-C05','E21-C06','E21-C07','E21-C08']),
   T('E-PALS-01','ems','소아소생','전문소아소생술·소아 서맥/빈맥/쇼크','covered',['E21-C04','E21-C05'],{visual:true}),
-  T('E-NRP-01','ems','신생아','신생아소생술 초기평가·환기·압박','partial',['E20-C03'],{visual:true}),
+  T('E-NRP-01','ems','신생아','신생아소생술 초기평가·환기·압박','covered',['E20-C03'],{visual:true,evidence:'2026-NFA-EMS-350-352-364-newborn-resuscitation'}),
   T('E-GER-01','ems','노인','노인 생리·접근·평가·다약제','covered',['E22-C01','E22-C02','E22-C03']),
   T('E-BEH-01','ems','행동응급','행동응급·자살위험·폭력·기록','covered',['E23-C01','E23-C02','E23-C03'])
 ];

@@ -38,9 +38,9 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===30,'thirty building ECG rhythm electrical-therapy drug infection ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.added===38,'thirty-eight building ECG rhythm electrical-therapy disaster newborn drug infection ACLS and post-ROSC source-backed practice questions are loaded');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===30&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===38&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAclsExamStandard=finalGapPractice.filter(q=>/^119-finalgap-acls-0[1-4]$/.test(q.id||''));
 ok(adultAclsExamStandard.length===4&&adultAclsExamStandard.every(q=>/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the 2020 KACPR source mandated by the 2026 exam plan');
@@ -94,7 +94,7 @@ ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='partial'&&fullCoverag
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-02')?.status==='covered','Phase A chemical-bond/reaction/redox row closes only after direct official-page evidence');
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-03')?.status==='covered','Phase A state-change sensible/latent-heat row closes only after exact textbook examples and calculations');
 ok(['F-SCI-01','F-SCI-04','F-SCI-05','F-SCI-06'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='partial'),'remaining unresolved fire-science rows stay fail-closed after F-SCI-02/F-SCI-03 closure');
-ok(fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='partial','mass-casualty triage remains explicitly partial');
+ok(fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='covered','mass-casualty START triage closes only after exact 2026 textbook RPM thresholds and focused drills');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='covered','cardiac-arrest ECG rhythm recognition closes only after four-rhythm source-backed content and waveform study visual');
 ok(fullCoverage.rows.find(x=>x.id==='E-ACLS-01')?.status==='covered','adult shockable/non-shockable cardiac-arrest algorithm closes on the 2020 KACPR source mandated by the 2026 exam plan');
 ok(['E-ECG-02','E-ACLS-02'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='partial'),'non-arrest ECG and full brady/tachy algorithm rows remain fail-closed');
@@ -303,7 +303,16 @@ ok(V.curriculum.byId['E20-C03']?.title==='정상분만·신생아 초기처치',
 ok((V.contentPacks.authored['E20-C03']?.detail||[]).some(x=>/아프가\(Apgar\).*1분.*5분/.test(x)),'newborn lesson includes exact-source Apgar 1- and 5-minute assessment');
 ok((V.contentPacks.authored['E20-C03']?.must||[]).some(x=>/입 먼저.*코 다음/.test(x)),'newborn lesson preserves textbook mouth-before-nose suction order');
 ok((V.contentPacks.authored['E20-C03']?.visuals||[]).includes('ems-newborn-initial')&&!!V.Visual119.render('ems-newborn-initial'),'newborn initial-care flow renders as a real study visual');
-ok(fullCoverage.rows.find(x=>x.id==='E-NRP-01')?.status==='partial','NRP remains honestly partial until ventilation/compression algorithm evidence is completed');
+const startIds=['119-finalgap-start-01','119-finalgap-start-02','119-finalgap-start-03','119-finalgap-start-04'];
+const nrpIds=['119-finalgap-nrp-01','119-finalgap-nrp-02','119-finalgap-nrp-03','119-finalgap-nrp-04'];
+ok(startIds.every(id=>V.questionById[id]?.grade==='P'&&/2026 소방전술3\(구급\) 86~87쪽/.test(String(V.questionById[id]?.source||''))),'four START drills remain P-grade and exact-textbook source-bound');
+ok(nrpIds.every(id=>V.questionById[id]?.grade==='P'&&/2026 소방전술3\(구급\)/.test(String(V.questionById[id]?.source||''))),'four newborn-resuscitation drills remain P-grade and exact-textbook source-bound');
+ok((V.contentPacks.authored['E05-C04']?.must||[]).some(x=>/RPM.*Respiration.*Pulse.*Mental Status/.test(x))&&(V.contentPacks.authored['E05-C04']?.must||[]).some(x=>/10.*30/.test(x)),'START lesson exposes RPM and exact textbook respiratory thresholds');
+ok((V.contentPacks.authored['E05-C04']?.visuals||[]).includes('ems-start-triage')&&!!V.Visual119.render('ems-start-triage'),'START triage renders a dedicated study visual');
+ok((V.contentPacks.authored['E20-C03']?.must||[]).some(x=>/맥박 <60/.test(x))&&(V.contentPacks.authored['E20-C03']?.must||[]).some(x=>/3 : 1/.test(x)),'newborn lesson exposes the exact pulse threshold and 3-to-1 compression ratio');
+ok((V.contentPacks.authored['E20-C03']?.visuals||[]).includes('ems-newborn-resuscitation')&&!!V.Visual119.render('ems-newborn-resuscitation'),'newborn full resuscitation algorithm renders a dedicated study visual');
+ok(V.questionById['119-finalgap-start-01']?.difficulty==='low'&&V.questionById['119-finalgap-nrp-01']?.difficulty==='low','START and newborn concepts retain explicit low-difficulty contract items');
+ok(fullCoverage.rows.find(x=>x.id==='E-NRP-01')?.status==='covered','newborn resuscitation closes only after exact 2026 textbook ventilation pulse-threshold and 3-to-1 compression algorithm evidence');
 ok((V.contentPacks.authored['F03-C07']?.compare||[]).some(x=>/굴뚝|연돌/.test(String(x?.[0]))),'smoke/Flow Path lesson compares stack-effect smoke movement');
 ok((V.contentPacks.authored['F03-C08']?.compare||[]).some(x=>/UVCE/.test(String(x?.[0]))),'explosion lesson compares UVCE with other explosion mechanisms');
 ok(V.EMSQuestions119?.added===9,'nine page-grounded EMS exam-style questions are loaded');
