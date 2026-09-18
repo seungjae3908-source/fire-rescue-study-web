@@ -49,11 +49,8 @@ function stripSessionPath(s){
 function candidateVariants(paths){
   const out=[];
   for(const raw of paths||[]){
-    const original=strip(raw);
-    const originalNoSession=original.replace(/;jsessionid=[^?'\"()\s]+/gi,'');
-    const normalized=normalizeDownloadPath(original);
-    const normalizedNoSession=stripSessionPath(normalized);
-    for(const p of [original,originalNoSession,normalized,normalizedNoSession]){
+    const normalized=normalizeDownloadPath(raw);
+    for(const p of [normalized,stripSessionPath(normalized)]){
       if(p&&!out.includes(p))out.push(p);
     }
   }
@@ -186,7 +183,7 @@ async function resolveSource(doc,force=false){
       if(!a||!a.paths||!a.paths.length){last='ATTACHMENT_PATH_MISSING';await sleep(Math.min(1200,350+attempt*75));continue}
       const urls=officialCandidateUrls(a.paths);
       if(!urls.length){last='ATTACHMENT_CANDIDATES_INVALID';await sleep(Math.min(1200,350+attempt*75));continue}
-      const row={doc,name:a.name||src.name,urls,detailUrl:url.split('&_119=')[0],cookie,expires:Date.now()+10*60*1000};
+      const row={doc,name:a.name||src.name,urls,detailUrl:url,cookie,expires:Date.now()+10*60*1000};
       cache.set(doc,row);return row;
     }catch(e){last=String((e&&e.message)||e)}
     await sleep(Math.min(1200,350+attempt*75));

@@ -12,12 +12,7 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   const a=P.extractAttachmentCandidates(html('13. 소방전술3(구급)-저용량.pdf','/board/file/bbs/1/FILE_EMS/ems'),'13. 소방전술3(구급)-저용량.pdf');
   assert.ok(a);
   assert.equal(a.paths.some(x=>x.includes('pdfFileDownload')),true);
-  const url=await P.selectWorkingCandidate(
-    a.paths,
-    'https://www.nfa.go.kr/detail',
-    '',
-    async u=>(!u.includes('%20')&&!u.includes('pdfFileDownload')&&u.includes(';jsessionid='))?pdf():miss()
-  );
+  const url=await P.selectWorkingCandidate(a.paths,'https://www.nfa.go.kr/detail','',async u=>u.includes('pdfFileDownload')?miss():pdf());
   assert.equal(url,'https://www.nfa.go.kr/board/file/bbs/1/FILE_EMS/ems;jsessionid=SESSION');
 }
 {
@@ -29,19 +24,9 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
 {
   const raw='/board/file/bbs/3/FILE_F2/fire2 ;jsessionid=SESSION';
   const variants=P.candidateVariants([raw]);
-  assert.deepEqual(variants,[
-    '/board/file/bbs/3/FILE_F2/fire2 ;jsessionid=SESSION',
-    '/board/file/bbs/3/FILE_F2/fire2 ',
-    '/board/file/bbs/3/FILE_F2/fire2;jsessionid=SESSION',
-    '/board/file/bbs/3/FILE_F2/fire2'
-  ]);
-  const url=await P.selectWorkingCandidate(
-    [raw],
-    'https://www.nfa.go.kr/detail',
-    '',
-    async u=>u.endsWith('/fire2%20')?pdf():miss()
-  );
-  assert.equal(url,'https://www.nfa.go.kr/board/file/bbs/3/FILE_F2/fire2%20');
+  assert.deepEqual(variants,['/board/file/bbs/3/FILE_F2/fire2;jsessionid=SESSION','/board/file/bbs/3/FILE_F2/fire2']);
+  const url=await P.selectWorkingCandidate([raw],'https://www.nfa.go.kr/detail','',async u=>u.includes(';jsessionid=')?miss():pdf());
+  assert.equal(url,'https://www.nfa.go.kr/board/file/bbs/3/FILE_F2/fire2');
 }
 {
   assert.equal(P.extractAttachmentCandidates('<html><body>temporary shell</body></html>','4. 소방법령2.pdf'),null);
@@ -58,7 +43,7 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   const row={
     doc:'ems',
     name:'13. 소방전술3(구급)-저용량.pdf',
-    detailUrl:'https://www.nfa.go.kr/detail',
+    detailUrl:'https://www.nfa.go.kr/detail?_119=exact-session-context',
     cookie:'JSESSIONID=abc',
     urls:['https://www.nfa.go.kr/board/file/bbs/5/FILE_EMS/ems']
   };
@@ -73,6 +58,7 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
     }
   );
   assert.equal(calls,1,'a session-sensitive valid candidate must be requested only once');
+  assert.equal(result.row.detailUrl,'https://www.nfa.go.kr/detail?_119=exact-session-context','exact resolving detail URL must remain the request referer context');
   assert.match(await result.upstream.text(),/^%PDF-/,'the first valid PDF response remains streamable after magic validation');
 }
 
