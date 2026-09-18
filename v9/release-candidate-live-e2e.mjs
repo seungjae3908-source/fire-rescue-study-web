@@ -99,7 +99,23 @@ try{
   const mp=await mobile.newPage(),merr=collectErrors(mp);mp.setDefaultTimeout(90000);
   await boot(mp);await enter(mp,'F05-C01');await noX(mp,'release mobile study');
   assert(await mp.locator('.book-mobile').isVisible(),'mobile uses one-scroll electronic textbook');
-  assert(await mp.locator('.calc-lab').count()===1,'mobile hazardous-material textbook renders calculation lab');
+  const mobileCalcTruth=await mp.evaluate(()=>{
+    const V=window.AITUTOR_V9,s=V.Store.state,a=V.contentPacks.authored['F05-C01'],g=V.contentPacks.get('F05-C01');
+    return{
+      state:{conceptId:s.conceptId,scopeId:s.scopeId,subject:s.subject,page:s.page},
+      authoredCalculations:(a?.calculations||[]).length,
+      getCalculations:(g?.calculations||[]).length,
+      formula:String(g?.calculations?.[0]?.formula||''),
+      hazmat2026:!!V.Hazmat2026,
+      calcLabs:document.querySelectorAll('.book-mobile .calc-lab').length,
+      currentHeading:document.querySelector('.concept-head h2')?.textContent||'',
+      bookHasCalcWord:(document.querySelector('.book-mobile')?.textContent||'').includes('계산문제')
+    };
+  });
+  console.log('MOBILE_CALC_TRUTH',JSON.stringify(mobileCalcTruth));
+  assert(mobileCalcTruth.state.conceptId==='F05-C01'&&mobileCalcTruth.state.scopeId==='F05'&&mobileCalcTruth.state.subject==='fire','mobile state is exact F05-C01 fire concept');
+  assert(mobileCalcTruth.authoredCalculations>=1&&mobileCalcTruth.getCalculations>=1&&mobileCalcTruth.formula.includes('Σ('),'mobile runtime retains verified F05-C01 calculation data');
+  assert(mobileCalcTruth.calcLabs===1&&mobileCalcTruth.bookHasCalcWord,'mobile hazardous-material textbook renders calculation lab');
   const calc=await mp.evaluate(()=>window.AITUTOR_V9.contentPacks.authored['F05-C01']?.calculations?.[0]||null);
   assert(calc?.formula?.includes('Σ('),'F05-C01 exposes designated-quantity calculation formula');
   assert((await mp.locator('#book-quiz .question-card').count())===6,'mobile textbook shows six exam-style confirmation questions');
