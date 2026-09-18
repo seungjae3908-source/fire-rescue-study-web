@@ -79,6 +79,17 @@ try{
 
   const mobileType=await m.evaluate(()=>({lesson:parseFloat(getComputedStyle(document.querySelector('.book-section>p')).fontSize),jump:parseFloat(getComputedStyle(document.querySelector('.book-jumpbar button')).fontSize),nav:parseFloat(getComputedStyle(document.querySelector('.mobile-nav button')).fontSize)}));assert(mobileType.lesson>=16&&mobileType.jump>=11&&mobileType.nav>=12,`mobile textbook typography is readable (${JSON.stringify(mobileType)})`);await noX(m,'mobile rich detail');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E13-C05'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E13-C05');
+  const emsBook=await m.locator('.book-mobile').textContent();
+  assert(emsBook.includes('조직관류')&&emsBook.includes('보상'),'mobile EMS textbook deepens hypovolemic shock physiology');
+  assert(await m.locator('.book-mobile .concept-visual').count()>=1,'mobile EMS shock lesson renders learning diagram');
+  const emsChoice=m.locator('[data-answer^="119-e13-05:"]').first();
+  assert(await emsChoice.isVisible(),'high-yield EMS exam-style question is rendered in textbook');
+  await emsChoice.click();
+  assert(await m.locator('.choice-explanations .choice-explain').count()===4,'EMS question shows explanations for all four choices');
+  await noX(m,'mobile EMS deep lesson');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.go('tutor'));await m.waitForSelector('.tutor-layout');assert(await m.locator('.tutor-quick button').count()===4,'119 tutor exposes four contextual quick prompts');assert((await m.locator('.tutor-layout').textContent()).includes('119 학습도우미'),'mobile tutor is branded as 119 study assistant');
   await m.evaluate(()=>window.AITUTOR_V9.App.go('exam'));await m.waitForSelector('.difficulty-picker');assert(await m.locator('[data-exam-difficulty="low"]').isVisible()&&await m.locator('[data-exam-difficulty="mid"]').isVisible()&&await m.locator('[data-exam-difficulty="high"]').isVisible(),'mock exam exposes 하/중/상 difficulty choices');await m.locator('[data-exam-difficulty="high"]').click();assert(await m.evaluate(()=>window.AITUTOR_V9.App.runtime.examDifficulty)==='high','hard mock difficulty selection is stored');await m.locator('[data-exam-start="practice"]').click();await m.waitForSelector('[data-exam-answer]');assert(await m.evaluate(()=>window.AITUTOR_V9.App.runtime.exam?.difficulty)==='high','practice exam uses selected hard difficulty profile');await m.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('settings')});await m.waitForSelector('.settings-page');
   await m.locator('.mobile-nav [data-go="settings"]').click();await m.waitForSelector('.settings-page');assert(await m.locator('.settings-page').isVisible(),'mobile settings page opens directly');assert(await m.locator('.settings-account').isVisible(),'mobile account section is inline and visible');assert(await m.locator('[data-profile-save]').isVisible(),'mobile profile-save action is directly reachable');assert(await m.locator('#importBackup').isVisible(),'mobile restore file input is directly reachable');assert(merr.length===0,`mobile runtime errors = 0 (${merr.join(' | ')})`);await mobile.close();
