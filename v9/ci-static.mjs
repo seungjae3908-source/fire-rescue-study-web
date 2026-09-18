@@ -81,7 +81,7 @@ ok(!!fullCoverage&&fullCoverage.total>70,'full exam Coverage Map is loaded as a 
 ok(fullCoverage.missing===0&&fullCoverage.partial>0&&fullCoverage.implementationPercent<100,'full exam Coverage Map has no fully missing topic but still exposes partial areas before 100-point release');
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='partial','fire-science and building-fire enrichments remain honestly partial until all subtopics are closed');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='partial','ECG and mass-casualty topics remain explicitly partial after source-backed VF/VT and START enrichment');
-ok(fullCoverage.calcMissing.includes('E-CALC-01')&&!fullCoverage.calcMissing.includes('E-BURN-02'),'oxygen-cylinder calculation remains open while Parkland is source-backed and closed');
+ok(fullCoverage.calcMissing.length===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-BURN-02')?.status==='covered','no calculation topic is blank: oxygen/drip remain partial while Parkland is source-backed covered');
 
 ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'current 176-node content contract reaches 176/176 without claiming full exam coverage');
 const mock=V.examReadiness();
