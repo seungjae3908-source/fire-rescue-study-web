@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -53,10 +53,14 @@ ok(V.CalculationContract119.falsePositiveRemoved.every(id=>V.ContentContract119.
 ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-applicable contracts, not keyword padding');
 ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'119 content contract reaches truthful 176/176 completion');
 const mock=V.examReadiness();
-ok(mock.ready===(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete),'real mock exam is fail-closed on count + restored-scope coverage');
-ok(mock.fire>=25&&mock.ems>=40,'distinct verified bank reaches 25 fire + 40 EMS');
-ok(mock.missingFireScopes.includes('F05')&&mock.missingFireScopes.includes('F06')&&mock.missingFireScopes.includes('F07')&&!mock.ready,'real mock stays locked until restored fire scopes gain page-verified questions');
-ok(V.scopePractice2026?.questions===27&&V.questions.filter(q=>q.grade==='P').length>=27,'27 practice-only questions cover the restored fire scopes without real-exam credit');
+const restoredVerifiedIds=['119-ver-f05-c04-a','119-ver-f05-c05-a','119-ver-f06-c01-a','119-ver-f06-c03-a','119-ver-f07-c05-a','119-ver-f07-c11-a'];
+const restoredVerified=restoredVerifiedIds.map(id=>V.questionById[id]);
+ok(restoredVerified.every(q=>q&&q.grade==='B'&&q.pageVerified===true&&q.reviewStatus==='manual-reviewed'&&V.QuestionQuality119.isExamStyle(q)),'six restored-scope questions are manually reviewed B-grade page-verified exam-style questions');
+ok(restoredVerified.every(q=>/PDF\s+[0-9]+(?:[·~][0-9]+)?쪽/.test(q.source)&&!/기출|실제 출제|과거시험/.test(q.q)),'restored-scope B questions cite exact PDF pages without past-exam claims');
+ok(new Set(restoredVerified.map(q=>q.scopeId)).size===3&&['F05','F06','F07'].every(s=>restoredVerified.some(q=>q.scopeId===s)),'page-verified B questions cover F05 F06 F07');
+ok(mock.ready===(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete),'real mock gate remains count + full-scope fail-closed contract');
+ok(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete&&mock.missingFireScopes.length===0&&mock.ready,'real mock is verified-ready after restored-scope B evidence');
+ok(V.scopePractice2026?.questions===27&&V.questions.filter(q=>q.grade==='P').length>=27,'27 practice-only restored-scope questions remain P-grade and separate from real-exam credit');
 ok(V.QuestionDifficulty?.levels?.high&&V.QuestionDifficulty?.profiles?.hard,'question difficulty is independent from evidence grade');
 ok(V.Hazmat2026?.grade2?.items?.length===7,'official grade-2 hazardous-material item table is loaded');
 ok(V.Hazmat2026?.multiple([{quantity:100,designated:100},{quantity:250,designated:500}])===1.5,'hazardous-material designated-quantity multiple calculator works');
