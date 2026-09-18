@@ -85,7 +85,7 @@ try{
   await m.locator('[data-outline]').first().click();await m.waitForSelector('.outline.open');
   const mtoc=await m.locator('.outline.open').innerText();
   assert(!/F\d\d-C\d\d/.test(mtoc)&&/1\.\s/.test(mtoc),'mobile TOC uses aligned numbered names without ids');
-  await m.locator('[data-outline-close]').click();
+  await m.locator('.outline.open button[data-outline-close]').click();
 
   const action=await m.locator('.page-study .actionbar').boundingBox(),nav=await m.locator('.mobile-nav').boundingBox();
   assert(action&&nav&&action.y+action.height<=nav.y+2,'study action bar stays above bottom navigation');
@@ -124,6 +124,21 @@ try{
   await m.locator('[data-doc-open]').first().click();await m.waitForSelector('.doc-viewer');
   const viewer=await m.locator('.doc-viewer-text').innerText();
   assert(viewer.trim().length>20&&viewer.includes('[1쪽]'),'uploaded PDF extracted text can be opened and checked');
+  await m.locator('[data-doc-viewer-close]').click();
+
+  const pngBase64=await m.evaluate(async()=>{
+    const canvas=document.createElement('canvas');canvas.width=1400;canvas.height=360;
+    const g=canvas.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,canvas.width,canvas.height);
+    g.fillStyle='#000';g.font='bold 92px Arial, sans-serif';g.textBaseline='middle';g.fillText('119 RESCUE OCR 2468',70,180);
+    const blob=await new Promise((res,rej)=>canvas.toBlob(x=>x?res(x):rej(Error('PNG_CREATE_FAILED')),'image/png'));
+    return await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(blob)});
+  });
+  await m.locator('#personalFile').setInputFiles({name:'ocr-ui.png',mimeType:'image/png',buffer:Buffer.from(pngBase64,'base64')});
+  await m.waitForFunction(()=>window.AITUTOR_V9.App.runtime.docs.some(d=>d.title==='ocr-ui.png'),null,{timeout:180000});
+  const imageRow=m.locator('.doc-row').filter({hasText:'ocr-ui.png'});
+  await imageRow.locator('[data-doc-open]').click();await m.waitForSelector('.doc-viewer');
+  const ocrText=await m.locator('.doc-viewer-text').innerText();
+  assert(/RESCUE/i.test(ocrText)&&/2468/.test(ocrText),'uploaded photo OCR text can be opened and checked');
   await m.locator('[data-doc-viewer-close]').click();
   await noX(m,'mobile notes');
 
