@@ -66,6 +66,20 @@ try{
   const haz=await m.evaluate(()=>({rows:document.querySelectorAll('.book-mobile .hazmat-table tbody tr').length,text:document.querySelector('.book-mobile .hazmat-reference')?.innerText||'',calc:document.querySelector('.book-mobile .calc-example')?.innerText||'',sections:document.querySelectorAll('.book-mobile .book-section').length}));assert(haz.rows===7&&haz.text.includes('황화린')&&haz.text.includes('인화성고체'),'grade-2 electronic textbook shows official item/quantity table');assert(haz.calc.includes('1.5배'),'hazardous-material calculation example renders');assert(haz.sections>=4,'mobile textbook exposes summary detail quiz and source sections');
   await noX(m,'mobile hazardous-material book');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C04'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C04');
+  const class3=await m.locator('.book-mobile').textContent();
+  assert(class3.includes('황린')&&class3.includes('물속 저장'),'class-3 lesson includes phosphorus exception and storage rule');
+  assert(await m.locator('.book-mobile .concept-visual').count()>=1,'hazardous-material class lesson renders learning diagram');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C05'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C05');
+  const class4=await m.locator('.book-mobile').textContent();
+  assert(class4.includes('내알코올포')&&class4.includes('정전기'),'class-4 lesson includes water-soluble foam and static-electricity hazards');
+  const hazChoice=m.locator('[data-answer^="119-h4-3:"]').first();
+  assert(await hazChoice.isVisible(),'hazardous-material high-difficulty question is rendered');
+  await hazChoice.click();
+  assert(await m.locator('.choice-explanations .choice-explain').count()===4,'hazardous-material question explains all four choices');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C05'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C05');
   assert((await m.locator('.concept-head h2').textContent()).includes('스프링클러'),'mobile can enter sprinkler concept');
