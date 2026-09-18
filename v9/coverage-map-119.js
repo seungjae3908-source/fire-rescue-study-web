@@ -40,12 +40,12 @@ const topics=[
   T('F-BLD-02','fire','건축화재·방재','방화구획·방화벽·방화문','covered',['F07-C01'],{recent:'2026',evidence:'building-act-46-57'}),
   T('F-BLD-03','fire','건축화재·방재','불연·준불연·난연재료·내화구조','covered',['F07-C01'],{recent:'2026',evidence:'building-act-2'}),
   T('F-BLD-04','fire','건축화재·방재','연돌효과·연기이동·피난계획','covered',['F03-C07'],{recent:'2024',evidence:'2026-fire2-335-338+fire1-77'}),
-  T('F-BLD-05','fire','특수화재','주방·전기·가스·금속화재','partial',['F03-C01'],{recent:'2026'}),
+  T('F-BLD-05','fire','특수화재','주방·전기·가스·금속화재','covered',['F03-C01'],{recent:'2026',evidence:'2026-fire1-4+37-38+fire2-188+197'}),
 
   // FIRE — suppression / hazardous materials / facilities / investigation
   T('F-SUP-01','fire','소화이론','냉각·질식·제거·억제 소화','covered',['F04-C01']),
   T('F-SUP-02','fire','소화약제','물·포·CO2·할론·청정·분말 비교','covered',['F04-C02','F04-C03','F04-C04','F04-C05','F04-C06','F04-C07','F04-C08']),
-  T('F-SUP-03','fire','소화약제','포 혼합농도·팽창비·원액량 계산','partial',['F04-C04'],{calc:true}),
+  T('F-SUP-03','fire','소화약제','포 혼합농도·팽창비·원액량 계산','covered',['F04-C04'],{calc:true,evidence:'2026-fire1-36+fire2-199-204+206+210'}),
   T('F-HAZ-01','fire','위험물','위험물 정의·류별 성상·품명·지정수량','covered',['F05-C01','F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07']),
   T('F-HAZ-02','fire','위험물','지정수량 배수·혼재위험물 계산','covered',['F05-C01','F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07'],{calc:true}),
   T('F-HAZ-03','fire','위험물','류별 저장·취급금기·소화·예외','covered',['F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07'],{evidence:'NFA-hazmat-common-storage-extinguishing-exceptions'}),
