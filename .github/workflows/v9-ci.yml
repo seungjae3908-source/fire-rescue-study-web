@@ -1,6 +1,13 @@
 name: V9 Development CI
 
 on:
+  workflow_dispatch:
+    inputs:
+      run_coverage_audit:
+        description: 'Run the slow one-by-one official textbook coverage audit'
+        required: false
+        default: false
+        type: boolean
   push:
     branches: [feat/v9-learning-workspace]
     paths:
@@ -83,15 +90,38 @@ jobs:
           exit 1
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
         run: node v9/e2e.mjs
-      - name: One-by-one official textbook coverage anchor audit
-        continue-on-error: true
-        run: node v9/coverage-anchor-audit.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
         run: node v9/sync-e2e.mjs
       - name: Invalid/expired member session fail-closed QA
         run: node v9/auth-session-e2e.mjs
+
+
+  coverage_anchor_audit:
+    name: coverage_anchor_audit (manual slow audit)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_coverage_audit }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA dependency
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start branch-only static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/aitutor-v9-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: One-by-one official textbook coverage anchor audit
+        run: node v9/coverage-anchor-audit.mjs
 
 
   official_pdf_proxy_contract:
