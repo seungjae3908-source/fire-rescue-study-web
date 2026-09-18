@@ -3,15 +3,15 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
 const V=window.AITUTOR_V9;
-ok(V.curriculum.totalConcepts===135,'135 concepts');
-ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===135,'unique concept ids');
+ok(V.curriculum.totalConcepts===162,'162 complete concepts');
+ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===162,'unique concept ids');
 ok(V.curriculum.concepts.every(x=>x.sourceRanges.length>0),'all concepts have official source ranges');
-ok(V.curriculum.fire.length===4,'four fire scopes');
+ok(V.curriculum.fire.length===7,'seven complete fire scopes');
 ok(V.curriculum.ems.length===24,'twenty-four EMS scopes');
 ok(V.questions.every(q=>q.choices.length===4),'all questions have four choices');
 ok(V.questions.every(q=>new Set(q.choices).size===4),'no duplicate choices inside a question');
@@ -27,12 +27,15 @@ const extra=Object.keys(V.contentPacks.authored).filter(id=>!V.curriculum.byId[i
 console.log('VERIFIED_COVERAGE',coverage);
 console.log('MISSING_VERIFIED_CONCEPTS',missing);
 console.log('EXTRA_AUTHORED_CONCEPTS',extra);
-ok(coverage.total===135,'content coverage denominator is 135');
-ok(missing.length===0,`all 135 concept packs are source-verified; missing=${missing.join(',')||'none'}`);
-ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===135,'exactly 135 valid authored concept packs');
+ok(coverage.total===162,'content coverage denominator is 162');
+ok(missing.length===0,`all 162 concept packs are source-verified; missing=${missing.join(',')||'none'}`);
+ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===162,'exactly 162 valid authored concept packs');
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'),'all authored content packs are explicitly verified');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored verified pack');
+ok(V.curriculum.byId['F05-C05']&&V.curriculum.byId['F07-C05'],'hazardous materials and sprinkler scopes exist');
+ok(V.contentPacks.authored['F05-C05']?.deepSections?.length>0&&V.contentPacks.authored['F07-C05']?.deepSections?.length>0,'new fire scopes have rich detail sections');
+ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope expansion adds 27 concepts');
 ok((V.depthEnrichment?.conceptIds||[]).length>=19,'source-depth enrichment batch 1 is loaded');
 ok(!!V.depthEnrichment2,'source-depth enrichment batch 2 is loaded');
 
@@ -42,9 +45,11 @@ const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 ok(sw.includes("const PREFIX='ai-tutor-v9-'"),'v9 service worker uses a dedicated cache prefix');
 ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names');
 ok(sw.includes("'./sync-merge.js'")&&sw.includes("'./sync-ui.js'"),'v9 sync hardening files are offline-cached');
-ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'"),'v9 depth enrichments are offline-cached');
+ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'")&&sw.includes("'./content-rich-2026.js'"),'v9 depth enrichments are offline-cached');
+ok(sw.includes("'./curriculum-complete-2026.js'"),'complete curriculum expansion is offline-cached');
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
+ok(v9index.indexOf('./curriculum-complete-2026.js')>v9index.indexOf('./curriculum.js')&&v9index.indexOf('./curriculum-complete-2026.js')<v9index.indexOf('./content-packs.js'),'complete curriculum loads before content packs');
 ok(v9index.indexOf('./depth-enrichment.js')>v9index.indexOf('./verified-final.js'),'depth enrichment loads after base verified packs');
 ok(v9index.indexOf('./depth-enrichment-2.js')>v9index.indexOf('./depth-enrichment.js'),'depth enrichment batch 2 loads after batch 1');
 ok(v9index.indexOf('./sync-merge.js')<v9index.indexOf('./auth.js'),'conflict-safe merge loads before member auth');
@@ -149,4 +154,4 @@ ok(liveClosedLoop.includes('B_CAN_READ_A_DOC')&&liveClosedLoop.includes('B_CAN_I
 ok(liveClosedLoop.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),'live closed-loop includes explicit cleanup');
 const root=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 ok(!root.includes('/v9/')&&!root.includes('v9/app.js'),'production root remains v8.6 during development');
-console.log(JSON.stringify({concepts:135,verifiedPacks:coverage.verified,enrichedPacks:Object.values(V.contentPacks.authored).filter(p=>p.depthEnriched).length,questions:V.questions.length,mock,studyTables},null,2));
+console.log(JSON.stringify({concepts:V.curriculum.totalConcepts,verifiedPacks:coverage.verified,enrichedPacks:Object.values(V.contentPacks.authored).filter(p=>p.depthEnriched).length,questions:V.questions.length,mock,studyTables},null,2));
