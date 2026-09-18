@@ -12,7 +12,8 @@
 'ems-newborn-initial':['보온 유지','입→코 기도정리','호흡 평가','필요 시 부드러운 자극','Apgar 1분·5분 재평가'],
 'ems-hazmat-zones':['현장 위험평가','오염구역','오염통제구역·제독','안전구역','중증도분류·이송'],
 'ems-pediatric-resuscitation':['기도·호흡 평가','산소화·환기','느린맥·저산소 경계','순환·쇼크 평가','심정지 시 CPR·제세동'],
-'ems-ecg-arrest-rhythms':['VF','무맥성 VT','PEA','무수축']
+'ems-ecg-arrest-rhythms':['VF','무맥성 VT','PEA','무수축'],
+'ems-electrical-therapy':['제세동','동기화 심율동전환','경피조율']
 });
 const baseRender=X.render.bind(X);
 const waves=[
@@ -24,8 +25,17 @@ const waves=[
 function ecgCard(w){
   return `<div class="ecg-rhythm-card"><div class="ecg-rhythm-head"><b>${w.title}</b><span>${w.tag}</span></div><div class="ecg-strip" role="img" aria-label="${w.title} 학습용 파형 도식"><svg viewBox="0 0 300 80" preserveAspectRatio="none" aria-hidden="true"><path d="${w.path}"/></svg></div><p>${w.note}</p></div>`;
 }
+const therapyCards=[
+  {title:'제세동',tag:'심정지',main:'VF · 무맥성 VT',sub:'비동기 충격 · 빠른 충격 후 즉시 CPR'},
+  {title:'동기화 심율동전환',tag:'맥박 있음',main:'혈역학적으로 불안정한 빈맥',sub:'R파 동기화 · 소아 0.5~1 J/kg → 2 J/kg'},
+  {title:'경피조율',tag:'서맥',main:'완전 AV block/동기능부전 등',sub:'환기·산소·압박·약물 불응 시 고려'}
+];
+function therapyCard(x){
+  return `<div class="therapy-card"><div class="therapy-head"><b>${x.title}</b><span>${x.tag}</span></div><strong>${x.main}</strong><p>${x.sub}</p></div>`;
+}
 X.render=id=>{
-  if(id!=='ems-ecg-arrest-rhythms')return baseRender(id);
-  return `<div class="concept-visual ecg-learning-visual"><div class="visual-title">심정지 4리듬 · 시험 판독용 학습 도식</div><div class="ecg-rhythm-grid">${waves.map(ecgCard).join('')}</div><div class="ecg-visual-note">실제 환자 ECG 원본이 아닌 개념 비교용 도식 · pVT/PEA는 반드시 맥박 확인과 함께 판단</div></div>`;
+  if(id==='ems-ecg-arrest-rhythms')return `<div class="concept-visual ecg-learning-visual"><div class="visual-title">심정지 4리듬 · 시험 판독용 학습 도식</div><div class="ecg-rhythm-grid">${waves.map(ecgCard).join('')}</div><div class="ecg-visual-note">실제 환자 ECG 원본이 아닌 개념 비교용 도식 · pVT/PEA는 반드시 맥박 확인과 함께 판단</div></div>`;
+  if(id==='ems-electrical-therapy')return `<div class="concept-visual electrical-therapy-visual"><div class="visual-title">전기치료 3가지 · 적용상황 비교</div><div class="therapy-grid">${therapyCards.map(therapyCard).join('')}</div><div class="ecg-visual-note">시험 기준 2020 KACPR · 제세동/동기화 전환/경피조율은 서로 다른 치료</div></div>`;
+  return baseRender(id);
 };
 })();

@@ -77,7 +77,7 @@ const topics=[
   T('E-ECG-01','ems','전문심장소생술','VF·무맥성 VT·PEA·asystole 판독','covered',['E11-C04','E11-C05'],{visual:true,recent:'very-high',evidence:'2020-KACPR-140-145+2026-NFA-EMS-208-209+study-waveform-schematic'}),
   T('E-ECG-02','ems','전문심장소생술','SVT·AF·VT·서맥·AV block 판독','partial',['E11-C02','E11-C05'],{visual:true,recent:'very-high'}),
   T('E-ACLS-02','ems','전문심장소생술','안정/불안정 빈맥·서맥 알고리즘','partial',['E11-C02'],{recent:'very-high'}),
-  T('E-ACLS-03','ems','전문심장소생술','제세동·동기화 심율동전환·경피조율','partial',['E11-C04','E11-C05','E11-C06'],{visual:true,recent:'2025'}),
+  T('E-ACLS-03','ems','전문심장소생술','제세동·동기화 심율동전환·경피조율','covered',['E11-C04','E11-C05','E11-C06'],{visual:true,recent:'very-high',evidence:'2020-KACPR-adult-ALS-140-145+pediatric-table8-table9+2026-NFA-EMS-210-215'}),
   T('E-ACLS-04','ems','전문심장소생술','에피네프린·아미오다론·아데노신·아트로핀 등 약물','covered',['E11-C03','E11-C05'],{recent:'very-high'}),
   T('E-ACLS-05','ems','전문심장소생술','Hs & Ts·ROSC 후 처치','covered',['E11-C03'],{evidence:'2020-KACPR-144-145+235-257-2026-exam-standard'}),
   T('E-CARD-01','ems','내과응급','ACS·STEMI/NSTEMI·급성폐부종·심인성쇼크','partial',['E11-C01','E11-C02'],{visual:true}),

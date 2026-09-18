@@ -15,7 +15,8 @@ const preferred={
 'F07-C05':['sprinkler-system'],
 'E09-C01':['ems-airway-open'],
 'E11-C04':['ems-ecg-arrest-rhythms'],
-'E11-C05':['ems-ecg-arrest-rhythms'],
+'E11-C05':['ems-ecg-arrest-rhythms','ems-electrical-therapy'],
+'E11-C06':['ems-electrical-therapy'],
 'E24-C02':['ems-airway-open']
 };
 const clean=x=>String(x||'').replace(/\s+/g,' ').trim();

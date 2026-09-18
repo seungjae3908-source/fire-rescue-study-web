@@ -38,9 +38,9 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===25,'twenty-five building ECG rhythm drug infection ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.added===29,'twenty-nine building ECG rhythm electrical-therapy drug infection ACLS and post-ROSC source-backed practice questions are loaded');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===25&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===29&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAclsExamStandard=finalGapPractice.filter(q=>/^119-finalgap-acls-0[1-4]$/.test(q.id||''));
 ok(adultAclsExamStandard.length===4&&adultAclsExamStandard.every(q=>/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the 2020 KACPR source mandated by the 2026 exam plan');
@@ -97,7 +97,8 @@ ok(['F-SCI-01','F-SCI-04','F-SCI-05','F-SCI-06'].every(id=>fullCoverage.rows.fin
 ok(fullCoverage.rows.find(x=>x.id==='E-MCI-01')?.status==='partial','mass-casualty triage remains explicitly partial');
 ok(fullCoverage.rows.find(x=>x.id==='E-ECG-01')?.status==='covered','cardiac-arrest ECG rhythm recognition closes only after four-rhythm source-backed content and waveform study visual');
 ok(fullCoverage.rows.find(x=>x.id==='E-ACLS-01')?.status==='covered','adult shockable/non-shockable cardiac-arrest algorithm closes on the 2020 KACPR source mandated by the 2026 exam plan');
-ok(['E-ECG-02','E-ACLS-02','E-ACLS-03'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='partial'),'non-arrest ECG brady/tachy and electrical-therapy rows remain fail-closed');
+ok(['E-ECG-02','E-ACLS-02'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='partial'),'non-arrest ECG and full brady/tachy algorithm rows remain fail-closed');
+ok(fullCoverage.rows.find(x=>x.id==='E-ACLS-03')?.status==='covered','defibrillation synchronized cardioversion and transcutaneous pacing close only after exam-standard source separation and direct comparison');
 ok(fullCoverage.rows.find(x=>x.id==='E-ACLS-05')?.status==='covered','reversible causes and post-ROSC care close only on the 2020 KACPR source mandated by the 2026 exam plan');
 const newlyClosedFireRows=['F-COMB-02','F-FIRE-03','F-EXP-01','F-BLD-01','F-BLD-02','F-BLD-03'];
 ok(newlyClosedFireRows.every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'six source-backed fire rows are promoted only after explicit evidence closure');
@@ -286,6 +287,12 @@ ok((V.contentPacks.authored['E11-C04']?.visuals||[]).includes('ems-ecg-arrest-rh
 ok(Array.isArray(V.Visual119?.data?.['ems-ecg-arrest-rhythms'])&&V.Visual119.data['ems-ecg-arrest-rhythms'].length===4,'ECG visual contract exposes exactly four arrest rhythms');
 ok(/ecg-rhythm-grid/.test(V.Visual119.render('ems-ecg-arrest-rhythms')||'')&&/시험 판독용 학습 도식/.test(V.Visual119.render('ems-ecg-arrest-rhythms')||''),'dedicated ECG renderer produces waveform cards and labels them as study schematics');
 ok((V.contentPacks.authored['E11-C05']?.must||[]).some(x=>/PEA.*맥박 없음/.test(x))&&(V.contentPacks.authored['E11-C05']?.traps||[]).some(x=>/전극.*리드|리드.*전극/.test(x)),'PEA pulse-check and asystole lead-check traps are explicit in the lesson');
+const electricalIds=['119-finalgap-electrical-01','119-finalgap-electrical-02','119-finalgap-electrical-03','119-finalgap-electrical-04'];
+ok(electricalIds.every(id=>V.questionById[id]?.grade==='P'&&/2020년 한국심폐소생술 가이드라인/.test(String(V.questionById[id]?.source||''))),'four electrical-therapy drills remain P-grade and exam-standard source-bound');
+ok(Array.isArray(V.Visual119?.data?.['ems-electrical-therapy'])&&V.Visual119.data['ems-electrical-therapy'].length===3,'electrical-therapy visual exposes exactly three distinct modalities');
+ok(/therapy-grid/.test(V.Visual119.render('ems-electrical-therapy')||'')&&/전기치료 3가지/.test(V.Visual119.render('ems-electrical-therapy')||''),'electrical-therapy renderer uses independent comparison cards instead of a false sequence');
+ok((V.contentPacks.authored['E11-C05']?.must||[]).some(x=>/0\.5~1 J\/kg.*2 J\/kg/.test(x))&&(V.contentPacks.authored['E11-C05']?.must||[]).some(x=>/완전 AV block\/동기능부전/.test(x)),'synchronized cardioversion dose and pacing indication are explicit');
+ok((V.contentPacks.authored['E11-C04']?.compare||[]).some(x=>x?.[0]==='제세동')&&(V.contentPacks.authored['E11-C05']?.compare||[]).some(x=>x?.[0]==='경피조율'),'defibrillation and pacing remain distinct in lesson comparisons');
 ok((V.contentPacks.authored['E11-C03']?.detail||[]).some(x=>/2020.*에피네프린 1mg.*3~5분/.test(x))&&(V.contentPacks.authored['E11-C05']?.detail||[]).some(x=>/아데노신.*0\.1mg\/kg/.test(x)),'adult and pediatric ACLS dosing remains bound to the 2020 KACPR exam-standard source');
 ok(V.curriculum.byId['E03-C04']?.title==='감염 관리·패혈증 주의'&&(V.contentPacks.authored['E03-C04']?.detail||[]).some(x=>/패혈증/.test(x)),'infection lesson adds conservative source-backed sepsis warning content');
 ok(V.curriculum.byId['F07-C01']?.title==='소방시설 5분류·건축방재','building-fire fundamentals are visible in the facilities curriculum title');
