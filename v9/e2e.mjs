@@ -66,7 +66,12 @@ try{
   const haz=await m.evaluate(()=>({rows:document.querySelectorAll('.book-mobile .hazmat-table tbody tr').length,text:document.querySelector('.book-mobile .hazmat-reference')?.innerText||'',calc:document.querySelector('.book-mobile .calc-example')?.innerText||'',sections:document.querySelectorAll('.book-mobile .book-section').length}));assert(haz.rows===7&&haz.text.includes('황화린')&&haz.text.includes('인화성고체'),'grade-2 electronic textbook shows official item/quantity table');assert(haz.calc.includes('1.5배'),'hazardous-material calculation example renders');assert(haz.sections>=4,'mobile textbook exposes summary detail quiz and source sections');
   await noX(m,'mobile hazardous-material book');
 
-  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C05'));await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C05');assert((await m.locator('.concept-head h2').textContent()).includes('스프링클러'),'mobile can enter sprinkler concept');\n  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C19'));await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C19');assert((await m.locator('.book-mobile').textContent()).includes('준비작동식'),'mobile textbook includes granular preaction sprinkler lesson');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C05'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C05');
+  assert((await m.locator('.concept-head h2').textContent()).includes('스프링클러'),'mobile can enter sprinkler concept');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C19'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C19');
+  assert((await m.locator('.book-mobile').textContent()).includes('준비작동식'),'mobile textbook includes granular preaction sprinkler lesson');
   await m.waitForSelector('.book-mobile');assert((await m.locator('.book-mobile').textContent()).includes('교재형 상세'),'mobile rich textbook renders');
   await m.locator('.book-source [data-source-concept]').click();await m.waitForSelector('#sourceModal');assert(await m.locator('#sourceModal').isVisible(),'source evidence modal opens');
   await m.locator('#sourceModal [data-pdf-evidence]').click();await m.waitForSelector('#pdfEvidence');assert(await m.locator('#pdfEvidence').isVisible(),'PDF evidence viewer opens from explanation');
