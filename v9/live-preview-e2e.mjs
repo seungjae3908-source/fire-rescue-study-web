@@ -53,7 +53,7 @@ async function openEvidence(page,id,doc,{anchored=true,pager=false}={}){
     const root=document.querySelector('#pdfEvidence');
     const label=root?.querySelector('[data-pdf-page-label]')?.textContent||'';
     return !!root?.querySelector('canvas') && /하이라이트\s+[1-9]\d*개/.test(label);
-  },{timeout:240000});
+  },null,{timeout:240000});
 
   const result=await page.evaluate(()=> {
     const root=document.querySelector('#pdfEvidence');
