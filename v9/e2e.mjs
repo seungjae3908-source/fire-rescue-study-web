@@ -169,6 +169,25 @@ try{
   assert(mock.emsScopes>=24,'practice mock covers every EMS scope');
   await noX(m,'mobile exam question');
 
+  await m.evaluate(()=>{
+    const e=window.AITUTOR_V9.App.runtime.exam;
+    e.answers={};
+    e.qs.forEach((q,i)=>{e.answers[q.id]=i===0?(q.a+1)%4:q.a});
+    e.i=e.qs.length-1;
+    window.AITUTOR_V9.App.render();
+  });
+  await m.waitForSelector('[data-exam-next]');
+  await m.locator('[data-exam-next]').click();
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='stats'&&!!window.AITUTOR_V9.App.runtime.examReportId);
+  await m.waitForSelector('.exam-report');
+  const reportText=await m.locator('.exam-report').innerText();
+  assert(reportText.includes('64/65')&&reportText.includes('오답·미응답 분석')&&reportText.includes('1문항'),'finished mock opens a 65-question score + wrong-answer analysis');
+  assert(reportText.includes('내 답')&&reportText.includes('정답')&&reportText.includes('정답 근거'),'exam analysis shows selected answer, correct answer and explanation');
+  assert(await m.locator('.exam-report [data-concept]').count()>=1&&await m.locator('.exam-report [data-source-concept]').count()>=1,'exam analysis links wrong questions to concept review and official evidence');
+  await noX(m,'mobile exam analysis');
+  await m.locator('[data-report-close]').click();
+  assert(await m.locator('[data-exam-report]').count()>=1,'recent exam history keeps an analysis action for locally detailed results');
+
   await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
   await cleanPage(m,'mobile notes');
   const notesText=await m.locator('.page').innerText();
