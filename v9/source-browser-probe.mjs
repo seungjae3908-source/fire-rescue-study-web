@@ -29,16 +29,7 @@ try{
       const clean=[...new Set(paths.map(x=>x.replace(/;jsessionid=[^?'")\s]+/gi,'')))];
       for(const path of clean){
         const url=new URL(path,'https://www.nfa.go.kr').href;
-        let pdf=false,status=0,type='';
-        try{
-          const check=await p.evaluate(async u=>{
-            const r=await fetch(u,{headers:{Range:'bytes=0-7'}});
-            const b=new Uint8Array(await r.arrayBuffer());
-            return{status:r.status,type:r.headers.get('content-type')||'',head:String.fromCharCode(...b.slice(0,5))};
-          },url);
-          status=check.status;type=check.type;pdf=check.head==='%PDF-';
-        }catch{}
-        attachments.push({name:row.name,path,url,status,type,pdf});
+        attachments.push({name:row.name,path,url});
       }
     }
     console.log('SOURCE_BROWSER_CATALOG',JSON.stringify({key:def.key,http:res?.status()||0,title:await p.title(),attachments},null,2));
