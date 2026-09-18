@@ -4,7 +4,7 @@ const base=process.env.STUDY_119_BRANCH_URL||'http://127.0.0.1:4173/v9/index.htm
 const targets=[
   {id:'F-SCI-01',title:'원자·분자·원자량·분자량',terms:['원자량','분자량','원자와 분자','원자','분자']},
   {id:'F-SCI-02',title:'화학결합·화학반응식·산화환원',terms:['화학결합','공유결합','산화환원','산화 반응','환원 반응','화학반응식']},
-  {id:'F-SCI-03',title:'물질상태·상변화·감열·잠열',terms:['상태변화','상변화','융해열','기화열','잠열','감열','증발잠열','융해','기화']},
+  {id:'F-SCI-03',title:'물질상태·상변화·감열·잠열',priority:['현열','감열'],terms:['현열','감열','상태변화','상변화','융해열','기화열','잠열','증발잠열','융해','기화']},
   {id:'F-SCI-04',title:'기체법칙·이상기체·mol',terms:['보일의 법칙','보일 법칙','샤를의 법칙','샤를 법칙','이상기체','이상 기체','기체 상태방정식','기체상태방정식','몰질량','몰 (mole)','몰(mole)','아보가드로수','아보가드 로수','1 몰이란','1몰이란','물질량을 나타내는 국제단위']},
   {id:'F-SCI-05',title:'열량·비열·열용량 계산',terms:['열용량','비열','열량','현열','잠열']},
   {id:'F-SCI-06',title:'전도·대류·복사·복사열 계산',terms:['열전도','전도','대류','복사열','복사','스테판','Stefan']},
@@ -59,7 +59,7 @@ try{
     return targets.map(t=>{
       const row=out[t.id];
       row.hits=row.hits
-        .map(h=>({...h,score:(h.matched||[]).reduce((n,term)=>n+norm(term).length,0)}))
+        .map(h=>({...h,score:(h.matched||[]).reduce((n,term)=>n+norm(term).length,0)+((t.priority||[]).some(term=>(h.matched||[]).includes(term))?1000:0)}))
         .sort((a,b)=>b.score-a.score||a.bookPage-b.bookPage)
         .slice(0,16);
       return row;
