@@ -191,8 +191,9 @@ ok(sourceCatalog.includes('noUserUploadRequired:true'),'official source catalog 
 ok(sourceCatalog.includes('officialPageFallback:true'),'official source catalog has official-page fallback');
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
 ok(sourcePdf.includes('pdfjs-text-coordinate-overlay'),'official PDF evidence uses a text-coordinate highlight overlay');
-ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs stay local and unmodified');
-ok(sourcePdf.includes('SOURCE_PDF_NOT_ATTACHED'),'PDF evidence fails closed until the source PDF is attached');
+ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs are never server-uploaded and remain unmodified');
+ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialRemotePreferred:true'),'PDF evidence prefers official remote sources and never requires user upload');
+ok(sourcePdf.includes('SOURCE_REMOTE_UNRESOLVED'),'unresolved direct PDFs fail closed to official-page fallback');
 const pdf=fs.readFileSync(new URL('./pdf.js',import.meta.url),'utf8');
 ok(pdf.includes('exportForSync')&&pdf.includes('importFromSync'),'private extracted text supports owner-scoped member sync');
 ok(pdf.includes('deletedDocuments')&&pdf.includes('deletionTombstones:true'),'local private-document deletion uses owner-scoped tombstones');
