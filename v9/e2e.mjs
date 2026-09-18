@@ -116,6 +116,26 @@ try{
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C19'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C19');
   assert((await m.locator('.book-mobile').textContent()).includes('준비작동식'),'mobile textbook includes granular preaction sprinkler lesson');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C11'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C11');
+  const detectionBook=await m.locator('.book-mobile').textContent();
+  assert(detectionBook.includes('감지기')&&detectionBook.includes('수신기')&&detectionBook.includes('경보'),'automatic fire detection lesson explains full signal flow');
+  assert(await m.locator('.book-mobile .concept-visual').count()>=1,'automatic fire detection lesson renders learning diagram');
+  const detectionQ=m.locator('[data-answer^="119-fac-11b:"]').first();
+  assert(await detectionQ.isVisible(),'automatic fire detection high-difficulty comparison question is rendered');
+  await detectionQ.click();
+  assert(await m.locator('.choice-explanations .choice-explain').count()===4,'fire detection question explains all four choices');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C03');
+  const hydrantBook=await m.locator('.book-mobile').textContent();
+  assert(hydrantBook.includes('수원')&&hydrantBook.includes('호스')&&hydrantBook.includes('관창'),'indoor hydrant lesson explains components and manual discharge');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C15'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C15');
+  const activityBook=await m.locator('.book-mobile').textContent();
+  assert(activityBook.includes('제연')&&activityBook.includes('연결송수관')&&activityBook.includes('무선통신보조'),'firefighting activity lesson covers smoke control, standpipe and radio support');
+
   await m.waitForSelector('.book-mobile');assert((await m.locator('.book-mobile').textContent()).includes('교재형 상세'),'mobile rich textbook renders');
   await m.locator('.book-source [data-source-concept]').click();await m.waitForSelector('#pdfEvidence');assert(await m.locator('#pdfEvidence').isVisible(),'official evidence opens PDF viewer in one click');
   assert(await m.locator('#sourceModal').count()===0,'one-click official evidence removes intermediate source modal');
