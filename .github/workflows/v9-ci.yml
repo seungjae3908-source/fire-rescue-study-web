@@ -48,6 +48,8 @@ jobs:
         run: node v9/ci-static.mjs
       - name: 176-concept + 119 textbook/content contract depth gate
         run: node v9/content-depth.mjs
+      - name: 119 content contract blocker report
+        run: node v9/content-contract-audit.mjs
 
   browser:
     runs-on: ubuntu-latest
