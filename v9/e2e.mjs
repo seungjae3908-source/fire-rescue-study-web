@@ -65,7 +65,7 @@ try{
   assert(derr.length===0,'desktop runtime errors = 0 '+derr.join(' | '));
   await desktop.close();
 
-  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,deviceScaleFactor:2});
   const m=await mobile.newPage(),merr=collectErrors(m);
   await boot(m);
   const navLabels=(await m.locator('.mobile-nav button').allInnerTexts()).map(x=>x.trim());
@@ -81,6 +81,13 @@ try{
   assert(await m.locator('.page-study .actionbar').isVisible(),'mobile study keeps previous/TOC/next navigation');
   assert(await m.locator('.book-jumpbar button').count()===4,'mobile study has four true content tabs');
   assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문','mobile tabs are 핵심/상세/문제/원문');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
+  await m.locator('.book-jumpbar [data-study-tab="core"]').click();
+  await m.waitForSelector('.book-section .study-must');
+  assert((await m.locator('.book-section .study-must-title').innerText()).includes('★ 시험필수'),'core learning exposes a compact exam-essential block');
+  assert(await m.locator('.book-section .study-must li').count()>=1,'core learning underlines only curated must-remember points');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
@@ -112,6 +119,10 @@ try{
   await m.waitForSelector('#pdfEvidence');
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
+  const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=root.querySelectorAll('.pdf-evidence-line');return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
+  assert(pdfVisual.pixelWidth>=pdfVisual.cssWidth*1.8,'mobile PDF canvas renders at high device-pixel density for crisp text');
+  assert(pdfVisual.evidence>=1&&pdfVisual.evidence<=3,'PDF marks only one to three evidence lines instead of every matching word');
+  assert(pdfVisual.legacy===0&&!/근거\s+\d+개/.test(pdfVisual.label),'legacy keyword boxes/count are hidden from the student');
   const cache=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.openPdf(key),b=await V.SourcePDF.openPdf(key);return{same:a.pdf===b.pdf,origin:a.origin}});
   const local=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc;return await V.SourcePDF.availability(key)});
   assert(cache.same&&(/local-cache/.test(cache.origin)||cache.origin==='official-static-range')&&(local.local||local.mirror),'official PDF uses local cache or stable static mirror and is reused after first load');
@@ -126,6 +137,10 @@ try{
   const practice=m.locator('[data-exam-start="practice"]');
   await practice.click();await m.waitForSelector('.question-card');
   assert(await m.locator('.question-card .choice').count()===4,'practice exam renders one four-choice question at a time');
+  const generatedStemAudit=await m.evaluate(()=>window.AITUTOR_V9.questions.filter(q=>q.generatedPractice).every(q=>!/(다음 심화 설명을 가장 정확히|교재형 상세 설명|30초 핵심 설명|학습노드|exact-page)/.test(String(q.q||''))));
+  assert(generatedStemAudit,'generated practice questions use concise student-facing exam stems');
+  const qStyle=await m.locator('.question-card h2').evaluate(el=>({font:parseFloat(getComputedStyle(el).fontSize),line:getComputedStyle(el).lineHeight}));
+  assert(qStyle.font<=20,'mobile question stem uses compact exam-readable typography');
   const mock=await m.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam,fire=e.qs.filter(q=>q.subject==='fire'),ems=e.qs.filter(q=>q.subject==='ems');return{total:e.qs.length,fire:fire.length,ems:ems.length,unique:new Set(e.qs.map(q=>q.id)).size,fireScopes:new Set(fire.map(q=>q.scopeId)).size,emsScopes:new Set(ems.map(q=>q.scopeId)).size}});
   assert(mock.total===65&&mock.fire===25&&mock.ems===40&&mock.unique===65,'practice mock blueprint is 25 fire + 40 EMS with no duplicate questions');
   assert(mock.fireScopes>=7,'practice mock covers every fire scope');
@@ -164,6 +179,23 @@ try{
 
   await go(m,'stats');await cleanPage(m,'mobile stats');
   assert(!(await m.locator('.page').innerText()).includes('검증문제 커버'),'stats removes engineering validation metrics');
+
+  await go(m,'study');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C06'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C06');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.book-section .hazmat-table tbody tr');
+  const hazRow=await m.locator('.book-section .hazmat-table tbody tr').first().evaluate(tr=>{const cells=[...tr.querySelectorAll('td')].map(td=>td.getBoundingClientRect());return{tr:tr.getBoundingClientRect().toJSON?.()||{x:tr.getBoundingClientRect().x,width:tr.getBoundingClientRect().width},cells:cells.map(x=>({x:x.x,y:x.y,width:x.width,height:x.height}))}});
+  assert(hazRow.cells.length>=2&&Math.abs(hazRow.cells[0].y-hazRow.cells[1].y)<3,'hazardous-material name and designated quantity appear on the same mobile row');
+  await noX(m,'mobile hazardous-material detail');
+
+  await m.locator('.mobile-nav [data-more]').click();
+  await m.waitForSelector('.menu-modal');
+  const menuLabels=(await m.locator('.menu-modal .menu-list button').allInnerTexts()).join(' ');
+  assert(!menuLabels.includes('AI AI')&&menuLabels.includes('AI 질문'),'more menu removes duplicated AI label');
+  const menuBoxes=await m.locator('.menu-modal .menu-list button').evaluateAll(nodes=>nodes.slice(0,2).map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,width:b.width}}));
+  assert(menuBoxes.length===2&&Math.abs(menuBoxes[0].y-menuBoxes[1].y)<3&&menuBoxes[0].x!==menuBoxes[1].x,'more menu uses compact two-column layout');
+  await m.locator('[data-close-more]').click();
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   for(const tab of ['core','detail','quiz','source']){
