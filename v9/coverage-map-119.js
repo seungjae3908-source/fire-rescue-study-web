@@ -78,7 +78,7 @@ const topics=[
   T('E-ECG-02','ems','전문심장소생술','SVT·AF·VT·서맥·AV block 판독','partial',['E11-C02','E11-C05'],{visual:true,recent:'very-high'}),
   T('E-ACLS-02','ems','전문심장소생술','안정/불안정 빈맥·서맥 알고리즘','partial',['E11-C02'],{recent:'very-high'}),
   T('E-ACLS-03','ems','전문심장소생술','제세동·동기화 심율동전환·경피조율','partial',['E11-C04','E11-C05','E11-C06'],{visual:true,recent:'2025'}),
-  T('E-ACLS-04','ems','전문심장소생술','에피네프린·아미오다론·아데노신·아트로핀 등 약물','partial',['E11-C03','E11-C05'],{recent:'very-high'}),
+  T('E-ACLS-04','ems','전문심장소생술','에피네프린·아미오다론·아데노신·아트로핀 등 약물','covered',['E11-C03','E11-C05'],{recent:'very-high'}),
   T('E-ACLS-05','ems','전문심장소생술','Hs & Ts·ROSC 후 처치','partial',['E11-C03']),
   T('E-CARD-01','ems','내과응급','ACS·STEMI/NSTEMI·급성폐부종·심인성쇼크','partial',['E11-C01','E11-C02'],{visual:true}),
 
@@ -89,8 +89,8 @@ const topics=[
   T('E-TRM-03','ems','외상','복부·골반외상·대량출혈·중증외상 이송','partial',['E13-C04','E13-C05','E14-C02'],{recent:'2026'}),
   T('E-BURN-01','ems','외상','화상 깊이·TBSA·특수화상','partial',['E14-C03']),
   T('E-BURN-02','ems','계산','Parkland 수액량 계산','covered',['E14-C03'],{calc:true,recent:'2025'}),
-  T('E-CALC-01','ems','계산','산소통 사용시간 계산','missing',[],{calc:true,recent:'2024'}),
-  T('E-CALC-02','ems','계산','수액 적하속도·시간당 주입량','missing',[],{calc:true,recent:'2025'}),
+  T('E-CALC-01','ems','계산','산소통 사용시간 계산','partial',['E09-C07'],{calc:true,recent:'2024-reconstructed',evidence:'reconstructed-practice'}),
+  T('E-CALC-02','ems','계산','수액 적하속도·시간당 주입량','partial',['E07-C03'],{calc:true,recent:'prep-standard',evidence:'standard-education-practice'}),
   T('E-NEURO-01','ems','내과응급','의식장애·경련·뇌졸중','covered',['E17-C01','E17-C02','E17-C03','E17-C04']),
   T('E-ENDO-01','ems','내과응급','저혈당·DKA·HHS','partial',['E17-C02'],{recent:'2025'}),
   T('E-GI-01','ems','내과응급','급성복통·위장관 출혈·복부 응급','partial',['E12-C01','E12-C02','E12-C03','E12-C04','E12-C05']),
@@ -99,7 +99,7 @@ const topics=[
   T('E-ENV-01','ems','특수응급','한랭·열·익수·물림·쏘임','covered',['E19-C01','E19-C02','E19-C03','E19-C04','E19-C05']),
   T('E-OB-01','ems','산과','임신·정상분만·합병증·산과응급','covered',['E20-C01','E20-C02','E20-C03','E20-C04','E20-C05','E20-C06']),
   T('E-PED-01','ems','소아','소아 평가·기도·호흡·내과·외상','covered',['E21-C01','E21-C02','E21-C03','E21-C04','E21-C05','E21-C06','E21-C07','E21-C08']),
-  T('E-PALS-01','ems','소아소생','전문소아소생술·소아 서맥/빈맥/쇼크','partial',['E21-C04','E21-C05'],{visual:true}),
+  T('E-PALS-01','ems','소아소생','전문소아소생술·소아 서맥/빈맥/쇼크','covered',['E21-C04','E21-C05'],{visual:true}),
   T('E-NRP-01','ems','신생아','신생아소생술 초기평가·환기·압박','partial',['E20-C03'],{visual:true}),
   T('E-GER-01','ems','노인','노인 생리·접근·평가·다약제','covered',['E22-C01','E22-C02','E22-C03']),
   T('E-BEH-01','ems','행동응급','행동응급·자살위험·폭력·기록','covered',['E23-C01','E23-C02','E23-C03'])
