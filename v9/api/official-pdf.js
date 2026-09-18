@@ -126,7 +126,8 @@ function typeLooksPdf(res){
 async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
   const baseHeaders={'user-agent':UA,'accept':'application/pdf,*/*;q=0.8','referer':row.detailUrl,'cache-control':'no-cache'};
   if(row.cookie)baseHeaders.cookie=row.cookie;
-  const range=meta?'bytes=0-63':(req.headers&&req.headers.range)||'';
+  const clientRange=(req.headers&&req.headers.range)||'';
+  const range=meta?'bytes=0-63':(clientRange||((req.method||'GET')==='GET'?'bytes=0-':''));
   if(range)baseHeaders.range=range;
   if(req.headers&&req.headers['if-range'])baseHeaders['if-range']=req.headers['if-range'];
   let lastStatus=0;
@@ -223,7 +224,11 @@ module.exports=async function handler(req,res){
 
   let result;
   try{result=await fetchPdf(doc,req,meta)}
-  catch(e){res.statusCode=502;return res.end(String((e&&e.message)||'OFFICIAL_SOURCE_FETCH_FAILED').slice(0,200))}
+  catch(e){
+    const msg=String((e&&e.message)||'OFFICIAL_SOURCE_FETCH_FAILED').slice(0,200);
+    console.error('OFFICIAL_PDF_PROXY_ERROR',JSON.stringify({doc,meta,error:msg}));
+    res.statusCode=502;return res.end(msg)
+  }
   const {row,upstream}=result;
   if(!upstream.ok&&upstream.status!==206){
     res.statusCode=upstream.status||502;
