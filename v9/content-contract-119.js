@@ -5,7 +5,7 @@ const visualKeywords=/스프링클러|플래시오버|백드래프트|롤오버|
 const calcKeywords=/지정수량|계산|열량|연소|약제|농도|유량|방수/;
 const chars=x=>String(x||'').replace(/\s+/g,'').length;
 function questionMeta(id){
-  const qs=(V.questionsForConcept?.(id)||[]);
+  const qs=V.QuestionQuality119?.forConcept?.(id)||(V.questionsForConcept?.(id)||[]).filter(q=>q.examStyle===true);
   const diff={low:0,mid:0,high:0},choiceExplained=qs.filter(q=>Array.isArray(q.choiceExplanations)&&q.choiceExplanations.length===4).length;
   for(const q of qs){const d=q.difficulty||V.QuestionDifficulty?.infer?.(q)||'mid';if(diff[d]!==undefined)diff[d]++}
   return{total:qs.length,diff,choiceExplained};
