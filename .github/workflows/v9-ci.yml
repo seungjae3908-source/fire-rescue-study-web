@@ -90,6 +90,8 @@ jobs:
           exit 1
       - name: Phase A remaining official-PDF evidence audit
         run: node v9/phase-a-source-audit.mjs
+      - name: Combustion-products HCN full-PDF evidence audit
+        run: node v9/combustion-products-source-audit.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
