@@ -200,6 +200,32 @@ try{
   assert(hazRow.cells.length>=2&&Math.abs(hazRow.cells[0].y-hazRow.cells[1].y)<3,'hazardous-material name and designated quantity appear on the same mobile row');
   await noX(m,'mobile hazardous-material detail');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E05-C04'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E05-C04');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.book-section .detail-view');
+  const triageText=await m.locator('.page-study').innerText();
+  assert(triageText.includes('기록지·중증도 분류')&&triageText.includes('START')&&triageText.includes('호흡 · 맥박 · 의식'),'START triage is a visible learner-facing section instead of a hidden audit gap');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E14-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E14-C03');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.book-section .calc-lab');
+  const parklandText=await m.locator('.book-section').innerText();
+  assert(parklandText.includes('Parkland')&&parklandText.includes('4 mL × 체중(kg) × 2·3도 화상 TBSA(%)')&&parklandText.includes('7,200mL'),'burn lesson exposes Parkland formula, timing and worked example');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C07'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C07');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const smokeText=await m.locator('.book-section').innerText();
+  assert(smokeText.includes('굴뚝효과')&&smokeText.includes('역굴뚝효과')&&smokeText.includes('HVAC'),'smoke lesson adds stack-effect and smoke-movement comparison');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C08'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C08');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const explosionText=await m.locator('.book-section').innerText();
+  assert(explosionText.includes('UVCE')&&explosionText.includes('BLEVE')&&explosionText.includes('폭연')&&explosionText.includes('폭굉'),'explosion lesson compares UVCE, BLEVE, deflagration and detonation');
+
   await m.locator('.mobile-nav [data-more]').click();
   await m.waitForSelector('.menu-modal');
   const menuLabels=(await m.locator('.menu-modal .menu-list button').allInnerTexts()).join(' ');
