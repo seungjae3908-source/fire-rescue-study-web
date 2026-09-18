@@ -343,7 +343,7 @@ try{
   const lawLinks=m.locator('.book-section .source-law-links a');
   assert(await lawLinks.count()>=4,'119-law source tab exposes current official law links');
   const lawHrefs=await lawLinks.evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
-  assert(lawHrefs.every(x=>/^https:\/\/law\.go\.kr\//.test(x)),'119-law source links stay on the official National Law Information Center domain');
+  assert(lawHrefs.every(x=>/^https:\/\/(?:www\.)?law\.go\.kr\//.test(x)),'119-law source links stay on the official National Law Information Center domain');
   await noX(m,'mobile 119-law source');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E05-C04'));
