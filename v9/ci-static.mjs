@@ -38,9 +38,9 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===95,'ninety-five building ECG rhythm brady-tachy electrical-therapy disaster CBRN transport cardiovascular shock endocrine sepsis toxicology newborn trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.added===99,'ninety-nine building ECG rhythm brady-tachy electrical-therapy disaster CBRN transport cardiovascular shock endocrine sepsis toxicology newborn chest-trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===95&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===99&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAclsExamStandard=finalGapPractice.filter(q=>/^119-finalgap-acls-0[1-4]$/.test(q.id||''));
 ok(adultAclsExamStandard.length===4&&adultAclsExamStandard.every(q=>/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the 2020 KACPR source mandated by the 2026 exam plan');
@@ -369,9 +369,13 @@ ok(fullCoverage.rows.find(x=>x.id==='E-ENDO-01')?.status==='covered','hypoglycem
 ok(fullCoverage.rows.find(x=>x.id==='E-INF-01')?.status==='covered','sepsis/infectious-emergency row closes only after current KDCA definition warning-sign and shock-progression evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-SHOCK-01')?.status==='covered','four-type shock comparison closes only after textbook plus official KDCA/KACPR evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-TOX-01')?.status==='covered','toxicology antidote toxidrome-pattern and anaphylaxis row closes only after NFA KDCA and E-GEN official evidence');
-ok(fullCoverage.rows.find(x=>x.id==='E-TRM-02')?.status==='partial','chest-trauma row remains partial because hemothorax and cardiac-tamponade direct evidence is incomplete');
+ok(fullCoverage.rows.find(x=>x.id==='E-TRM-02')?.status==='covered','chest-trauma row closes only after official flail-chest pneumothorax tamponade and traumatic-hemothorax evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-CARD-01')?.status==='covered','ACS STEMI/NSTEMI pulmonary-edema and cardiogenic-shock row closes only after NFA textbook plus current KDCA evidence');
 ok(fullCoverage.missing===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='partial','oxygen-cylinder and IV-drip calculations are no longer blank, but remain explicitly partial/nonverified');
+const chestTraumaIds=['119-finalgap-chest-01','119-finalgap-chest-02','119-finalgap-chest-03','119-finalgap-chest-04'];
+ok(chestTraumaIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'four chest-trauma drills remain P-grade exam-style practice');
+ok((V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='긴장성 기흉')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='혈흉')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='심장압전')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='연가양흉'),'E-TRM-02 lesson directly compares all four named chest-trauma entities');
+ok((V.contentPacks.authored['E14-C02']?.officialLinks||[]).some(x=>/cntnts_sn=5493/.test(x.url||''))&&(V.contentPacks.authored['E14-C02']?.officialLinks||[]).some(x=>/cntnts_sn=2970/.test(x.url||''))&&(V.contentPacks.authored['E14-C02']?.officialLinks||[]).some(x=>/19d6ac639176/.test(x.url||'')),'chest-trauma lesson links current KDCA official pneumothorax tamponade and traumatic-hemothorax evidence');
 ok(V.curriculum.byId['E03-C05']?.title==='위험물·CBRN 현장 구급·제독','CBRN/decontamination is visible in the EMS curriculum');
 ok(V.curriculum.byId['E21-C04']?.title==='기도·호흡·소아소생 기초','pediatric resuscitation basics are visible in the EMS curriculum');
 ok((V.contentPacks.authored['E03-C05']?.visuals||[]).includes('ems-hazmat-zones')&&!!V.Visual119.render('ems-hazmat-zones'),'CBRN three-zone/decon flow renders as a real study visual');
