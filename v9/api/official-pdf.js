@@ -95,8 +95,13 @@ async function fetchPdf(doc,req,meta=false,force=false){
 }
 
 module.exports=async function handler(req,res){
+  res.setHeader('Access-Control-Allow-Origin','*');
+  res.setHeader('Access-Control-Allow-Methods','GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers','Range, If-Range, Content-Type');
+  res.setHeader('Access-Control-Expose-Headers','Content-Length, Content-Range, Accept-Ranges, ETag, Last-Modified, X-119-Official-Source');
+  if((req.method||'GET')==='OPTIONS'){res.statusCode=204;return res.end()}
   if(!['GET','HEAD'].includes(req.method||'GET')){
-    res.statusCode=405;res.setHeader('Allow','GET, HEAD');return res.end('Method Not Allowed');
+    res.statusCode=405;res.setHeader('Allow','GET, HEAD, OPTIONS');return res.end('Method Not Allowed');
   }
   const doc=one(req.query?.doc)||'';
   if(!SOURCES[doc]){res.statusCode=400;return res.end('UNKNOWN_OFFICIAL_DOCUMENT')}
