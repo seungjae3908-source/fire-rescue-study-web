@@ -19,7 +19,7 @@ try{
   await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C05'));await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C05');assert((await p.locator('.concept-head h2').textContent()).includes('스프링클러'),'complete fire curriculum exposes sprinkler study concept');
   await p.locator('.tabbar [data-study-tab="detail"]').click();await p.waitForSelector('.detail-view');assert((await p.locator('.detail-view').textContent()).includes('상세내용'),'rich detail tab renders for sprinkler');
   assert((await p.locator('.detail-section').count())>=1,'detail tab has structured learning sections');
-  const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.verified===162&&coverage.total===162,'browser runtime sees 162/162 verified concept packs');
+  const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.total===162&&coverage.verified===135&&coverage.pending===27,'browser runtime preserves 135 page-verified + 27 page-anchor-pending truth');
 
   const readiness=await p.evaluate(()=>window.AITUTOR_V9.examReadiness());
   await p.locator('[data-go="exam"]').first().click();await p.waitForSelector('.page');const examText=await p.locator('.page').textContent();assert(await p.locator('[data-exam-start="practice"]').count()===1,'practice mode remains available');
