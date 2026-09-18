@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','ems-rich-2026.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','ems-rich-2026.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -19,8 +19,10 @@ ok(new Set(V.questions.map(q=>q.id)).size===V.questions.length,'unique question 
 ok(V.questions.every(q=>Number.isInteger(q.a)&&q.a>=0&&q.a<4),'single valid answer index');
 ok(V.questions.every(q=>!/(기출|실제 출제|과거시험)/.test(String(q.q||''))),'no generated question is mislabeled as past exam');
 const mock=V.examReadiness();
-ok(mock.ready===(mock.fire>=25&&mock.ems>=40),'real mock exam is fail-closed');
+ok(mock.ready===(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete),'real mock exam is fail-closed on count + restored-scope coverage');
 ok(mock.fire>=25&&mock.ems>=40,'distinct verified bank reaches 25 fire + 40 EMS');
+ok(mock.missingFireScopes.includes('F05')&&mock.missingFireScopes.includes('F06')&&mock.missingFireScopes.includes('F07')&&!mock.ready,'real mock stays locked until restored fire scopes gain page-verified questions');
+ok(V.scopePractice2026?.questions===27&&V.questions.filter(q=>q.grade==='P').length>=27,'27 practice-only questions cover the restored fire scopes without real-exam credit');
 const coverage=V.contentPacks.coverage();
 const missing=V.curriculum.concepts.filter(c=>V.contentPacks.authored[c.id]?.status!=='verified').map(c=>c.id);
 const scopeVerified=V.curriculum.concepts.filter(c=>V.contentPacks.authored[c.id]?.status==='scope-verified').map(c=>c.id);
