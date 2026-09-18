@@ -116,7 +116,7 @@ jobs:
     timeout-minutes: 35
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: 7090a90d9885f6f0177e33aaeed66b6771bca61a
+      STUDY_119_EXPECTED_APP_HEAD: 006dbb27874e3e12ef96262af6a178401a176fb5
       STUDY_119_PROXY_RUNTIME_HEAD: f7c1b971966e5cae90d4009c8257af1b79144128
     steps:
       - uses: actions/checkout@v4
@@ -136,7 +136,7 @@ jobs:
     timeout-minutes: 30
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: 7090a90d9885f6f0177e33aaeed66b6771bca61a
+      STUDY_119_EXPECTED_APP_HEAD: 006dbb27874e3e12ef96262af6a178401a176fb5
       STUDY_119_DISCOVERY_IDS: F07-C05,F07-C16,F07-C17,F07-C18,F07-C19,F07-C20,F07-C21
     steps:
       - uses: actions/checkout@v4
@@ -156,7 +156,7 @@ jobs:
     timeout-minutes: 30
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: 7090a90d9885f6f0177e33aaeed66b6771bca61a
+      STUDY_119_EXPECTED_APP_HEAD: 006dbb27874e3e12ef96262af6a178401a176fb5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -175,7 +175,7 @@ jobs:
     timeout-minutes: 25
     env:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: 7090a90d9885f6f0177e33aaeed66b6771bca61a
+      STUDY_119_EXPECTED_APP_HEAD: 006dbb27874e3e12ef96262af6a178401a176fb5
       STUDY_119_INSPECT_ID: F07-C16
       STUDY_119_INSPECT_PAGES: 284,285,286,287,288,289,290,291,292
     steps:
