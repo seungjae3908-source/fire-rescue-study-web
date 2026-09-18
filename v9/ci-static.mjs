@@ -89,7 +89,7 @@ ok(Object.entries(exactAnchorBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
 }),'seven sprinkler concepts are exact-page verified from 2026 prevention1 PDF');
-const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':49,'F03-C11':453,'F03-C12':319,'F03-C13':320,'F03-C14':319,'F03-C15':326,'F03-C16':453};
+const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':40,'F03-C11':453,'F03-C12':319,'F03-C13':320,'F03-C14':319,'F03-C15':326,'F03-C16':453};
 ok(Object.entries(exactFirePhenomenaBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
@@ -128,6 +128,9 @@ ok(V.contentPacks.authored['F05-C05']?.deepSections?.length>0&&V.contentPacks.au
 ok(V.curriculumExpansion2026?.addedConcepts===27,'official missing fire scope expansion adds 27 concepts');
 ok(V.curriculumDepth119?.addedConcepts===14,'119 depth syllabus adds 14 granular fire/sprinkler concepts');
 ok(V.FireDepth119?.concepts?.length===14,'14 new deep fire concepts have textbook packs');
+ok(V.curriculum.byId['F03-C10']?.title==='플레임오버','flameover is a separate curriculum concept instead of being conflated with rollover');
+ok((V.contentPacks.authored['F03-C06']?.compare||[]).map(x=>x?.[0]).join('|').includes('플레임오버')&&(V.contentPacks.authored['F03-C06']?.compare||[]).map(x=>x?.[0]).join('|').includes('롤오버'),'fire-phenomena comparison distinguishes flameover and rollover');
+ok((V.contentPacks.authored['F03-C10']?.visuals||[]).includes('flameover-flow')&&!!V.Visual119.render('flameover-flow'),'flameover has its own learning flow diagram');
 ok(V.FireQuestions119?.added===13,'deep fire batch adds 13 sourced practice questions with option explanations');
 ok(V.GovernanceDepth119?.concepts?.length===12,'all fire-organization and disaster-management concepts receive textbook-depth enrichment');
 ok(V.GovernanceQuestions119?.added===24,'governance batch adds twenty-four exam-style questions');
