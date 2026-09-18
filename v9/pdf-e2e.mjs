@@ -14,7 +14,7 @@ try{
     const sourceAttached=await V.SourcePDF.attach('ems',file);
     const host=document.createElement('div');host.style.width='800px';document.body.appendChild(host);
     const sourceRender=await V.SourcePDF.render('ems',1,host,['AITUTOR PDF QA SAMPLE 123']);
-    const sourceDom={canvas:host.querySelectorAll('canvas').length,highlights:host.querySelectorAll('.pdf-highlight-box').length,localOnly:V.SourcePDF.privacy.localOnly,serverUpload:V.SourcePDF.privacy.serverUpload,originalUnmodified:V.SourcePDF.privacy.originalUnmodified};
+    const sourceDom={canvas:host.querySelectorAll('canvas').length,highlights:host.querySelectorAll('.pdf-highlight-box').length,localCacheAllowed:V.SourcePDF.privacy.localCacheAllowed,userUploadRequired:V.SourcePDF.privacy.userUploadRequired,serverUpload:V.SourcePDF.privacy.serverUpload,originalUnmodified:V.SourcePDF.privacy.originalUnmodified};
     host.remove();
     const docs=await V.PrivateDocs.listDocuments('personal');
     const hits=await V.PrivateDocs.search('SAMPLE 123',{kind:'personal',limit:10});
@@ -30,7 +30,7 @@ try{
   assert(result.otherHits===0,'PDF chunks are invisible to another local owner');
   assert(result.sourceAttached?.key==='ems'&&result.sourceRender?.page===1,'official source PDF can be attached and rendered locally');
   assert(result.sourceDom?.canvas===1&&result.sourceDom?.highlights>=1&&result.sourceRender?.hits>=1,'PDF text coordinates produce at least one visible highlight box');
-  assert(result.sourceDom?.localOnly===true&&result.sourceDom?.serverUpload===false&&result.sourceDom?.originalUnmodified===true,'official source PDF remains local-only and unmodified');
+  assert(result.sourceDom?.localCacheAllowed===true&&result.sourceDom?.userUploadRequired===false&&result.sourceDom?.serverUpload===false&&result.sourceDom?.originalUnmodified===true,'official source PDF needs no user upload and remains unmodified/no-server-upload');
   assert(errors.length===0,`PDF runtime errors = 0 (${errors.join(' | ')})`);
   console.log('V9_PDF_QA_SUCCESS');
   await context.close();
