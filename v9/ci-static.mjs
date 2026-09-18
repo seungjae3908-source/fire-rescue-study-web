@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js']){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
@@ -64,6 +64,9 @@ ok(V.FireQuestions119?.added===13,'deep fire batch adds 13 sourced practice ques
 ok(V.SuppressionDepth119?.concepts?.length===8,'all eight suppression theory concepts receive textbook-depth enrichment');
 ok(V.SuppressionQuestions119?.added===16,'suppression batch adds sixteen exam-style questions with option explanations');
 ok(V.SuppressionDepth119.concepts.every(id=>V.contentPacks.authored[id]?.visuals?.length>0),'all suppression concepts have learning diagrams');
+ok(V.FacilitiesDepth119?.concepts?.length===14,'fourteen non-sprinkler fire-protection concepts receive textbook-depth enrichment');
+ok(V.FacilitiesQuestions119?.added>=17,'fire-protection depth batch adds exam-style questions with option explanations');
+ok(V.FacilitiesDepth119.concepts.every(id=>V.contentPacks.authored[id]?.visuals?.length>0),'fire-protection depth concepts have learning diagrams');
 ok(V.HazmatDepth119?.concepts?.length===6,'all six hazardous-material classes receive official common-rule depth');
 ok(V.HazmatQuestions119?.added===7,'hazardous-material depth batch adds seven sourced questions');
 ok(V.HazmatDepth119.concepts.every(id=>V.contentPacks.authored[id]?.calculations?.length>0),'all hazardous-material class lessons expose designated-quantity calculation contract');
