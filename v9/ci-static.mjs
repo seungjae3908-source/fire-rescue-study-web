@@ -71,6 +71,7 @@ ok(mock.ready===(mock.fire>=25&&mock.ems>=40&&mock.scopeComplete),'real mock gat
 ok(Array.isArray(mock.missingFireScopes)&&Array.isArray(mock.missingEmsScopes),'real mock readiness exposes both fire and EMS uncovered verified scopes');
 ok(mock.scopeComplete===(mock.missingFireScopes.length===0&&mock.missingEmsScopes.length===0),'real mock scopeComplete requires both fire and EMS coverage');
 ok(mock.ready||mock.missingFireScopes.length>0||mock.missingEmsScopes.length>0||mock.fireNeed>0||mock.emsNeed>0,'real mock never reports false readiness when verified evidence is incomplete');
+ok(mock.ready===true&&mock.missingFireScopes.length===0&&mock.missingEmsScopes.length===0,'page-verified EMS gap repair closes all verified-scope blockers for the 65-question real mock');
 ok(V.scopePractice2026?.questions===27&&V.questions.filter(q=>q.grade==='P').length>=27,'27 practice-only restored-scope questions remain P-grade and separate from real-exam credit');
 ok(V.QuestionDifficulty?.levels?.high&&V.QuestionDifficulty?.profiles?.hard,'question difficulty is independent from evidence grade');
 ok(V.Hazmat2026?.grade2?.items?.length===7,'official grade-2 hazardous-material item table is loaded');
