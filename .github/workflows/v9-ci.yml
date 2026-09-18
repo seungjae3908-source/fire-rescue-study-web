@@ -50,6 +50,8 @@ jobs:
         run: node v9/content-depth.mjs
       - name: 119 content contract blocker report
         run: node v9/content-contract-audit.mjs
+      - name: 119 exam-style question contract coverage report
+        run: node v9/question-contract-audit.mjs
 
   browser:
     runs-on: ubuntu-latest
