@@ -244,10 +244,13 @@ module.exports=async function handler(req,res){
   }
 
   res.statusCode=upstream.status;
-  for(const h of ['content-type','content-length','content-range','accept-ranges','etag','last-modified']){
+  for(const h of ['content-length','content-range','accept-ranges','etag','last-modified']){
     const v=upstream.headers.get(h);if(v)res.setHeader(h,v)
   }
-  if(!res.getHeader('Content-Type'))res.setHeader('Content-Type','application/pdf');
+  // NFA often serves verified PDF bytes as application/octet-stream.
+  // This endpoint is a fixed ten-document PDF allowlist and fetchFirstWorkingCandidate
+  // validates the PDF response before it reaches this handler, so normalize for PDF.js.
+  res.setHeader('Content-Type','application/pdf');
   res.setHeader('Content-Disposition',"inline; filename*=UTF-8''"+safeName(row.name));
   res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
   res.setHeader('X-Content-Type-Options','nosniff');
