@@ -95,7 +95,8 @@ ok(v9index.indexOf('./depth-enrichment.js')>v9index.indexOf('./verified-final.js
 ok(v9index.indexOf('./depth-enrichment-2.js')>v9index.indexOf('./depth-enrichment.js'),'depth enrichment batch 2 loads after batch 1');
 ok(v9index.indexOf('./sync-merge.js')<v9index.indexOf('./auth.js'),'conflict-safe merge loads before member auth');
 ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sync API loads before member auth');
-ok(v9index.indexOf('./source-pdf.js')>v9index.indexOf('./pdf.js')&&v9index.indexOf('./source-pdf.js')<v9index.indexOf('./app.js'),'official PDF highlight engine loads before app UI');
+ok(v9index.indexOf('./source-catalog-119.js')>v9index.indexOf('./pdf.js')&&v9index.indexOf('./source-catalog-119.js')<v9index.indexOf('./source-pdf.js'),'official source catalog loads before PDF engine');
+ok(v9index.indexOf('./source-pdf.js')>v9index.indexOf('./source-catalog-119.js')&&v9index.indexOf('./source-pdf.js')<v9index.indexOf('./app.js'),'official PDF highlight engine loads before app UI');
 
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
 const studyTables=['study_profiles','study_user_progress','study_user_answers','study_wrong_answers','study_review_schedule','study_personal_notes','study_private_documents','study_document_chunks','study_sessions','study_exam_history','study_tutor_preferences'];
@@ -182,6 +183,9 @@ ok(config.includes("supabaseUrl:'https://petlfbztqguuzkasfpug.supabase.co'"),'ch
 ok(/supabasePublishableKey:'sb_publishable_[A-Za-z0-9_-]+'/.test(config),'checked-in v9 config uses a browser-safe publishable key');
 ok(!/sb_secret_[A-Za-z0-9_-]+/.test(config)&&!/service_role/i.test(config),'checked-in v9 config contains no privileged Supabase key');
 
+const sourceCatalog=fs.readFileSync(new URL('./source-catalog-119.js',import.meta.url),'utf8');
+ok(sourceCatalog.includes('noUserUploadRequired:true'),'official source catalog forbids user-upload requirement');
+ok(sourceCatalog.includes('officialPageFallback:true'),'official source catalog has official-page fallback');
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
 ok(sourcePdf.includes('pdfjs-text-coordinate-overlay'),'official PDF evidence uses a text-coordinate highlight overlay');
 ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs stay local and unmodified');
