@@ -1,59 +1,114 @@
 import { chromium } from 'playwright';
 
 const defs=[
-  {key:'ems',title:'2026년 공통교재 [소방전술3]'},
-  {key:'fire1',title:'2026년 공통교재 [소방전술1]'},
-  {key:'prevention',title:'2026년 공통교재 [예방실무1/예방실무2]'},
-  {key:'laws',title:'2026년 공통교재 [소방법령1~5]'}
+  {
+    key:'ems',
+    title:'2026년 공통교재 [소방전술3]',
+    url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view&pageIdx=&searchCondition=&searchKeyword=',
+    expected:['13. 소방전술3(구급)-저용량.pdf']
+  },
+  {
+    key:'fire1',
+    title:'2026년 공통교재 [소방전술1]',
+    url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106809&mode=view&pageIdx=&searchCondition=&searchKeyword=',
+    expected:['10. 소방전술1(화재1).pdf','11. 소방전술1(화재2).pdf']
+  },
+  {
+    key:'prevention',
+    title:'2026년 공통교재 [예방실무1/예방실무2]',
+    url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106805&mode=view&pageIdx=&searchCondition=&searchKeyword=',
+    expected:['1.예방실무1.pdf','2.예방실무2.pdf']
+  },
+  {
+    key:'laws',
+    title:'2026년 공통교재 [소방법령1~5]',
+    url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106806&mode=view&pageIdx=&searchCondition=&searchKeyword=',
+    expected:['3._소방법령1.pdf','4. 소방법령2.pdf','5. 소방법령3.pdf','6. 소방법령4.pdf','7. 소방법령5.pdf']
+  }
 ];
-const listUrl='https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/';
+
 const clean=x=>String(x||'').replace(/\s+/g,' ').trim();
-const stripSession=x=>x.replace(/;jsessionid=[^?'")\s]+/gi,'');
+const norm=x=>clean(x).toLowerCase().replace(/&nbsp;/g,' ').replace(/[\s_-]+/g,'').replace(/[^0-9a-z가-힣().]/g,'');
+const stripSession=x=>String(x||'').replace(/;jsessionid=[^?'")\s]+/gi,'');
+const pathRe=/(\/board\/file\/[^'")\s]+(?:;jsessionid=[^'")\s]+)?)/gi;
+
+function extractPaths(rows){
+  const out=[];
+  for(const row of rows){
+    const raw=[row.href,row.onclick,row.action,row.outer].filter(Boolean).join('\n');
+    for(const m of raw.matchAll(pathRe)){
+      const path=clean(m[1]);
+      if(!path.includes('/board/file/'))continue;
+      out.push({text:row.text||'',path,url:new URL(path,'https://www.nfa.go.kr').href,stablePath:stripSession(path)});
+    }
+  }
+  return [...new Map(out.map(x=>[x.path,x])).values()];
+}
+
 const browser=await chromium.launch({headless:true});
+let failed=false;
 try{
   const ctx=await browser.newContext({
     locale:'ko-KR',
-    userAgent:'Mozilla/5.0 119-study-source-catalog/2.0',
-    extraHTTPHeaders:{'accept-language':'ko-KR,ko;q=0.9'}
+    userAgent:'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36 119-study-source-probe/3.0',
+    extraHTTPHeaders:{'accept-language':'ko-KR,ko;q=0.9,en;q=0.7'}
   });
   const p=await ctx.newPage();
+
   for(const def of defs){
-    let data=[],detailUrl='',ok=false;
-    for(let attempt=0;attempt<8;attempt++){
-      await p.goto(listUrl,{waitUntil:'domcontentloaded',timeout:45000}).catch(()=>{});
-      const link=p.getByRole('link',{name:def.title,exact:true}).first();
-      if(!(await link.count())){await p.waitForTimeout(700);continue}
-      await Promise.all([
-        p.waitForLoadState('domcontentloaded',{timeout:30000}).catch(()=>{}),
-        link.click({timeout:15000}).catch(()=>{})
-      ]);
-      await p.waitForTimeout(500);
-      detailUrl=p.url();
-      const body=await p.locator('body').innerText().catch(()=> '');
-      if(body.includes(def.title)&&/첨부파일/.test(body)&&/\.pdf/i.test(body)){
-        data=await p.evaluate(()=>[...document.querySelectorAll('li.file')].map(li=>({
-          name:li.querySelector('.fileOnm')?.textContent?.replace(/\s+/g,' ').trim()||'',
-          raw:[...li.querySelectorAll('a,button')].flatMap(el=>[
-            el.getAttribute('href')||'',
-            el.getAttribute('onclick')||''
-          ]).filter(Boolean)
-        })).filter(x=>/\.pdf$/i.test(x.name)));
-        if(data.length){ok=true;break}
+    const res=await p.goto(def.url,{waitUntil:'domcontentloaded',timeout:45000});
+    await p.waitForTimeout(1200);
+
+    const snap=await p.evaluate(()=>{
+      const all=[...document.querySelectorAll('a,button,[onclick],[href],li,tr,div,p,span')];
+      const rows=[];
+      for(const el of all){
+        const text=(el.textContent||'').replace(/\s+/g,' ').trim();
+        const href=el.getAttribute?.('href')||'';
+        const onclick=el.getAttribute?.('onclick')||'';
+        const action=el.getAttribute?.('action')||'';
+        const interesting=/\.pdf/i.test(text)||/\.pdf|\/board\/file\/|Jnit_boardDownload/i.test(href+' '+onclick+' '+action);
+        if(!interesting)continue;
+        rows.push({
+          tag:el.tagName,
+          text:text.slice(0,500),
+          href,
+          onclick,
+          action,
+          outer:(el.outerHTML||'').slice(0,2500)
+        });
       }
-      await p.waitForTimeout(600);
-    }
-    const attachments=[];
-    for(const row of data){
-      const text=row.raw.join('\n');
-      const paths=[...text.matchAll(/['"]?(\/board\/file\/[^'")\s]+(?:pdfFileDownload)?(?:;jsessionid=[^'")\s]+)?)['"]?/g)]
-        .map(m=>stripSession(clean(m[1])))
-        .filter(x=>x.includes('/board/file/'));
-      for(const path of [...new Set(paths)]){
-        if(!/pdfFileDownload|FILE_/i.test(path))continue;
-        attachments.push({name:row.name,path,url:new URL(path,'https://www.nfa.go.kr').href});
-      }
-    }
-    console.log('BROWSER_SOURCE_CATALOG',JSON.stringify({key:def.key,title:def.title,detailUrl,ok,attachments},null,2));
+      return {
+        title:document.title,
+        bodyText:(document.body?.innerText||'').slice(0,20000),
+        rows:rows.slice(0,200)
+      };
+    });
+
+    const paths=extractPaths(snap.rows);
+    const checks=def.expected.map(name=>{
+      const n=norm(name);
+      const textHit=snap.rows.some(r=>norm(r.text).includes(n)||norm(r.outer).includes(n));
+      const candidate=paths.find(x=>norm(x.text).includes(n))||null;
+      return {name,textHit,candidate};
+    });
+    const ok=checks.every(x=>x.textHit)&&paths.length>0;
+    if(!ok)failed=true;
+
+    console.log('BROWSER_SOURCE_CATALOG',JSON.stringify({
+      key:def.key,
+      http:res?.status()||0,
+      finalUrl:p.url(),
+      title:snap.title,
+      expected:def.expected,
+      ok,
+      checks,
+      paths,
+      candidateRows:snap.rows.slice(0,40)
+    },null,2));
   }
   await ctx.close();
-}finally{await browser.close()}
+}finally{
+  await browser.close();
+}
+if(failed)throw new Error('OFFICIAL_SOURCE_BROWSER_PROBE_FAILED');
