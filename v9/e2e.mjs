@@ -33,7 +33,7 @@ try{
   assert((await p.locator('.concept-head h2').textContent()).includes('보일오버'),'granular fire syllabus exposes boilover concept');
   await p.locator('.tabbar [data-study-tab="detail"]').click();
   assert(await p.locator('.concept-visual').count()>=1,'boilover detail renders learning diagram');
-  const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.total===176&&coverage.verified===150&&coverage.pending===26,'browser runtime preserves 150 page-verified + 26 page-anchor-pending truth');
+  const coverage=await p.evaluate(()=>window.AITUTOR_V9.contentPacks.coverage());assert(coverage.total===176&&coverage.verified===158&&coverage.pending===18,'browser runtime preserves 158 page-verified + 18 page-anchor-pending truth');
   const sprinklerAnchors=await p.evaluate(()=>{
     const V=window.AITUTOR_V9,spec={'F07-C05':284,'F07-C16':288,'F07-C17':288,'F07-C18':284,'F07-C19':284,'F07-C20':302,'F07-C21':287};
     return Object.entries(spec).map(([id,page])=>({id,page,from:Number(V.curriculum.byId[id]?.sourceRanges?.[0]?.from)||0,status:V.contentPacks.authored[id]?.status,precision:V.contentPacks.authored[id]?.sourcePrecision}));
@@ -44,6 +44,15 @@ try{
     return Object.entries(spec).map(([id,page])=>({id,page,from:Number(V.curriculum.byId[id]?.sourceRanges?.[0]?.from)||0,status:V.contentPacks.authored[id]?.status,precision:V.contentPacks.authored[id]?.sourcePrecision}));
   });
   assert(firePhenomenaAnchors.every(x=>x.from===x.page&&x.status==='verified'&&x.precision==='exact-pdf-page-anchor'),'browser runtime exposes eight verified fire-phenomena page anchors');
+  const hazmatAnchors=await p.evaluate(()=>{
+    const V=window.AITUTOR_V9,spec={'F05-C02':385,'F05-C03':407,'F05-C04':428,'F05-C05':449,'F05-C06':496,'F05-C07':523};
+    const simple=Object.entries(spec).map(([id,page])=>({id,page,doc:V.curriculum.byId[id]?.sourceRanges?.[0]?.doc,from:Number(V.curriculum.byId[id]?.sourceRanges?.[0]?.from)||0,status:V.contentPacks.authored[id]?.status,precision:V.contentPacks.authored[id]?.sourcePrecision}));
+    const c01=V.curriculum.byId['F05-C01']?.sourceRanges||[],c08=V.curriculum.byId['F05-C08']?.sourceRanges||[];
+    return{simple,c01,c08,s01:V.contentPacks.authored['F05-C01']?.status,p01:V.contentPacks.authored['F05-C01']?.sourcePrecision,s08:V.contentPacks.authored['F05-C08']?.status,p08:V.contentPacks.authored['F05-C08']?.sourcePrecision};
+  });
+  assert(hazmatAnchors.simple.every(x=>x.doc==='prevention2'&&x.from===x.page&&x.status==='verified'&&x.precision==='exact-pdf-page-anchor'),'browser runtime exposes six exact hazardous-material class page anchors');
+  assert(hazmatAnchors.c01.length===2&&Number(hazmatAnchors.c01[0]?.from)===345&&Number(hazmatAnchors.c01[1]?.from)===385&&hazmatAnchors.s01==='verified'&&hazmatAnchors.p01==='exact-pdf-page-anchor','browser runtime preserves hazardous definition/classification dual-page evidence');
+  assert(hazmatAnchors.c08.length===2&&hazmatAnchors.c08[0]?.doc==='fire1'&&Number(hazmatAnchors.c08[0]?.from)===319&&hazmatAnchors.c08[1]?.doc==='prevention2'&&Number(hazmatAnchors.c08[1]?.from)===536&&hazmatAnchors.s08==='verified'&&hazmatAnchors.p08==='exact-pdf-page-anchor','browser runtime preserves hazardous special-phenomenon + response dual-source evidence');
 
   const readiness=await p.evaluate(()=>window.AITUTOR_V9.examReadiness());
   await p.locator('[data-go="exam"]').first().click();await p.waitForSelector('.page');const examText=await p.locator('.page').textContent();assert(await p.locator('[data-exam-start="practice"]').count()===1,'practice mode remains available');

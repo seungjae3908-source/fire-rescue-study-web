@@ -58,10 +58,18 @@ ok(Object.entries(exactFirePhenomenaBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
 }),'eight fire-phenomena concepts are exact-page verified from 2026 fire1 PDF');
-ok(scopeVerified.length===26&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)||/^F03-C(09|1[0-6])$/.test(id)),`26 page-anchor-pending fire concepts remain fail-closed; actual=${scopeVerified.length}`);
-ok(missing.length===26&&missing.every(id=>scopeVerified.includes(id)),`only the 26 page-anchor-pending concepts are not fully verified; missing=${missing.join(',')||'none'}`);
+const exactHazmatBatch={'F05-C02':385,'F05-C03':407,'F05-C04':428,'F05-C05':449,'F05-C06':496,'F05-C07':523};
+ok(Object.entries(exactHazmatBatch).every(([id,page])=>{
+  const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
+  return r?.doc==='prevention2'&&Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
+}),'hazardous-material classes 1-6 are exact-page verified from 2026 prevention2 PDF');
+const haz01=V.curriculum.byId['F05-C01']?.sourceRanges||[],haz08=V.curriculum.byId['F05-C08']?.sourceRanges||[];
+ok(haz01.length===2&&haz01[0]?.doc==='prevention2'&&Number(haz01[0]?.from)===345&&Number(haz01[1]?.from)===385&&V.contentPacks.authored['F05-C01']?.status==='verified','hazardous-material definition/classification keeps both exact official pages');
+ok(haz08.length===2&&haz08[0]?.doc==='fire1'&&Number(haz08[0]?.from)===319&&haz08[1]?.doc==='prevention2'&&Number(haz08[1]?.from)===536&&V.contentPacks.authored['F05-C08']?.status==='verified','hazardous-material fire principles keep exact special-phenomenon and response pages');
+ok(scopeVerified.length===18&&scopeVerified.every(id=>/^F0[5-7]-/.test(id)||/^F03-C(09|1[0-6])$/.test(id)),`18 page-anchor-pending fire concepts remain fail-closed; actual=${scopeVerified.length}`);
+ok(missing.length===18&&missing.every(id=>scopeVerified.includes(id)),`only the 18 page-anchor-pending concepts are not fully verified; missing=${missing.join(',')||'none'}`);
 ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===176,'exactly 176 valid authored concept packs');
-ok(coverage.verified===150&&coverage.pending===26,'release truth advances to 150 page-verified + 26 page-anchor-pending');
+ok(coverage.verified===158&&coverage.pending===18,'release truth advances to 158 page-verified + 18 page-anchor-pending');
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'||p.status==='scope-verified'),'every authored content pack has an explicit verified/scope-verified truth state');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored study pack');

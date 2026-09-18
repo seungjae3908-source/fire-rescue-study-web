@@ -61,6 +61,20 @@ const R=V.curriculum.ranges;
 const note=(id,doc,text)=>{R[id]=[{doc,label:V.curriculum.docs[doc]?.label||doc,note:text}]};
 const anchor=(id,doc,from,to=from)=>{R[id]=[{doc,from,to,label:V.curriculum.docs[doc]?.label||doc}]};
 for(let i=1;i<=8;i++)note(`F05-C${String(i).padStart(2,'0')}`,'prevention2','위험물 류별 특성·소화원칙 / 공식 범위 대조');
+R['F05-C01']=[
+  {doc:'prevention2',from:345,to:345,label:V.curriculum.docs.prevention2.label},
+  {doc:'prevention2',from:385,to:385,label:V.curriculum.docs.prevention2.label}
+];
+anchor('F05-C02','prevention2',385);
+anchor('F05-C03','prevention2',407);
+anchor('F05-C04','prevention2',428);
+anchor('F05-C05','prevention2',449);
+anchor('F05-C06','prevention2',496);
+anchor('F05-C07','prevention2',523);
+R['F05-C08']=[
+  {doc:'fire1',from:319,to:319,label:V.curriculum.docs.fire1.label},
+  {doc:'prevention2',from:536,to:536,label:V.curriculum.docs.prevention2.label}
+];
 for(let i=1;i<=4;i++)note(`F06-C${String(i).padStart(2,'0')}`,'law1','화재조사 목적·절차·원인·피해조사');
 for(let i=1;i<=15;i++)note(`F07-C${String(i).padStart(2,'0')}`,'prevention1','소방시설 종류·작동원리·사용법 중심(구체 설치기준 제외)');
 anchor('F07-C05','prevention1',284);
