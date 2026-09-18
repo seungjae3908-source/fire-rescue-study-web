@@ -35,4 +35,20 @@ try{
     console.log('BROWSER_SOURCE_CATALOG',JSON.stringify({key:def.key,title:def.title,detailUrl,ok,attachments:data},null,2));
   }
   await p.close();
+  const local=await browser.newPage();
+  await local.goto('http://127.0.0.1:4173/v9/index.html',{waitUntil:'domcontentloaded',timeout:30000}).catch(()=>{});
+  const cors=await local.evaluate(async()=>{
+    const V=window.AITUTOR_V9||{},keys=['fire1','fire2','ems'],out={};
+    for(const key of keys){
+      const url=V.SourceCatalog119?.get?.(key)?.directPdf||'';
+      try{
+        const res=await fetch(url,{redirect:'follow',credentials:'omit'});
+        out[key]={ok:res.ok,status:res.status,type:res.headers.get('content-type')||'',cors:true};
+        try{await res.body?.cancel?.()}catch{}
+      }catch(e){out[key]={ok:false,error:String(e?.message||e),cors:false}}
+    }
+    return out;
+  }).catch(e=>({fatal:String(e?.message||e)}));
+  console.log('LOCAL_APP_CORS_CHECK',JSON.stringify(cors,null,2));
+  await local.close();
 }finally{await browser.close()}
