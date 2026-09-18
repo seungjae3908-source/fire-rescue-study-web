@@ -169,6 +169,7 @@ ok((V.contentPacks.authored['E01-C03']?.officialLinks||[]).length>=4,'119-law le
 ok(fullCoverage.rows.find(x=>x.id==='E-LAW-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-TRN-02')?.status==='partial','119-law and air/international EMS gaps are truthfully partial after source-backed enrichment');
 ok(fullCoverage.rows.find(x=>x.id==='F-HAZ-04')?.status==='covered','special-combustible gap is closed by current-law definition, quantity table and storage rules');
 ok(fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='F-BLD-03')?.status==='partial','building compartment and fire-material topics remain honestly partial after current-law enrichment');
+ok(fullCoverage.rows.find(x=>x.id==='E-TRM-03')?.status==='partial','abdominal/pelvic trauma and severe-transport coverage is explicitly partial after source-backed enrichment');
 ok(V.curriculum.byId['F07-C01']?.title==='소방시설 5분류·건축방재','building-fire fundamentals are visible in the facilities curriculum title');
 ok((V.contentPacks.authored['F07-C01']?.officialLinks||[]).length>=3,'building-fire lesson exposes official Building Act source links');
 ok((V.contentPacks.authored['F05-C01']?.specialCombustibles||[]).length===11,'special-combustible lesson exposes the eleven current law quantity rows');
