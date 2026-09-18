@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_PREVIEW_URL||'https://study-119-preview.vercel.app/';
-const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'8840391550625e0ca8d05bc29780f9d7cf94c42d';
+const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'9aeaadd12b01b36c2addda29860133d4296b9877';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
 function observe(page){const errors=[];page.on('pageerror',e=>errors.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('console:'+m.text())});page.on('requestfailed',r=>errors.push('requestfailed:'+r.url()+' '+(r.failure()?.errorText||'')));return errors}
