@@ -352,6 +352,24 @@ try{
     await ctx.close();
   }
 
+  {
+    const offlineCtx=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+    const offlinePage=await offlineCtx.newPage(),offlineErrors=collectErrors(offlinePage);
+    await boot(offlinePage);
+    await offlinePage.waitForFunction(async()=>{if(!('serviceWorker' in navigator))return false;await navigator.serviceWorker.ready;return true},{},{timeout:60000});
+    await offlinePage.reload({waitUntil:'domcontentloaded'});
+    await offlinePage.waitForSelector('.app');
+    await offlinePage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:30000});
+    await offlineCtx.setOffline(true);
+    await offlinePage.reload({waitUntil:'domcontentloaded',timeout:30000});
+    await offlinePage.waitForSelector('.app');
+    await offlinePage.waitForFunction(()=>!!window.AITUTOR_V9?.App);
+    assert((await offlinePage.locator('body').innerText()).includes('홈'),'v9 PWA shell reloads while offline');
+    assert(offlineErrors.filter(x=>!/ERR_INTERNET_DISCONNECTED|Failed to fetch|favicon/i.test(x)).length===0,'offline shell has no unexpected runtime errors');
+    await offlineCtx.setOffline(false);
+    await offlineCtx.close();
+  }
+
   console.log('V9_STUDENT_UX_E2E_SUCCESS');
 }finally{
   await browser.close();
