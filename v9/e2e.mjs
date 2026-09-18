@@ -250,6 +250,17 @@ try{
   assert(await m.locator('.book-section .source-law-links a').count()>=3,'special-combustible source tab links the current law article and annexes');
   await noX(m,'mobile special-combustible law');
 
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C01'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C01');
+  assert((await m.locator('.concept-head h2').innerText()).includes('건축방재'),'facilities curriculum exposes building-fire fundamentals');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  const buildingText=await m.locator('.book-section').innerText();
+  assert(buildingText.includes('방화구획')&&buildingText.includes('방화벽')&&buildingText.includes('내화구조')&&buildingText.includes('준불연재료')&&buildingText.includes('난연재료'),'building-fire lesson separates compartments, walls, fire resistance and material classes');
+  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
+  const buildingLinks=m.locator('.book-section .source-law-links a');
+  assert(await buildingLinks.count()>=3,'building-fire source tab exposes official Building Act links');
+  await noX(m,'mobile building-fire law');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E01-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E01-C03');
   assert((await m.locator('.concept-head h2').innerText()).includes('119구급대 법령'),'EMS curriculum exposes the current 119-law lesson');
