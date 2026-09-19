@@ -43,8 +43,8 @@ try{
   const result=await page.evaluate(({requiredDetailSignals})=>{
     const V=window.AITUTOR_V9,norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
     const conceptRows=V.curriculum.concepts.map(c=>{
-      const p=V.contentPacks.get(c.id),qs=V.QuestionQuality119.forConcept(c.id)||[],sourceRanges=c.sourceRanges||[];
-      const deep=p.deepSections||[],text=[p.summary,...(p.detail||[]),...deep.flatMap(x=>[x.title,x.body,...(x.bullets||[])]),...(p.must||[]),...(p.traps||[])].filter(Boolean).join(' ');
+      const p=V.contentPacks.get(c.id),qs=V.QuestionQuality119.forConcept(c.id)||[],sourceRanges=c.sourceRanges||[],familyMembers=new Set(V.Quality2ComparisonFamilies119?.memberIds||[]);
+      const deep=p.deepSections||[],text=[p.summary,...(p.features||[]),...(p.detail||[]),...deep.flatMap(x=>[x.title,x.body,...(x.bullets||[])]),...(p.must||[]),...(p.traps||[])].filter(Boolean).join(' ');
       const important=/플래시오버|백드래프트|위험물|스프링클러|포소화|심정지|소생술|쇼크|환자 평가|기도|호흡|뇌졸중|화상|출혈/.test(c.title);
       const questionTarget=important?20:12;
       const gates={
@@ -52,9 +52,12 @@ try{
         source:sourceRanges.length>0||/쪽|법|공식|가이드라인/.test(String(p.source||'')),
         summary:String(p.summary||'').length>=35,
         depth:text.length>=650,
+        features:(p.features||[]).length>=3,
         must:(p.must||[]).length>=3,
         trap:(p.traps||[]).length>=1,
         deep:deep.length>=3,
+        semanticCompare:!familyMembers.has(c.id)||(p.compare||[]).length>=2&&!!p.compareFamily,
+        noArbitraryCompare:p.compareDerived!=='same-scope-neighbor-summary',
         questions:qs.length>=questionTarget,
         fourChoice:qs.every(q=>q.choices?.length===4&&q.choiceExplanations?.length===4)
       };
