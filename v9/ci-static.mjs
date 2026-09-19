@@ -44,7 +44,7 @@ ok(verifiedEmsBatch1.every(q=>/소방전술3\(구급\).*\d+(?:\s*[~\-–]\s*\d+)
 const verifiedFireBatch1=(V.questions||[]).filter(q=>/^119-verfire-/.test(q.id||''));
 ok(V.VerifiedFireBatch119?.added===18&&verifiedFireBatch1.length===18,'verified fire batch1 adds eighteen exact-page questions');
 ok(verifiedFireBatch1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified fire batch1 stays B-grade, page-verified and never claims past-exam status');
-ok(verifiedFireBatch1.every(q=>/(소방전술1|예방실무1).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified fire batch1 carries exact textbook page evidence');
+ok(verifiedFireBatch1.every(q=>/(소방전술1|예방실무1|예방실무2).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified fire batch1 carries exact textbook page evidence');
 ok(V.CalculationQuestions119?.added===21,'calculation practice bank adds twenty-one calculation drills with explicit evidence tiers');
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
 ok(calculationPractice.length===21&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
