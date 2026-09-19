@@ -266,6 +266,12 @@ try{
 
   await go(m,'stats');await cleanPage(m,'mobile stats');
   assert(!(await m.locator('.page').innerText()).includes('검증문제 커버'),'stats removes engineering validation metrics');
+  await m.evaluate(()=>{const V=window.AITUTOR_V9,q=V.questions[0];V.Store.state.wrongs=[{id:'e2e-wrong-delete',questionId:q.id,conceptId:q.conceptId,scopeId:q.scopeId,confidence:'none',due:Date.now(),resolved:false,wrongCount:1,createdAt:Date.now()}];V.Store.save();V.App.go('wrong')});
+  await m.waitForSelector('[data-wrong-delete="e2e-wrong-delete"]');
+  m.once('dialog',d=>d.accept());
+  await m.locator('[data-wrong-delete="e2e-wrong-delete"]').click();
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.wrongs.every(x=>x.id!=='e2e-wrong-delete'));
+  assert(await m.locator('[data-wrong-delete="e2e-wrong-delete"]').count()===0,'wrong-note delete removes the selected item while preserving answer history');
 
   await go(m,'study');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C06'));
