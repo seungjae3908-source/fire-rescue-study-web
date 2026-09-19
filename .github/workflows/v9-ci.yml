@@ -103,6 +103,8 @@ jobs:
         run: node v9/sync-e2e.mjs
       - name: Invalid/expired member session fail-closed QA
         run: node v9/auth-session-e2e.mjs
+      - name: Private suggestion board + admin reply QA
+        run: node v9/suggestions-e2e.mjs
 
 
   global_typography_audit:
