@@ -40,9 +40,10 @@ function peerRows(c,p){
   return rows.filter(r=>r[0]&&r[1])
 }
 function deriveComparison(c,p){
+  // Quality 2.0 does not invent comparison partners merely because concepts are adjacent.
+  // Curated semantic families are applied by quality2-comparison-families-119.js.
   if((p.compare||[]).length)return;
-  const rows=peerRows(c,p);
-  if(rows.length>=2){p.compare=rows;p.compareDerived='same-scope-neighbor-summary'}
+  p.compare=[];
 }
 function ensureDeep(c,p){
   p.deepSections=Array.isArray(p.deepSections)?p.deepSections:[];
@@ -80,6 +81,6 @@ V.Quality2GlobalContent119={
   concepts:C.concepts.length,
   featureReady:C.concepts.filter(c=>(P[c.id]?.features||[]).length>=3).length,
   comparisonReady:C.concepts.filter(c=>(P[c.id]?.compare||[]).length>=2).length,
-  policy:'features/must/deep content are derived only from the same verified pack; fallback comparisons use neighboring concepts in the same official scope'
+  policy:'features/must/deep content are derived only from the same verified pack; comparisons are supplied only by authored content or curated semantic comparison families'
 };
 })();
