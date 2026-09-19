@@ -63,11 +63,25 @@ async function auditVisible(page,meta){
     const action=document.querySelector('.page-study .actionbar'),nav=document.querySelector('.mobile-nav');
     let chromeOverlap=null;
     if(action&&nav&&visible(action)&&visible(nav)){const a=action.getBoundingClientRect(),n=nav.getBoundingClientRect();if(a.bottom>n.top+1)chromeOverlap={type:'action-nav-overlap',actionBottom:a.bottom,navTop:n.top}}
-    return{problems,small,overlaps,chromeOverlap};
+    const nestedScroll=[];
+    if(innerWidth<=720){
+      const primary=document.querySelector('.page-study .study-body-mobile');
+      if(primary&&visible(primary)){
+        for(const el of primary.querySelectorAll('*')){
+          if(!visible(el))continue;
+          const cs=getComputedStyle(el);
+          if(['auto','scroll'].includes(cs.overflowY)&&el.scrollHeight>el.clientHeight+2){
+            nestedScroll.push({type:'nested-y-scroll',tag:el.tagName,cls:String(el.className||'').slice(0,100),sh:el.scrollHeight,ch:el.clientHeight});
+          }
+        }
+      }
+    }
+    return{problems,small,overlaps,chromeOverlap,nestedScroll};
   });
   for(const p of result.problems)pushIssue({...meta,...p});
   for(const p of result.overlaps)pushIssue({...meta,...p});
   if(result.chromeOverlap)pushIssue({...meta,...result.chromeOverlap});
+  for(const p of result.nestedScroll||[])pushIssue({...meta,...p});
   if(result.small.length)warnings.push({...meta,type:'small-font',count:result.small.length,samples:result.small.slice(0,4)});
 }
 async function auditExam(page,meta){
@@ -120,5 +134,5 @@ try{
     if(issues.length)console.error('GLOBAL_TYPOGRAPHY_AUDIT_ISSUES',JSON.stringify(issues,null,2));
     throw new Error('GLOBAL_TYPOGRAPHY_AUDIT_FAILED '+JSON.stringify({issues:issues.length,smallTextGroups:warnings.length}));
   }
-  assert(true,'all concept tabs and active exam pass global typography/layout audit with no clipped or sub-11px student controls');
+  assert(true,'all concept tabs and active exam pass global typography/layout audit with no clipping, nested mobile study scroll or sub-11px student controls');
 }finally{await browser.close()}
