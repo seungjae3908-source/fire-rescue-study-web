@@ -9,7 +9,7 @@ on:
         default: false
         type: boolean
   push:
-    branches: [feat/v9-learning-workspace]
+    branches: [main, feat/v9-learning-workspace]
     paths:
       - 'v9/**'
       - 'supabase/v9-schema.sql'
