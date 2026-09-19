@@ -44,6 +44,10 @@ on:
       - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
 
+concurrency:
+  group: v9-development-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
