@@ -775,3 +775,11 @@ small{font-size:max(11px,.78em)}
   text-decoration-color:rgba(111,182,255,.58);
   text-decoration-skip-ink:auto;
 }
+
+
+/* Quality 2.0 — close remaining 768px readability gaps found by strict typography audit */
+@media(min-width:721px) and (max-width:900px){
+  .hazmat-class-card small{font-size:11px!important;line-height:1.4!important}
+  .hazmat-table th{font-size:11px!important;line-height:1.35!important}
+  .ecg-rhythm-card p,.therapy-card p{font-size:11px!important;line-height:1.5!important}
+}
