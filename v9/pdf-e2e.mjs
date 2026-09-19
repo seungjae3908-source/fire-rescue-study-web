@@ -20,7 +20,7 @@ try{
     const sourceAttached=await V.SourcePDF.attach('ems',file);
     const host=document.createElement('div');host.style.width='800px';document.body.appendChild(host);
     const sourceRender=await V.SourcePDF.render('ems',1,host,['AITUTOR PDF QA SAMPLE 123']);
-    const canvas=host.querySelector('canvas'),box=canvas?.getBoundingClientRect();const sourceDom={canvas:host.querySelectorAll('canvas').length,evidenceLines:host.querySelectorAll('.pdf-evidence-line').length,legacyVisible:[...host.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,pixelWidth:canvas?.width||0,cssWidth:box?.width||0,localCacheAllowed:V.SourcePDF.privacy.localCacheAllowed,userUploadRequired:V.SourcePDF.privacy.userUploadRequired,serverUpload:V.SourcePDF.privacy.serverUpload,originalUnmodified:V.SourcePDF.privacy.originalUnmodified};
+    const canvas=host.querySelector('canvas'),box=canvas?.getBoundingClientRect(),evidence=[...host.querySelectorAll('.pdf-evidence-line')];const sourceDom={canvas:host.querySelectorAll('canvas').length,evidenceLines:evidence.length,evidenceHeights:evidence.map(x=>x.getBoundingClientRect().height),evidenceShadows:evidence.map(x=>getComputedStyle(x).boxShadow),legacyVisible:[...host.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,pixelWidth:canvas?.width||0,cssWidth:box?.width||0,localCacheAllowed:V.SourcePDF.privacy.localCacheAllowed,userUploadRequired:V.SourcePDF.privacy.userUploadRequired,serverUpload:V.SourcePDF.privacy.serverUpload,originalUnmodified:V.SourcePDF.privacy.originalUnmodified};
     host.remove();
     const docs=await V.PrivateDocs.listDocuments('personal');
     const hits=await V.PrivateDocs.search('SAMPLE 123',{kind:'personal',limit:10});
@@ -32,10 +32,13 @@ try{
   },fixtureBase64);
   assert(result.ingested.chunks>=1,'PDF.js creates at least one private text chunk');
   assert(result.doc?.pageCount===1,'PDF page count preserved');
+  assert(result.doc?.extractionVersion==='v10-hybrid-ocr-ai','private PDF uses hybrid text/OCR/AI extraction contract');
+  assert(Number(result.doc?.extractionQuality)>0,'private PDF stores extraction-quality evidence');
   assert(result.hits>=1&&/AITUTOR PDF QA SAMPLE 123/.test(result.hitText),'extracted PDF text is searchable');
   assert(result.otherHits===0,'PDF chunks are invisible to another local owner');
   assert(result.sourceAttached?.key==='ems'&&result.sourceRender?.page===1,'official source PDF can be attached and rendered locally');
-  assert(result.sourceDom?.canvas===1&&result.sourceDom?.evidenceLines>=1&&result.sourceDom?.evidenceLines<=3&&result.sourceRender?.hits>=1,'PDF evidence matcher marks only the matching evidence line(s)');
+  assert(result.sourceDom?.canvas===1&&result.sourceDom?.evidenceLines>=1&&result.sourceRender?.hits>=1,'PDF evidence matcher marks the complete matching evidence block');
+  assert(result.sourceDom?.evidenceHeights.every(h=>h<=3)&&result.sourceDom?.evidenceShadows.every(x=>x==='none'),'PDF evidence uses thin non-obscuring baseline underlines');
   assert(result.sourceDom?.legacyVisible===0,'legacy per-keyword highlight boxes stay hidden');
   assert(result.sourceDom?.pixelWidth>=result.sourceDom?.cssWidth*1.8,'PDF source rendering uses high-DPI canvas pixels');
   assert(result.sourceDom?.localCacheAllowed===true&&result.sourceDom?.userUploadRequired===false&&result.sourceDom?.serverUpload===false&&result.sourceDom?.originalUnmodified===true,'official source PDF needs no user upload and remains unmodified/no-server-upload');
