@@ -98,6 +98,13 @@ try{
   await m.waitForSelector('.book-section .study-must');
   assert((await m.locator('.book-section .study-must-title').innerText()).includes('★ 시험필수'),'core learning exposes a compact exam-essential block');
   assert(await m.locator('.book-section .study-must li').count()>=1,'core learning underlines only curated must-remember points');
+  assert((await m.locator('.book-section .study-must-title').innerText()).includes('전부 보기'),'core learning no longer truncates must-remember items to the first three');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
+  await m.locator('.book-jumpbar [data-study-tab="core"]').click();
+  await m.waitForSelector('.book-section .hazmat-class-grid');
+  assert(await m.locator('.book-section .hazmat-class-card').count()===6,'hazardous-material core summary always shows all six classes');
+  assert((await m.locator('.book-section .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material summary visibly reaches class 6');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
@@ -107,6 +114,9 @@ try{
   assert(!detailText.includes('개념 구조와 읽는 순서')&&!detailText.includes('개념 이해'),'mobile detail simplifies meta headings to 개념');
   assert(await m.locator('.book-section .detail-num').count()===0,'mobile detail has no detached numeric badges');
   assert(await m.locator('.book-section .detail-view>.lead').count()===0,'detail tab does not repeat the core summary above structured detail');
+  assert(await m.locator('.book-section .detail-view .study-must').count()===1,'detail view repeats curated exam essentials before deep explanation');
+  const keyLineStyle=await m.locator('.book-section .detail-view .study-key-text').first().evaluate(el=>getComputedStyle(el).textDecorationLine);
+  assert(keyLineStyle.includes('underline'),'detail important points are visibly underlined');
   const dup=await m.locator('.book-section .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
   assert(!dup,'detail tab removes duplicate section bodies');
   const bodyHeight=await m.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
@@ -129,6 +139,8 @@ try{
 
   await m.locator('.book-jumpbar [data-study-tab="source"]').click();
   await m.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
+  assert(await m.locator('.study-body-mobile [data-source-download]').count()===1,'source tab exposes an explicit PDF download action');
+  assert(await m.evaluate(()=>typeof window.AITUTOR_V9.SourcePDF.download==='function'),'official PDF subsystem exposes direct download from cache/mirror');
   await m.locator('.study-body-mobile .source-only [data-source-concept]').click();
   await m.waitForSelector('#pdfEvidence');
   assert(Number(await m.locator('#pdfEvidence').getAttribute('data-page'))===30,'F03-C03 opens at mapped PDF page 30 for textbook page 14');
@@ -171,6 +183,7 @@ try{
   await realStart.click();await m.waitForSelector('.question-card');
   const realMock=await m.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam,fire=e.qs.filter(q=>q.subject==='fire'),ems=e.qs.filter(q=>q.subject==='ems');return{mode:e.mode,total:e.qs.length,fire:fire.length,ems:ems.length,verified:e.qs.every(q=>q.grade==='A'||q.grade==='B'),unique:new Set(e.qs.map(q=>q.id)).size}});
   assert(realMock.mode==='real'&&realMock.total===65&&realMock.fire===25&&realMock.ems===40&&realMock.verified&&realMock.unique===65,'real mock builds 25 verified fire + 40 verified EMS questions with no duplicates');
+  assert(await m.locator('.mobile-nav').isHidden(),'active exam hides global mobile navigation to prevent accidental exit');
   await m.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});
   await m.waitForSelector('.exam-start');
   const practice=m.locator('[data-exam-start="practice"]');
