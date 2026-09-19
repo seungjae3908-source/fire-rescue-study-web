@@ -20,6 +20,10 @@ for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,im
 const V=window.AITUTOR_V9;
 const audit=V.ContentContract119.audit(),coverage=V.contentPacks.coverage(),fullExamCoverage=V.CoverageMap119?.audit?.(),qa=V.QuestionQuality119.audit(),mock=V.examReadiness();
 const perConceptQuestionContract=V.curriculum.concepts.every(c=>{const q=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const x of q)d[x.difficulty]=(d[x.difficulty]||0)+1;return q.length>=6&&d.low>=1&&d.mid>=2&&d.high>=1});
+const verifiedQuestions=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B');
+const textbookVerifiedQuestions=verifiedQuestions.filter(q=>/소방전술|예방실무|소방법령|공식교재|교재/.test(String(q.source||'')));
+const exactPage=/\d+(?:\s*[~\-–]\s*\d+)?\s*쪽|page\s*\d+/i;
+const verifiedQuestionPageEvidence=textbookVerifiedQuestions.length>0&&textbookVerifiedQuestions.every(q=>exactPage.test(String(q.source||'')));
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const lite=fs.readFileSync(new URL('./supabase-lite.js',import.meta.url),'utf8');
@@ -34,14 +38,16 @@ const checks={
   pageEvidenceAll:coverage.verified===V.curriculum.totalConcepts&&coverage.pending===0,
   fullExamCoverageComplete:!!fullExamCoverage&&fullExamCoverage.missing===0&&fullExamCoverage.partial===0,
   questionContract:qa.examStyle>=1056&&qa.duplicateTexts.length===0&&perConceptQuestionContract,
+  verifiedQuestionPageEvidence,
   realMockVerifiedReady:mock.ready===true&&mock.scopeComplete===true&&mock.fire>=25&&mock.ems>=40&&mock.missingFireScopes.length===0&&mock.missingEmsScopes.length===0,
   pwaOfflineContract:e2e.includes('v9 PWA shell reloads while offline'),
   pdfPrivateRestoreContract:pdfE2E.includes('PDF.js creates at least one private text chunk')&&pdfE2E.includes('PDF chunks are invisible to another local owner'),
   imageOcrRestoreContract:imageE2E.includes('fresh browser context restores image OCR metadata and extracted text for the same owner'),
   sessionExpiryContract:authE2E.includes('401 refresh rejection emits SIGNED_OUT')&&lite.includes("function clearSession(event='SIGNED_OUT')"),
   authSyncRemoteFirst:auth.includes('remoteFirstOnSignIn:true')&&auth.includes('remoteFirstOnManualSync:true')&&auth.includes('originalFilesAutoUpload:false'),
-  deployedReleaseAcceptance:workflow.includes('release_candidate_live_acceptance:'),
-  deployedPrivacySessionAcceptance:workflow.includes('deployed_private_session_acceptance:'),
+  releaseAcceptanceContractPresent:workflow.includes('release_candidate_live_acceptance:'),
+  privacyAcceptanceContractPresent:workflow.includes('deployed_private_session_acceptance:'),
+  exactPreviewAcceptanceContractPresent:workflow.includes('preview_exact_sha_acceptance:'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
@@ -73,18 +79,20 @@ const blockers=[];
 for(const [k,v] of Object.entries(checks))if(!v)blockers.push('CONTRACT_'+k);
 if(!stagingLive)blockers.push('STUDY_STAGING_AUTH_SYNC_RLS_LIVE_PROOF_MISSING');
 const result={
-  version:'119-release-gate-audit-v1',
+  version:'119-release-gate-audit-v2',
   content:{complete:audit.complete,total:audit.total,averageScore:audit.averageScore,blockers:audit.blockers},
   pageEvidence:coverage,
   fullExamCoverage:fullExamCoverage?{total:fullExamCoverage.total,covered:fullExamCoverage.covered,partial:fullExamCoverage.partial,missing:fullExamCoverage.missing,implementationPercent:fullExamCoverage.implementationPercent}:null,
-  questions:{examStyle:qa.examStyle,duplicateTexts:qa.duplicateTexts.length},
+  questions:{examStyle:qa.examStyle,duplicateTexts:qa.duplicateTexts.length,verified:verifiedQuestions.length,textbookVerified:textbookVerifiedQuestions.length,textbookVerifiedExactPage:textbookVerifiedQuestions.filter(q=>exactPage.test(String(q.source||''))).length},
   realMock:{ready:mock.ready,fire:mock.fire,ems:mock.ems,missingFireScopes:mock.missingFireScopes,missingEmsScopes:mock.missingEmsScopes},
   checks,
   stagingLiveRlsProven:stagingLive,
   stagingLiveEvidence:stagingLive?{projectRef:liveEvidence.projectRef,migrationVersion:liveEvidence.migrationVersion,migrationName:liveEvidence.migrationName,verifiedAtUtc:liveEvidence.verifiedAtUtc}:null,
   blockers,
   releaseReady:blockers.length===0,
-  productionRootPromotionAllowed:blockers.length===0
+  productionRuntimeAccepted:false,
+  productionAcceptanceRequiredAfterDeploy:true,
+  productionRootPromotionAllowed:false
 };
 console.log('RELEASE_GATE_119',JSON.stringify(result,null,2));
-if(!checks.contentAll||!checks.pageEvidenceAll||!checks.questionContract)process.exitCode=1;
+if(blockers.length)process.exitCode=1;
