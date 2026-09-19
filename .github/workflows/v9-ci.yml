@@ -115,6 +115,8 @@ jobs:
         run: node v9/phase-b-ems-source-audit.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
+      - name: Korean image OCR quality + owner isolation QA
+        run: node v9/image-ocr-e2e.mjs
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
         run: node v9/e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
