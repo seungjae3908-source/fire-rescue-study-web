@@ -99,7 +99,7 @@ function printDocument(mode){
   </style></head><body><section class="cover"><h1>${esc(title)}</h1><p>119 소방·구급 합격 학습 OS</p><p>생성일 ${new Date().toLocaleDateString('ko-KR')}</p></section>${body}</body></html>`;
 }
 function exportPdf(mode){
-  const html=printDocument(mode),w=window.open('','_blank','noopener,noreferrer');if(!w)throw Error('POPUP_BLOCKED');
+  const html=printDocument(mode),w=window.open('','_blank');if(!w)throw Error('POPUP_BLOCKED');try{w.opener=null}catch{}
   w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch{}},350);return true;
 }
 V.PassNote={conceptKey,questionKey,has,find,persist,remove,toggleConcept,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,subjectOf,subjectLabel};
