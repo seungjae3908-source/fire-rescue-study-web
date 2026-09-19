@@ -99,8 +99,9 @@ try{
   assert(/^1\s*\/\s*\d+/.test(quizTotal),'concept practice starts at question 1 with an explicit total');
   await m.locator('.book-section .question-card').first().locator('.choice').first().click();
   assert(await m.locator('.book-section .question-card').first().locator('.question-result-meta .tag').count()===1,'practice question shows only compact difficulty feedback after answering');
-  if(await m.locator('[data-study-quiz-next]:not([disabled])').count()){
-    await m.locator('[data-study-quiz-next]').click();
+  const nextPractice=m.locator('.study-body-mobile [data-study-quiz-next]:not([disabled])');
+  if(await nextPractice.count()){
+    await nextPractice.click();
     const secondPracticeQuestion=(await m.locator('.book-section .question-card h2').innerText()).trim();
     assert(secondPracticeQuestion!==firstPracticeQuestion,'concept practice next button advances to a different question');
   }
