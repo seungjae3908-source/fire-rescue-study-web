@@ -638,3 +638,15 @@
   .study-features li{gap:7px}
   .study-important{line-height:1.65;word-break:keep-all;overflow-wrap:anywhere}
 }
+
+
+/* Quality 2.0 — consistent important underlines in core/detail */
+.study-must .study-key-text,
+.detail-key .study-key-text,
+.study-numbers .study-key-text{
+  text-decoration-line:underline;
+  text-decoration-thickness:1.25px;
+  text-underline-offset:4px;
+  text-decoration-color:rgba(226,235,247,.58);
+  text-decoration-skip-ink:auto;
+}
