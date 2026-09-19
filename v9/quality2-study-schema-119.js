@@ -62,11 +62,14 @@ function build(id){
   p.studySchema=schema;return schema
 }
 const schemas={};
-for(const c of V.curriculum?.concepts||[]){const x=build(c.id);if(x)schemas[c.id]=x}
+function refresh(id){const x=build(id);if(x)schemas[id]=x;else delete schemas[id];return x}
+function refreshAll(){for(const c of V.curriculum?.concepts||[])refresh(c.id);return schemas}
+refreshAll();
 V.Quality2StudySchema119={
   version:'119-quality2-study-schema-v2',
   schemas,
-  get:id=>schemas[id]||null,
-  policy:'all fields are selected only from the already verified concept pack and its official source anchors; non-applicable categories remain empty instead of inventing content'
+  get:id=>refresh(id),
+  refreshAll,
+  policy:'all fields are selected only from the current verified concept pack through StudyEmphasis119 and its official source anchors; non-applicable categories remain empty instead of inventing content'
 };
 })();
