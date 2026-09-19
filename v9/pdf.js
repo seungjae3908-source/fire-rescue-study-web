@@ -39,7 +39,7 @@ function nativePdfText(tc){
   }
   return normalizeText(out.join('\n'))
 }
-function benchmarkNorm(s){return String(s||'').normalize('NFKC').toLowerCase().replace(/[^0-9a-z가-힣%./-]/g,'')}
+function benchmarkNorm(s){return String(s||'').replace(/\[\s*\d+\s*쪽\s*\]/g,' ').normalize('NFKC').toLowerCase().replace(/[^0-9a-z가-힣%./-]/g,'')}
 function editDistance(a,b){a=[...String(a||'')];b=[...String(b||'')];let prev=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const cur=[i];for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur}return prev[b.length]}
 function tokenRecall(reference,observed,re){const ref=String(reference||'').match(re)||[];if(!ref.length)return 1;const obs=benchmarkNorm(observed);let hit=0;for(const raw of ref){const t=benchmarkNorm(raw);if(t&&obs.includes(t))hit++}return hit/ref.length}
 function ocrBenchmarkMetrics(reference,observed){
