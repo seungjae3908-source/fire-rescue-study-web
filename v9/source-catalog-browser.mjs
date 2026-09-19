@@ -46,7 +46,8 @@ function extractPaths(rows){
 }
 
 const browser=await chromium.launch({headless:true});
-let failed=false,externalBlocked=0;
+const externalNetworkFailure=/ERR_(?:CONNECTION_TIMED_OUT|TIMED_OUT|CONNECTION_RESET|NAME_NOT_RESOLVED|NETWORK_CHANGED|INTERNET_DISCONNECTED)|page\.goto: Timeout \d+ms exceeded/i;
+let failed=false,externalBlocked=0,externalUnavailable=0;
 try{
   const ctx=await browser.newContext({
     locale:'ko-KR',
@@ -102,8 +103,14 @@ try{
       res=await p.goto(def.url,{waitUntil:'domcontentloaded',timeout:45000});
       snap=await stableSnapshot(p,def.expected);
     }catch(err){
-      failed=true;
-      console.log('BROWSER_SOURCE_CATALOG',JSON.stringify({key:def.key,http:res?.status?.()||0,finalUrl:p.url(),ok:false,error:String(err?.message||err)},null,2));
+      const message=String(err?.message||err),officialNfa=/^https:\/\/www\.nfa\.go\.kr\//.test(def.url);
+      const external=officialNfa&&externalNetworkFailure.test(message);
+      if(external)externalUnavailable++;else failed=true;
+      console.log('BROWSER_SOURCE_CATALOG',JSON.stringify({
+        key:def.key,http:res?.status?.()||0,finalUrl:p.url(),ok:false,
+        externalStatus:external?'NFA_NETWORK_UNREACHABLE':'UNEXPECTED_FAILURE',
+        error:message
+      },null,2));
       await p.close().catch(()=>{});
       continue;
     }
@@ -138,5 +145,5 @@ try{
 }finally{
   await browser.close();
 }
-console.log('BROWSER_SOURCE_CATALOG_SUMMARY',JSON.stringify({total:defs.length,externalBlocked,unexpectedFailures:failed?1:0,policy:'NFA visitor/WAF gate is reported explicitly and is not treated as an app failure; official proxy/mirror integrity is release-gated separately.'}));
+console.log('BROWSER_SOURCE_CATALOG_SUMMARY',JSON.stringify({total:defs.length,externalBlocked,externalUnavailable,unexpectedFailures:failed?1:0,policy:'NFA visitor/WAF gate or direct nfa.go.kr network unavailability is reported explicitly and is not treated as an app failure; official proxy/mirror integrity is release-gated separately.'}));
 if(failed)throw new Error('OFFICIAL_SOURCE_BROWSER_PROBE_FAILED');
