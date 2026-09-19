@@ -207,6 +207,12 @@ try{
   const realStart=m.locator('[data-exam-start="real"]');
   assert(await realStart.count()===1,'real mock start is enabled only after verified fire+EMS scope coverage closes');
   await realStart.click();await m.waitForSelector('.question-card');
+  assert(await m.locator('.page-exam.exam-active>.top').isHidden(),'active mobile exam hides the redundant global header');
+  assert(await m.locator('.page-exam.exam-active .mobile-nav').isHidden(),'active mobile exam hides global bottom navigation');
+  const examLayout=await m.locator('.exam-run-workspace').evaluate(root=>{const footer=root.querySelector('.exam-footer'),status=root.querySelector('.exam-answer-count'),buttons=[...root.querySelectorAll('.exam-footer .btn')],choices=[...root.querySelectorAll('.choice')];const sr=status?.getBoundingClientRect(),br=buttons.map(x=>x.getBoundingClientRect());return{status:sr&&{l:sr.left,r:sr.right,sw:status.scrollWidth,cw:status.clientWidth,sh:status.scrollHeight,ch:status.clientHeight},buttons:br.map(x=>({l:x.left,r:x.right,t:x.top,b:x.bottom})),choiceOverflow:choices.some(x=>x.scrollWidth>x.clientWidth+2||x.getBoundingClientRect().right>innerWidth+1||x.getBoundingClientRect().left<-1)}}); 
+  assert(examLayout.status&&examLayout.status.sw<=examLayout.status.cw+2&&examLayout.status.sh<=examLayout.status.ch+2,'active exam answer counter text is not clipped or compressed');
+  assert(examLayout.buttons.length===2&&examLayout.buttons[0].r<=examLayout.status.l+1&&examLayout.status.r<=examLayout.buttons[1].l+1,'active exam footer columns never overlap');
+  assert(!examLayout.choiceOverflow,'active exam choice text stays inside the mobile viewport');
   const realMock=await m.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam,fire=e.qs.filter(q=>q.subject==='fire'),ems=e.qs.filter(q=>q.subject==='ems');return{mode:e.mode,total:e.qs.length,fire:fire.length,ems:ems.length,verified:e.qs.every(q=>q.grade==='A'||q.grade==='B'),unique:new Set(e.qs.map(q=>q.id)).size}});
   assert(realMock.mode==='real'&&realMock.total===65&&realMock.fire===25&&realMock.ems===40&&realMock.verified&&realMock.unique===65,'real mock builds 25 verified fire + 40 verified EMS questions with no duplicates');
   assert(await m.locator('.mobile-nav').isHidden(),'active exam hides global mobile navigation to prevent accidental exit');
