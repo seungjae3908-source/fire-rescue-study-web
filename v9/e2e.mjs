@@ -92,8 +92,18 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="quiz"]').click();
   await m.waitForSelector('.book-section .question-card');
   assert(await m.locator('.book-section .question-card').first().locator('.tag').count()===0,'practice question hides difficulty/evidence badges before the student answers');
+  assert(await m.locator('.book-section .question-card').count()===1,'concept practice shows exactly one question at a time instead of an infinite scroll list');
+  assert(await m.locator('.book-section .study-quiz-pager').count()===1,'concept practice exposes previous/current/next navigation');
+  const firstPracticeQuestion=(await m.locator('.book-section .question-card h2').innerText()).trim();
+  const quizTotal=await m.locator('.book-section .study-quiz-progress b').innerText();
+  assert(/^1\s*\/\s*\d+/.test(quizTotal),'concept practice starts at question 1 with an explicit total');
   await m.locator('.book-section .question-card').first().locator('.choice').first().click();
   assert(await m.locator('.book-section .question-card').first().locator('.question-result-meta .tag').count()===1,'practice question shows only compact difficulty feedback after answering');
+  if(await m.locator('[data-study-quiz-next]:not([disabled])').count()){
+    await m.locator('[data-study-quiz-next]').click();
+    const secondPracticeQuestion=(await m.locator('.book-section .question-card h2').innerText()).trim();
+    assert(secondPracticeQuestion!==firstPracticeQuestion,'concept practice next button advances to a different question');
+  }
   await m.locator('.book-jumpbar [data-study-tab="core"]').click();
   await m.waitForSelector('.book-section .study-must');
   assert((await m.locator('.book-section .study-must-title').innerText()).includes('★ 시험필수'),'core learning exposes a compact exam-essential block');
@@ -123,7 +133,16 @@ try{
   const keyLineStyle=await m.locator('.book-section .detail-view .study-key-text').first().evaluate(el=>getComputedStyle(el).textDecorationLine);
   assert(keyLineStyle.includes('underline'),'detail important points are visibly underlined');
   const dup=await m.locator('.book-section .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
-  assert(!dup,'detail tab removes duplicate section bodies');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.book-section .concept-visual .visual-node');
+  const visualLayout=await m.locator('.book-section .concept-visual').evaluate(root=>{const nodes=[...root.querySelectorAll('.visual-node')].map(x=>x.getBoundingClientRect()),labels=[...root.querySelectorAll('.visual-node b')].map(x=>({text:x.textContent||'',scroll:x.scrollWidth,client:x.clientWidth,wordBreak:getComputedStyle(x).wordBreak}));return{nodes,labels}});
+  assert(visualLayout.nodes.every((n,i,a)=>i===0||n.y>=a[i-1].y+a[i-1].height-1),'mobile principle diagrams stack vertically without card collisions');
+  assert(visualLayout.labels.every(x=>x.scroll<=x.client+2),'mobile principle-diagram labels do not overflow their cards');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   const bodyHeight=await m.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
   assert(bodyHeight>=320,'mobile study keeps at least 320px for learning content');
 
@@ -151,9 +170,10 @@ try{
   assert(Number(await m.locator('#pdfEvidence').getAttribute('data-page'))===30,'F03-C03 opens at mapped PDF page 30 for textbook page 14');
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
-  const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=root.querySelectorAll('.pdf-evidence-line');return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
+  const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=[...root.querySelectorAll('.pdf-evidence-line')];return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,lineHeights:lines.map(x=>x.getBoundingClientRect().height),lineStyles:lines.map(x=>({bg:getComputedStyle(x).backgroundColor,shadow:getComputedStyle(x).boxShadow})),legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
   assert(pdfVisual.pixelWidth>=pdfVisual.cssWidth*1.8,'mobile PDF canvas renders at high device-pixel density for crisp text');
-  assert(pdfVisual.evidence<=3,'PDF highlights at most three evidence lines and fails closed to zero when no confident line match exists');
+  assert(pdfVisual.lineHeights.every(h=>h<=3),'PDF evidence uses thin baseline underlines instead of text-covering highlight boxes');
+  assert(pdfVisual.lineStyles.every(x=>x.shadow==='none'),'PDF evidence underlines use no obscuring inset shadow');
   assert(pdfVisual.legacy===0&&!/근거\s+\d+개/.test(pdfVisual.label),'legacy keyword boxes/count are hidden from the student');
   const cache=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.openPdf(key),b=await V.SourcePDF.openPdf(key);return{same:a.pdf===b.pdf,origin:a.origin}});
   const local=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc;return await V.SourcePDF.availability(key)});
