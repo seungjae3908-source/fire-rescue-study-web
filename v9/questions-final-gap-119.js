@@ -108,8 +108,20 @@ const Q=[
   {id:'119-finalgap-chest-03',grade:'P',subject:'ems',scopeId:'E14',conceptId:'E14-C02',difficulty:'mid',type:'비교형',source:'질병관리청 국가건강정보포털 · 심낭염(심장눌림증)',q:'심장압전(심장눌림증)에 대한 설명으로 옳은 것은?',choices:['심낭 안의 체액이나 혈액이 증가해 심장을 압박하고 심장충만을 방해한다','흉강에 공기가 차서 폐만 압박하는 상태다','늑골이 여러 곳에서 골절된 상태다','위장관 출혈로 혈압이 떨어지는 상태만을 뜻한다'],a:0,choiceExplanations:['정답. 심낭 내 액체·혈액이 심장을 압박해 저혈압과 실신을 일으킬 수 있다.','기흉과 혼동한 설명이다.','연가양흉의 구조적 손상이다.','심장압전은 심낭 내 압박 문제다.']},
   {id:'119-finalgap-chest-04',grade:'P',subject:'ems',scopeId:'E14',conceptId:'E14-C02',difficulty:'high',type:'통합형',source:'2026 소방전술3(구급) 중증외상 기준 · 질병관리청 공식 흉부질환 자료',q:'흉부외상 네 가지를 연결한 설명으로 옳은 것은?',choices:['긴장성 기흉=공기 압력상승, 혈흉=흉막강 출혈, 심장압전=심낭 압박, 연가양흉=흉벽 불안정','긴장성 기흉=혈액, 혈흉=공기, 심장압전=늑골골절, 연가양흉=심낭액','네 질환 모두 같은 병태생리다','네 질환 모두 호흡과 순환평가가 필요 없다'],a:0,choiceExplanations:['정답. 문제 위치와 병태생리를 공기·피·심낭·흉벽로 구분하면 된다.','네 질환의 핵심 위치와 병태생리를 모두 바꾼 설명이다.','각각 병태생리와 응급위험이 다르다.','모두 중증화 시 호흡·순환을 위협할 수 있어 반복평가가 필요하다.']}
 ];
-const seenId=new Set(V.questions.map(q=>q.id)),seenText=new Set(V.questions.map(q=>String(q.q||'').replace(/\s+/g,' ').trim().toLowerCase()));let added=0;
-for(const q of Q){const k=String(q.q).replace(/\s+/g,' ').trim().toLowerCase();if(seenId.has(q.id)||seenText.has(k))continue;q.ex=q.choiceExplanations[q.a];q.examStyle=V.QuestionQuality119?.isExamStyle?.(q)!==false;q.questionClass='exam-style';V.questions.push(q);seenId.add(q.id);seenText.add(k);added++}
+const seenId=new Set(V.questions.map(q=>q.id)),seenText=new Map(V.questions.map(q=>[String(q.q||'').replace(/\s+/g,' ').trim().toLowerCase(),q]));let added=0;
+const skippedDuplicates=[];
+for(const q of Q){
+  const k=String(q.q).replace(/\s+/g,' ').trim().toLowerCase();
+  if(seenId.has(q.id))throw Error('FINAL_GAP_DUP_ID '+q.id);
+  const existing=seenText.get(k);
+  if(existing){
+    if(!(existing.grade==='A'||existing.grade==='B')||existing.pageVerified!==true)throw Error('FINAL_GAP_UNVERIFIED_DUP_TEXT '+q.id+' <- '+existing.id);
+    skippedDuplicates.push({id:q.id,replacedBy:existing.id,replacementGrade:existing.grade,replacementSource:existing.source});
+    continue;
+  }
+  q.ex=q.choiceExplanations[q.a];q.examStyle=V.QuestionQuality119?.isExamStyle?.(q)!==false;q.questionClass='exam-style';
+  V.questions.push(q);seenId.add(q.id);seenText.set(k,q);added++
+}
 V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);V.QuestionDifficulty?.annotate?.(V.questions);
-V.FinalGapQuestions119={version:'119-final-gap-practice-v20',added,ids:Q.map(q=>q.id),pastExamClaim:false,sourcePolicy:'2026 NFA textbook + 2020 KACPR exam-standard + official government CBRN supplements'};
+V.FinalGapQuestions119={version:'119-final-gap-practice-v21',planned:Q.length,added,skippedDuplicates,ids:Q.map(q=>q.id),pastExamClaim:false,sourcePolicy:'2026 NFA textbook + 2020 KACPR exam-standard + official government CBRN supplements; an exact-text duplicate may be skipped only when an already-loaded A/B page-verified question upgrades the evidence tier'};
 })();
