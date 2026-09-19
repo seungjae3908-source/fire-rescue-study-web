@@ -24,8 +24,8 @@ async function create({category='개선',title='',body='',anonymous=true}={}){
 async function adminReply(suggestionId,{status='수렴완료',reply=''}={}){
   if(!STATUS.includes(status))throw Error('INVALID_STATUS');if(!(await isAdmin()))throw Error('ADMIN_REQUIRED');
   const {client}=await ready(),one=await client.from(T).select('*').eq('id',suggestionId).maybeSingle();if(one.error)throw one.error;if(!one.data)throw Error('SUGGESTION_NOT_FOUND');
-  const row={...one.data,status,admin_reply:String(reply||'').trim(),admin_replied_at:new Date().toISOString(),updated_at:new Date().toISOString()};
-  const r=await client.from(T).upsert([row]);if(r.error)throw r.error;return row
+  const patch={status,admin_reply:String(reply||'').trim(),admin_replied_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+  const r=await client.from(T).update(patch).eq('id',suggestionId);if(r.error)throw r.error;return{...one.data,...patch}
 }
 async function remove(suggestionId){
   const {client}=await ready(),r=await client.from(T).delete().eq('id',suggestionId);if(r.error)throw r.error;return true
