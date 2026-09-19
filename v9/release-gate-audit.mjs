@@ -13,12 +13,12 @@ const files=[
   'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
   'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js',
-  'questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','textbook-grounded-119.js',
+  'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','textbook-grounded-119.js',
   'visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
 ];
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 const V=window.AITUTOR_V9;
-const audit=V.ContentContract119.audit(),coverage=V.contentPacks.coverage(),fullExamCoverage=V.CoverageMap119?.audit?.(),qa=V.QuestionQuality119.audit(),mock=V.examReadiness();
+const audit=V.ContentContract119.audit(),coverage=V.contentPacks.coverage(),fullExamCoverage=V.CoverageMap119?.audit?.(),qa=V.QuestionQuality119.audit(),mock=V.examReadiness(),calcTraining=V.CalculationTraining119?.audit?.();
 const perConceptQuestionContract=V.curriculum.concepts.every(c=>{const q=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const x of q)d[x.difficulty]=(d[x.difficulty]||0)+1;return q.length>=6&&d.low>=1&&d.mid>=2&&d.high>=1});
 const verifiedQuestions=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B');
 const textbookVerifiedQuestions=verifiedQuestions.filter(q=>/소방전술|예방실무|소방법령|공식교재|교재/.test(String(q.source||'')));
@@ -39,6 +39,7 @@ const checks={
   fullExamCoverageComplete:!!fullExamCoverage&&fullExamCoverage.missing===0&&fullExamCoverage.partial===0,
   questionContract:qa.examStyle>=1056&&qa.duplicateTexts.length===0&&perConceptQuestionContract,
   verifiedQuestionPageEvidence,
+  calculationSixStage:!!calcTraining&&calcTraining.ready===true&&calcTraining.allGeneratedPractice===true&&calcTraining.rows?.length===7,
   realMockVerifiedReady:mock.ready===true&&mock.scopeComplete===true&&mock.fire>=25&&mock.ems>=40&&mock.missingFireScopes.length===0&&mock.missingEmsScopes.length===0,
   pwaOfflineContract:e2e.includes('v9 PWA shell reloads while offline'),
   pdfPrivateRestoreContract:pdfE2E.includes('PDF.js creates at least one private text chunk')&&pdfE2E.includes('PDF chunks are invisible to another local owner'),
@@ -84,6 +85,7 @@ const result={
   pageEvidence:coverage,
   fullExamCoverage:fullExamCoverage?{total:fullExamCoverage.total,covered:fullExamCoverage.covered,partial:fullExamCoverage.partial,missing:fullExamCoverage.missing,implementationPercent:fullExamCoverage.implementationPercent}:null,
   questions:{examStyle:qa.examStyle,duplicateTexts:qa.duplicateTexts.length,verified:verifiedQuestions.length,textbookVerified:textbookVerifiedQuestions.length,textbookVerifiedExactPage:textbookVerifiedQuestions.filter(q=>exactPage.test(String(q.source||''))).length},
+  calculationTraining:calcTraining,
   realMock:{ready:mock.ready,fire:mock.fire,ems:mock.ems,missingFireScopes:mock.missingFireScopes,missingEmsScopes:mock.missingEmsScopes},
   checks,
   stagingLiveRlsProven:stagingLive,
