@@ -687,3 +687,17 @@ small{font-size:max(11px,.78em)}
   .compare td:first-child{overflow-wrap:anywhere!important}
   .compare td:last-child{overflow-wrap:anywhere!important;word-break:break-word!important}
 }
+
+
+/* Quality 2.0 — calculation training family filters */
+.calc-filter-wrap{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:9px 12px;border-bottom:1px solid var(--line);background:#081524;min-width:0}
+.calc-chip{appearance:none;border:1px solid var(--line);border-radius:999px;background:#0a1828;color:#d7e3f1;padding:7px 10px;font-size:12px;font-weight:800;line-height:1.1;white-space:nowrap}
+.calc-chip b{color:var(--blue);font-size:11px}
+.calc-chip.on{border-color:rgba(111,182,255,.55);background:rgba(111,182,255,.10);color:#fff}
+.calc-practice-note{flex-basis:100%;line-height:1.45}
+@media(max-width:720px){
+  .calc-filter-wrap{overflow-x:auto;flex-wrap:nowrap;padding:8px 10px;scrollbar-width:none}
+  .calc-filter-wrap::-webkit-scrollbar{display:none}
+  .calc-chip{flex:0 0 auto;min-height:38px}
+  .calc-practice-note{display:none}
+}
