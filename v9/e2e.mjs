@@ -336,19 +336,27 @@ try{
   assert(viewer.trim().length>20&&viewer.includes('[1쪽]'),'uploaded PDF extracted text can be opened and checked');
   await m.locator('[data-doc-viewer-close]').click();
 
+  const ocrReference='소방 구급 산소 119 2468 500mL 30% 100mmHg';
   const pngBase64=await m.evaluate(async()=>{
-    const canvas=document.createElement('canvas');canvas.width=1400;canvas.height=360;
+    const canvas=document.createElement('canvas');canvas.width=1800;canvas.height=520;
     const g=canvas.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,canvas.width,canvas.height);
-    g.fillStyle='#000';g.font='bold 92px Arial, sans-serif';g.textBaseline='middle';g.fillText('119 RESCUE OCR 2468',70,180);
+    g.fillStyle='#000';g.textBaseline='middle';g.font='bold 104px "Noto Sans CJK KR","Noto Sans KR","Malgun Gothic",Arial,sans-serif';
+    g.fillText('소방 구급 산소',70,155);
+    g.font='bold 94px Arial,"Noto Sans KR",sans-serif';g.fillText('119 2468 500mL 30% 100mmHg',70,360);
     const blob=await new Promise((res,rej)=>canvas.toBlob(x=>x?res(x):rej(Error('PNG_CREATE_FAILED')),'image/png'));
     return await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(blob)});
   });
-  await m.locator('#personalFile').setInputFiles({name:'ocr-ui.png',mimeType:'image/png',buffer:Buffer.from(pngBase64,'base64')});
-  await m.waitForFunction(()=>window.AITUTOR_V9.App.runtime.docs.some(d=>d.title==='ocr-ui.png'),null,{timeout:180000});
-  const imageRow=m.locator('.doc-row').filter({hasText:'ocr-ui.png'});
+  await m.locator('#personalFile').setInputFiles({name:'ocr-benchmark.png',mimeType:'image/png',buffer:Buffer.from(pngBase64,'base64')});
+  await m.waitForFunction(()=>window.AITUTOR_V9.App.runtime.docs.some(d=>d.title==='ocr-benchmark.png'),null,{timeout:180000});
+  const imageRow=m.locator('.doc-row').filter({hasText:'ocr-benchmark.png'});
   await imageRow.locator('[data-doc-open]').click();await m.waitForSelector('.doc-viewer');
   const ocrText=await m.locator('.doc-viewer-text').innerText();
-  assert(/RESCUE/i.test(ocrText)&&/2468/.test(ocrText),'uploaded photo OCR text can be opened and checked');
+  const ocrMetrics=await m.evaluate(({reference,observed})=>window.AITUTOR_V9.PrivateDocs.ocrBenchmarkMetrics(reference,observed),{reference:ocrReference,observed:ocrText});
+  console.log('OCR_BENCHMARK_119',JSON.stringify({reference:ocrReference,observed:ocrText,metrics:ocrMetrics}));
+  assert(ocrMetrics.koreanRecall>=.67,'OCR benchmark recognizes at least two-thirds of Korean key tokens');
+  assert(ocrMetrics.numericRecall===1,'OCR benchmark preserves every critical numeric token');
+  assert(ocrMetrics.unitRecall>=.67,'OCR benchmark preserves at least two-thirds of critical unit tokens');
+  assert(ocrMetrics.cer<=.35,'OCR benchmark normalized character error rate stays at or below 35%');
   await m.locator('[data-doc-viewer-close]').click();
   await noX(m,'mobile notes');
 
