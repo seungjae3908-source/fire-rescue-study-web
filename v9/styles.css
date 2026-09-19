@@ -815,3 +815,27 @@ small{font-size:max(11px,.78em)}
   .resource-row b,.doc-row b{font-size:15px;line-height:1.45}
   .resource-row small,.doc-row small{font-size:12px!important;line-height:1.45}
 }
+
+
+/* Quality 2.0 — standardized concept study structure */
+.study-quick{margin:0 0 12px;border-left:4px solid var(--orange);padding:10px 12px;background:rgba(255,145,77,.055);border-radius:0 12px 12px 0}
+.study-quick-title{font-size:12px;font-weight:950;color:var(--orange);margin-bottom:5px}
+.study-quick .lead{margin:0!important}
+.study-schema{display:grid;gap:9px;margin:2px 0 12px;padding:13px;border:1px solid var(--line);border-radius:14px;background:#081725}
+.study-schema-title{font-size:13px;font-weight:950;color:#fff}
+.study-schema-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.study-schema-item{min-width:0;border:1px solid rgba(255,255,255,.065);border-radius:11px;background:#091a2b;padding:10px}
+.study-schema-item>b{display:block;font-size:12px;color:var(--blue);margin-bottom:6px}
+.study-schema-item ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.study-schema-item li{font-size:13px;line-height:1.58;word-break:keep-all;overflow-wrap:anywhere}
+.study-schema-item.warning{border-color:rgba(255,133,128,.20)}
+.study-schema-item.warning>b{color:var(--red)}
+@media(max-width:720px){
+  .study-quick{padding:10px 11px;margin-bottom:10px}
+  .study-quick-title{font-size:13px}
+  .study-schema{padding:11px;margin-bottom:10px}
+  .study-schema-grid{grid-template-columns:1fr}
+  .study-schema-item{padding:10px 11px}
+  .study-schema-item>b{font-size:13px}
+  .study-schema-item li{font-size:14px;line-height:1.62}
+}
