@@ -15,6 +15,7 @@ try{
       select(){this.op='select';return this}
       eq(k,v){this.filters.push([k,v]);return this}
       delete(){this.op='delete';return this}
+      update(values){this.op='update';this.patch=values||{};return this}
       maybeSingle(){this.single=true;return this.exec()}
       upsert(incoming){for(const row of incoming){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows[i]={...rows[i],...row};else rows.push({...row})}return Promise.resolve({data:null,error:null})}
       then(a,b){return this.exec().then(a,b)}
@@ -23,6 +24,7 @@ try{
         if(this.table==='study_suggestions'){
           let data=rows.slice();for(const [k,v] of this.filters)data=data.filter(x=>x[k]===v);
           if(this.op==='delete'){for(const row of data){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows.splice(i,1)}return{data:null,error:null}}
+          if(this.op==='update'){for(const row of data){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows[i]={...rows[i],...(this.patch||{})}}return{data:null,error:null}}
           return{data:this.single?(data[0]||null):data,error:null}
         }
         return{data:null,error:null}
