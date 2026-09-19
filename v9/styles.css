@@ -352,3 +352,22 @@
   .pdf-modal-head>.spacer{display:none}
   .pdf-modal-head .btn{min-height:38px!important}
 }
+
+
+/* Student-first UX V8 — integrated pass notes */
+.study-star-btn{appearance:none;border:0;background:transparent;color:var(--yellow);font-size:19px;line-height:1;padding:1px 2px;cursor:pointer;flex:0 0 auto}
+.study-star-btn:not(.on){color:#7f8fa3}.study-star-btn.on{color:var(--yellow);filter:drop-shadow(0 0 5px rgba(255,198,109,.25))}
+.study-numbers li{list-style:none;display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px;align-items:start}
+.pass-question-btn.on{color:var(--yellow);border-color:rgba(255,198,109,.38);background:rgba(255,198,109,.06)}
+.pass-note-hero h2{font-size:28px;margin:5px 0 6px}.pass-note-metrics{display:flex;gap:8px;flex-wrap:wrap;margin:11px 0}.pass-note-metrics span{border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-size:12px;color:#d9e5f2;background:#081524}
+.pass-export-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 8px}
+.note-list{display:grid;gap:9px}.note-row,.note-edit-row{align-items:stretch!important}.note-row>div:first-child{min-width:0;display:grid;gap:5px}.note-row small{white-space:pre-wrap;line-height:1.55}.note-row .toolbar{flex:0 0 auto}
+.note-edit-row{display:grid!important;grid-template-columns:1fr;gap:8px}.note-edit-row .textarea{min-height:180px}
+.doc-row .toolbar{flex-wrap:wrap}
+@media(max-width:720px){
+  .study-star-btn{font-size:21px;min-width:28px;min-height:28px}
+  .pass-note-hero h2{font-size:25px}.pass-export-grid{grid-template-columns:1fr 1fr}.pass-export-grid .btn{min-height:48px;font-size:13px}
+  .note-row{flex-direction:column;gap:8px}.note-row .toolbar{display:grid;grid-template-columns:1fr 1fr;width:100%}.note-row .toolbar .btn{width:100%}
+  .doc-row .toolbar{display:grid!important;grid-template-columns:1fr 1fr!important}.doc-row .toolbar .btn:nth-child(3){grid-column:1/-1}
+  .notes-page{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+}
