@@ -53,12 +53,15 @@ try{
     userAgent:'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36 119-study-source-probe/3.0',
     extraHTTPHeaders:{'accept-language':'ko-KR,ko;q=0.9,en;q=0.7'}
   });
-  async function stableSnapshot(p){
+  async function stableSnapshot(p,expected=[]){
     let lastErr=null;
     for(let attempt=1;attempt<=4;attempt++){
       try{
         await p.waitForLoadState('domcontentloaded',{timeout:15000}).catch(()=>{});
-        await p.waitForTimeout(1000*attempt);
+        await p.waitForFunction(names=>{
+          const t=(document.body?.innerText||'').replace(/\s+/g,' ');
+          return names.some(name=>t.includes(name));
+        },expected,{timeout:12000}).catch(()=>{});
         return await p.evaluate(()=>{
           const all=[...document.querySelectorAll('a,button,[onclick],[href],li,tr,div,p,span')];
           const rows=[];
@@ -97,7 +100,7 @@ try{
     let res=null,snap=null;
     try{
       res=await p.goto(def.url,{waitUntil:'domcontentloaded',timeout:45000});
-      snap=await stableSnapshot(p);
+      snap=await stableSnapshot(p,def.expected);
     }catch(err){
       failed=true;
       console.log('BROWSER_SOURCE_CATALOG',JSON.stringify({key:def.key,http:res?.status?.()||0,finalUrl:p.url(),ok:false,error:String(err?.message||err)},null,2));
