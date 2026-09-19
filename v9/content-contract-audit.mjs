@@ -15,7 +15,7 @@ const files=[
   'facilities-depth-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js',
   'suppression-depth-119.js','suppression-visuals-119.js',
-  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','question-bank-119.js','question-bank-quality2-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js',
+  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','question-bank-119.js','question-bank-quality2-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js',
   'content-contract-119.js'
 ];
 for(const file of files){
