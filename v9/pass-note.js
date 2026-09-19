@@ -26,10 +26,11 @@ async function remove(id){
   V.Store.state.notes=(V.Store.state.notes||[]).filter(n=>n.id!==id);V.Store.save();return true;
 }
 function conceptNoteFromKey(key){
-  const m=String(key||'').match(/^pass-c-(F\d\d-C\d\d|E\d\d-C\d\d)-(must|number|summary)-(\d+)$/);if(!m)return null;
+  const m=String(key||'').match(/^pass-c-(F\d\d-C\d\d|E\d\d-C\d\d)-(must|number|summary|feature)-(\d+)$/);if(!m)return null;
   const [,conceptId,bucket,idxRaw]=m,idx=Number(idxRaw),c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
   let rows=[];
   if(bucket==='must')rows=uniq(p.must||[]);
+  else if(bucket==='feature')rows=uniq(p.features||[]);
   else if(bucket==='number'){
     const unit=/\d|%|℃|°|cm|mm|kg|mL|\bL\b|초|분|시간|회|배|단계|류|쪽|년|개월/;
     const deep=(p.deepSections||[]).flatMap(x=>[x?.body,...(x?.bullets||[])]),compare=(p.compare||[]).flatMap(x=>Array.isArray(x)?x:[]);
@@ -85,9 +86,9 @@ function numericRows(p){
 }
 function conceptHtml(c,compact=false){
   const p=V.contentPacks?.get?.(c.id);if(!p)return'';
-  const must=uniq(p.must||[]),nums=numericRows(p),traps=uniq(p.traps||[]);
-  const main=compact?must.slice(0,5):must;
-  return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${main.length?'<h3>★★★ 시험필수</h3><ul>'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자·단위·기준</h3><ul>'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>헷갈림 주의</h3><ul>'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
+  const features=uniq(p.features||[]),must=uniq(p.must||[]),nums=numericRows(p),traps=uniq(p.traps||[]);
+  const main=compact?must.slice(0,5):must,featureRows=compact?features.slice(0,4):features;
+  return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${featureRows.length?'<h3>★ 특징·핵심</h3><ul class="important">'+featureRows.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${main.length?'<h3>★★★ 시험필수</h3><ul class="important">'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자·단위·기준</h3><ul>'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>헷갈림 주의</h3><ul>'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
 }
 function notesHtml(rows){return rows.map(n=>`<section class="c"><h2>${esc(n.title||'합격노트')}</h2><div class="note">${esc(n.body||'').replace(/\n/g,'<br>')}</div></section>`).join('')}
 function printDocument(mode){
@@ -104,7 +105,7 @@ function printDocument(mode){
     body=(V.curriculum?.concepts||[]).filter(c=>subjectOf(c)===subject).map(c=>conceptHtml(c,false)).join('');
   }
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${esc(title)}</title><style>
-  @page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#111;font-size:11pt;line-height:1.55}h1{font-size:22pt;border-bottom:3px solid #111;padding-bottom:8px}h2{font-size:15pt;margin:18px 0 7px}h3{font-size:11pt;margin:9px 0 4px}ul{margin:4px 0 10px 19px;padding:0}.c{break-inside:avoid;border-bottom:1px solid #ddd;padding:0 0 12px;margin:0 0 12px}.summary{font-weight:700}.src{font-size:8.5pt;color:#666}.note{white-space:normal}.cover{min-height:235mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:30pt}.cover p{color:#555}.c li{margin:2px 0}
+  @page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#111;font-size:11pt;line-height:1.55}h1{font-size:22pt;border-bottom:3px solid #111;padding-bottom:8px}h2{font-size:15pt;margin:18px 0 7px}h3{font-size:11pt;margin:9px 0 4px}ul{margin:4px 0 10px 19px;padding:0}.c{break-inside:avoid;border-bottom:1px solid #ddd;padding:0 0 12px;margin:0 0 12px}.summary{font-weight:700}.important li{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}.src{font-size:8.5pt;color:#666}.note{white-space:normal}.cover{min-height:235mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:30pt}.cover p{color:#555}.c li{margin:2px 0}
   </style></head><body><section class="cover"><h1>${esc(title)}</h1><p>119 소방·구급 합격 학습 OS</p><p>생성일 ${new Date().toLocaleDateString('ko-KR')}</p></section>${body}</body></html>`;
 }
 function exportPdf(mode){
