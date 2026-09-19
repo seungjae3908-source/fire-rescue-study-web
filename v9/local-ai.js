@@ -20,7 +20,7 @@ async function ensure({onProgress}={}){
   if(!navigator.gpu)throw Error('WEBGPU_UNAVAILABLE');
   loading=(async()=>{
     emit('로컬 AI 엔진 불러오는 중',onProgress);
-    const m=await import('https://esm.run/@mlc-ai/web-llm@0.2.85'),list=m.prebuiltAppConfig?.model_list||[];
+    const m=V.RuntimeDeps?.loadWebLLM?await V.RuntimeDeps.loadWebLLM():await import('https://esm.run/@mlc-ai/web-llm@0.2.85'),list=m.prebuiltAppConfig?.model_list||[];
     const model=list.find(x=>/0\.5B.*Instruct/i.test(x.model_id))||list.filter(x=>/Instruct/i.test(x.model_id)).sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0]||list.sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0];
     if(!model)throw Error('LOCAL_AI_MODEL_UNAVAILABLE');
     engine=await m.CreateMLCEngine(model.model_id,{initProgressCallback:p=>emit(p.text||'AI 모델 준비 중',onProgress)});
