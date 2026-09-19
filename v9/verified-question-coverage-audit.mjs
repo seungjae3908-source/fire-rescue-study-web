@@ -41,7 +41,6 @@ const highYieldGaps=concepts.filter(x=>x.highYield&&x.verified<4);
 const highYieldUnderThree=concepts.filter(x=>x.highYield&&x.verified<3);
 const highYieldUnderTwo=concepts.filter(x=>x.highYield&&x.verified<2);
 const highYieldZero=concepts.filter(x=>x.highYield&&x.verified===0);
-const highYieldUnderTwo=concepts.filter(x=>x.highYield&&x.verified<2);
 const zeroVerified=concepts.filter(x=>x.verified===0);
 const zeroVerifiedTarget=47;
 const result={
