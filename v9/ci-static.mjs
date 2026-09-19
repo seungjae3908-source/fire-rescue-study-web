@@ -7,7 +7,7 @@ for(const file of [
   'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','curriculum-ems-quality2-119.js','master-syllabus-119.js',
   'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js',
-  'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js','questions-verified-ems-batch1-119.js',
+  'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js','questions-verified-ems-batch1-119.js','questions-verified-fire-batch1-119.js',
   'question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
   'content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js',
   'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
@@ -41,6 +41,10 @@ const verifiedEmsBatch1=(V.questions||[]).filter(q=>/^119-verems-/.test(q.id||''
 ok(V.VerifiedEMSBatch119?.added===26&&verifiedEmsBatch1.length===26,'verified EMS batch1 adds twenty-six exact-page questions');
 ok(verifiedEmsBatch1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS batch1 stays B-grade, page-verified and never claims past-exam status');
 ok(verifiedEmsBatch1.every(q=>/소방전술3\(구급\).*\d+(?:\s*[~\-–]\s*\d+)?\s*쪽/.test(String(q.source||''))),'verified EMS batch1 carries exact textbook page evidence');
+const verifiedFireBatch1=(V.questions||[]).filter(q=>/^119-verfire-/.test(q.id||''));
+ok(V.VerifiedFireBatch119?.added===18&&verifiedFireBatch1.length===18,'verified fire batch1 adds eighteen exact-page questions');
+ok(verifiedFireBatch1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified fire batch1 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedFireBatch1.every(q=>/(소방전술1|예방실무1).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified fire batch1 carries exact textbook page evidence');
 ok(V.CalculationQuestions119?.added===21,'calculation practice bank adds twenty-one calculation drills with explicit evidence tiers');
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
 ok(calculationPractice.length===21&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
