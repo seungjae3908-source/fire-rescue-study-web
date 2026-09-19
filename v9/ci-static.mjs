@@ -62,6 +62,10 @@ ok(V.VerifiedEMSBreadth119?.added===20&&verifiedEmsBreadth1.length===20,'verifie
 ok(verifiedEmsBreadth1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS breadth batch1 stays B-grade, page-verified and never claims past-exam status');
 ok(verifiedEmsBreadth1.every(q=>/소방전술3\(구급\).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified EMS breadth batch1 carries exact textbook page evidence');
 const verifiedEmsBreadth2=(V.questions||[]).filter(q=>/^119-verbreadth2-/.test(q.id||''));
+ok(V.VerifiedEMSBreadth2119?.added===21&&verifiedEmsBreadth2.length===21,'verified EMS breadth batch2 closes twenty-one remaining zero-verified EMS concepts');
+ok(verifiedEmsBreadth2.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS breadth batch2 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedEmsBreadth2.every(q=>/소방전술3\(구급\).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified EMS breadth batch2 carries exact textbook page evidence');
+const verifiedEmsBreadth2=(V.questions||[]).filter(q=>/^119-verbreadth2-/.test(q.id||''));
 ok(V.VerifiedEMSBreadth2119?.added===21&&verifiedEmsBreadth2.length===21,'verified EMS breadth batch2 adds twenty-one exact-page zero-gap questions');
 ok(verifiedEmsBreadth2.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS breadth batch2 stays B-grade, page-verified and never claims past-exam status');
 ok(verifiedEmsBreadth2.every(q=>/소방전술3\(구급\).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified EMS breadth batch2 carries exact textbook page evidence');
