@@ -64,9 +64,18 @@ function extractLines(text){
 }
 async function createFromPrivateDoc(docId,title){
   const chunks=await V.PrivateDocs?.chunksFor?.(docId);if(!chunks?.length)throw Error('PRIVATE_DOC_TEXT_NOT_FOUND');
-  const text=chunks.sort((a,b)=>(a.page||0)-(b.page||0)||(a.chunkIndex||0)-(b.chunkIndex||0)).map(x=>x.text||'').join('\n');
-  const lines=extractLines(text),body=(lines.length?lines:['추출된 내용이 부족합니다. 원문을 확인해 직접 수정하세요.']).map(x=>'• '+x).join('\n');
-  return persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+'\n\n※ 자동 추출 초안입니다. 원문과 대조해 수정하세요.',sourceType:'pass-doc'});
+  const sorted=chunks.sort((a,b)=>(a.page||0)-(b.page||0)||(a.chunkIndex||0)-(b.chunkIndex||0)),text=sorted.map(x=>x.text||'').join('\n');
+  const lines=extractLines(text),fallback=(lines.length?lines:['추출된 내용이 부족합니다. 원문을 확인해 직접 수정하세요.']).map(x=>'• '+x).join('\n');
+  let body=fallback,aiUsed=false;
+  if(navigator.gpu&&V.LocalAI?.studyDigest){
+    try{
+      const ai=await V.LocalAI.studyDigest({title:title||'PDF/사진 정리',text});
+      if(ai&&ai.length>=40){body=ai;aiUsed=true}
+    }catch{}
+  }
+  const review=sorted.some(x=>x.needsReview)?'\n\n⚠ OCR 신뢰도가 낮은 페이지가 포함되어 있습니다. 해당 원문 페이지를 꼭 확인하세요.':'';
+  const note=await persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+`\n\n※ ${aiUsed?'로컬 AI가 추출문 안에서만 정리한':'자동 추출'} 초안입니다. 원문과 대조해 수정하세요.`+review,sourceType:aiUsed?'pass-doc-ai':'pass-doc'});
+  return{...note,aiUsed};
 }
 function passNotes(){return (state().notes||[]).filter(n=>/^pass-/.test(String(n.sourceType||''))||/^pass-/.test(String(n.id||'')))}
 function numericRows(p){
