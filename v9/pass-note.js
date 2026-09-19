@@ -9,6 +9,7 @@ const subjectOf=c=>c?.subject==='fire'||String(c?.id||'').startsWith('F')?'fire'
 const subjectLabel=s=>s==='fire'?'소방학개론':'응급처치학개론';
 const normalize=s=>String(s||'').replace(/\s+/g,' ').trim();
 const uniq=arr=>{const out=[];for(const x of arr||[]){const t=normalize(x);if(t&&!out.includes(t))out.push(t)}return out};
+const emphasis=()=>{const E=V.StudyEmphasis119;if(!E)throw Error('STUDY_EMPHASIS_SSOT_MISSING');return E};
 
 function conceptKey(conceptId,bucket='must',index=0){return 'pass-c-'+conceptId+'-'+bucket+'-'+index}
 function questionKey(questionId){return 'pass-q-'+questionId}
@@ -29,15 +30,12 @@ function conceptNoteFromKey(key){
   const m=String(key||'').match(/^pass-c-(F\d\d-C\d\d|E\d\d-C\d\d)-(must|number|summary|feature)-(\d+)$/);if(!m)return null;
   const [,conceptId,bucket,idxRaw]=m,idx=Number(idxRaw),c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
   let rows=[];
-  if(bucket==='must')rows=uniq(p.must||[]);
-  else if(bucket==='feature')rows=uniq(p.features||[]);
-  else if(bucket==='number'){
-    const unit=/\d|%|℃|°|cm|mm|kg|mL|\bL\b|초|분|시간|회|배|단계|류|쪽|년|개월/;
-    const deep=(p.deepSections||[]).flatMap(x=>[x?.body,...(x?.bullets||[])]),compare=(p.compare||[]).flatMap(x=>Array.isArray(x)?x:[]);
-    rows=uniq([...(p.must||[]),...(p.detail||[]),...deep,...compare].filter(x=>unit.test(String(x||'')))).slice(0,12);
-  } else rows=[p.summary];
+  if(bucket==='must')rows=emphasis().mustRows(p);
+  else if(bucket==='feature')rows=emphasis().featureRows(p);
+  else if(bucket==='number')rows=emphasis().numberRows(p,12);
+  else rows=[p.summary];
   const text=rows[idx];if(!text)return null;
-  const subj=subjectOf(c),source=p.source||V.sourceLabel?.(conceptId)||'공식교재';
+  const subj=subjectOf(c),source=emphasis().evidence(conceptId,p).source||'공식교재';
   return{id:key,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:`${text}\n\n[공식근거]\n${source}`,sourceType:'pass-star',conceptId,subject:subj,sourceRef:source};
 }
 async function toggleConcept(key){
@@ -79,21 +77,17 @@ async function createFromPrivateDoc(docId,title){
   return{...note,aiUsed};
 }
 function passNotes(){return (state().notes||[]).filter(n=>/^pass-/.test(String(n.sourceType||''))||/^pass-/.test(String(n.id||'')))}
-function numericRows(p){
-  const unit=/\d|%|℃|°|cm|mm|kg|mL|\bL\b|초|분|시간|회|배|단계|류|년|개월/;
-  const deep=(p.deepSections||[]).flatMap(x=>[x?.body,...(x?.bullets||[])]),compare=(p.compare||[]).flatMap(x=>Array.isArray(x)?x:[]);
-  return uniq([...(p.must||[]),...(p.detail||[]),...deep,...compare].filter(x=>unit.test(String(x||'')))).slice(0,10);
-}
+function numericRows(p){return emphasis().numberRows(p,10)}
 function conceptHtml(c,compact=false){
   const p=V.contentPacks?.get?.(c.id);if(!p)return'';
-  const features=uniq(p.features||[]),must=uniq(p.must||[]),nums=numericRows(p),traps=uniq(p.traps||[]);
+  const E=emphasis(),features=E.featureRows(p),must=E.mustRows(p),nums=E.numberRows(p,10),traps=E.trapRows(p);
   const main=compact?must.slice(0,5):must,featureRows=compact?features.slice(0,4):features;
   return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${featureRows.length?'<h3>★ 특징·핵심</h3><ul class="important">'+featureRows.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${main.length?'<h3>★★★ 시험필수</h3><ul class="important">'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자·단위·기준</h3><ul>'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>헷갈림 주의</h3><ul>'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
 }
 function notesHtml(rows){return rows.map(n=>`<section class="c"><h2>${esc(n.title||'합격노트')}</h2><div class="note">${esc(n.body||'').replace(/\n/g,'<br>')}</div></section>`).join('')}
 function rapidConceptHtml(c){
   const p=V.contentPacks?.get?.(c.id);if(!p)return'';
-  const must=uniq(p.must||[]).slice(0,3),nums=numericRows(p).slice(0,3),traps=uniq(p.traps||[]).slice(0,2);
+  const E=emphasis(),must=E.mustRows(p,3),nums=E.numberRows(p,3),traps=E.trapRows(p,2);
   return `<section class="c rapid"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${must.length?'<h3>★★★</h3><ul class="important">'+must.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자·기준</h3><ul>'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>함정</h3><ul>'+traps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}</section>`
 }
 function rapidConceptSets(){
