@@ -20,7 +20,8 @@ const files=[
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 
 const V=window.AITUTOR_V9;
-const verified=(V.questions||[]).filter(q=>(q.grade==='A'||q.grade==='B')&&V.QuestionQuality119?.isExamStyle?.(q));
+const verified=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B');
+const structuredVerified=verified.filter(q=>Array.isArray(q.choices)&&q.choices.length===4&&Number.isInteger(q.a)&&q.a>=0&&q.a<4&&!!q.source);
 const bySubject=subject=>verified.filter(q=>q.subject===subject);
 const subjectTotals={fire:bySubject('fire').length,ems:bySubject('ems').length};
 const target={fire:250,ems:300};
@@ -39,8 +40,9 @@ const concepts=V.curriculum.concepts.map(c=>{
 const highYieldGaps=concepts.filter(x=>x.highYield&&x.verified<4);
 const zeroVerified=concepts.filter(x=>x.verified===0);
 const result={
-  version:'119-verified-question-coverage-v1',
+  version:'119-verified-question-coverage-v2',
   subjectTotals,
+  structuredVerified:structuredVerified.length,
   target,
   gap:{fire:Math.max(0,target.fire-subjectTotals.fire),ems:Math.max(0,target.ems-subjectTotals.ems)},
   zeroVerifiedConcepts:zeroVerified.length,
