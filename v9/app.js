@@ -40,7 +40,7 @@ function quickCoreBlock(pack){
   return `<section class="study-quick"><div class="study-quick-title">30초 핵심</div><p class="lead">${esc(text)}</p></section>`
 }
 function schemaRows(title,rows,cls=''){
-  const vals=uniqueTextRows(rows||[]).slice(0,4);if(!vals.length)return'';
+  const vals=uniqueTextRows(rows||[]).map(studentStudyText).filter(Boolean).slice(0,4);if(!vals.length)return'';
   return `<div class="study-schema-item ${cls}"><b>${esc(title)}</b><ul>${vals.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`
 }
 function studySchemaBlock(pack){
