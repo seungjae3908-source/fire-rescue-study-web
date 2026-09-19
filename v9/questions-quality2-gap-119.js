@@ -103,6 +103,91 @@ const rows=[
       '역할을 서로 바꾼 설명이다.',
       '소화용수설비의 기능과도 다르다.'
     ]
+  },
+  {
+    id:'119-q2-ems-e25-01',grade:'B',subject:'ems',scopeId:'E25',conceptId:'E25-C01',difficulty:'mid',type:'감별형',
+    source:'2026 소방전술3(구급) 223~224쪽',pageVerified:true,reviewStatus:'manual-reviewed',examStyle:true,questionClass:'exam-style',
+    q:'담낭염·담석 환자에서 교재가 제시하는 통증 양상으로 가장 적절한 것은?',
+    choices:[
+      '윗배 또는 우상복부 통증이 어깨나 등으로 퍼질 수 있고 지방이 많은 음식 뒤 악화될 수 있다',
+      '항상 좌하복부에만 통증이 있고 음식과는 관계가 없다',
+      '통증은 반드시 가슴 중앙에만 나타난다',
+      '통증이 있으면 현장에서 음식을 먹여 반응을 확인한다'
+    ],a:0,
+    choiceExplanations:[
+      '정답. 교재는 윗배·우상복부 통증, 어깨·등 방사통과 지방식 후 악화 가능성을 설명한다.',
+      '교재의 대표 통증 위치·유발요인과 다르다.',
+      '담낭염·담석의 대표 설명이 아니다.',
+      '급성 복통 환자에게는 먹을 것을 주지 않는 것이 교재 원칙이다.'
+    ]
+  },
+  {
+    id:'119-q2-ems-e25-02',grade:'B',subject:'ems',scopeId:'E25',conceptId:'E25-C02',difficulty:'mid',type:'증상형',
+    source:'2026 소방전술3(구급) 224·435~437쪽',pageVerified:true,reviewStatus:'manual-reviewed',examStyle:true,questionClass:'exam-style',
+    q:'신장·요로 결석을 의심할 수 있는 증상 조합으로 가장 적절한 것은?',
+    choices:[
+      '심한 옆구리 통증 + 오심·구토 + 서혜부 방향 방사통',
+      '무통성 흉부압박감 + 왼팔 방사통만',
+      '기침할 때만 생기는 선홍색 객혈',
+      '피부 발진만 있고 통증·배뇨증상은 없음'
+    ],a:0,
+    choiceExplanations:[
+      '정답. 교재는 돌이 요로를 따라 이동할 때 심한 옆구리 통증, 오심·구토, 서혜부 방사통이 나타날 수 있다고 설명한다.',
+      '급성관상동맥계 증상과 더 가까운 조합이다.',
+      '호흡기계 객혈 설명에 가깝다.',
+      '요로결석의 대표 증상 조합이 아니다.'
+    ]
+  },
+  {
+    id:'119-q2-ems-e25-03',grade:'B',subject:'ems',scopeId:'E25',conceptId:'E25-C03',difficulty:'low',type:'기초생리형',
+    source:'2026 소방전술3(구급) 66·227쪽',pageVerified:true,reviewStatus:'manual-reviewed',examStyle:true,questionClass:'exam-style',
+    q:'혈액 구성요소와 기능의 연결로 옳은 것은?',
+    choices:[
+      '적혈구-산소운반 / 백혈구-면역 / 혈소판-지혈·응고',
+      '적혈구-지혈 / 백혈구-산소운반 / 혈소판-담즙분비',
+      '적혈구-면역 / 백혈구-혈압생성 / 혈소판-산소운반',
+      '세 구성요소 모두 기능이 동일하다'
+    ],a:0,
+    choiceExplanations:[
+      '정답. 소방전술3은 적혈구의 산소운반, 백혈구의 면역, 혈소판의 응고·지혈 역할을 설명한다.',
+      '각 혈구의 대표 기능을 서로 바꾼 오답이다.',
+      '백혈구와 혈소판의 기능을 잘못 연결했다.',
+      '세 구성요소는 서로 다른 대표 기능을 가진다.'
+    ]
+  },
+  {
+    id:'119-q2-ems-e25-04',grade:'B',subject:'ems',scopeId:'E25',conceptId:'E25-C04',difficulty:'mid',type:'처치형',
+    source:'2026 소방전술3(구급) 105·435쪽 · 질병관리청 국가건강정보포털 비출혈/안외상',pageVerified:true,reviewStatus:'manual-reviewed',examStyle:true,questionClass:'exam-style',
+    q:'눈·귀·코·목 응급의 초기 대응 원칙으로 가장 적절한 것은?',
+    choices:[
+      '심한 출혈·부종·이물이 기도를 위협하는지 먼저 보고, 눈 화학노출은 지체 없이 충분히 세척한다',
+      '눈 화학노출은 물질명을 완전히 확인할 때까지 세척하지 않는다',
+      '비출혈은 모든 경우 고개를 뒤로 젖혀 피를 삼키게 한다',
+      '인후·후두 부종이 있어도 기도 평가는 뒤로 미룬다'
+    ],a:0,
+    choiceExplanations:[
+      '정답. 기도위험은 ABC 우선순위로 보고 화학적 눈 손상은 즉시 세척하는 원칙을 적용한다.',
+      '화학적 눈 손상은 세척 지연이 추가 손상을 키울 수 있다.',
+      '비출혈에서 혈액의 기도 흡인을 줄이는 자세원칙과 반대다.',
+      '인후·후두 부종은 기도폐쇄로 진행할 수 있어 기도평가가 우선이다.'
+    ]
+  },
+  {
+    id:'119-q2-ems-e25-05',grade:'B',subject:'ems',scopeId:'E25',conceptId:'E25-C05',difficulty:'mid',type:'비교형',
+    source:'2026 응급처치학개론 출제범위 · 2026 소방전술3(구급) 390~394쪽 · 질병관리청 골관절염/통풍',pageVerified:true,reviewStatus:'manual-reviewed',examStyle:true,questionClass:'exam-style',
+    q:'비외상성 근골격계 질환의 구분으로 가장 적절한 것은?',
+    choices:[
+      '골관절염은 퇴행성, 통풍은 염증성 관절질환의 대표 예로 구분해 학습한다',
+      '골관절염과 통풍은 모두 반드시 외상 직후에만 발생한다',
+      '비외상성 근골격계 질환은 공식 시험범위와 무관하다',
+      '발열·전신상태 저하가 있어도 감염성 가능성은 고려하지 않는다'
+    ],a:0,
+    choiceExplanations:[
+      '정답. 공식 출제범위는 비외상성 근골격계 질환을 퇴행성·염증성·감염성으로 구분한다.',
+      '두 질환 모두 외상 직후에만 발생하는 질환이 아니다.',
+      '2026 응급처치학개론 범위에 비외상성 근골격계 질환이 포함된다.',
+      '전신증상이 동반되면 감염성 가능성 등 중증 원인을 함께 고려해야 한다.'
+    ]
   }
 ];
 const seen=new Set(V.questions.map(q=>q.id)),texts=new Set(V.questions.map(q=>String(q.q||'').replace(/\s+/g,' ').trim()));
