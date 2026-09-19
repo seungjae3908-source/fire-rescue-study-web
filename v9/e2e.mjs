@@ -98,6 +98,11 @@ try{
   await m.waitForSelector('.book-section .study-must');
   assert((await m.locator('.book-section .study-must-title').innerText()).includes('★ 시험필수'),'core learning exposes a compact exam-essential block');
   assert(await m.locator('.book-section .study-must li').count()>=1,'core learning underlines only curated must-remember points');
+  const starBefore=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
+  await m.locator('.book-section .study-star-btn').first().click();
+  const starAfter=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
+  assert(starAfter===starBefore+1,'core star saves the exact exam-essential point into pass notes');
+  assert(await m.locator('.book-section .study-star-btn.on').count()>=1,'saved core point visibly keeps its filled star state');
   assert((await m.locator('.book-section .study-must-title').innerText()).includes('전부 보기'),'core learning no longer truncates must-remember items to the first three');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
@@ -133,9 +138,9 @@ try{
   assert(['auto','scroll'].includes(scrollState.overflow),'mobile study uses one dedicated vertical body scroller');
   await noX(m,'mobile study detail');
 
-  const pageMap=await m.evaluate(()=>{const S=window.AITUTOR_V9.SourcePDF;return{fire1:S.pdfPage('fire1',14),fire2:S.pdfPage('fire2',352),ems:S.pdfPage('ems',72),fire1Back:S.bookPage('fire1',30),fire2Back:S.bookPage('fire2',362),emsBack:S.bookPage('ems',90),prevention1Pdf:S.pdfPage('prevention1',17),prevention1Book:S.bookPage('prevention1',17)}});
+  const pageMap=await m.evaluate(()=>{const S=window.AITUTOR_V9.SourcePDF;return{fire1:S.pdfPage('fire1',14),fire2:S.pdfPage('fire2',352),ems:S.pdfPage('ems',72),fire1Back:S.bookPage('fire1',30),fire2Back:S.bookPage('fire2',362),emsBack:S.bookPage('ems',90),prevention1Pdf:S.pdfPage('prevention1',3),prevention2Pdf:S.pdfPage('prevention2',3),law1Pdf:S.pdfPage('law1',3),law2Pdf:S.pdfPage('law2',332),law3Pdf:S.pdfPage('law3',3),law4Pdf:S.pdfPage('law4',281),law5Pdf:S.pdfPage('law5',499),prevention1Book:S.bookPage('prevention1',17),law2Book:S.bookPage('law2',344)}});
   assert(pageMap.fire1===30&&pageMap.fire2===362&&pageMap.ems===90&&pageMap.fire1Back===14&&pageMap.fire2Back===352&&pageMap.emsBack===72,'official textbook printed pages map to actual PDF pages for fire1/fire2/EMS');
-  assert(pageMap.prevention1Pdf===17&&pageMap.prevention1Book===0,'unproven prevention page offsets stay raw PDF anchors instead of being mislabeled as textbook pages');
+  assert(pageMap.prevention1Pdf===17&&pageMap.prevention2Pdf===15&&pageMap.law1Pdf===7&&pageMap.law2Pdf===344&&pageMap.law3Pdf===11&&pageMap.law4Pdf===287&&pageMap.law5Pdf===513&&pageMap.prevention1Book===3&&pageMap.law2Book===332,'uploaded 2026 prevention/law textbooks use verified printed-page offsets for all seven new books');
 
   await m.locator('.book-jumpbar [data-study-tab="source"]').click();
   await m.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
@@ -219,6 +224,8 @@ try{
   assert(await m.locator('[data-exam-report]').count()>=1,'recent exam history keeps an analysis action for locally detailed results');
 
   await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
+  assert((await m.locator('.top h1').innerText()).includes('합격노트'),'notes area is promoted to pass-note workspace');
+  assert(await m.locator('[data-pass-export]').count()===4,'pass-note workspace exposes fire, EMS, personal and rapid-review PDF exports');
   const fileInputStable=await m.evaluate(async()=>{
     const first=document.querySelector('#personalFile');
     for(let i=0;i<80&&window.AITUTOR_V9.App.runtime.docsLoading;i++)await new Promise(r=>setTimeout(r,25));
@@ -243,6 +250,8 @@ try{
   const uploadStatus=(await m.locator('[data-upload-status]').innerText()).trim();
   assert(uploadStatus.includes('분석 완료'),'personal PDF reports visible analysis completion; status='+uploadStatus+'; errors='+merr.join(' | '));
   await m.waitForSelector('[data-doc-open]');
+  await m.locator('[data-doc-pass]').first().click();
+  assert((await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.some(n=>n.sourceType==='pass-doc'))),'uploaded PDF/photo extraction can create an editable pass-note draft');
   await m.locator('[data-doc-open]').first().click();await m.waitForSelector('.doc-viewer');
   const viewer=await m.locator('.doc-viewer-text').innerText();
   assert(viewer.trim().length>20&&viewer.includes('[1쪽]'),'uploaded PDF extracted text can be opened and checked');
