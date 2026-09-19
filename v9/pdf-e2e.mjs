@@ -16,6 +16,17 @@ try{
     let buf;
     if(fixtureBase64){const bin=atob(fixtureBase64),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);buf=bytes.buffer}else{const res=await fetch('./fixtures/private-sample.pdf');buf=await res.arrayBuffer()}
     const file=new File([buf],'private-sample.pdf',{type:'application/pdf'});
+    const guardAudit={
+      emptyNeedsOcr:V.PrivateDocs.pdfPageNeedsOcr({items:[]},''),
+      goodNeedsOcr:V.PrivateDocs.pdfPageNeedsOcr({items:Array.from({length:20},(_,i)=>({str:'정상 교재 텍스트 '+i}))},'정상적인 한국어 교재 텍스트가 충분히 추출되어 OCR을 다시 돌릴 필요가 없는 페이지입니다. 숫자 20 kg 기준도 함께 포함합니다.'),
+      numberGood:V.LocalAI.numbersPreserved('높이 1.8m 이하, 유량 50~200%','높이 1.8m 이하, 유량 50~200%'),
+      numberBad:V.LocalAI.numbersPreserved('높이 1.8m 이하, 유량 50~200%','높이 2.0m 이하, 유량 50~200%'),
+      ordered:V.PrivateDocs.nativePdfText({items:[
+        {str:'첫째 줄 A',transform:[1,0,0,10,10,200],height:10},
+        {str:'첫째 줄 B',transform:[1,0,0,10,100,200],height:10},
+        {str:'둘째 줄',transform:[1,0,0,10,10,180],height:10}
+      ]})
+    };
     const ingested=await V.PrivateDocs.ingest(file,{kind:'personal',title:'PDF QA SAMPLE',keepOriginal:true});
     const sourceAttached=await V.SourcePDF.attach('ems',file);
     const host=document.createElement('div');host.style.width='800px';document.body.appendChild(host);
@@ -28,8 +39,11 @@ try{
     const otherDocs=await V.PrivateDocs.listDocuments('personal');
     const otherHits=await V.PrivateDocs.search('SAMPLE 123',{kind:'personal',limit:10});
     V.Store.switchOwner(owner);
-    return{ingested,doc:docs.find(d=>d.title==='PDF QA SAMPLE'),hits:hits.length,hitText:hits[0]?.text||'',otherDocs:otherDocs.length,otherHits:otherHits.length,sourceAttached,sourceRender,sourceDom};
+    return{guardAudit,ingested,doc:docs.find(d=>d.title==='PDF QA SAMPLE'),hits:hits.length,hitText:hits[0]?.text||'',otherDocs:otherDocs.length,otherHits:otherHits.length,sourceAttached,sourceRender,sourceDom};
   },fixtureBase64);
+  assert(result.guardAudit.emptyNeedsOcr===true&&result.guardAudit.goodNeedsOcr===false,'hybrid extraction sends only empty/sparse/low-quality text pages to OCR');
+  assert(result.guardAudit.numberGood===true&&result.guardAudit.numberBad===false,'AI OCR correction guard rejects changed numeric/unit facts');
+  assert(/첫째 줄 A 첫째 줄 B\n둘째 줄/.test(result.guardAudit.ordered),'native PDF text reconstruction preserves line reading order');
   assert(result.ingested.chunks>=1,'PDF.js creates at least one private text chunk');
   assert(result.doc?.pageCount===1,'PDF page count preserved');
   assert(result.doc?.extractionVersion==='v10-hybrid-ocr-ai','private PDF uses hybrid text/OCR/AI extraction contract');
