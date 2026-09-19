@@ -14,7 +14,7 @@ const files=[
   'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js',
   'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js',
   'questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
-  'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-highyield4-119.js','textbook-grounded-119.js',
+  'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','textbook-grounded-119.js',
   'visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
 ];
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
@@ -44,7 +44,7 @@ const highYieldZero=concepts.filter(x=>x.highYield&&x.verified===0);
 const zeroVerified=concepts.filter(x=>x.verified===0);
 const zeroVerifiedEms=zeroVerified.filter(x=>x.subject==='ems');
 const zeroVerifiedFire=zeroVerified.filter(x=>x.subject==='fire');
-const zeroVerifiedTarget=26;
+const zeroVerifiedTarget=0;
 const result={
   version:'119-verified-question-coverage-v4',
   subjectTotals,
@@ -69,6 +69,8 @@ console.log('VERIFIED_QUESTION_COVERAGE_HIGH_YIELD_GAPS');console.table(highYiel
 console.log('VERIFIED_QUESTION_COVERAGE_LOWEST_80');console.table(concepts.slice(0,80));
 if(structuredVerified.length!==verified.length)throw new Error('VERIFIED_QUESTION_STRUCTURE_GAP '+JSON.stringify({verified:verified.length,structured:structuredVerified.length}));
 if(zeroVerifiedEms.length)throw new Error('EMS_ZERO_VERIFIED_REMAINS '+JSON.stringify(zeroVerifiedEms.map(x=>({id:x.id,title:x.title}))));
+if(zeroVerifiedFire.length)throw new Error('FIRE_ZERO_VERIFIED_REMAINS '+JSON.stringify(zeroVerifiedFire.map(x=>({id:x.id,title:x.title}))));
+if(zeroVerified.length)throw new Error('ZERO_VERIFIED_CONCEPT_REMAINS '+JSON.stringify(zeroVerified.map(x=>({id:x.id,title:x.title,subject:x.subject}))));
 if(zeroVerified.length>zeroVerifiedTarget)throw new Error('ZERO_VERIFIED_BREADTH_REGRESSION '+JSON.stringify({actual:zeroVerified.length,target:zeroVerifiedTarget,fire:zeroVerifiedFire.length,ems:zeroVerifiedEms.length}));
 if(highYieldZero.length)throw new Error('HIGH_YIELD_VERIFIED_ZERO '+JSON.stringify(highYieldZero.map(x=>({id:x.id,title:x.title}))));
 if(highYieldUnderTwo.length)throw new Error('HIGH_YIELD_VERIFIED_UNDER_TWO '+JSON.stringify(highYieldUnderTwo.map(x=>({id:x.id,title:x.title,verified:x.verified}))));
