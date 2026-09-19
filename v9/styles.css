@@ -410,3 +410,17 @@
   .book-section .lesson,.book-section .lesson p,.book-section .lesson li{max-width:100%}
   .book-section .lesson p,.book-section .lesson li{word-break:keep-all;overflow-wrap:anywhere}
 }
+
+
+/* Quality 2.0 — one-question concept practice */
+.study-quiz-single{min-width:0}
+.study-quiz-pager{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center;margin-top:10px;position:sticky;bottom:0;padding:8px 0 2px;background:linear-gradient(to bottom,rgba(8,21,36,0),#081524 24%)}
+.study-quiz-progress{display:grid;place-items:center;min-width:76px;gap:2px}
+.study-quiz-progress b{font-size:13px}
+.study-quiz-progress small{font-size:11px;color:var(--muted)}
+.study-quiz-pager .btn{min-width:0}
+@media(max-width:720px){
+  .study-quiz-pager{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);gap:6px}
+  .study-quiz-pager .btn{min-height:46px!important;font-size:13px!important;padding:8px 6px!important}
+  .study-quiz-progress{min-width:0}
+}
