@@ -115,10 +115,10 @@ try{
     if(issues.length>=maxIssues)break;
   }
   console.log('GLOBAL_TYPOGRAPHY_AUDIT_SUMMARY',JSON.stringify({states,issues:issues.length,warningGroups:warnings.length},null,2));
-  if(warnings.length)console.log('GLOBAL_TYPOGRAPHY_AUDIT_WARNINGS',JSON.stringify(warnings.slice(0,30),null,2));
-  if(issues.length){
-    console.error('GLOBAL_TYPOGRAPHY_AUDIT_ISSUES',JSON.stringify(issues,null,2));
-    throw new Error('GLOBAL_TYPOGRAPHY_AUDIT_FAILED '+issues.length);
+  if(warnings.length)console.error('GLOBAL_TYPOGRAPHY_AUDIT_SMALL_TEXT',JSON.stringify(warnings.slice(0,60),null,2));
+  if(issues.length||warnings.length){
+    if(issues.length)console.error('GLOBAL_TYPOGRAPHY_AUDIT_ISSUES',JSON.stringify(issues,null,2));
+    throw new Error('GLOBAL_TYPOGRAPHY_AUDIT_FAILED '+JSON.stringify({issues:issues.length,smallTextGroups:warnings.length}));
   }
-  assert(true,'all concept tabs and active exam pass global typography/layout audit');
+  assert(true,'all concept tabs and active exam pass global typography/layout audit with no clipped or sub-11px student controls');
 }finally{await browser.close()}
