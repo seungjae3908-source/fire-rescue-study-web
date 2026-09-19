@@ -154,7 +154,7 @@ try{
   await m.waitForSelector('.question-card');
   const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형');return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id)}}); 
   assert(calcBank.filter==='calc'&&calcBank.count>=8&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with at least the eight source-backed drills');
-  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===17,'calculation practice includes thirteen official-source drills plus four clearly labeled oxygen/drip practice drills');
+  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===21,'calculation practice includes the expanded source-backed bank while preserving legacy oxygen/drip practice labels');
   await noX(m,'mobile calculation practice');
   const calcEvidence=await m.evaluate(()=>{const V=window.AITUTOR_V9;return{
     oxygen:(V.contentPacks.authored['E09-C07']?.calculations||[]).map(x=>({formula:x.formula,tier:x.evidenceTier,note:x.note})),
@@ -162,9 +162,9 @@ try{
     oxygenQs:V.questions.filter(q=>/^119-calc-oxygen-/.test(q.id||'')).map(q=>q.grade),
     dripQs:V.questions.filter(q=>/^119-calc-drip-/.test(q.id||'')).map(q=>q.grade)
   }});
-  assert(calcEvidence.oxygen.some(x=>x.tier==='reconstructed-exam-practice'&&/P - R/.test(x.formula||'')),'oxygen-cylinder formula is explicitly labeled reconstructed-practice, not official verified');
-  assert(calcEvidence.drip.some(x=>x.tier==='standard-education-practice'&&/gtt\/min/.test(x.formula||'')),'IV-drip formula is explicitly labeled standard-education practice');
-  assert(calcEvidence.oxygenQs.length===2&&calcEvidence.dripQs.length===2&&[...calcEvidence.oxygenQs,...calcEvidence.dripQs].every(x=>x==='P'),'nonofficial calculation drills cannot enter verified real-mock credit');
+  assert(calcEvidence.oxygen.some(x=>x.tier==='reconstructed-exam-practice')&&calcEvidence.oxygen.some(x=>x.tier==='official-source-practice'&&/P - R/.test(x.formula||'')),'oxygen-cylinder lesson keeps reconstructed practice separate from the official-source calculation contract');
+  assert(calcEvidence.drip.some(x=>x.tier==='standard-education-practice')&&calcEvidence.drip.some(x=>x.tier==='regulated-device-source-practice'&&/gtt\/min/.test(x.formula||'')),'IV-drip lesson keeps legacy education practice separate from regulated-device source calculation');
+  assert(calcEvidence.oxygenQs.length===4&&calcEvidence.dripQs.length===4&&[...calcEvidence.oxygenQs,...calcEvidence.dripQs].every(x=>x==='P'),'legacy and newly source-backed oxygen/drip calculation drills all remain P-grade and cannot enter verified real-mock credit');
   await go(m,'exam');await m.waitForSelector('.exam-start');
   const realStart=m.locator('[data-exam-start="real"]');
   assert(await realStart.count()===1,'real mock start is enabled only after verified fire+EMS scope coverage closes');
