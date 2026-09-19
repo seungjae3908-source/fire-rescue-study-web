@@ -43,7 +43,7 @@ try{
   },fixtureBase64);
   assert(result.guardAudit.emptyNeedsOcr===true&&result.guardAudit.goodNeedsOcr===false,'hybrid extraction sends only empty/sparse/low-quality text pages to OCR');
   assert(result.guardAudit.numberGood===true&&result.guardAudit.numberBad===false,'AI OCR correction guard rejects changed numeric/unit facts');
-  assert(/첫째 줄 A 첫째 줄 B\n둘째 줄/.test(result.guardAudit.ordered),'native PDF text reconstruction preserves line reading order');
+  assert(/첫째 줄 A 첫째 줄 B\n+둘째 줄/.test(result.guardAudit.ordered),'native PDF text reconstruction preserves line reading order while allowing paragraph spacing');
   assert(result.ingested.chunks>=1,'PDF.js creates at least one private text chunk');
   assert(result.doc?.pageCount===1,'PDF page count preserved');
   assert(result.doc?.extractionVersion==='v10-hybrid-ocr-ai','private PDF uses hybrid text/OCR/AI extraction contract');
