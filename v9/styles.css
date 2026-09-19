@@ -744,3 +744,15 @@ small{font-size:max(11px,.78em)}
 @media(max-width:720px){
   .note-official-lock>p{font-size:14px;line-height:1.65}
 }
+
+
+/* Quality 2.0 — tablet legibility hardening (721–900px) */
+@media(min-width:721px) and (max-width:900px){
+  .brand small,.account-chip small{font-size:11px!important;line-height:1.35}
+  .confidence button{font-size:12px!important;min-height:36px;padding:7px 10px}
+  .row small,.today-item small,.syllabus-group-head>small{font-size:11px!important;line-height:1.45}
+  .metric span{font-size:11px!important}
+  .nav button{font-size:13px}
+  .btn.small{font-size:12px}
+  .concepts button{font-size:12px}
+}
