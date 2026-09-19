@@ -46,6 +46,7 @@ function statementCandidate(c,text,index,kind='핵심'){
   const getter=(pc,pp)=>{
     if(kind==='주의')return (pp?.traps||[])[index%(pp?.traps?.length||1)]||pp?.summary;
     if(kind==='심화')return (pp?.deepSections||[])[index%(pp?.deepSections?.length||1)]?.body||pp?.summary;
+    if(kind==='특징')return (pp?.features||[])[index%(pp?.features?.length||1)]||(pp?.must||[])[0]||pp?.summary;
     return (pp?.must||[])[index%(pp?.must?.length||1)]||(pp?.detail||[])[0]||pp?.summary
   };
   const peers=peerStatementChoices(c,getter,index*4+3);if(peers.length<3)return null;
@@ -53,8 +54,8 @@ function statementCandidate(c,text,index,kind='핵심'){
   const correct=clip(text,135);
   const ar=arrange(id,correct,peers.map(({text,concept})=>({text,explanation:`오답. 이 문장은 ‘${concept.title}’ 쪽 내용이 섞인 선택지로 현재 개념의 핵심과 다르다.`})),`정답. 이 문장은 ‘${c.title}’에서 확인해야 할 ${kind} 내용이다.`);
   if(!ar)return null;
-  const stems={핵심:`다음 중 ${c.title}의 핵심 내용으로 옳은 것은?`,주의:`다음 중 ${c.title}에서 주의해야 할 내용으로 옳은 것은?`,심화:`다음 중 ${c.title}의 원리·설명으로 옳은 것은?`};
-  return{id,difficulty:kind==='주의'?'high':index%3===0?'mid':'low',type:kind==='주의'?'함정판별형':kind==='심화'?'원리형':'핵심형',q:stems[kind],...ar}
+  const stems={핵심:`다음 중 ${c.title}의 핵심 내용으로 옳은 것은?`,주의:`다음 중 ${c.title}에서 주의해야 할 내용으로 옳은 것은?`,심화:`다음 중 ${c.title}의 원리·설명으로 옳은 것은?`,특징:`다음 중 ${c.title}의 특징으로 가장 적절한 것은?`};
+  return{id,difficulty:kind==='주의'?'high':kind==='특징'?(index%2?'mid':'low'):index%3===0?'mid':'low',type:kind==='주의'?'함정판별형':kind==='심화'?'원리형':kind==='특징'?'특징형':'핵심형',q:stems[kind],...ar}
 }
 function compareCandidate(c,row,index){
   if(!Array.isArray(row)||!row[0]||!row[1])return null;
@@ -68,6 +69,7 @@ function candidates(c,p){
   const quotes=uniq([p.summary,...(p.detail||[]),...(p.deepSections||[]).map(x=>x.body)]).filter(x=>x.length>=20);
   quotes.slice(0,6).forEach((x,i)=>out.push(titleCandidate(c,x,i)));
   uniq(p.must||[]).slice(0,5).forEach((x,i)=>out.push(statementCandidate(c,x,i,'핵심')));
+  uniq(p.features||[]).slice(0,4).forEach((x,i)=>out.push(statementCandidate(c,x,i,'특징')));
   uniq(p.traps||[]).slice(0,3).forEach((x,i)=>out.push(statementCandidate(c,x,i,'주의')));
   uniq((p.deepSections||[]).map(x=>x.body)).slice(0,4).forEach((x,i)=>out.push(statementCandidate(c,x,i,'심화')));
   (p.compare||[]).slice(0,4).forEach((x,i)=>out.push(compareCandidate(c,x,i)));
@@ -77,7 +79,8 @@ function candidates(c,p){
 const existingIds=new Set(V.questions.map(q=>q.id)),existingTexts=new Set(V.questions.map(q=>norm(q.q))),added=[];
 for(const c of concepts){
   const p=V.contentPacks.authored[c.id];if(!p||p.status!=='verified')continue;
-  const existing=V.QuestionQuality119.forConcept(c.id),need=Math.max(0,12-existing.length);if(!need)continue;
+  const highYield=/플래시오버|백드래프트|위험물|스프링클러|포소화|심정지|소생술|쇼크|환자 평가|기도|호흡|뇌졸중|화상|출혈/.test(c.title);
+  const target=highYield?20:12,existing=V.QuestionQuality119.forConcept(c.id),need=Math.max(0,target-existing.length);if(!need)continue;
   const pool=candidates(c,p),usedStem=new Set();
   for(const cand of pool){
     if(added.filter(q=>q.conceptId===c.id).length>=need)break;
@@ -100,5 +103,5 @@ for(const c of concepts){
 V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));
 V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);
 V.QuestionDifficulty?.annotate?.(V.questions);
-V.Quality2QuestionFactory119={version:'119-quality2-question-factory-v1',added:added.length,targetPerConcept:12,grade:'P',pastExamClaim:false};
+V.Quality2QuestionFactory119={version:'119-quality2-question-factory-v2',added:added.length,targetPerConcept:12,highYieldTarget:20,grade:'P',pastExamClaim:false};
 })();
