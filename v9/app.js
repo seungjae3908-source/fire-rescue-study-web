@@ -34,6 +34,28 @@ function calculationBlocks(c,pack){
   if(!rows.length)return'';
   return rows.map((x,i)=>`<section class="calc-lab" data-calculation-index="${i}"><div class="lesson-heading"><div><span class="eyebrow">계산문제</span><h3>${esc(x.title||'공식 계산')}</h3></div></div><div class="calc-formula">${esc(x.formula)}</div>${x.note?`<div class="calc-example"><b>계산 원칙</b><p>${esc(x.note)}</p>${x.example?`<p><code>${esc(x.example)}</code></p>`:''}</div>`:''}</section>`).join('');
 }
+function quickCoreBlock(pack){
+  const text=pack?.studySchema?.quick30||pack?.summary||'';if(!text)return'';
+  return `<section class="study-quick"><div class="study-quick-title">30초 핵심</div><p class="lead">${esc(text)}</p></section>`
+}
+function schemaRows(title,rows,cls=''){
+  const vals=uniqueTextRows(rows||[]).slice(0,4);if(!vals.length)return'';
+  return `<div class="study-schema-item ${cls}"><b>${esc(title)}</b><ul>${vals.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`
+}
+function studySchemaBlock(pack){
+  const s=pack?.studySchema;if(!s)return'';
+  const definition=uniqueTextRows([s.definition]),easy=uniqueTextRows([s.easy]).filter(x=>x!==s.definition);
+  const items=[
+    schemaRows('정의 · 개념',definition,'definition'),
+    schemaRows('쉽게 이해',easy,'easy'),
+    schemaRows('발생·적용 조건',s.conditions,'conditions'),
+    schemaRows('원리 · 작동',s.mechanisms,'mechanism'),
+    schemaRows('시기 · 단계',s.timingStages,'timing'),
+    schemaRows('전조 · 위험신호',s.warningSigns,'warning'),
+    schemaRows('이전 · 이후',s.beforeAfter,'before-after')
+  ].filter(Boolean);
+  return items.length?`<section class="study-schema"><div class="study-schema-title">개념 완전정리</div><div class="study-schema-grid">${items.join('')}</div></section>`:''
+}
 function featureBlock(c,pack){
   const rows=uniqueTextRows(pack?.features||[]);if(!rows.length)return'';
   return `<section class="study-features"><div class="study-features-title">★ 특징 · 핵심 정리</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'feature',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text study-important">${esc(x)}</span></li>`}).join('')}</ul></section>`;
@@ -59,7 +81,7 @@ function specialCombustibleBlock(pack){
 }
 function sourceBlock(c,pack){const links=(pack?.officialLinks||[]).filter(x=>x?.url);return `<div class="lesson source-only"><p class="lead">${esc(pack.source||V.sourceLabel(c.id)||'공식교재')}</p><div class="source-primary-actions"><button class="btn primary" data-source-concept="${c.id}">PDF 바로보기</button><button class="btn" data-source-download="${c.id}">PDF 다운로드</button></div>${links.length?`<div class="source-law-links"><b>공식 추가 근거</b>${links.map(x=>`<a class="source-law-link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)} <span aria-hidden="true">↗</span></a>`).join('')}</div>`:''}</div>`}
 function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.id)||[],detail=pack.detail||[],sections=uniqueSections(pack.deepSections||[]),coreRows=uniqueTextRows(detail,pack.summary);
-  if(tab==='detail'){const detailRows=sections.length?sections:uniqueTextRows(detail).map((body,i)=>({title:i===0?'정의 · 개념':'상세 정리',body,bullets:[]}));return `<div class="lesson detail-view">${featureBlock(c,pack)}${mustBlock(c,pack)}${detailRows.map(detailSection).join('')}${numberBlock(c,pack)}${visualBlocks(pack)}${hazmatBlock(c)}${specialCombustibleBlock(pack)}${calculationBlocks(c,pack)}${comparisonBlock(pack)}${trapBlock(pack)}</div>`}
+  if(tab==='detail'){const detailRows=sections.length?sections:uniqueTextRows(detail).map((body,i)=>({title:i===0?'정의 · 개념':'상세 정리',body,bullets:[]}));return `<div class="lesson detail-view">${quickCoreBlock(pack)}${featureBlock(c,pack)}${mustBlock(c,pack)}${studySchemaBlock(pack)}${detailRows.map(detailSection).join('')}${numberBlock(c,pack)}${visualBlocks(pack)}${hazmatBlock(c)}${specialCombustibleBlock(pack)}${calculationBlocks(c,pack)}${comparisonBlock(pack)}${trapBlock(pack)}</div>`}
   if(tab==='quiz'){
     if(!qs.length)return '<div class="lesson quiz-view"><div class="empty book-empty">아직 준비된 문제가 없습니다.</div></div>';
     const raw=Number(runtime.studyQuizIndex[c.id]||0),idx=Math.max(0,Math.min(raw,qs.length-1));runtime.studyQuizIndex[c.id]=idx;
@@ -67,7 +89,7 @@ function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.i
     return `<div class="lesson quiz-view"><div class="quiz-overview"><b>개념 확인 문제</b><span>${answered}/${qs.length} 답변 · 하/중/상 혼합</span></div><div class="study-quiz-single">${qcard(qs[idx],true)}</div><div class="study-quiz-pager"><button class="btn" data-study-quiz-prev ${idx===0?'disabled':''}>← 이전</button><div class="study-quiz-progress"><b>${idx+1} / ${qs.length}</b><small>${state().answers[qs[idx].id]===undefined?'미답':state().answers[qs[idx].id]===qs[idx].a?'정답':'오답'}</small></div><button class="btn primary" data-study-quiz-next ${idx>=qs.length-1?'disabled':''}>다음 →</button></div></div>`;
   }
   if(tab==='source')return sourceBlock(c,pack);
-  return `<div class="lesson core-view"><p class="lead">${esc(pack.summary)}</p>${featureBlock(c,pack)}${mustBlock(c,pack)}${numberBlock(c,pack)}${coreRows.map(x=>`<div class="core-line"><p>${esc(x)}</p></div>`).join('')}${hazmatBlock(c)}${trapBlock(pack)}</div>`;
+  return `<div class="lesson core-view">${quickCoreBlock(pack)}${featureBlock(c,pack)}${mustBlock(c,pack)}${numberBlock(c,pack)}${coreRows.map(x=>`<div class="core-line"><p>${esc(x)}</p></div>`).join('')}${hazmatBlock(c)}${trapBlock(pack)}</div>`;
 }
 function lessonBook(c,pack){const tab=['core','detail','quiz','source'].includes(state().studyTab)?state().studyTab:'core';return `<article class="book-mobile"><nav class="book-jumpbar">${[['core','핵심'],['detail','상세'],['quiz','문제'],['source','원문']].map(([k,l])=>`<button class="${tab===k?'on':''}" data-study-tab="${k}">${l}</button>`).join('')}</nav><section class="book-section">${lessonContent(c,pack,tab)}</section></article>`}
 function studyRail(c,pack,st){return `<aside class="study-rail"><section class="rail-card"><h3>${esc(c.title)}</h3><div class="rail-actions"><button class="btn primary" data-tutor-concept="${c.id}">AI 질문</button><button class="btn" data-bank-concept="${c.id}">문제</button><button class="btn ghost" data-source-concept="${c.id}">원문</button></div></section></aside>`}
