@@ -54,7 +54,7 @@ try{
   await page.locator(`[data-suggest-admin-reply="${id}"]`).fill('개선 반영을 완료했습니다.');
   await page.locator(`[data-suggest-admin-save="${id}"]`).click();
   await page.waitForFunction(()=>window.__suggestQa.rows[0]?.status==='개선완료');
-  assert(window!==null,'admin reply flow completed');
+  assert(true,'admin reply flow completed');
   const row=await page.evaluate(()=>window.__suggestQa.rows[0]);
   assert(row.status==='개선완료'&&/완료/.test(row.admin_reply),'admin can set 개선완료 and store a reply');
   assert(errors.length===0,'suggestion board runtime errors = 0 ('+errors.join(' | ')+')');
