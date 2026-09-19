@@ -52,7 +52,7 @@ function trapBlock(pack){
   const rows=uniqueTextRows(pack?.traps||[]);if(!rows.length)return'';
   return `<section class="study-traps"><div class="study-traps-title">⚠ 헷갈림 주의</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
 }
-function comparisonBlock(pack){return pack.compare?.length?`<section class="detail-compare"><h3>비슷한 개념 비교</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>핵심</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`:''}
+function comparisonBlock(pack){const title=pack.compareFamily?.title||'비슷한 개념 비교';return pack.compare?.length?`<section class="detail-compare"><h3>${esc(title)}</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>핵심</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`:''}
 function specialCombustibleBlock(pack){
   const rows=pack?.specialCombustibles||[],rules=pack?.specialCombustibleStorage||[];if(!rows.length)return'';
   return `<section class="hazmat-reference special-combustible-reference"><div class="lesson-heading"><div><span class="eyebrow">2026 현행 법령</span><h3>특수가연물 품명별 기준수량</h3></div></div><div class="table-scroll"><table class="hazmat-table"><thead><tr><th>품명</th><th>기준수량</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x[0])}</td><td><b>${esc(x[1])}</b></td></tr>`).join('')}</tbody></table></div>${rules.length?`<div class="lesson-box"><b>저장·취급 핵심</b><ul>${rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}</section>`;
