@@ -13,7 +13,7 @@ for(const file of [
   'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
   'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js',
-  'questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
+  'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
   'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
 ]){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
@@ -41,6 +41,12 @@ ok(V.CalculationQuestions119?.added===21,'calculation practice bank adds twenty-
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
 ok(calculationPractice.length===21&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
 ok(calculationPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'calculation practice makes no unsupported past-exam claim');
+const calcQ2=(V.questions||[]).filter(q=>/^119-q2calc-/.test(q.id||''));
+ok(calcQ2.length===24&&calcQ2.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'Quality 2.0 keeps twenty-four numeric calculation variants practice-only');
+const calcV3=(V.questions||[]).filter(q=>/^119-calc3-/.test(q.id||''));
+const calcV3Audit=V.CalculationTraining119?.audit?.();
+ok(calcV3.length===42&&calcV3.every(q=>q.grade==='P'&&q.type==='계산형'&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'six-stage calculation bank adds forty-two P-grade drills without past-exam credit');
+ok(calcV3Audit?.ready===true&&calcV3Audit?.rows?.length===7&&calcV3Audit.rows.every(x=>Object.values(x.stages).every(n=>n>=1)),'all seven calculation families cover understand basic unit reverse trap and exam stages');
 ok(V.LawQuestions119?.added===18,'eighteen current-law practice questions are loaded');
 const lawPractice=(V.questions||[]).filter(q=>/^119-law-/.test(q.id||''));
 ok(lawPractice.length===18&&lawPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'current-law questions stay practice-only and pass the exam-style gate');
@@ -472,6 +478,7 @@ ok(sw.includes("'./questions-pals-advanced-119.js'"),'official pediatric ALS pra
 ok(sw.includes("'./questions-fire-terminology-119.js'"),'exact-page fire terminology practice bank is offline-cached');
 ok(sw.includes("'./exam-gap-enrichment-119.js'"),'exam gap enrichment is offline-cached');
 ok(sw.includes("'./questions-calculation-119.js'"),'calculation practice bank is offline-cached');
+ok(sw.includes("'./calculation-training-v3-119.js'"),'six-stage calculation training is offline-cached');
 ok(sw.includes("'./questions-law-119.js'"),'current-law practice bank is offline-cached');
 ok(sw.includes("'./questions-special-combustible-119.js'"),'special-combustible practice bank is offline-cached');
 ok(sw.includes("'./questions-ems-gap-practice-119.js'"),'CBRN/PALS practice bank is offline-cached');
