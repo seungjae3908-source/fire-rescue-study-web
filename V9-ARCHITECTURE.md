@@ -87,3 +87,8 @@ Every concept has an official source range. A Concept Pack can show detailed cla
 - runtime errors = 0
 
 Only after all gates pass should root `index.html` switch from v8.6 to v9.
+
+
+## Release CI
+
+V9 release verification runs on pull requests and on pushes to both `feat/v9-learning-workspace` and `main`.
