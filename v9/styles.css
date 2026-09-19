@@ -650,3 +650,40 @@
   text-decoration-color:rgba(226,235,247,.58);
   text-decoration-skip-ink:auto;
 }
+
+
+/* Quality 2.0 — final legibility / table hardening discovered by 2,896-state audit */
+.compare td,
+.compare th{
+  min-width:0!important;
+  max-width:100%;
+  white-space:normal!important;
+  word-break:break-word!important;
+  overflow-wrap:anywhere!important;
+  hyphens:auto;
+}
+.compare td *{min-width:0;max-width:100%;white-space:normal!important;overflow-wrap:anywhere!important}
+small{font-size:max(11px,.78em)}
+.btn.small{font-size:12px}
+.seg button{font-size:11px}
+.top .crumb{font-size:12px}
+.study-toolbar .path{font-size:12px}
+.concept-head .id,.concept-head .scope-label{font-size:11px}
+.concept-head p{font-size:12px}
+.tabbar button{font-size:11px}
+.outline-head>div small{font-size:11px}
+.syllabus-group-head>b{font-size:12px}
+.syllabus-group-head>small{font-size:11px}
+.concepts button{font-size:12px;line-height:1.45}
+.lesson-box b{font-size:12px}
+.source-box{font-size:11px}
+.rail-chips button,.rail-note small{font-size:11px}
+.metric span,.today-item small{font-size:11px}
+.today-item .score{font-size:11px}
+.today-item b{font-size:13px}
+@media(max-width:820px){
+  .compare tr{min-width:0!important}
+  .compare td{min-width:0!important}
+  .compare td:first-child{overflow-wrap:anywhere!important}
+  .compare td:last-child{overflow-wrap:anywhere!important;word-break:break-word!important}
+}
