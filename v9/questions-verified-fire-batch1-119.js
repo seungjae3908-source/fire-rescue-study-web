@@ -135,7 +135,8 @@ const Q=[
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
 const ids=new Set(V.questions.map(q=>q.id)),texts=new Set(V.questions.map(q=>norm(q.q)));let added=0;
 for(const q of Q){
-  if(ids.has(q.id)||texts.has(norm(q.q)))continue;
+  if(ids.has(q.id))throw Error('VERIFIED_FIRE_BATCH1_DUP_ID '+q.id);
+  if(texts.has(norm(q.q)))throw Error('VERIFIED_FIRE_BATCH1_DUP_TEXT '+q.id+' :: '+q.q);
   q.ex=q.choiceExplanations[q.a];
   q.examStyle=true;q.questionClass='exam-style';q.pageVerified=true;q.reviewStatus='source-reviewed';q.pastExamClaim=false;
   if(!Array.isArray(q.choices)||q.choices.length!==4||new Set(q.choices.map(norm)).size!==4)throw Error('VERIFIED_FIRE_BATCH1_CHOICES '+q.id);
