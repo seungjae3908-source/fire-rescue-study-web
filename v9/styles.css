@@ -839,3 +839,38 @@ small{font-size:max(11px,.78em)}
   .study-schema-item>b{font-size:13px}
   .study-schema-item li{font-size:14px;line-height:1.62}
 }
+
+/* Quality 2.0 — canonical responsive study-table column policy */
+.lesson table{
+  max-width:100%;
+}
+@media(max-width:720px){
+  .hazmat-reference .table-scroll{
+    max-width:100%;
+    overflow:visible;
+  }
+  .hazmat-reference .hazmat-table{
+    width:100%;
+    max-width:100%;
+    min-width:0!important;
+    table-layout:auto!important;
+  }
+  .hazmat-reference .hazmat-table tr{
+    grid-template-columns:minmax(0,1fr) max-content!important;
+    max-width:100%;
+  }
+  .hazmat-reference .hazmat-table td:first-child{
+    width:auto!important;
+    min-width:0!important;
+    white-space:normal!important;
+    word-break:keep-all;
+    overflow-wrap:anywhere;
+  }
+  .hazmat-reference .hazmat-table td:last-child{
+    width:auto!important;
+    min-width:max-content!important;
+    max-width:none!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+  }
+}
