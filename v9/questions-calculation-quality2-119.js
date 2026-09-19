@@ -68,7 +68,7 @@ drip('119-q2calc-drip-03',750,6);
 
 function heat(id,m,cp,dt){
   const ans=round(m*cp*dt,1);
-  put({id,subject:'fire',scopeId:'F03',conceptId:'F03-C02',source:'2026 소방전술1(화재2) · Q=m×c×ΔT',q:'질량 '+m+'g, 비열 '+cp+'cal/g·℃인 물질의 온도를 '+dt+'℃ 올리는 데 필요한 감열량은?',correct:fmt(ans)+'cal',wrong:[fmt(m*cp)+'cal',fmt(cp*dt)+'cal',fmt(ans/2)+'cal'],explain:'Q='+m+'×'+cp+'×'+dt+'='+fmt(ans)+'cal'});
+  put({id,subject:'fire',scopeId:'F03',conceptId:'F03-C02',source:'2026 소방전술1(화재2) · Q=m×c×ΔT',q:'질량 '+m+'g, 비열 '+cp+'cal/g·℃인 물질의 온도를 '+dt+'℃ 올리는 데 필요한 감열량은?',correct:fmt(ans)+'cal',wrong:[fmt(m*cp)+'cal',fmt(cp*dt)+'cal',fmt(ans+25)+'cal'],explain:'Q='+m+'×'+cp+'×'+dt+'='+fmt(ans)+'cal'});
 }
 heat('119-q2calc-heat-01',2,1,50);
 heat('119-q2calc-heat-02',5,.5,40);
@@ -87,7 +87,7 @@ foam('119-q2calc-foam-02','expand',900,75);
 
 function gas(id,p1,v1,p2){
   const ans=round(p1*v1/p2,2);
-  put({id,subject:'fire',scopeId:'F03',conceptId:'F03-C03',difficulty:'high',source:'KOSHA 공식 계산자료 · 보일 법칙 P1V1=P2V2',q:'온도가 일정할 때 P1='+p1+', V1='+v1+'L, P2='+p2+'이면 V2는?',correct:fmt(ans)+'L',wrong:[fmt(round(v1*p2/p1,2))+'L',fmt(v1)+'L',fmt(ans*2)+'L'],explain:'V2=P1×V1÷P2='+p1+'×'+v1+'÷'+p2+'='+fmt(ans)+'L'});
+  put({id,subject:'fire',scopeId:'F03',conceptId:'F03-C03',difficulty:'high',source:'KOSHA 공식 계산자료 · 보일 법칙 P1V1=P2V2',q:'온도가 일정할 때 P1='+p1+', V1='+v1+'L, P2='+p2+'이면 V2는?',correct:fmt(ans)+'L',wrong:[fmt(round(v1*p2/p1,2))+'L',fmt(v1)+'L',fmt(ans+3)+'L'],explain:'V2=P1×V1÷P2='+p1+'×'+v1+'÷'+p2+'='+fmt(ans)+'L'});
 }
 gas('119-q2calc-gas-01',1,10,2);
 gas('119-q2calc-gas-02',2,6,3);
