@@ -57,21 +57,19 @@ function studySchemaBlock(pack){
   return items.length?`<section class="study-schema"><div class="study-schema-title">개념 완전정리</div><div class="study-schema-grid">${items.join('')}</div></section>`:''
 }
 function featureBlock(c,pack){
-  const rows=uniqueTextRows(pack?.features||[]);if(!rows.length)return'';
+  const rows=V.StudyEmphasis119?.featureRows?.(pack)||[];if(!rows.length)return'';
   return `<section class="study-features"><div class="study-features-title">★ 특징 · 핵심 정리</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'feature',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text study-important">${esc(x)}</span></li>`}).join('')}</ul></section>`;
 }
 function mustBlock(c,pack){
-  const rows=uniqueTextRows(pack?.must||[]);if(!rows.length)return'';
+  const rows=V.StudyEmphasis119?.mustRows?.(pack)||[];if(!rows.length)return'';
   return `<section class="study-must"><div class="study-must-title">★★★ 시험필수 · 전부 보기</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'must',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text">${esc(x)}</span></li>`}).join('')}</ul></section>`;
 }
 function numberBlock(c,pack){
-  const unit=/\d|%|℃|°|cm|mm|kg|mL|\bL\b|초|분|시간|회|배|단계|류|쪽|년|개월/;
-  const deep=(pack?.deepSections||[]).flatMap(x=>[x?.body,...(x?.bullets||[])]),compare=(pack?.compare||[]).flatMap(x=>Array.isArray(x)?x:[]);
-  const rows=uniqueTextRows([...(pack?.must||[]),...(pack?.detail||[]),...deep,...compare].filter(x=>unit.test(String(x||'')))).slice(0,12);if(!rows.length)return'';
+  const rows=V.StudyEmphasis119?.numberRows?.(pack,12)||[];if(!rows.length)return'';
   return `<section class="study-numbers"><div class="study-numbers-title">★★ 숫자 · 단위 · 기준</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'number',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text">${esc(x)}</span></li>`}).join('')}</ul></section>`;
 }
 function trapBlock(pack){
-  const rows=uniqueTextRows(pack?.traps||[]);if(!rows.length)return'';
+  const rows=V.StudyEmphasis119?.trapRows?.(pack)||[];if(!rows.length)return'';
   return `<section class="study-traps"><div class="study-traps-title">⚠ 헷갈림 주의</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
 }
 function comparisonBlock(pack){const title=pack.compareFamily?.title||'비슷한 개념 비교';return pack.compare?.length?`<section class="detail-compare"><h3>${esc(title)}</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>핵심</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`:''}
@@ -79,7 +77,7 @@ function specialCombustibleBlock(pack){
   const rows=pack?.specialCombustibles||[],rules=pack?.specialCombustibleStorage||[];if(!rows.length)return'';
   return `<section class="hazmat-reference special-combustible-reference"><div class="lesson-heading"><div><span class="eyebrow">2026 현행 법령</span><h3>특수가연물 품명별 기준수량</h3></div></div><div class="table-scroll"><table class="hazmat-table"><thead><tr><th>품명</th><th>기준수량</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x[0])}</td><td><b>${esc(x[1])}</b></td></tr>`).join('')}</tbody></table></div>${rules.length?`<div class="lesson-box"><b>저장·취급 핵심</b><ul>${rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}</section>`;
 }
-function sourceBlock(c,pack){const links=(pack?.officialLinks||[]).filter(x=>x?.url);return `<div class="lesson source-only"><p class="lead">${esc(pack.source||V.sourceLabel(c.id)||'공식교재')}</p><div class="source-primary-actions"><button class="btn primary" data-source-concept="${c.id}">PDF 바로보기</button><button class="btn" data-source-download="${c.id}">PDF 다운로드</button></div>${links.length?`<div class="source-law-links"><b>공식 추가 근거</b>${links.map(x=>`<a class="source-law-link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)} <span aria-hidden="true">↗</span></a>`).join('')}</div>`:''}</div>`}
+function sourceBlock(c,pack){const links=(pack?.officialLinks||[]).filter(x=>x?.url),evidence=V.StudyEmphasis119?.evidence?.(c.id,pack),source=evidence?.source||'공식교재';return `<div class="lesson source-only"><p class="lead">${esc(source)}</p><div class="source-primary-actions"><button class="btn primary" data-source-concept="${c.id}">PDF 바로보기</button><button class="btn" data-source-download="${c.id}">PDF 다운로드</button></div>${links.length?`<div class="source-law-links"><b>공식 추가 근거</b>${links.map(x=>`<a class="source-law-link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)} <span aria-hidden="true">↗</span></a>`).join('')}</div>`:''}</div>`}
 function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.id)||[],detail=pack.detail||[],sections=uniqueSections(pack.deepSections||[]),coreRows=uniqueTextRows(detail,pack.summary);
   if(tab==='detail'){const detailRows=sections.length?sections:uniqueTextRows(detail).map((body,i)=>({title:i===0?'정의 · 개념':'상세 정리',body,bullets:[]}));return `<div class="lesson detail-view">${quickCoreBlock(pack)}${featureBlock(c,pack)}${mustBlock(c,pack)}${studySchemaBlock(pack)}${detailRows.map(detailSection).join('')}${numberBlock(c,pack)}${visualBlocks(pack)}${hazmatBlock(c)}${specialCombustibleBlock(pack)}${calculationBlocks(c,pack)}${comparisonBlock(pack)}${trapBlock(pack)}</div>`}
   if(tab==='quiz'){
