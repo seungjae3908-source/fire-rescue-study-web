@@ -2,7 +2,7 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const fire=[
-  {id:'FA',title:'PART 1 · 소방행정·재난관리',subtitle:'조직 · 소방력 · 재난관리',scopeIds:['F01','F02']},
+  {id:'FA',title:'PART 1 · 소방행정·재난관리',subtitle:'발전과정 · 조직관리 · 인적/물적/재정 자원 · 민간 소방조직 · 재난관리',scopeIds:['F01','F02'],requiredTopics:['소방의 발전과정','소방행정체제와 기능·책임','소방조직관리 기초이론','인적·물적·재정적 자원관리','민간 소방조직의 종류와 역할','재난관리 예방·대비·대응·복구']},
   {id:'FB',title:'PART 2 · 연소·폭발·화재현상',subtitle:'연소원리 · 열전달 · 화재성장 · 특수현상 · 폭발',scopeIds:['F03'],requiredTopics:[
     '연소의 조건과 형태','인화점·연소점·발화점','열전달','화재성장단계',
     '롤오버','플래시오버','백드래프트','연기와 Flow Path','폭발',
