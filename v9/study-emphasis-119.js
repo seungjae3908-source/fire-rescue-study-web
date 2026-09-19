@@ -18,7 +18,7 @@ function evidence(id,p){
   return{source,ranges}
 }
 function forConcept(id,{numberLimit=12}={}){
-  const p=V.contentPacks?.get?.(id);if(!p)return null;
+  const p=V.contentPacks?.authored?.[id]||V.contentPacks?.get?.(id);if(!p)return null;
   const features=featureRows(p),must=mustRows(p),numbers=numberRows(p,numberLimit),traps=trapRows(p),ev=evidence(id,p);
   return{
     id,features,must,numbers,traps,exceptions:traps.slice(),
