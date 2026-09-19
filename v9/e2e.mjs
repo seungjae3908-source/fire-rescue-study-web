@@ -210,8 +210,13 @@ try{
   await m.locator('[data-calc-bank]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='bank');
   await m.waitForSelector('.question-card');
   const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형');return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id)}}); 
-  assert(calcBank.filter==='calc'&&calcBank.count>=8&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with at least the eight source-backed drills');
-  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===21,'calculation practice includes the expanded source-backed bank while preserving legacy oxygen/drip practice labels');
+  assert(calcBank.filter==='calc'&&calcBank.count>=45&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with the expanded source-backed drill bank');
+  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===21,'calculation practice preserves the 21 reviewed legacy/source-backed calculation drills');
+  assert(calcBank.ids.filter(id=>/^119-q2calc-/.test(id)).length===24,'calculation Quality 2.0 adds 24 numeric variants without past-exam credit');
+  assert(await m.locator('.calc-chip').count()>=8,'calculation training exposes formula-family filters');
+  await m.locator('[data-calc-group="oxygen"]').click();
+  const oxygenGroup=await m.evaluate(()=>({group:window.AITUTOR_V9.App.runtime.calcGroup,stem:document.querySelector('.question-card h2')?.textContent||''}));
+  assert(oxygenGroup.group==='oxygen'&&/산소통/.test(oxygenGroup.stem),'calculation family filter switches to oxygen-cylinder drills');
   await noX(m,'mobile calculation practice');
   const calcEvidence=await m.evaluate(()=>{const V=window.AITUTOR_V9;return{
     oxygen:(V.contentPacks.authored['E09-C07']?.calculations||[]).map(x=>({formula:x.formula,tier:x.evidenceTier,note:x.note})),
