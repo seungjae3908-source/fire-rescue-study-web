@@ -80,6 +80,8 @@ jobs:
         run: node v9/question-contract-audit.mjs
       - name: A/B verified question coverage gap report
         run: node v9/verified-question-coverage-audit.mjs
+      - name: B-grade promotion candidate report
+        run: node v9/verified-promotion-candidate-audit.mjs
       - name: 119 textbook-depth distribution report
         run: node v9/textbook-depth-audit.mjs
       - name: 119 remaining blocker detail report
