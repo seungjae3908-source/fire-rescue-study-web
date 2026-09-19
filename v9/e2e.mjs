@@ -98,6 +98,18 @@ try{
   await m.waitForSelector('.book-section .study-must');
   assert((await m.locator('.book-section .study-must-title').innerText()).includes('★ 시험필수'),'core learning exposes a compact exam-essential block');
   assert(await m.locator('.book-section .study-must li').count()>=1,'core learning underlines only curated must-remember points');
+  const starBefore=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
+  await m.locator('.book-section .study-star-btn').first().click();
+  const starAfter=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
+  assert(starAfter===starBefore+1,'core star saves the exact exam-essential point into pass notes');
+  assert(await m.locator('.book-section .study-star-btn.on').count()>=1,'saved core point visibly keeps its filled star state');
+  assert((await m.locator('.book-section .study-must-title').innerText()).includes('전부 보기'),'core learning no longer truncates must-remember items to the first three');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
+  await m.locator('.book-jumpbar [data-study-tab="core"]').click();
+  await m.waitForSelector('.book-section .hazmat-class-grid');
+  assert(await m.locator('.book-section .hazmat-class-card').count()===6,'hazardous-material core summary always shows all six classes');
+  assert((await m.locator('.book-section .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material summary visibly reaches class 6');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
@@ -107,6 +119,9 @@ try{
   assert(!detailText.includes('개념 구조와 읽는 순서')&&!detailText.includes('개념 이해'),'mobile detail simplifies meta headings to 개념');
   assert(await m.locator('.book-section .detail-num').count()===0,'mobile detail has no detached numeric badges');
   assert(await m.locator('.book-section .detail-view>.lead').count()===0,'detail tab does not repeat the core summary above structured detail');
+  assert(await m.locator('.book-section .detail-view .study-must').count()===1,'detail view repeats curated exam essentials before deep explanation');
+  const keyLineStyle=await m.locator('.book-section .detail-view .study-key-text').first().evaluate(el=>getComputedStyle(el).textDecorationLine);
+  assert(keyLineStyle.includes('underline'),'detail important points are visibly underlined');
   const dup=await m.locator('.book-section .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
   assert(!dup,'detail tab removes duplicate section bodies');
   const bodyHeight=await m.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
@@ -123,12 +138,14 @@ try{
   assert(['auto','scroll'].includes(scrollState.overflow),'mobile study uses one dedicated vertical body scroller');
   await noX(m,'mobile study detail');
 
-  const pageMap=await m.evaluate(()=>{const S=window.AITUTOR_V9.SourcePDF;return{fire1:S.pdfPage('fire1',14),fire2:S.pdfPage('fire2',352),ems:S.pdfPage('ems',72),fire1Back:S.bookPage('fire1',30),fire2Back:S.bookPage('fire2',362),emsBack:S.bookPage('ems',90),prevention1Pdf:S.pdfPage('prevention1',17),prevention1Book:S.bookPage('prevention1',17)}});
+  const pageMap=await m.evaluate(()=>{const S=window.AITUTOR_V9.SourcePDF;return{fire1:S.pdfPage('fire1',14),fire2:S.pdfPage('fire2',352),ems:S.pdfPage('ems',72),fire1Back:S.bookPage('fire1',30),fire2Back:S.bookPage('fire2',362),emsBack:S.bookPage('ems',90),prevention1Pdf:S.pdfPage('prevention1',3),prevention2Pdf:S.pdfPage('prevention2',3),law1Pdf:S.pdfPage('law1',3),law2Pdf:S.pdfPage('law2',332),law3Pdf:S.pdfPage('law3',3),law4Pdf:S.pdfPage('law4',281),law5Pdf:S.pdfPage('law5',499),prevention1Book:S.bookPage('prevention1',17),law2Book:S.bookPage('law2',344)}});
   assert(pageMap.fire1===30&&pageMap.fire2===362&&pageMap.ems===90&&pageMap.fire1Back===14&&pageMap.fire2Back===352&&pageMap.emsBack===72,'official textbook printed pages map to actual PDF pages for fire1/fire2/EMS');
-  assert(pageMap.prevention1Pdf===17&&pageMap.prevention1Book===0,'unproven prevention page offsets stay raw PDF anchors instead of being mislabeled as textbook pages');
+  assert(pageMap.prevention1Pdf===17&&pageMap.prevention2Pdf===15&&pageMap.law1Pdf===7&&pageMap.law2Pdf===344&&pageMap.law3Pdf===11&&pageMap.law4Pdf===287&&pageMap.law5Pdf===513&&pageMap.prevention1Book===3&&pageMap.law2Book===332,'uploaded 2026 prevention/law textbooks use verified printed-page offsets for all seven new books');
 
   await m.locator('.book-jumpbar [data-study-tab="source"]').click();
   await m.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
+  assert(await m.locator('.study-body-mobile [data-source-download]').count()===1,'source tab exposes an explicit PDF download action');
+  assert(await m.evaluate(()=>typeof window.AITUTOR_V9.SourcePDF.download==='function'),'official PDF subsystem exposes direct download from cache/mirror');
   await m.locator('.study-body-mobile .source-only [data-source-concept]').click();
   await m.waitForSelector('#pdfEvidence');
   assert(Number(await m.locator('#pdfEvidence').getAttribute('data-page'))===30,'F03-C03 opens at mapped PDF page 30 for textbook page 14');
@@ -171,6 +188,7 @@ try{
   await realStart.click();await m.waitForSelector('.question-card');
   const realMock=await m.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam,fire=e.qs.filter(q=>q.subject==='fire'),ems=e.qs.filter(q=>q.subject==='ems');return{mode:e.mode,total:e.qs.length,fire:fire.length,ems:ems.length,verified:e.qs.every(q=>q.grade==='A'||q.grade==='B'),unique:new Set(e.qs.map(q=>q.id)).size}});
   assert(realMock.mode==='real'&&realMock.total===65&&realMock.fire===25&&realMock.ems===40&&realMock.verified&&realMock.unique===65,'real mock builds 25 verified fire + 40 verified EMS questions with no duplicates');
+  assert(await m.locator('.mobile-nav').isHidden(),'active exam hides global mobile navigation to prevent accidental exit');
   await m.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});
   await m.waitForSelector('.exam-start');
   const practice=m.locator('[data-exam-start="practice"]');
@@ -206,6 +224,8 @@ try{
   assert(await m.locator('[data-exam-report]').count()>=1,'recent exam history keeps an analysis action for locally detailed results');
 
   await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
+  assert((await m.locator('.top h1').innerText()).includes('합격노트'),'notes area is promoted to pass-note workspace');
+  assert(await m.locator('[data-pass-export]').count()===4,'pass-note workspace exposes fire, EMS, personal and rapid-review PDF exports');
   const fileInputStable=await m.evaluate(async()=>{
     const first=document.querySelector('#personalFile');
     for(let i=0;i<80&&window.AITUTOR_V9.App.runtime.docsLoading;i++)await new Promise(r=>setTimeout(r,25));
@@ -230,6 +250,9 @@ try{
   const uploadStatus=(await m.locator('[data-upload-status]').innerText()).trim();
   assert(uploadStatus.includes('분석 완료'),'personal PDF reports visible analysis completion; status='+uploadStatus+'; errors='+merr.join(' | '));
   await m.waitForSelector('[data-doc-open]');
+  await m.locator('[data-doc-pass]').first().click();
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.notes.some(n=>n.sourceType==='pass-doc'),null,{timeout:15000});
+  assert((await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.some(n=>n.sourceType==='pass-doc'))),'uploaded PDF/photo extraction can create an editable pass-note draft');
   await m.locator('[data-doc-open]').first().click();await m.waitForSelector('.doc-viewer');
   const viewer=await m.locator('.doc-viewer-text').innerText();
   assert(viewer.trim().length>20&&viewer.includes('[1쪽]'),'uploaded PDF extracted text can be opened and checked');
@@ -253,6 +276,12 @@ try{
 
   await go(m,'stats');await cleanPage(m,'mobile stats');
   assert(!(await m.locator('.page').innerText()).includes('검증문제 커버'),'stats removes engineering validation metrics');
+  await m.evaluate(()=>{const V=window.AITUTOR_V9,q=V.questions[0];V.Store.state.wrongs=[{id:'e2e-wrong-delete',questionId:q.id,conceptId:q.conceptId,scopeId:q.scopeId,confidence:'none',due:Date.now(),resolved:false,wrongCount:1,createdAt:Date.now()}];V.Store.save();V.App.go('wrong')});
+  await m.waitForSelector('[data-wrong-delete="e2e-wrong-delete"]');
+  m.once('dialog',d=>d.accept());
+  await m.locator('[data-wrong-delete="e2e-wrong-delete"]').click();
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.wrongs.every(x=>x.id!=='e2e-wrong-delete'));
+  assert(await m.locator('[data-wrong-delete="e2e-wrong-delete"]').count()===0,'wrong-note delete removes the selected item while preserving answer history');
 
   await go(m,'study');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C06'));
