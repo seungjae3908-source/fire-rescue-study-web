@@ -251,6 +251,7 @@ try{
   assert(uploadStatus.includes('분석 완료'),'personal PDF reports visible analysis completion; status='+uploadStatus+'; errors='+merr.join(' | '));
   await m.waitForSelector('[data-doc-open]');
   await m.locator('[data-doc-pass]').first().click();
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.notes.some(n=>n.sourceType==='pass-doc'),null,{timeout:15000});
   assert((await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.some(n=>n.sourceType==='pass-doc'))),'uploaded PDF/photo extraction can create an editable pass-note draft');
   await m.locator('[data-doc-open]').first().click();await m.waitForSelector('.doc-viewer');
   const viewer=await m.locator('.doc-viewer-text').innerText();
