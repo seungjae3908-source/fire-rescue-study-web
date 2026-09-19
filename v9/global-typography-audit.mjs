@@ -32,8 +32,10 @@ async function setStudy(page,id,tab){
 async function auditVisible(page,meta){
   const result=await page.evaluate(()=>{
     const visible=el=>{
+      if(el.closest('.outline:not(.open),.backdrop:not(.on),[hidden],.hidden'))return false;
       const cs=getComputedStyle(el),r=el.getBoundingClientRect();
-      return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;
+      if(cs.display==='none'||cs.visibility==='hidden'||Number(cs.opacity)===0||r.width<=0||r.height<=0)return false;
+      return true;
     };
     const excSmall=el=>el.matches('.tiny,.muted,.eyebrow,.scope-label,.tag,.pill,.exam-answer-count small,.study-quiz-progress small,.pdf-render-meta');
     const selector='h1,h2,h3,p,li,b,strong,small,button,a,td,th,.visual-node,.hazmat-class-card,.choice,.pill,.tag,.source-law-link';
@@ -74,7 +76,7 @@ async function auditExam(page,meta){
   await page.locator('[data-exam-start="practice"]').click();
   await page.waitForSelector('.exam-run-workspace');
   const r=await page.locator('.exam-run-workspace').evaluate(root=>{
-    const vis=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&r.width>0&&r.height>0};
+    const vis=el=>{if(el.closest('.outline:not(.open),.backdrop:not(.on),[hidden],.hidden'))return false;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
     const status=root.querySelector('.exam-answer-count'),footer=root.querySelector('.exam-footer'),buttons=[...root.querySelectorAll('.exam-footer .btn')],choices=[...root.querySelectorAll('.choice')];
     const sr=status?.getBoundingClientRect(),br=buttons.map(x=>x.getBoundingClientRect());
     const overlaps=br.length===2&&sr?(br[0].right>sr.left+1||sr.right>br[1].left+1):true;
