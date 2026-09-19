@@ -279,6 +279,16 @@ try{
   assert(await m.locator('[data-pass-export]').count()===4,'pass-note workspace exposes fire, EMS, personal and rapid-review PDF exports');
   assert(await m.locator('[data-note-filter]').count()===7,'pass-note workspace exposes subject/source filters');
   assert(await m.locator('#noteSearch').count()===1,'pass-note workspace exposes note search');
+  const sourceNoteId=await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.find(n=>n.sourceType==='pass-star')?.id||'');
+  if(sourceNoteId){
+    const beforeOfficial=await m.evaluate(id=>{const n=window.AITUTOR_V9.Store.state.notes.find(x=>x.id===id),marker='\n\n[내 메모]\n',i=String(n?.body||'').indexOf(marker);return i>=0?String(n.body).slice(0,i):String(n?.body||'')},sourceNoteId);
+    await m.locator(`[data-note-edit="${sourceNoteId}"]`).click();
+    assert(await m.locator('.note-official-lock').count()===1&&await m.locator('#noteEditMemo').count()===1&&await m.locator('#noteEditBody').count()===0,'source-backed pass note locks official text and exposes only a personal memo editor');
+    await m.locator('#noteEditMemo').fill('E2E 내 암기 메모');
+    await m.locator(`[data-note-save="${sourceNoteId}"]`).click();
+    const after=await m.evaluate(id=>window.AITUTOR_V9.Store.state.notes.find(x=>x.id===id)?.body||'',sourceNoteId);
+    assert(after.startsWith(beforeOfficial)&&after.includes('[내 메모]')&&after.includes('E2E 내 암기 메모'),'editing a source-backed note preserves official text and appends personal memo separately');
+  }
   if(await m.locator('[data-note-filter="star"]').count()){
     await m.locator('[data-note-filter="star"]').click();
     assert(true,'pass-note star filter can be selected');
