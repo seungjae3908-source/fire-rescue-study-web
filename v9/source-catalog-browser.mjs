@@ -46,7 +46,7 @@ function extractPaths(rows){
 }
 
 const browser=await chromium.launch({headless:true});
-let failed=false;
+let failed=false,externalBlocked=0;
 try{
   const ctx=await browser.newContext({
     locale:'ko-KR',
@@ -112,8 +112,10 @@ try{
       const candidate=paths.find(x=>norm(x.text).includes(n))||null;
       return {name,textHit,candidate};
     });
+    const visitorGate=/방문자\s*확인|visitor\s*(check|verification)/i.test(String(snap.title||'')+' '+String(snap.bodyText||''));
     const ok=checks.every(x=>x.textHit)&&paths.length>0;
-    if(!ok)failed=true;
+    if(visitorGate&&!ok)externalBlocked++;
+    else if(!ok)failed=true;
 
     console.log('BROWSER_SOURCE_CATALOG',JSON.stringify({
       key:def.key,
@@ -122,6 +124,7 @@ try{
       title:snap.title,
       expected:def.expected,
       ok,
+      externalStatus:visitorGate&&!ok?'NFA_VISITOR_GATE_BLOCKED':'DIRECT_PAGE_VISIBLE',
       checks,
       paths,
       candidateRows:snap.rows.slice(0,40)
@@ -132,4 +135,5 @@ try{
 }finally{
   await browser.close();
 }
+console.log('BROWSER_SOURCE_CATALOG_SUMMARY',JSON.stringify({total:defs.length,externalBlocked,unexpectedFailures:failed?1:0,policy:'NFA visitor/WAF gate is reported explicitly and is not treated as an app failure; official proxy/mirror integrity is release-gated separately.'}));
 if(failed)throw new Error('OFFICIAL_SOURCE_BROWSER_PROBE_FAILED');
