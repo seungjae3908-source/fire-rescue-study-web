@@ -625,3 +625,16 @@
 @media(max-width:370px){
   .training-grid.three{grid-template-columns:1fr}
 }
+
+
+/* Quality 2.0 — per-concept features / important text */
+.study-features{border:1px solid rgba(111,182,255,.26);background:#0b1c30;border-radius:14px;padding:12px 13px;margin:0 0 12px}
+.study-features-title{font-size:12px;font-weight:900;color:var(--blue);letter-spacing:.02em;margin-bottom:8px}
+.study-features ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.study-features li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;min-width:0}
+.study-important{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:4px;text-decoration-color:rgba(111,182,255,.65);text-decoration-skip-ink:auto}
+@media(max-width:720px){
+  .study-features{padding:11px 11px}
+  .study-features li{gap:7px}
+  .study-important{line-height:1.65;word-break:keep-all;overflow-wrap:anywhere}
+}
