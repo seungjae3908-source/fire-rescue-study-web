@@ -42,7 +42,9 @@ const highYieldUnderThree=concepts.filter(x=>x.highYield&&x.verified<3);
 const highYieldUnderTwo=concepts.filter(x=>x.highYield&&x.verified<2);
 const highYieldZero=concepts.filter(x=>x.highYield&&x.verified===0);
 const zeroVerified=concepts.filter(x=>x.verified===0);
-const zeroVerifiedTarget=47;
+const zeroVerifiedEms=zeroVerified.filter(x=>x.subject==='ems');
+const zeroVerifiedFire=zeroVerified.filter(x=>x.subject==='fire');
+const zeroVerifiedTarget=26;
 const result={
   version:'119-verified-question-coverage-v4',
   subjectTotals,
@@ -50,6 +52,7 @@ const result={
   target,
   gap:{fire:Math.max(0,target.fire-subjectTotals.fire),ems:Math.max(0,target.ems-subjectTotals.ems)},
   zeroVerifiedConcepts:zeroVerified.length,
+  zeroVerifiedBySubject:{fire:zeroVerifiedFire.length,ems:zeroVerifiedEms.length},
   zeroVerifiedTarget,
   highYieldZero:highYieldZero.length,
   highYieldUnderTwo:highYieldUnderTwo.length,
@@ -65,7 +68,8 @@ console.log('VERIFIED_QUESTION_COVERAGE_HIGH_YIELD_UNDER_THREE');console.table(h
 console.log('VERIFIED_QUESTION_COVERAGE_HIGH_YIELD_GAPS');console.table(highYieldGaps);
 console.log('VERIFIED_QUESTION_COVERAGE_LOWEST_80');console.table(concepts.slice(0,80));
 if(structuredVerified.length!==verified.length)throw new Error('VERIFIED_QUESTION_STRUCTURE_GAP '+JSON.stringify({verified:verified.length,structured:structuredVerified.length}));
-if(zeroVerified.length>zeroVerifiedTarget)throw new Error('ZERO_VERIFIED_BREADTH_REGRESSION '+JSON.stringify({actual:zeroVerified.length,target:zeroVerifiedTarget}));
+if(zeroVerifiedEms.length)throw new Error('EMS_ZERO_VERIFIED_REMAINS '+JSON.stringify(zeroVerifiedEms.map(x=>({id:x.id,title:x.title}))));
+if(zeroVerified.length>zeroVerifiedTarget)throw new Error('ZERO_VERIFIED_BREADTH_REGRESSION '+JSON.stringify({actual:zeroVerified.length,target:zeroVerifiedTarget,fire:zeroVerifiedFire.length,ems:zeroVerifiedEms.length}));
 if(highYieldZero.length)throw new Error('HIGH_YIELD_VERIFIED_ZERO '+JSON.stringify(highYieldZero.map(x=>({id:x.id,title:x.title}))));
 if(highYieldUnderTwo.length)throw new Error('HIGH_YIELD_VERIFIED_UNDER_TWO '+JSON.stringify(highYieldUnderTwo.map(x=>({id:x.id,title:x.title,verified:x.verified}))));
 if(highYieldUnderThree.length)throw new Error('HIGH_YIELD_VERIFIED_UNDER_THREE '+JSON.stringify(highYieldUnderThree.map(x=>({id:x.id,title:x.title,verified:x.verified}))));
