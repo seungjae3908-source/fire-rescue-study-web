@@ -52,7 +52,7 @@ const rows=[
       '자동화재탐지설비의 감지기와 폐쇄형 스프링클러 헤드의 감열부는 서로 다른 장치다.',
       '일반 폐쇄형 시스템의 자동 방수 원리를 수동 방수설비처럼 설명한 오답이다.'
     ]
-  ,
+  },
   {
     id:'119-q2-haz-special-21',grade:'B',subject:'fire',scopeId:'F05',conceptId:'F05-C08',difficulty:'mid',type:'비교형',
     source:'2026 소방전술1(화재1) 319쪽 · 2026 예방실무2 536쪽',examStyle:true,questionClass:'exam-style',
