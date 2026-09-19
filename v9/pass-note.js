@@ -15,7 +15,7 @@ function questionKey(questionId){return 'pass-q-'+questionId}
 function find(id){return (state().notes||[]).find(n=>n.id===id)||null}
 function has(id){return !!find(id)}
 async function persist(note){
-  const s=state(),i=(s.notes||[]).findIndex(n=>n.id===note.id),row={private:true,createdAt:note.createdAt||now(),updatedAt:now(),...note};
+  const s=state(),i=(s.notes||[]).findIndex(n=>n.id===note.id),row={private:true,...note,createdAt:note.createdAt||now(),updatedAt:now()};
   if(i>=0)s.notes[i]={...s.notes[i],...row};else s.notes.push(row);
   V.Store.save();
   try{if(V.Auth?.user&&V.Auth?.saveNote)await V.Auth.saveNote(row)}catch(e){console.warn('pass note sync failed',e)}
