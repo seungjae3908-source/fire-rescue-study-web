@@ -371,3 +371,42 @@
   .doc-row .toolbar{display:grid!important;grid-template-columns:1fr 1fr!important}.doc-row .toolbar .btn:nth-child(3){grid-column:1/-1}
   .notes-page{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
 }
+
+
+/* Quality 2.0 — global Korean typography, mobile visual timeline, non-obscuring PDF evidence */
+.pdf-evidence-line{
+  position:absolute!important;
+  background:rgba(255,188,36,.98)!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:999px!important;
+  height:2px!important;
+  pointer-events:none!important;
+}
+.concept-head h2,.scope-label,.book-section,.lesson,.detail-copy,.core-line,.study-must,.study-numbers,.study-traps,
+.visual-node,.hazmat-class-card,.question-card,.answer,.note-row,.source-law-link,.row,.btn,.choice,.compare td{
+  min-width:0;
+}
+.concept-head h2,.book-section h2,.book-section h3,.detail-copy h3,.detail-copy p,.detail-copy li,.core-line p,
+.study-key-text,.visual-node b,.hazmat-class-card b,.hazmat-class-card small,.question-card h2,.choice,.answer,
+.note-row b,.note-row small,.source-law-link,.row b,.row small,.btn{
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+.visual-node b{font-size:14px;line-height:1.55;text-align:left}
+.visual-title{font-size:13px;line-height:1.4}
+.pdf-render-meta{white-space:normal!important;word-break:keep-all;overflow-wrap:anywhere;line-height:1.45}
+
+@media(max-width:720px){
+  .concept-visual{padding:12px;margin:12px 0}
+  .visual-flow{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;align-items:stretch!important}
+  .visual-node{min-width:0!important;width:100%!important;display:grid!important;grid-template-columns:32px minmax(0,1fr)!important;align-items:center!important;gap:10px!important;padding:12px 13px!important}
+  .visual-node span{width:30px!important;height:30px!important;font-size:13px!important}
+  .visual-node b{font-size:15px!important;line-height:1.55!important}
+  .visual-flow>i{display:grid!important;place-items:center!important;height:18px!important;font-size:0!important;line-height:1!important;color:var(--blue)!important}
+  .visual-flow>i::after{content:'↓';font-size:18px;line-height:1}
+  .pdf-render-meta{font-size:12px!important;padding:7px 9px!important}
+  .pdf-evidence-line{height:2px!important}
+  .book-section .lesson,.book-section .lesson p,.book-section .lesson li{max-width:100%}
+  .book-section .lesson p,.book-section .lesson li{word-break:keep-all;overflow-wrap:anywhere}
+}
