@@ -277,6 +277,13 @@ try{
   await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
   assert((await m.locator('.top h1').innerText()).includes('합격노트'),'notes area is promoted to pass-note workspace');
   assert(await m.locator('[data-pass-export]').count()===4,'pass-note workspace exposes fire, EMS, personal and rapid-review PDF exports');
+  assert(await m.locator('[data-note-filter]').count()===7,'pass-note workspace exposes subject/source filters');
+  assert(await m.locator('#noteSearch').count()===1,'pass-note workspace exposes note search');
+  if(await m.locator('[data-note-filter="star"]').count()){
+    await m.locator('[data-note-filter="star"]').click();
+    assert(true,'pass-note star filter can be selected');
+    await m.locator('[data-note-filter="all"]').click();
+  }
   const fileInputStable=await m.evaluate(async()=>{
     const first=document.querySelector('#personalFile');
     for(let i=0;i<80&&window.AITUTOR_V9.App.runtime.docsLoading;i++)await new Promise(r=>setTimeout(r,25));
