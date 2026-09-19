@@ -37,7 +37,9 @@ const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
 const merged=[...V.questions];const seen=new Set(merged.map(q=>norm(q.q)));for(const q of P){if(!seen.has(norm(q.q))){merged.push(q);seen.add(norm(q.q))}}
 V.questions=merged;V.questionById=Object.fromEntries(merged.map(q=>[q.id,q]));V.questionsForConcept=id=>merged.filter(q=>q.conceptId===id);
 V.examReadiness=()=>{
-  const verified=merged.filter(q=>q.grade==='A'||q.grade==='B'),fire=verified.filter(q=>q.subject==='fire'),ems=verified.filter(q=>q.subject==='ems');
+  // Evaluate the current canonical question collection at call time.
+  // Later source-backed B questions (for newly explicit official scopes) must not be hidden by a stale load-time closure.
+  const current=V.questions||[],verified=current.filter(q=>q.grade==='A'||q.grade==='B'),fire=verified.filter(q=>q.subject==='fire'),ems=verified.filter(q=>q.subject==='ems');
   const fireCount=new Set(fire.map(q=>q.id)).size,emsCount=new Set(ems.map(q=>q.id)).size;
   const requiredFireScopes=V.curriculum.fire.map(x=>x.id),requiredEmsScopes=V.curriculum.ems.map(x=>x.id);
   const coveredFireScopes=new Set(fire.map(q=>q.scopeId)),coveredEmsScopes=new Set(ems.map(q=>q.scopeId));
