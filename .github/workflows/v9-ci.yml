@@ -19,6 +19,7 @@ on:
       - 'supabase/v9-study-membership-trigger.sql'
       - 'supabase/tests/v9-live-closed-loop.sql'
       - 'V9-ARCHITECTURE.md'
+      - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
   pull_request:
     paths:
@@ -30,6 +31,7 @@ on:
       - 'supabase/v9-study-membership-trigger.sql'
       - 'supabase/tests/v9-live-closed-loop.sql'
       - 'V9-ARCHITECTURE.md'
+      - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
 
 permissions:
