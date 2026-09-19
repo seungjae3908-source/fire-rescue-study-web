@@ -88,7 +88,7 @@ const rows=[
   },
 
   {
-    id:'119-q2-flash-01',grade:'B',subject:'fire',scopeId:'F03',conceptId:'F03-C09',difficulty:'mid',type:'단계형',
+    id:'119-q2-flash-01',grade:'B',subject:'fire',scopeId:'F03',conceptId:'F03-C09',difficulty:'low',type:'단계형',
     source:'2026 소방전술1(화재1) 21·29쪽',examStyle:true,questionClass:'exam-style',
     q:'플래시오버가 화재 진행단계에서 나타나는 시기로 가장 적절한 것은?',
     choices:['성장기와 최성기의 과도기','발화 전 단계만','쇠퇴기가 완전히 끝난 뒤','소화 완료 후'],a:0,
