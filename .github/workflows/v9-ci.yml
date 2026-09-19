@@ -133,6 +133,33 @@ jobs:
         run: node v9/global-typography-audit.mjs
 
 
+  coverage2_backlog_report:
+    name: coverage2_backlog_report (non-release readiness)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA dependency
+        run: |
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Start branch-only static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/study119-coverage2-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/study119-coverage2-http.log
+          exit 1
+      - name: Strict concept depth and detailed scope backlog
+        run: node v9/coverage2-audit.mjs
+
+
   coverage_anchor_audit:
     name: coverage_anchor_audit (manual slow audit)
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_coverage_audit }}
