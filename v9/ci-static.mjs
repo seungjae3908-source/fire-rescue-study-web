@@ -23,9 +23,9 @@ ok(reviewed119.length>=29,'119 manually-authored/reviewed exam-question bank rem
 ok(reviewed119.every(V.QuestionQuality119.isExamStyle),'every manually-authored 119 question passes the full exam-style quality contract');
 ok(V.QuestionFactory119?.generated===generated119.length&&generated119.length>0,'grounded factory reports exactly the generated practice questions it added');
 ok(generated119.every(q=>q.grade==='P'&&q.generatedBy==='119-grounded-question-factory-v1'&&V.QuestionQuality119.isExamStyle(q)),'factory questions stay P-grade practice and pass the exam-style contract');
-ok(V.CalculationQuestions119?.added===17,'calculation practice bank adds seventeen calculation drills with explicit evidence tiers');
+ok(V.CalculationQuestions119?.added===21,'calculation practice bank adds twenty-one calculation drills with explicit evidence tiers');
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
-ok(calculationPractice.length===17&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
+ok(calculationPractice.length===21&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
 ok(calculationPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'calculation practice makes no unsupported past-exam claim');
 ok(V.LawQuestions119?.added===18,'eighteen current-law practice questions are loaded');
 const lawPractice=(V.questions||[]).filter(q=>/^119-law-/.test(q.id||''));
@@ -83,7 +83,7 @@ ok(V.VisualCompletion119.targets.every(id=>{
   return (p?.visuals||[]).length>0&&(p.visuals||[]).some(v=>!!V.Visual119.render(v));
 }),'all 27 required visual concepts render at least one real Visual119 diagram');
 ok(!contentAudit.blockers.visual,'visual blocker remains closed');
-ok(V.CalculationContract119?.requiredIds?.length===11&&V.CalculationContract119.requiredIds.includes('F03-C02')&&V.CalculationContract119.requiredIds.includes('F03-C03')&&V.CalculationContract119.requiredIds.includes('F04-C04')&&V.CalculationContract119.requiredIds.includes('E14-C03'),'calculation contract tracks fire-heat foam hazardous-material combustion-air and Parkland source-applicable concepts');
+ok(V.CalculationContract119?.requiredIds?.length===13&&V.CalculationContract119.requiredIds.includes('F03-C02')&&V.CalculationContract119.requiredIds.includes('F03-C03')&&V.CalculationContract119.requiredIds.includes('F04-C04')&&V.CalculationContract119.requiredIds.includes('E07-C03')&&V.CalculationContract119.requiredIds.includes('E09-C07')&&V.CalculationContract119.requiredIds.includes('E14-C03'),'calculation contract tracks fire heat foam hazardous-material combustion-air oxygen-cylinder IV-drip and Parkland source-applicable concepts');
 ok(V.CalculationContract119.requiredIds.every(id=>(V.contentPacks.authored[id]?.calculations||[]).length>0),'all source-applicable calculation concepts expose a real calculation contract');
 ok(V.CalculationContract119.falsePositiveRemoved.every(id=>V.ContentContract119.evaluateConcept(id).needsCalc===false),'former keyword-only calculation false positives are no longer required');
 ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-applicable contracts, not keyword padding');
@@ -195,7 +195,7 @@ ok((evacuation?.must||[]).some(x=>/유도등/.test(x))&&(evacuation?.must||[]).s
 ok((water?.compare||[]).some(x=>x?.[0]==='소화용수설비')&&(activity?.compare||[]).some(x=>x?.[0]==='연결송수관')&&(activity?.compare||[]).some(x=>x?.[0]==='제연')&&(activity?.compare||[]).some(x=>x?.[0]==='무선통신보조'),'facility support closure distinguishes water supply, standpipe, smoke control and radio assist');
 ok(['119-fac-13a','119-fac-14a','119-fac-15a','119-fac-15b'].every(id=>!!V.questionById[id]),'evacuation/water/firefighter-support closure has focused comparison and purpose drills');
 ok(['F-HAZ-03','F-FAC-04','F-FAC-05'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'hazmat handling and both facility-operation rows are promoted only after evidence checks pass');
-ok(fullCoverage.calcMissing.length===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-BURN-02')?.status==='covered','no calculation topic is blank: oxygen/drip remain partial while Parkland is source-backed covered');
+ok(fullCoverage.calcMissing.length===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='E-BURN-02')?.status==='covered','all calculation coverage rows are source-backed covered without converting legacy practice into real-mock credit');
 
 ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'current 176-node content contract reaches 176/176 without claiming full exam coverage');
 const mock=V.examReadiness();
@@ -298,8 +298,8 @@ ok(giIds.every(id=>V.questionById[id]?.grade==='P'&&/2026 소방전술3\(구급\
 ok((V.contentPacks.authored['E14-C03']?.must||[]).some(x=>/손바닥.*1%/.test(x))&&(V.contentPacks.authored['E14-C03']?.must||[]).some(x=>/전기화상/.test(x))&&(V.contentPacks.authored['E14-C03']?.must||[]).some(x=>/화학화상/.test(x)),'burn lesson exposes TBSA small-area rule and special-burn distinctions');
 ok((V.contentPacks.authored['E10-C03']?.must||[]).some(x=>/천식 ≠ COPD/.test(x))&&(V.contentPacks.authored['E10-C05']?.must||[]).some(x=>/흡입손상 3축/.test(x)),'respiratory lesson separates asthma/COPD and the three inhalation-injury mechanisms');
 ok((V.contentPacks.authored['E12-C05']?.must||[]).some(x=>/토혈/.test(x)&&/혈변/.test(x))&&(V.contentPacks.authored['E12-C05']?.must||[]).some(x=>/배대동맥류/.test(x)),'GI lesson carries bleeding manifestations and high-risk abdominal emergency');
-ok((V.contentPacks.authored['E09-C07']?.calculations||[]).some(x=>x.evidenceTier==='reconstructed-exam-practice'&&/P - R/.test(x.formula||'')),'oxygen-cylinder calculation is available only as clearly labeled reconstructed-exam practice');
-ok((V.contentPacks.authored['E07-C03']?.calculations||[]).some(x=>x.evidenceTier==='standard-education-practice'&&/gtt\/min/.test(x.formula||'')),'IV-drip calculation is available only as clearly labeled standard-education practice');
+ok((V.contentPacks.authored['E09-C07']?.calculations||[]).some(x=>x.evidenceTier==='reconstructed-exam-practice')&&(V.contentPacks.authored['E09-C07']?.calculations||[]).some(x=>x.evidenceTier==='official-source-practice'&&/P - R/.test(x.formula||'')),'oxygen-cylinder lesson preserves reconstructed practice while adding a separate official-source calculation contract');
+ok((V.contentPacks.authored['E07-C03']?.calculations||[]).some(x=>x.evidenceTier==='standard-education-practice')&&(V.contentPacks.authored['E07-C03']?.calculations||[]).some(x=>x.evidenceTier==='regulated-device-source-practice'&&/gtt\/min/.test(x.formula||'')),'IV-drip lesson preserves legacy education practice while adding a separate regulated-device source calculation contract');
 ok((V.contentPacks.authored['E21-C04']?.detail||[]).some(x=>/0\.01mg\/kg/.test(x)&&/3~5분/.test(x))&&(V.contentPacks.authored['E21-C04']?.detail||[]).some(x=>/0\.1mg\/kg/.test(x)&&/0\.2mg\/kg/.test(x)),'pediatric ALS lesson includes official 2020 arrest and tachy drug anchors');
 ok((V.contentPacks.authored['E14-C02']?.detail||[]).some(x=>/긴장성 기흉/.test(x)),'soft-tissue/chest lesson includes source-backed tension-pneumothorax deterioration and dressing response');
 const abdTraumaIds=['119-finalgap-trauma-abd-01','119-finalgap-trauma-abd-02','119-finalgap-trauma-abd-03','119-finalgap-trauma-abd-04'];
@@ -371,11 +371,16 @@ ok(fullCoverage.rows.find(x=>x.id==='E-SHOCK-01')?.status==='covered','four-type
 ok(fullCoverage.rows.find(x=>x.id==='E-TOX-01')?.status==='covered','toxicology antidote toxidrome-pattern and anaphylaxis row closes only after NFA KDCA and E-GEN official evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-TRM-02')?.status==='covered','chest-trauma row closes only after official flail-chest pneumothorax tamponade and traumatic-hemothorax evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-CARD-01')?.status==='covered','ACS STEMI/NSTEMI pulmonary-edema and cardiogenic-shock row closes only after NFA textbook plus current KDCA evidence');
-ok(fullCoverage.missing===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='partial'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='partial','oxygen-cylinder and IV-drip calculations are no longer blank, but remain explicitly partial/nonverified');
+ok(fullCoverage.total===89&&fullCoverage.covered===89&&fullCoverage.partial===0&&fullCoverage.missing===0&&fullCoverage.implementationPercent===100,'full exam coverage reaches 89/89 only after the final oxygen-cylinder and IV-drip source contracts close');
 const chestTraumaIds=['119-finalgap-chest-01','119-finalgap-chest-02','119-finalgap-chest-03','119-finalgap-chest-04'];
 ok(chestTraumaIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'four chest-trauma drills remain P-grade exam-style practice');
 ok((V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='긴장성 기흉')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='혈흉')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='심장압전')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='연가양흉'),'E-TRM-02 lesson directly compares all four named chest-trauma entities');
 ok((V.contentPacks.authored['E14-C02']?.officialLinks||[]).some(x=>/cntnts_sn=5493/.test(x.url||''))&&(V.contentPacks.authored['E14-C02']?.officialLinks||[]).some(x=>/cntnts_sn=2970/.test(x.url||''))&&(V.contentPacks.authored['E14-C02']?.officialLinks||[]).some(x=>/19d6ac639176/.test(x.url||'')),'chest-trauma lesson links current KDCA official pneumothorax tamponade and traumatic-hemothorax evidence');
+const finalOfficialCalcIds=['119-calc-oxygen-official-01','119-calc-oxygen-official-02','119-calc-drip-official-01','119-calc-drip-official-02'];
+ok(finalOfficialCalcIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'four final source-backed calculation drills remain P-grade exam-style practice');
+ok(/소방청 공식 구급 교육문제 496번/.test(V.questionById['119-calc-oxygen-official-01']?.source||'')&&/제인16-4490/.test(V.questionById['119-calc-drip-official-01']?.source||''),'final calculation drills expose their exact NFA and certified-device source lineage');
+ok((V.contentPacks.authored['E09-C07']?.must||[]).some(x=>/200psi/.test(x))&&(V.contentPacks.authored['E09-C07']?.must||[]).some(x=>/0\.28/.test(x)),'oxygen-cylinder lesson binds textbook reserve pressure and official E-cylinder factor');
+ok((V.contentPacks.authored['E07-C03']?.must||[]).some(x=>/실제 세트\/문제/.test(x))&&(V.contentPacks.authored['E07-C03']?.traps||[]).some(x=>/무조건 20gtt\/mL/.test(x)),'IV-drip lesson requires the actual set drop factor instead of hard-coding 20 gtt/mL universally');
 ok(V.curriculum.byId['E03-C05']?.title==='위험물·CBRN 현장 구급·제독','CBRN/decontamination is visible in the EMS curriculum');
 ok(V.curriculum.byId['E21-C04']?.title==='기도·호흡·소아소생 기초','pediatric resuscitation basics are visible in the EMS curriculum');
 ok((V.contentPacks.authored['E03-C05']?.visuals||[]).includes('ems-hazmat-zones')&&!!V.Visual119.render('ems-hazmat-zones'),'CBRN three-zone/decon flow renders as a real study visual');
