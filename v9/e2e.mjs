@@ -50,6 +50,10 @@ try{
   assert(globalQuality.familyReady===globalQuality.familyTotal&&globalQuality.arbitrary.length===0,'all curated comparison-family concepts use meaningful semantic comparison groups with no arbitrary neighbor fallback');
   assert(globalQuality.highYieldNot20.length===0,'all high-yield concepts expose at least twenty exam-style practice questions');
 
+  const studySchemaAudit=await p.evaluate(()=>{const V=window.AITUTOR_V9,rows=V.curriculum.concepts.map(c=>V.Quality2StudySchema119?.get?.(c.id)).filter(Boolean);return{total:V.curriculum.concepts.length,schemas:rows.length,baseReady:rows.filter(x=>x.quick30&&x.definition&&x.features?.length>=3&&x.core?.length>=3&&x.sourceRanges?.length).length,withConditions:rows.filter(x=>x.applicability?.conditions).length,withMechanism:rows.filter(x=>x.applicability?.mechanisms).length,withTiming:rows.filter(x=>x.applicability?.timingStages).length,withWarnings:rows.filter(x=>x.applicability?.warningSigns).length,withNumbers:rows.filter(x=>x.applicability?.numbers).length,withCompare:rows.filter(x=>x.applicability?.comparison).length}}); 
+  assert(studySchemaAudit.schemas===studySchemaAudit.total&&studySchemaAudit.baseReady===studySchemaAudit.total,'every current concept has grounded 30-second, definition, features, core and official source anchors');
+  assert(studySchemaAudit.withMechanism>0&&studySchemaAudit.withWarnings>0&&studySchemaAudit.withNumbers>0&&studySchemaAudit.withCompare>0,'applicable concepts expose structured mechanisms warnings numbers and comparison sections without forcing them onto every concept');
+
   const before=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
   await p.locator('[data-study-next]').click();
   const after=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
