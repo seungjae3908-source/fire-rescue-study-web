@@ -89,7 +89,7 @@ ok(V.CalculationContract119.falsePositiveRemoved.every(id=>V.ContentContract119.
 ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-applicable contracts, not keyword padding');
 const fullCoverage=V.CoverageMap119?.audit?.();
 ok(!!fullCoverage&&fullCoverage.total>70,'full exam Coverage Map is loaded as a separate truth layer');
-ok(fullCoverage.missing===0&&fullCoverage.partial>0&&fullCoverage.implementationPercent<100,'full exam Coverage Map has no fully missing topic but still exposes partial areas before 100-point release');
+ok(fullCoverage.total===89&&fullCoverage.covered===89&&fullCoverage.partial===0&&fullCoverage.missing===0&&fullCoverage.implementationPercent===100,'full exam Coverage Map reaches 89/89 covered with zero partial or missing rows');
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='covered','gas-law and building-compartmentation rows are both source-closed');
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-02')?.status==='covered','Phase A chemical-bond/reaction/redox row closes only after direct official-page evidence');
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-03')?.status==='covered','Phase A state-change sensible/latent-heat row closes only after exact textbook examples and calculations');
