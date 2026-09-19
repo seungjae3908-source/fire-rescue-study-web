@@ -38,6 +38,7 @@ const concepts=V.curriculum.concepts.map(c=>{
 }).sort((a,b)=>a.verified-b.verified||Number(b.highYield)-Number(a.highYield)||a.id.localeCompare(b.id));
 
 const highYieldGaps=concepts.filter(x=>x.highYield&&x.verified<4);
+const highYieldZero=concepts.filter(x=>x.highYield&&x.verified===0);
 const zeroVerified=concepts.filter(x=>x.verified===0);
 const result={
   version:'119-verified-question-coverage-v2',
@@ -46,11 +47,15 @@ const result={
   target,
   gap:{fire:Math.max(0,target.fire-subjectTotals.fire),ems:Math.max(0,target.ems-subjectTotals.ems)},
   zeroVerifiedConcepts:zeroVerified.length,
+  highYieldZero:highYieldZero.length,
   highYieldUnderFour:highYieldGaps.length
 };
 console.log('VERIFIED_QUESTION_COVERAGE_SUMMARY',JSON.stringify(result,null,2));
 console.log('VERIFIED_QUESTION_COVERAGE_BY_SCOPE');console.table(scopes);
 console.log('VERIFIED_QUESTION_COVERAGE_ZERO_CONCEPTS');console.table(zeroVerified);
+console.log('VERIFIED_QUESTION_COVERAGE_HIGH_YIELD_ZERO');console.table(highYieldZero);
 console.log('VERIFIED_QUESTION_COVERAGE_HIGH_YIELD_GAPS');console.table(highYieldGaps);
 console.log('VERIFIED_QUESTION_COVERAGE_LOWEST_80');console.table(concepts.slice(0,80));
+if(structuredVerified.length!==verified.length)throw new Error('VERIFIED_QUESTION_STRUCTURE_GAP '+JSON.stringify({verified:verified.length,structured:structuredVerified.length}));
+if(highYieldZero.length)throw new Error('HIGH_YIELD_VERIFIED_ZERO '+JSON.stringify(highYieldZero.map(x=>({id:x.id,title:x.title}))));
 console.log('VERIFIED_QUESTION_COVERAGE_AUDIT_COMPLETE');
