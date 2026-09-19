@@ -2,7 +2,7 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const fire=[
-  {id:'FA',title:'PART 1 · 소방행정·재난관리',subtitle:'조직 · 소방력 · 재난관리',scopeIds:['F01','F02']},
+  {id:'FA',title:'PART 1 · 소방행정·재난관리',subtitle:'발전과정 · 조직관리 · 인적/물적/재정 자원 · 민간 소방조직 · 재난관리',scopeIds:['F01','F02'],requiredTopics:['소방의 발전과정','소방행정체제와 기능·책임','소방조직관리 기초이론','인적·물적·재정적 자원관리','민간 소방조직의 종류와 역할','재난관리 예방·대비·대응·복구']},
   {id:'FB',title:'PART 2 · 연소·폭발·화재현상',subtitle:'연소원리 · 열전달 · 화재성장 · 특수현상 · 폭발',scopeIds:['F03'],requiredTopics:[
     '연소의 조건과 형태','인화점·연소점·발화점','열전달','화재성장단계',
     '롤오버','플래시오버','백드래프트','연기와 Flow Path','폭발',
@@ -27,7 +27,7 @@ const ems=[
   {id:'EC',title:'PART C · 해부생리·환자평가',subtitle:'해부생리 · 현장확인 · 1·2차평가 · 재평가',scopeIds:['E04','E08']},
   {id:'ED',title:'PART D · 기도·호흡',subtitle:'기도확보 · 흡인 · 산소 · 환기 · 호흡곤란',scopeIds:['E09','E10']},
   {id:'EE',title:'PART E · 순환·심장·소생술',subtitle:'심장질환 · 제세동 · 출혈 · 쇼크 · BLS',scopeIds:['E11','E13','E24']},
-  {id:'EF',title:'PART F · 내과응급',subtitle:'복통 · 의식장애 · 중독 · 알레르기',scopeIds:['E12','E17','E18']},
+  {id:'EF',title:'PART F · 내과응급',subtitle:'복통 · 간담췌 · 비뇨 · 조혈 · ENT · 비외상성 근골격 · 의식장애 · 중독 · 알레르기',scopeIds:['E12','E17','E18','E25'],requiredTopics:['위장관계 응급','간·담도·췌장 응급','비뇨생식기계 응급','조혈계 응급','감염질환 응급','눈·귀·코·목 응급','비외상성 근골격계 응급']},
   {id:'EG',title:'PART G · 외상',subtitle:'연부조직 · 화상 · 근골격 · 머리·척추',scopeIds:['E14','E15','E16']},
   {id:'EH',title:'PART H · 환경응급',subtitle:'한랭 · 열 · 익수 · 물림·쏘임',scopeIds:['E19']},
   {id:'EI',title:'PART I · 산과·소아·노인',subtitle:'분만 · 소아 · 노인',scopeIds:['E20','E21','E22']},

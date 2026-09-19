@@ -26,10 +26,11 @@ async function remove(id){
   V.Store.state.notes=(V.Store.state.notes||[]).filter(n=>n.id!==id);V.Store.save();return true;
 }
 function conceptNoteFromKey(key){
-  const m=String(key||'').match(/^pass-c-(F\d\d-C\d\d|E\d\d-C\d\d)-(must|number|summary)-(\d+)$/);if(!m)return null;
+  const m=String(key||'').match(/^pass-c-(F\d\d-C\d\d|E\d\d-C\d\d)-(must|number|summary|feature)-(\d+)$/);if(!m)return null;
   const [,conceptId,bucket,idxRaw]=m,idx=Number(idxRaw),c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
   let rows=[];
   if(bucket==='must')rows=uniq(p.must||[]);
+  else if(bucket==='feature')rows=uniq(p.features||[]);
   else if(bucket==='number'){
     const unit=/\d|%|℃|°|cm|mm|kg|mL|\bL\b|초|분|시간|회|배|단계|류|쪽|년|개월/;
     const deep=(p.deepSections||[]).flatMap(x=>[x?.body,...(x?.bullets||[])]),compare=(p.compare||[]).flatMap(x=>Array.isArray(x)?x:[]);
@@ -64,9 +65,18 @@ function extractLines(text){
 }
 async function createFromPrivateDoc(docId,title){
   const chunks=await V.PrivateDocs?.chunksFor?.(docId);if(!chunks?.length)throw Error('PRIVATE_DOC_TEXT_NOT_FOUND');
-  const text=chunks.sort((a,b)=>(a.page||0)-(b.page||0)||(a.chunkIndex||0)-(b.chunkIndex||0)).map(x=>x.text||'').join('\n');
-  const lines=extractLines(text),body=(lines.length?lines:['추출된 내용이 부족합니다. 원문을 확인해 직접 수정하세요.']).map(x=>'• '+x).join('\n');
-  return persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+'\n\n※ 자동 추출 초안입니다. 원문과 대조해 수정하세요.',sourceType:'pass-doc'});
+  const sorted=chunks.sort((a,b)=>(a.page||0)-(b.page||0)||(a.chunkIndex||0)-(b.chunkIndex||0)),text=sorted.map(x=>x.text||'').join('\n');
+  const lines=extractLines(text),fallback=(lines.length?lines:['추출된 내용이 부족합니다. 원문을 확인해 직접 수정하세요.']).map(x=>'• '+x).join('\n');
+  let body=fallback,aiUsed=false;
+  if(navigator.gpu&&V.LocalAI?.studyDigest){
+    try{
+      const ai=await V.LocalAI.studyDigest({title:title||'PDF/사진 정리',text});
+      if(ai&&ai.length>=40){body=ai;aiUsed=true}
+    }catch{}
+  }
+  const review=sorted.some(x=>x.needsReview)?'\n\n⚠ OCR 신뢰도가 낮은 페이지가 포함되어 있습니다. 해당 원문 페이지를 꼭 확인하세요.':'';
+  const note=await persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+`\n\n※ ${aiUsed?'로컬 AI가 추출문 안에서만 정리한':'자동 추출'} 초안입니다. 원문과 대조해 수정하세요.`+review,sourceType:aiUsed?'pass-doc-ai':'pass-doc'});
+  return{...note,aiUsed};
 }
 function passNotes(){return (state().notes||[]).filter(n=>/^pass-/.test(String(n.sourceType||''))||/^pass-/.test(String(n.id||'')))}
 function numericRows(p){
@@ -76,26 +86,39 @@ function numericRows(p){
 }
 function conceptHtml(c,compact=false){
   const p=V.contentPacks?.get?.(c.id);if(!p)return'';
-  const must=uniq(p.must||[]),nums=numericRows(p),traps=uniq(p.traps||[]);
-  const main=compact?must.slice(0,5):must;
-  return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${main.length?'<h3>★★★ 시험필수</h3><ul>'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자·단위·기준</h3><ul>'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>헷갈림 주의</h3><ul>'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
+  const features=uniq(p.features||[]),must=uniq(p.must||[]),nums=numericRows(p),traps=uniq(p.traps||[]);
+  const main=compact?must.slice(0,5):must,featureRows=compact?features.slice(0,4):features;
+  return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${featureRows.length?'<h3>★ 특징·핵심</h3><ul class="important">'+featureRows.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${main.length?'<h3>★★★ 시험필수</h3><ul class="important">'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자·단위·기준</h3><ul>'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>헷갈림 주의</h3><ul>'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
 }
 function notesHtml(rows){return rows.map(n=>`<section class="c"><h2>${esc(n.title||'합격노트')}</h2><div class="note">${esc(n.body||'').replace(/\n/g,'<br>')}</div></section>`).join('')}
+function rapidConceptHtml(c){
+  const p=V.contentPacks?.get?.(c.id);if(!p)return'';
+  const must=uniq(p.must||[]).slice(0,3),nums=numericRows(p).slice(0,3),traps=uniq(p.traps||[]).slice(0,2);
+  return `<section class="c rapid"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${must.length?'<h3>★★★</h3><ul class="important">'+must.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자·기준</h3><ul>'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>함정</h3><ul>'+traps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}</section>`
+}
+function rapidConceptSets(){
+  const concepts=V.curriculum?.concepts||[],wrongIds=[...new Set((state().wrongs||[]).filter(x=>!x.resolved).map(x=>x.conceptId))],wrongSet=new Set(wrongIds);
+  const wrong=wrongIds.map(id=>V.curriculum?.byId?.[id]).filter(Boolean).slice(0,40);
+  const high=concepts.filter(c=>!wrongSet.has(c.id)&&(V.QuestionQuality119?.forConcept?.(c.id)||[]).length>=20).slice(0,50);
+  return{wrong,high}
+}
 function printDocument(mode){
   const map={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'};
   const title=map[mode]||'119 합격노트';
   let body='';
   if(mode==='pass')body=notesHtml(state().notes||[]);
   else if(mode==='rapid'){
-    const starred=passNotes();
+    const starred=passNotes(),sets=rapidConceptSets();
     body=starred.length?'<h1>내 ★ 핵심</h1>'+notesHtml(starred):'<p>저장한 ★ 핵심이 없습니다.</p>';
-    body+='<h1>전 범위 시험필수</h1>'+((V.curriculum?.concepts||[]).map(c=>conceptHtml(c,true)).join(''));
+    if(sets.wrong.length)body+='<h1>최근 오답 개념</h1>'+sets.wrong.map(rapidConceptHtml).join('');
+    if(sets.high.length)body+='<h1>초고빈도 핵심</h1>'+sets.high.map(rapidConceptHtml).join('');
+    if(!sets.wrong.length&&!sets.high.length)body+='<h1>핵심 압축</h1>'+((V.curriculum?.concepts||[]).slice(0,30).map(rapidConceptHtml).join(''));
   } else {
     const subject=mode==='fire'?'fire':'ems';
     body=(V.curriculum?.concepts||[]).filter(c=>subjectOf(c)===subject).map(c=>conceptHtml(c,false)).join('');
   }
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${esc(title)}</title><style>
-  @page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#111;font-size:11pt;line-height:1.55}h1{font-size:22pt;border-bottom:3px solid #111;padding-bottom:8px}h2{font-size:15pt;margin:18px 0 7px}h3{font-size:11pt;margin:9px 0 4px}ul{margin:4px 0 10px 19px;padding:0}.c{break-inside:avoid;border-bottom:1px solid #ddd;padding:0 0 12px;margin:0 0 12px}.summary{font-weight:700}.src{font-size:8.5pt;color:#666}.note{white-space:normal}.cover{min-height:235mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:30pt}.cover p{color:#555}.c li{margin:2px 0}
+  @page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#111;font-size:11pt;line-height:1.55}h1{font-size:22pt;border-bottom:3px solid #111;padding-bottom:8px}h2{font-size:15pt;margin:18px 0 7px}h3{font-size:11pt;margin:9px 0 4px}ul{margin:4px 0 10px 19px;padding:0}.c{break-inside:avoid;border-bottom:1px solid #ddd;padding:0 0 12px;margin:0 0 12px}.summary{font-weight:700}.important li{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}.src{font-size:8.5pt;color:#666}.note{white-space:normal}.cover{min-height:235mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:30pt}.cover p{color:#555}.c li{margin:2px 0}
   </style></head><body><section class="cover"><h1>${esc(title)}</h1><p>119 소방·구급 합격 학습 OS</p><p>생성일 ${new Date().toLocaleDateString('ko-KR')}</p></section>${body}</body></html>`;
 }
 function exportPdf(mode){

@@ -4,15 +4,16 @@ import {createHash} from 'node:crypto';
 
 globalThis.window={AITUTOR_V9:{}};
 const files=[
-  'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js',
+  'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','curriculum-ems-quality2-119.js','master-syllabus-119.js',
   'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js',
-  'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js',
+  'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js',
   'question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
   'content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js',
-  'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js',
+  'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
-  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','question-bank-119.js','textbook-grounded-119.js',
+  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js',
+  'questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','textbook-grounded-119.js',
   'visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
 ];
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
@@ -29,8 +30,8 @@ const authE2E=fs.readFileSync(new URL('./auth-session-e2e.mjs',import.meta.url),
 const sql=fs.readFileSync(new URL('../supabase/tests/v9-live-closed-loop.sql',import.meta.url),'utf8');
 
 const checks={
-  content176:audit.total===176&&audit.complete===176&&audit.incomplete===0&&Object.keys(audit.blockers||{}).length===0,
-  pageEvidence176:coverage.verified===176&&coverage.pending===0,
+  contentAll:audit.total===V.curriculum.totalConcepts&&audit.complete===V.curriculum.totalConcepts&&audit.incomplete===0&&Object.keys(audit.blockers||{}).length===0,
+  pageEvidenceAll:coverage.verified===V.curriculum.totalConcepts&&coverage.pending===0,
   fullExamCoverageComplete:!!fullExamCoverage&&fullExamCoverage.missing===0&&fullExamCoverage.partial===0,
   questionContract:qa.examStyle>=1056&&qa.duplicateTexts.length===0&&perConceptQuestionContract,
   realMockVerifiedReady:mock.ready===true&&mock.scopeComplete===true&&mock.fire>=25&&mock.ems>=40&&mock.missingFireScopes.length===0&&mock.missingEmsScopes.length===0,
@@ -86,4 +87,4 @@ const result={
   productionRootPromotionAllowed:blockers.length===0
 };
 console.log('RELEASE_GATE_119',JSON.stringify(result,null,2));
-if(!checks.content176||!checks.pageEvidence176||!checks.questionContract)process.exitCode=1;
+if(!checks.contentAll||!checks.pageEvidenceAll||!checks.questionContract)process.exitCode=1;

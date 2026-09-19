@@ -55,7 +55,7 @@ async function remove(key){await clearPdfCache(key);const d=await db(),t=d.trans
 const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
 const stop=new Set(['그리고','하지만','에서','으로','하는','한다','있다','있으며','대한','통해','경우','확인','중요','필요','환자','설비','화재']);
 function queryTokens(queries){const out=[];for(const q of queries||[]){for(const w of String(q||'').split(/[\s·,()\/→]+/)){const n=norm(w);if(n.length>=2&&!stop.has(n)&&!out.includes(n))out.push(n)}}return out.sort((a,b)=>b.length-a.length).slice(0,24)}
-async function pdfjs(){const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p}
+async function pdfjs(){if(V.RuntimeDeps?.loadPdfJs)return V.RuntimeDeps.loadPdfJs();const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p}
 async function clearPdfCache(key){const hit=pdfCache.get(key);pdfCache.delete(key);if(hit?.task)await hit.task.destroy?.().catch?.(()=>{});else if(hit?.pdf)await hit.pdf.destroy?.().catch?.(()=>{})}
 async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCache.get(key);if(cached?.pdf)return cached;const p=await pdfjs(),local=await get(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static'&&!!catalog?.directPdf;let task,name,origin;
   if(local?.blob){task=p.getDocument({data:await local.blob.arrayBuffer()});name=local.name||key;origin='local-cache'}
@@ -66,12 +66,12 @@ async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCach
 }
 async function locate(key,queries=[]){const {pdf}=await openPdf(key),tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};let best={page:1,score:-1,pages:pdf.numPages};for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
 function evidenceLines(items,viewport,p,queries=[]){
-  const rawQueries=(queries||[]).map(x=>String(x||'').trim()).filter(Boolean),tokens=queryTokens(rawQueries);
+  const rawQueries=(queries||[]).map(x=>String(x||'').replace(/\s+/g,' ').trim()).filter(Boolean),tokens=queryTokens(rawQueries);
   const rows=[];
   for(const item of items||[]){
     const raw=String(item.str||'').trim();if(!raw)continue;
     const tx=p.Util.transform(viewport.transform,item.transform),h=Math.max(8,Math.hypot(tx[2],tx[3])),w=Math.max(2,Math.abs(Number(item.width)||0)*viewport.scale);
-    const row={raw,n: norm(raw),x:tx[4],y:tx[5],top:tx[5]-h,h,w};
+    const row={raw,n:norm(raw),x:tx[4],y:tx[5],top:tx[5]-h,h,w};
     let line=rows.find(x=>Math.abs(x.y-row.y)<=Math.max(3,Math.min(7,row.h*.38)));
     if(!line){line={y:row.y,items:[]};rows.push(line)}
     line.items.push(row);
@@ -79,20 +79,45 @@ function evidenceLines(items,viewport,p,queries=[]){
   const lines=rows.map(line=>{
     const its=line.items.sort((a,b)=>a.x-b.x),text=its.map(x=>x.raw).join(' ').replace(/\s+/g,' ').trim(),n=norm(text);
     const left=Math.min(...its.map(x=>x.x)),right=Math.max(...its.map(x=>x.x+x.w)),top=Math.min(...its.map(x=>x.top)),bottom=Math.max(...its.map(x=>x.top+x.h));
-    const matched=tokens.filter(t=>n.includes(t)),phraseStrong=rawQueries.some(q=>{const qn=norm(q);return qn.length>=16&&(qn.includes(n)&&n.length>=12||n.includes(qn))});
-    const score=matched.reduce((s,t)=>s+Math.min(14,t.length),0)+(matched.length>=2?matched.length*8:0)+(phraseStrong?80:0);
-    return{text,n,left,right,top,bottom,score,matched,phraseStrong};
-  }).filter(x=>x.n.length>=4&&x.score>0).sort((a,b)=>b.score-a.score);
-  const selected=[];
-  for(const line of lines){
-    const strong=line.phraseStrong||line.matched.length>=2||line.matched.some(t=>t.length>=5);
-    if(!strong)continue;
-    const overlaps=selected.some(x=>Math.abs(x.top-line.top)<6||x.n===line.n);
-    if(overlaps)continue;
-    selected.push(line);if(selected.length>=3)break;
+    return{text,n,left,right,top,bottom};
+  }).filter(x=>x.n.length>=4).sort((a,b)=>a.top-b.top);
+
+  const candidates=[];
+  const maxWindow=8;
+  for(const q of rawQueries){
+    const qn=norm(q),qt=queryTokens([q]);if(qn.length<8||!qt.length)continue;
+    for(let i=0;i<lines.length;i++){
+      let joined='';
+      for(let j=i;j<Math.min(lines.length,i+maxWindow);j++){
+        joined+=lines[j].n;
+        const matched=qt.filter(t=>joined.includes(t));
+        const exact=joined.includes(qn)||qn.includes(joined)&&joined.length>=Math.min(28,Math.floor(qn.length*.65));
+        const density=matched.reduce((n,t)=>n+Math.min(14,t.length),0);
+        const coverage=matched.length/Math.max(1,qt.length);
+        const score=(exact?180:0)+density+(matched.length>=2?matched.length*10:0)+Math.round(coverage*40)-Math.max(0,(j-i)-4)*3;
+        const strong=exact||coverage>=.55&&matched.length>=2||matched.some(t=>t.length>=7)&&coverage>=.35;
+        if(strong)candidates.push({start:i,end:j,score,query:q});
+        if(joined.length>Math.max(qn.length*1.8,260))break;
+      }
+    }
   }
-  if(!selected.length&&lines[0]&&lines[0].score>0)selected.push(lines[0]);
-  return selected.sort((a,b)=>a.top-b.top);
+  candidates.sort((a,b)=>b.score-a.score||(a.end-a.start)-(b.end-b.start));
+  const blocks=[];
+  for(const cand of candidates){
+    if(blocks.some(b=>!(cand.end<b.start||cand.start>b.end)))continue;
+    blocks.push(cand);if(blocks.length>=2)break;
+  }
+  if(!blocks.length&&tokens.length){
+    const scored=lines.map((line,i)=>{
+      const matched=tokens.filter(t=>line.n.includes(t));
+      return{i,score:matched.reduce((n,t)=>n+Math.min(14,t.length),0)+(matched.length>=2?matched.length*8:0),matched};
+    }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+    const best=scored[0];
+    if(best&&(best.matched.length>=2||best.matched.some(t=>t.length>=7)))blocks.push({start:best.i,end:best.i,score:best.score,query:''});
+  }
+  const picked=[];
+  for(const b of blocks.sort((a,b)=>a.start-b.start))for(let i=b.start;i<=b.end;i++)if(!picked.includes(lines[i]))picked.push(lines[i]);
+  return picked;
 }
 function downloadName(key,row,catalog){const raw=row?.name||catalog?.expectedNames?.[0]||catalog?.label||key;return /\.pdf$/i.test(raw)?raw:`${raw}.pdf`}
 async function download(key,{timeoutMs=120000,onProgress}={}){const catalog=V.SourceCatalog119?.get?.(key);if(!catalog)throw Error('SOURCE_PDF_UNKNOWN');let row=await get(key);if(!row?.blob)row=await cacheOfficial(key,{timeoutMs,onProgress});if(!row?.blob)throw Error('SOURCE_PDF_DOWNLOAD_UNAVAILABLE');const name=downloadName(key,row,catalog),url=URL.createObjectURL(row.blob),a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return{name,size:row.blob.size,key}}
@@ -109,7 +134,7 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const tc=await pg.getTextContent(),evidence=evidenceLines(tc.items||[],viewport,p,queries);
   for(const line of evidence){
     const mark=document.createElement('div');mark.className='pdf-evidence-line';
-    mark.style.left=Math.max(0,line.left-3)+'px';mark.style.top=Math.max(0,line.top-2)+'px';mark.style.width=Math.min(viewport.width-line.left+3,line.right-line.left+6)+'px';mark.style.height=Math.max(10,line.bottom-line.top+4)+'px';
+    mark.style.left=Math.max(0,line.left-2)+'px';mark.style.top=Math.min(viewport.height-3,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-line.left+2,line.right-line.left+4))+'px';mark.style.height='2px';
     mark.title=line.text;overlay.appendChild(mark);
   }
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);

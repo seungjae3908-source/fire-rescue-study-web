@@ -3,12 +3,24 @@ import vm from 'node:vm';
 
 function ok(cond,msg){if(!cond)throw new Error(msg);console.log('PASS',msg)}
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js','investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','facilities-visuals-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js','question-bank-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js']){
+for(const file of [
+  'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','curriculum-ems-quality2-119.js','master-syllabus-119.js',
+  'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
+  'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js',
+  'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js',
+  'question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
+  'content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js',
+  'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
+  'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
+  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js',
+  'questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
+  'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
+]){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
 }
 const V=window.AITUTOR_V9;
-ok(V.curriculum.totalConcepts===176,'176 current curriculum nodes load successfully');
+ok(V.curriculum.totalConcepts===V.curriculum.concepts.length&&V.curriculum.totalConcepts>=181,`current expanded curriculum nodes load successfully (${V.curriculum.totalConcepts})`);
 ok(V.MasterSyllabus119?.groups?.fire?.length===6&&V.MasterSyllabus119?.groups?.ems?.length===10,'119 master syllabus groups fire/EMS into exam-oriented parts');
 ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content completion contract is loaded');
 ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style question quality gate is loaded');
@@ -18,11 +30,13 @@ ok(questionAudit.duplicateTexts.length===0,'exam-style question text duplicates 
 ok((V.questions||[]).filter(V.QuestionQuality119.isExamStyle).every(q=>q.choiceExplanations?.length===4),'every exam-style question explains all four options');
 ok((V.questions||[]).filter(V.QuestionQuality119.isExamStyle).every(q=>q.difficulty&&q.type&&q.source),'every exam-style question has difficulty, type and source');
 const reviewed119=(V.questions||[]).filter(q=>/^119-/.test(q.id||'')&&!q.generatedPractice);
-const generated119=(V.questions||[]).filter(q=>q.generatedPractice===true);
+const generated119=(V.questions||[]).filter(q=>q.generatedPractice===true&&q.generatedBy==='119-grounded-question-factory-v1');
+const generatedQ2=(V.questions||[]).filter(q=>q.generatedPractice===true&&q.generatedBy==='119-quality2-question-factory-v1');
 ok(reviewed119.length>=29,'119 manually-authored/reviewed exam-question bank remains intact');
 ok(reviewed119.every(V.QuestionQuality119.isExamStyle),'every manually-authored 119 question passes the full exam-style quality contract');
 ok(V.QuestionFactory119?.generated===generated119.length&&generated119.length>0,'grounded factory reports exactly the generated practice questions it added');
-ok(generated119.every(q=>q.grade==='P'&&q.generatedBy==='119-grounded-question-factory-v1'&&V.QuestionQuality119.isExamStyle(q)),'factory questions stay P-grade practice and pass the exam-style contract');
+ok(V.Quality2QuestionFactory119?.added===generatedQ2.length&&generatedQ2.length>0,'Quality 2.0 factory reports exactly the additional source-grounded practice questions it added');
+ok(generated119.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q))&&generatedQ2.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'all generated factory questions stay P-grade practice and pass the exam-style contract');
 ok(V.CalculationQuestions119?.added===21,'calculation practice bank adds twenty-one calculation drills with explicit evidence tiers');
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
 ok(calculationPractice.length===21&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
@@ -57,22 +71,22 @@ ok(V.PALSAdvancedQuestions119?.added===7,'seven official-2020 pediatric ALS prac
 const palsAdvanced=(V.questions||[]).filter(q=>/^119-pals-adv-/.test(q.id||''));
 ok(palsAdvanced.length===7&&palsAdvanced.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'advanced pediatric ALS questions remain practice-only and pass the exam-style gate');
 ok(palsAdvanced.every(q=>/2020년 한국심폐소생술 가이드라인/.test(String(q.source||''))),'advanced pediatric ALS practice is bound to the official 2020 KACPR source');
-ok(generated119.every(q=>!/(다음 심화 설명을 가장 정확히|교재형 상세 설명|30초 핵심 설명|학습노드)/.test(String(q.q||''))),'generated practice stems use concise exam language without internal/meta wording');
+ok([...generated119,...generatedQ2].every(q=>!/(다음 심화 설명을 가장 정확히|교재형 상세 설명|30초 핵심 설명|학습노드)/.test(String(q.q||''))),'generated practice stems use concise exam language without internal/meta wording');
 
 const questionContractRows=V.curriculum.concepts.map(c=>{const qs=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const q of qs)d[q.difficulty]=(d[q.difficulty]||0)+1;return{id:c.id,n:qs.length,...d}});
-ok(questionContractRows.every(x=>x.n>=6&&x.low>=1&&x.mid>=2&&x.high>=1),'all 176 concepts satisfy >=6 exam-style questions with low>=1 mid>=2 high>=1');
+ok(questionContractRows.every(x=>x.n>=6&&x.low>=1&&x.mid>=2&&x.high>=1),`all ${V.curriculum.totalConcepts} concepts satisfy >=6 exam-style questions with low>=1 mid>=2 high>=1`);
 ok(V.QuestionQuality119.audit().duplicateTexts.length===0,'post-factory exam-style question text duplicates = 0');
-ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===176,'unique concept ids');
+ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===V.curriculum.totalConcepts,'unique concept ids');
 ok(V.curriculum.concepts.every(x=>x.sourceRanges.length>0),'all concepts have official source ranges');
 ok(V.curriculum.fire.length===7,'seven complete fire scopes');
-ok(V.curriculum.ems.length===24,'twenty-four EMS scopes');
+ok(V.curriculum.ems.length===25,'twenty-five EMS scopes including explicit Quality 2.0 medical gaps');
 ok(V.questions.every(q=>q.choices.length===4),'all questions have four choices');
 ok(V.questions.every(q=>new Set(q.choices).size===4),'no duplicate choices inside a question');
 ok(new Set(V.questions.map(q=>q.id)).size===V.questions.length,'unique question ids');
 ok(V.questions.every(q=>Number.isInteger(q.a)&&q.a>=0&&q.a<4),'single valid answer index');
 ok(V.questions.every(q=>!/(기출|실제 출제|과거시험)/.test(String(q.q||''))),'no generated question is mislabeled as past exam');
 const contentAudit=V.ContentContract119.audit();
-ok(contentAudit.total===176&&contentAudit.complete===176&&contentAudit.incomplete===0,'current 176-node curriculum contract is internally complete');
+ok(contentAudit.total===V.curriculum.totalConcepts&&contentAudit.complete===V.curriculum.totalConcepts&&contentAudit.incomplete===0,`current ${V.curriculum.totalConcepts}-node curriculum contract is internally complete`);
 ok(Object.keys(contentAudit.blockers||{}).length===0,'119 content contract has no remaining blockers');
 ok(!contentAudit.blockers.questionsEnough&&!contentAudit.blockers.difficultyLow&&!contentAudit.blockers.difficultyMid&&!contentAudit.blockers.difficultyHigh&&!contentAudit.blockers.choiceExplanations,'question-count, difficulty-mix and option-explanation blockers are closed without weakening the contract');
 ok(V.TextbookGrounded119?.targetChars===900&&V.curriculum.concepts.every(x=>V.contentPacks.authored[x.id]?.textbookGrounded119===true),'grounded textbook layer closes whatever depth/section/trap/memory shortfalls remain after source-backed enrichment');
@@ -89,7 +103,7 @@ ok(V.CalculationContract119.falsePositiveRemoved.every(id=>V.ContentContract119.
 ok(!contentAudit.blockers.calculation,'calculation blocker is closed by source-applicable contracts, not keyword padding');
 const fullCoverage=V.CoverageMap119?.audit?.();
 ok(!!fullCoverage&&fullCoverage.total>70,'full exam Coverage Map is loaded as a separate truth layer');
-ok(fullCoverage.total===89&&fullCoverage.covered===89&&fullCoverage.partial===0&&fullCoverage.missing===0&&fullCoverage.implementationPercent===100,'full exam Coverage Map reaches 89/89 covered with zero partial or missing rows');
+ok(fullCoverage.total>=94&&fullCoverage.covered===fullCoverage.total&&fullCoverage.partial===0&&fullCoverage.missing===0&&fullCoverage.implementationPercent===100,`full exam Coverage Map reaches ${fullCoverage.covered}/${fullCoverage.total} covered with zero partial or missing rows`);
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-04')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='F-BLD-02')?.status==='covered','gas-law and building-compartmentation rows are both source-closed');
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-02')?.status==='covered','Phase A chemical-bond/reaction/redox row closes only after direct official-page evidence');
 ok(fullCoverage.rows.find(x=>x.id==='F-SCI-03')?.status==='covered','Phase A state-change sensible/latent-heat row closes only after exact textbook examples and calculations');
@@ -197,7 +211,7 @@ ok(['119-fac-13a','119-fac-14a','119-fac-15a','119-fac-15b'].every(id=>!!V.quest
 ok(['F-HAZ-03','F-FAC-04','F-FAC-05'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'hazmat handling and both facility-operation rows are promoted only after evidence checks pass');
 ok(fullCoverage.calcMissing.length===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='E-BURN-02')?.status==='covered','all calculation coverage rows are source-backed covered without converting legacy practice into real-mock credit');
 
-ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'current 176-node content contract reaches 176/176 without claiming full exam coverage');
+ok(contentAudit.total===V.curriculum.totalConcepts&&contentAudit.complete===V.curriculum.totalConcepts&&contentAudit.incomplete===0&&contentAudit.averageScore===100,`current ${V.curriculum.totalConcepts}-node content contract reaches full completion without claiming more than the audited scope`);
 const mock=V.examReadiness();
 const restoredVerifiedIds=['119-ver-f05-c04-a','119-ver-f05-c05-a','119-ver-f06-c01-a','119-ver-f06-c03-a','119-ver-f07-c05-a','119-ver-f07-c11-a'];
 const restoredVerified=restoredVerifiedIds.map(id=>V.questionById[id]);
@@ -220,7 +234,7 @@ const extra=Object.keys(V.contentPacks.authored).filter(id=>!V.curriculum.byId[i
 console.log('VERIFIED_COVERAGE',coverage);
 console.log('MISSING_VERIFIED_CONCEPTS',missing);
 console.log('EXTRA_AUTHORED_CONCEPTS',extra);
-ok(coverage.total===176,'content coverage denominator is 176');
+ok(coverage.total===V.curriculum.totalConcepts,`content coverage denominator follows current curriculum: ${coverage.total}`);
 const exactAnchorBatch={'F07-C05':284,'F07-C16':288,'F07-C17':288,'F07-C18':284,'F07-C19':284,'F07-C20':302,'F07-C21':287};
 ok(Object.entries(exactAnchorBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
@@ -253,10 +267,10 @@ const f06=V.curriculum.byId['F07-C06']?.sourceRanges||[];
 ok(f06.length===2&&f06.every(r=>r.doc==='prevention1')&&Number(f06[0].from)===321&&Number(f06[1].from)===333&&V.contentPacks.authored['F07-C06']?.status==='verified'&&V.contentPacks.authored['F07-C06']?.sourcePrecision==='exact-pdf-page-anchor','simple + ESFR sprinkler concept keeps exact Prevention1 pages 321 and 333');
 const f15=V.curriculum.byId['F07-C15']?.sourceRanges||[];
 ok(f15.length===4&&f15.every(r=>r.doc==='prevention1')&&[167,174,433,482].every((p,i)=>Number(f15[i]?.from)===p)&&V.contentPacks.authored['F07-C15']?.status==='verified'&&V.contentPacks.authored['F07-C15']?.sourcePrecision==='exact-pdf-page-anchor','firefighter-support concept keeps exact Prevention1 pages 167,174,433,482');
-ok(scopeVerified.length===0,'all 176 concepts now have exact official page evidence; page-anchor pending = 0');
+ok(scopeVerified.length===0,`all ${V.curriculum.totalConcepts} concepts have verified source evidence; page-anchor pending = 0`);
 ok(missing.length===0,'no curriculum concept remains in scope-verified/page-anchor-pending state');
-ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===176,'exactly 176 valid authored concept packs');
-ok(coverage.verified===176&&coverage.pending===0,'page-evidence truth reaches 176 page-verified + 0 page-anchor-pending');
+ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===V.curriculum.totalConcepts,`exactly ${V.curriculum.totalConcepts} valid authored concept packs`);
+ok(coverage.verified===V.curriculum.totalConcepts&&coverage.pending===0,`page-evidence truth reaches ${V.curriculum.totalConcepts} verified + 0 pending`);
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'||p.status==='scope-verified'),'every authored content pack has an explicit verified/scope-verified truth state');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored study pack');
@@ -371,7 +385,7 @@ ok(fullCoverage.rows.find(x=>x.id==='E-SHOCK-01')?.status==='covered','four-type
 ok(fullCoverage.rows.find(x=>x.id==='E-TOX-01')?.status==='covered','toxicology antidote toxidrome-pattern and anaphylaxis row closes only after NFA KDCA and E-GEN official evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-TRM-02')?.status==='covered','chest-trauma row closes only after official flail-chest pneumothorax tamponade and traumatic-hemothorax evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-CARD-01')?.status==='covered','ACS STEMI/NSTEMI pulmonary-edema and cardiogenic-shock row closes only after NFA textbook plus current KDCA evidence');
-ok(fullCoverage.total===89&&fullCoverage.covered===89&&fullCoverage.partial===0&&fullCoverage.missing===0&&fullCoverage.implementationPercent===100,'full exam coverage reaches 89/89 only after the final oxygen-cylinder and IV-drip source contracts close');
+ok(fullCoverage.covered===fullCoverage.total&&fullCoverage.partial===0&&fullCoverage.missing===0&&fullCoverage.implementationPercent===100,`full exam coverage reaches ${fullCoverage.covered}/${fullCoverage.total} only after all source contracts close`);
 const chestTraumaIds=['119-finalgap-chest-01','119-finalgap-chest-02','119-finalgap-chest-03','119-finalgap-chest-04'];
 ok(chestTraumaIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'four chest-trauma drills remain P-grade exam-style practice');
 ok((V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='긴장성 기흉')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='혈흉')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='심장압전')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='연가양흉'),'E-TRM-02 lesson directly compares all four named chest-trauma entities');

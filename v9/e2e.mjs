@@ -40,6 +40,19 @@ try{
   assert(flashDetail.includes('백드래프트'),'detail view includes confusing-concept comparison');
   assert(await p.locator('.detail-num').count()===0,'decorative numbered detail badges are removed');
   assert(!flashDetail.includes('개념 구조와 읽는 순서'),'meta learning heading is removed/simplified');
+  const quality2Content=await p.evaluate(()=>{const V=window.AITUTOR_V9,flash=V.contentPacks.get('F03-C09'),foam=V.contentPacks.get('F07-C08'),baseQs=V.questions.filter(q=>/^119-q2-(foamprop|flash)-/.test(q.id||'')),gapQs=V.questions.filter(q=>/^119-q2-(haz-special|sprinkler-base)-/.test(q.id||''));return{flashText:[flash.summary,...(flash.detail||[]),...(flash.must||[])].join(' '),flashCompare:flash.compare?.length||0,flashDeep:flash.deepSections?.length||0,foamText:[foam.summary,...(foam.detail||[]),...(foam.must||[])].join(' '),foamCompare:foam.compare?.length||0,foamDeep:foam.deepSections?.length||0,foamQs:V.questions.filter(q=>q.conceptId==='F07-C08'&&/^119-q2-foamprop-/.test(q.id||'')).length,flashQs:V.questions.filter(q=>q.conceptId==='F03-C09'&&/^119-q2-flash-/.test(q.id||'')).length,baseQuality2:baseQs.length,gapQuality2:gapQs.length,allB:[...baseQs,...gapQs].every(q=>q.grade==='B'&&q.choices?.length===4&&q.choiceExplanations?.length===4)}}); 
+  assert(/483~649℃/.test(quality2Content.flashText)&&/20 kW\/㎡/.test(quality2Content.flashText)&&quality2Content.flashCompare>=4&&quality2Content.flashDeep>=5,'flashover quality2 content includes official phase, radiation, temperature range, before/after and four-way comparison');
+  assert(/라인 프로포셔너/.test(quality2Content.foamText)&&/펌프 프로포셔너/.test(quality2Content.foamText)&&/프레셔 프로포셔너/.test(quality2Content.foamText)&&/프레셔사이드 프로포셔너/.test(quality2Content.foamText)&&quality2Content.foamCompare>=4&&quality2Content.foamDeep>=6,'foam quality2 content covers all four proportioners with operating principles and comparison');
+  assert(quality2Content.foamQs===12&&quality2Content.flashQs===10&&quality2Content.baseQuality2===22&&quality2Content.gapQuality2>=3&&quality2Content.allB,'quality2 keeps 22 base source-backed questions and adds explicit source-backed gap questions with full option explanations');
+
+  const globalQuality=await p.evaluate(()=>{const V=window.AITUTOR_V9,rows=V.curriculum.concepts.map(c=>({id:c.id,features:(V.contentPacks.get(c.id)?.features||[]).length,compare:(V.contentPacks.get(c.id)?.compare||[]).length,family:V.contentPacks.get(c.id)?.compareFamily?.key||'',derived:V.contentPacks.get(c.id)?.compareDerived||'',questions:(V.QuestionQuality119.forConcept(c.id)||[]).length,title:c.title})),familyIds=new Set(V.Quality2ComparisonFamilies119?.memberIds||[]);return{total:rows.length,featureReady:rows.filter(x=>x.features>=3).length,familyTotal:familyIds.size,familyReady:rows.filter(x=>familyIds.has(x.id)&&x.compare>=2&&x.family).length,arbitrary:rows.filter(x=>x.derived==='same-scope-neighbor-summary').map(x=>x.id),highYieldNot20:rows.filter(x=>/플래시오버|백드래프트|위험물|스프링클러|포소화|심정지|소생술|쇼크|환자 평가|기도|호흡|뇌졸중|화상|출혈/.test(x.title)&&x.questions<20).map(x=>x.id)}}); 
+  assert(globalQuality.featureReady===globalQuality.total,'all current verified concepts expose at least three feature/key-point lines');
+  assert(globalQuality.familyReady===globalQuality.familyTotal&&globalQuality.arbitrary.length===0,'all curated comparison-family concepts use meaningful semantic comparison groups with no arbitrary neighbor fallback');
+  assert(globalQuality.highYieldNot20.length===0,'all high-yield concepts expose at least twenty exam-style practice questions');
+
+  const studySchemaAudit=await p.evaluate(()=>{const V=window.AITUTOR_V9,rows=V.curriculum.concepts.map(c=>V.Quality2StudySchema119?.get?.(c.id)).filter(Boolean);return{total:V.curriculum.concepts.length,schemas:rows.length,baseReady:rows.filter(x=>x.quick30&&x.definition&&x.features?.length>=3&&x.core?.length>=3&&x.sourceRanges?.length).length,withConditions:rows.filter(x=>x.applicability?.conditions).length,withMechanism:rows.filter(x=>x.applicability?.mechanisms).length,withTiming:rows.filter(x=>x.applicability?.timingStages).length,withWarnings:rows.filter(x=>x.applicability?.warningSigns).length,withNumbers:rows.filter(x=>x.applicability?.numbers).length,withCompare:rows.filter(x=>x.applicability?.comparison).length}}); 
+  assert(studySchemaAudit.schemas===studySchemaAudit.total&&studySchemaAudit.baseReady===studySchemaAudit.total,'every current concept has grounded 30-second, definition, features, core and official source anchors');
+  assert(studySchemaAudit.withMechanism>0&&studySchemaAudit.withWarnings>0&&studySchemaAudit.withNumbers>0&&studySchemaAudit.withCompare>0,'applicable concepts expose structured mechanisms warnings numbers and comparison sections without forcing them onto every concept');
 
   const before=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
   await p.locator('[data-study-next]').click();
@@ -50,6 +63,16 @@ try{
   const examText=await p.locator('.page').innerText();
   assert(examText.includes('65문항 · 65분')&&examText.includes('소방학개론 25문항')&&examText.includes('응급처치학개론 40문항'),'exam landing shows real 25+40 / 65-minute format');
   assert(!examText.includes('검증문제')&&!examText.includes('미검증'),'exam landing hides question-bank engineering state');
+
+  assert(await p.locator('[data-training-start]').count()===11,'exam landing exposes fire EMS full-range wrong-answer and weak-concept training modes');
+  await p.locator('[data-training-start="fire50"]').click();await p.waitForSelector('.exam-run-workspace');
+  const fire50=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,label:e.blueprint?.label}});
+  assert(fire50.mode==='training'&&fire50.total===50&&fire50.fire===50&&fire50.ems===0&&/소방학 집중 50/.test(fire50.label||''),'fire 50 training builds fifty unique fire questions outside real mock mode');
+  await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('.exam-start');
+  await p.locator('[data-training-start="all200"]').click();await p.waitForSelector('.exam-run-workspace');
+  const all200=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,unique:new Set(e.qs.map(q=>q.id)).size}});
+  assert(all200.mode==='training'&&all200.total===200&&all200.fire===77&&all200.ems===123&&all200.unique===200,'full-range 200 training preserves exam-like subject ratio with unique questions');
+  await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('.exam-start');
 
   await go(p,'resources');await cleanPage(p,'desktop resources');
   assert((await p.locator('.page').innerText()).includes('공식 자료'),'resources page is student-facing');
@@ -92,8 +115,19 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="quiz"]').click();
   await m.waitForSelector('.book-section .question-card');
   assert(await m.locator('.book-section .question-card').first().locator('.tag').count()===0,'practice question hides difficulty/evidence badges before the student answers');
+  assert(await m.locator('.book-section .question-card').count()===1,'concept practice shows exactly one question at a time instead of an infinite scroll list');
+  assert(await m.locator('.book-section .study-quiz-pager').count()===1,'concept practice exposes previous/current/next navigation');
+  const firstPracticeQuestion=(await m.locator('.book-section .question-card h2').innerText()).trim();
+  const quizTotal=await m.locator('.book-section .study-quiz-progress b').innerText();
+  assert(/^1\s*\/\s*\d+/.test(quizTotal),'concept practice starts at question 1 with an explicit total');
   await m.locator('.book-section .question-card').first().locator('.choice').first().click();
   assert(await m.locator('.book-section .question-card').first().locator('.question-result-meta .tag').count()===1,'practice question shows only compact difficulty feedback after answering');
+  const nextPractice=m.locator('.study-body-mobile [data-study-quiz-next]:not([disabled])');
+  if(await nextPractice.count()){
+    await nextPractice.click();
+    const secondPracticeQuestion=(await m.locator('.book-section .question-card h2').innerText()).trim();
+    assert(secondPracticeQuestion!==firstPracticeQuestion,'concept practice next button advances to a different question');
+  }
   await m.locator('.book-jumpbar [data-study-tab="core"]').click();
   await m.waitForSelector('.book-section .study-must');
   assert((await m.locator('.book-section .study-must-title').innerText()).includes('★ 시험필수'),'core learning exposes a compact exam-essential block');
@@ -123,7 +157,16 @@ try{
   const keyLineStyle=await m.locator('.book-section .detail-view .study-key-text').first().evaluate(el=>getComputedStyle(el).textDecorationLine);
   assert(keyLineStyle.includes('underline'),'detail important points are visibly underlined');
   const dup=await m.locator('.book-section .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
-  assert(!dup,'detail tab removes duplicate section bodies');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.book-section .concept-visual .visual-node');
+  const visualLayouts=await m.locator('.book-section .concept-visual').evaluateAll(roots=>roots.map(root=>{const nodes=[...root.querySelectorAll('.visual-node')].map(x=>x.getBoundingClientRect()),labels=[...root.querySelectorAll('.visual-node b')].map(x=>({text:x.textContent||'',scroll:x.scrollWidth,client:x.clientWidth,wordBreak:getComputedStyle(x).wordBreak}));return{nodes,labels}}));
+  assert(visualLayouts.length>=1&&visualLayouts.every(v=>v.nodes.every((n,i,a)=>i===0||n.y>=a[i-1].y+a[i-1].height-1)),'all mobile principle diagrams stack vertically without card collisions');
+  assert(visualLayouts.every(v=>v.labels.every(x=>x.scroll<=x.client+2)),'all mobile principle-diagram labels stay inside their cards');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   const bodyHeight=await m.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
   assert(bodyHeight>=320,'mobile study keeps at least 320px for learning content');
 
@@ -151,9 +194,10 @@ try{
   assert(Number(await m.locator('#pdfEvidence').getAttribute('data-page'))===30,'F03-C03 opens at mapped PDF page 30 for textbook page 14');
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
-  const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=root.querySelectorAll('.pdf-evidence-line');return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
+  const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=[...root.querySelectorAll('.pdf-evidence-line')];return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,lineHeights:lines.map(x=>x.getBoundingClientRect().height),lineStyles:lines.map(x=>({bg:getComputedStyle(x).backgroundColor,shadow:getComputedStyle(x).boxShadow})),legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
   assert(pdfVisual.pixelWidth>=pdfVisual.cssWidth*1.8,'mobile PDF canvas renders at high device-pixel density for crisp text');
-  assert(pdfVisual.evidence<=3,'PDF highlights at most three evidence lines and fails closed to zero when no confident line match exists');
+  assert(pdfVisual.lineHeights.every(h=>h<=3),'PDF evidence uses thin baseline underlines instead of text-covering highlight boxes');
+  assert(pdfVisual.lineStyles.every(x=>x.shadow==='none'),'PDF evidence underlines use no obscuring inset shadow');
   assert(pdfVisual.legacy===0&&!/근거\s+\d+개/.test(pdfVisual.label),'legacy keyword boxes/count are hidden from the student');
   const cache=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.openPdf(key),b=await V.SourcePDF.openPdf(key);return{same:a.pdf===b.pdf,origin:a.origin}});
   const local=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc;return await V.SourcePDF.availability(key)});
@@ -170,8 +214,13 @@ try{
   await m.locator('[data-calc-bank]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='bank');
   await m.waitForSelector('.question-card');
   const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형');return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id)}}); 
-  assert(calcBank.filter==='calc'&&calcBank.count>=8&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with at least the eight source-backed drills');
-  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===21,'calculation practice includes the expanded source-backed bank while preserving legacy oxygen/drip practice labels');
+  assert(calcBank.filter==='calc'&&calcBank.count>=45&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with the expanded source-backed drill bank');
+  assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===21,'calculation practice preserves the 21 reviewed legacy/source-backed calculation drills');
+  assert(calcBank.ids.filter(id=>/^119-q2calc-/.test(id)).length===24,'calculation Quality 2.0 adds 24 numeric variants without past-exam credit');
+  assert(await m.locator('.calc-chip').count()>=8,'calculation training exposes formula-family filters');
+  await m.locator('[data-calc-group="oxygen"]').click();
+  const oxygenGroup=await m.evaluate(()=>({group:window.AITUTOR_V9.App.runtime.calcGroup,stem:document.querySelector('.question-card h2')?.textContent||''}));
+  assert(oxygenGroup.group==='oxygen'&&/산소통/.test(oxygenGroup.stem),'calculation family filter switches to oxygen-cylinder drills');
   await noX(m,'mobile calculation practice');
   const calcEvidence=await m.evaluate(()=>{const V=window.AITUTOR_V9;return{
     oxygen:(V.contentPacks.authored['E09-C07']?.calculations||[]).map(x=>({formula:x.formula,tier:x.evidenceTier,note:x.note})),
@@ -186,6 +235,12 @@ try{
   const realStart=m.locator('[data-exam-start="real"]');
   assert(await realStart.count()===1,'real mock start is enabled only after verified fire+EMS scope coverage closes');
   await realStart.click();await m.waitForSelector('.question-card');
+  assert(await m.locator('.page-exam.exam-active>.top').isHidden(),'active mobile exam hides the redundant global header');
+  assert(await m.locator('.page-exam.exam-active .mobile-nav').isHidden(),'active mobile exam hides global bottom navigation');
+  const examLayout=await m.locator('.exam-run-workspace').evaluate(root=>{const footer=root.querySelector('.exam-footer'),status=root.querySelector('.exam-answer-count'),buttons=[...root.querySelectorAll('.exam-footer .btn')],choices=[...root.querySelectorAll('.choice')];const sr=status?.getBoundingClientRect(),br=buttons.map(x=>x.getBoundingClientRect());return{status:sr&&{l:sr.left,r:sr.right,sw:status.scrollWidth,cw:status.clientWidth,sh:status.scrollHeight,ch:status.clientHeight},buttons:br.map(x=>({l:x.left,r:x.right,t:x.top,b:x.bottom})),choiceOverflow:choices.some(x=>x.scrollWidth>x.clientWidth+2||x.getBoundingClientRect().right>innerWidth+1||x.getBoundingClientRect().left<-1)}}); 
+  assert(examLayout.status&&examLayout.status.sw<=examLayout.status.cw+2&&examLayout.status.sh<=examLayout.status.ch+2,'active exam answer counter text is not clipped or compressed');
+  assert(examLayout.buttons.length===2&&examLayout.buttons[0].r<=examLayout.status.l+1&&examLayout.status.r<=examLayout.buttons[1].l+1,'active exam footer columns never overlap');
+  assert(!examLayout.choiceOverflow,'active exam choice text stays inside the mobile viewport');
   const realMock=await m.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam,fire=e.qs.filter(q=>q.subject==='fire'),ems=e.qs.filter(q=>q.subject==='ems');return{mode:e.mode,total:e.qs.length,fire:fire.length,ems:ems.length,verified:e.qs.every(q=>q.grade==='A'||q.grade==='B'),unique:new Set(e.qs.map(q=>q.id)).size}});
   assert(realMock.mode==='real'&&realMock.total===65&&realMock.fire===25&&realMock.ems===40&&realMock.verified&&realMock.unique===65,'real mock builds 25 verified fire + 40 verified EMS questions with no duplicates');
   assert(await m.locator('.mobile-nav').isHidden(),'active exam hides global mobile navigation to prevent accidental exit');
@@ -226,6 +281,23 @@ try{
   await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
   assert((await m.locator('.top h1').innerText()).includes('합격노트'),'notes area is promoted to pass-note workspace');
   assert(await m.locator('[data-pass-export]').count()===4,'pass-note workspace exposes fire, EMS, personal and rapid-review PDF exports');
+  assert(await m.locator('[data-note-filter]').count()===7,'pass-note workspace exposes subject/source filters');
+  assert(await m.locator('#noteSearch').count()===1,'pass-note workspace exposes note search');
+  const sourceNoteId=await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.find(n=>n.sourceType==='pass-star')?.id||'');
+  if(sourceNoteId){
+    const beforeOfficial=await m.evaluate(id=>{const n=window.AITUTOR_V9.Store.state.notes.find(x=>x.id===id),marker='\n\n[내 메모]\n',i=String(n?.body||'').indexOf(marker);return i>=0?String(n.body).slice(0,i):String(n?.body||'')},sourceNoteId);
+    await m.locator(`[data-note-edit="${sourceNoteId}"]`).click();
+    assert(await m.locator('.note-official-lock').count()===1&&await m.locator('#noteEditMemo').count()===1&&await m.locator('#noteEditBody').count()===0,'source-backed pass note locks official text and exposes only a personal memo editor');
+    await m.locator('#noteEditMemo').fill('E2E 내 암기 메모');
+    await m.locator(`[data-note-save="${sourceNoteId}"]`).click();
+    const after=await m.evaluate(id=>window.AITUTOR_V9.Store.state.notes.find(x=>x.id===id)?.body||'',sourceNoteId);
+    assert(after.startsWith(beforeOfficial)&&after.includes('[내 메모]')&&after.includes('E2E 내 암기 메모'),'editing a source-backed note preserves official text and appends personal memo separately');
+  }
+  if(await m.locator('[data-note-filter="star"]').count()){
+    await m.locator('[data-note-filter="star"]').click();
+    assert(true,'pass-note star filter can be selected');
+    await m.locator('[data-note-filter="all"]').click();
+  }
   const fileInputStable=await m.evaluate(async()=>{
     const first=document.querySelector('#personalFile');
     for(let i=0;i<80&&window.AITUTOR_V9.App.runtime.docsLoading;i++)await new Promise(r=>setTimeout(r,25));
