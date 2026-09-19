@@ -29,8 +29,8 @@ const authE2E=fs.readFileSync(new URL('./auth-session-e2e.mjs',import.meta.url),
 const sql=fs.readFileSync(new URL('../supabase/tests/v9-live-closed-loop.sql',import.meta.url),'utf8');
 
 const checks={
-  content176:audit.total===176&&audit.complete===176&&audit.incomplete===0&&Object.keys(audit.blockers||{}).length===0,
-  pageEvidence176:coverage.verified===176&&coverage.pending===0,
+  contentAll:audit.total===V.curriculum.totalConcepts&&audit.complete===V.curriculum.totalConcepts&&audit.incomplete===0&&Object.keys(audit.blockers||{}).length===0,
+  pageEvidenceAll:coverage.verified===V.curriculum.totalConcepts&&coverage.pending===0,
   fullExamCoverageComplete:!!fullExamCoverage&&fullExamCoverage.missing===0&&fullExamCoverage.partial===0,
   questionContract:qa.examStyle>=1056&&qa.duplicateTexts.length===0&&perConceptQuestionContract,
   realMockVerifiedReady:mock.ready===true&&mock.scopeComplete===true&&mock.fire>=25&&mock.ems>=40&&mock.missingFireScopes.length===0&&mock.missingEmsScopes.length===0,
@@ -86,4 +86,4 @@ const result={
   productionRootPromotionAllowed:blockers.length===0
 };
 console.log('RELEASE_GATE_119',JSON.stringify(result,null,2));
-if(!checks.content176||!checks.pageEvidence176||!checks.questionContract)process.exitCode=1;
+if(!checks.contentAll||!checks.pageEvidenceAll||!checks.questionContract)process.exitCode=1;
