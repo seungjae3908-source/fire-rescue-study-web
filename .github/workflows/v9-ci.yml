@@ -105,6 +105,32 @@ jobs:
         run: node v9/auth-session-e2e.mjs
 
 
+  global_typography_audit:
+    name: global_typography_audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA dependency
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start branch-only static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/study119-typography-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/study119-typography-http.log
+          exit 1
+      - name: Audit every concept tab at 360/390/412/768 plus active exam
+        run: node v9/global-typography-audit.mjs
+
+
   coverage_anchor_audit:
     name: coverage_anchor_audit (manual slow audit)
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_coverage_audit }}
