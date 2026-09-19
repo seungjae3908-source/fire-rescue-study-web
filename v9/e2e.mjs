@@ -138,9 +138,9 @@ try{
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.book-section .concept-visual .visual-node');
-  const visualLayout=await m.locator('.book-section .concept-visual').evaluate(root=>{const nodes=[...root.querySelectorAll('.visual-node')].map(x=>x.getBoundingClientRect()),labels=[...root.querySelectorAll('.visual-node b')].map(x=>({text:x.textContent||'',scroll:x.scrollWidth,client:x.clientWidth,wordBreak:getComputedStyle(x).wordBreak}));return{nodes,labels}});
-  assert(visualLayout.nodes.every((n,i,a)=>i===0||n.y>=a[i-1].y+a[i-1].height-1),'mobile principle diagrams stack vertically without card collisions');
-  assert(visualLayout.labels.every(x=>x.scroll<=x.client+2),'mobile principle-diagram labels do not overflow their cards');
+  const visualLayouts=await m.locator('.book-section .concept-visual').evaluateAll(roots=>roots.map(root=>{const nodes=[...root.querySelectorAll('.visual-node')].map(x=>x.getBoundingClientRect()),labels=[...root.querySelectorAll('.visual-node b')].map(x=>({text:x.textContent||'',scroll:x.scrollWidth,client:x.clientWidth,wordBreak:getComputedStyle(x).wordBreak}));return{nodes,labels}}));
+  assert(visualLayouts.length>=1&&visualLayouts.every(v=>v.nodes.every((n,i,a)=>i===0||n.y>=a[i-1].y+a[i-1].height-1)),'all mobile principle diagrams stack vertically without card collisions');
+  assert(visualLayouts.every(v=>v.labels.every(x=>x.scroll<=x.client+2)),'all mobile principle-diagram labels stay inside their cards');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
