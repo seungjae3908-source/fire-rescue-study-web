@@ -38,7 +38,7 @@ ok(V.QuestionFactory119?.generated===generated119.length&&generated119.length>0,
 ok(V.Quality2QuestionFactory119?.added===generatedQ2.length&&generatedQ2.length>0,'Quality 2.0 factory reports exactly the additional source-grounded practice questions it added');
 ok(generated119.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q))&&generatedQ2.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'all generated factory questions stay P-grade practice and pass the exam-style contract');
 const verifiedEmsBatch1=(V.questions||[]).filter(q=>/^119-verems-/.test(q.id||''));
-ok(V.VerifiedEMSBatch119?.added===26&&verifiedEmsBatch1.length===26,'verified EMS batch1 adds twenty-six exact-page questions');
+ok(V.VerifiedEMSBatch119?.added===28&&verifiedEmsBatch1.length===28,'verified EMS batch1 adds twenty-eight exact-page questions');
 ok(verifiedEmsBatch1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS batch1 stays B-grade, page-verified and never claims past-exam status');
 ok(verifiedEmsBatch1.every(q=>/소방전술3\(구급\).*\d+(?:\s*[~\-–]\s*\d+)?\s*쪽/.test(String(q.source||''))),'verified EMS batch1 carries exact textbook page evidence');
 const verifiedFireBatch1=(V.questions||[]).filter(q=>/^119-verfire-/.test(q.id||''));
