@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
-let pdfPromise=null,tesseractPromise=null;
+let pdfPromise=null,tesseractPromise=null,webllmPromise=null;
 async function firstImport(candidates,label){
   const errors=[];
   for(const url of candidates){
@@ -35,5 +35,16 @@ async function loadTesseract(){
   })().catch(err=>{tesseractPromise=null;throw err});
   return tesseractPromise
 }
-V.RuntimeDeps={loadPdfJs,loadTesseract};
+async function loadWebLLM(){
+  if(webllmPromise)return webllmPromise;
+  webllmPromise=(async()=>{
+    const {module:m}=await firstImport([
+      'https://esm.run/@mlc-ai/web-llm@0.2.85',
+      'https://esm.sh/@mlc-ai/web-llm@0.2.85'
+    ],'WEBLLM');
+    return m
+  })().catch(err=>{webllmPromise=null;throw err});
+  return webllmPromise
+}
+V.RuntimeDeps={loadPdfJs,loadTesseract,loadWebLLM};
 })();
