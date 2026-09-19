@@ -12,7 +12,7 @@ async function chunksFor(docId){const d=await db(),t=d.transaction('chunks','rea
 async function purge(docId){const d=await db(),chunks=await chunksFor(docId),t=d.transaction(['docs','chunks'],'readwrite');t.objectStore('docs').delete(docId);for(const c of chunks)t.objectStore('chunks').delete(c.id);await txDone(t)}
 async function remove(docId){await purge(docId);tombstones()[docId]=Date.now();V.Store.save()}
 async function createOcrWorker(){
-  const T=await import('https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js');
+  const T=V.RuntimeDeps?.loadTesseract?await V.RuntimeDeps.loadTesseract():await import('https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js');
   const create=T.createWorker||T.default?.createWorker||window.Tesseract?.createWorker;
   if(!create)throw Error('OCR_ENGINE_UNAVAILABLE');
   const worker=await create('kor+eng');
@@ -85,8 +85,8 @@ async function maybeAiCorrect(primary,alternate,confidence,onProgress){
   try{return await V.LocalAI.correctExtractedText({primary,alternate,confidence,onProgress:t=>onProgress?.(t)})}catch(err){return{accepted:false,text:primary,reason:String(err?.message||err)}}
 }
 async function pdfText(file,onProgress,{aiAssist='auto'}={}){
-  const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');
-  p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';
+  const p=V.RuntimeDeps?.loadPdfJs?await V.RuntimeDeps.loadPdfJs():await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');
+  if(!V.RuntimeDeps?.loadPdfJs)p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';
   const task=p.getDocument({data:await file.arrayBuffer()}),pdf=await task.promise,out=[];let worker=null,aiBudget=6;
   try{
     for(let i=1;i<=pdf.numPages;i++){
