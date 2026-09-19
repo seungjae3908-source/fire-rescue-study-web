@@ -44,6 +44,7 @@ const checks={
   pwaOfflineContract:e2e.includes('v9 PWA shell reloads while offline'),
   pdfPrivateRestoreContract:pdfE2E.includes('PDF.js creates at least one private text chunk')&&pdfE2E.includes('PDF chunks are invisible to another local owner'),
   imageOcrRestoreContract:imageE2E.includes('fresh browser context restores image OCR metadata and extracted text for the same owner'),
+  ocrQualityBenchmarkContract:imageE2E.includes('OCR benchmark character error rate <= 18%')&&imageE2E.includes('OCR benchmark preserves numeric facts and units')&&imageE2E.includes('OCR benchmark preserves Korean key terms'),
   sessionExpiryContract:authE2E.includes('401 refresh rejection emits SIGNED_OUT')&&lite.includes("function clearSession(event='SIGNED_OUT')"),
   authSyncRemoteFirst:auth.includes('remoteFirstOnSignIn:true')&&auth.includes('remoteFirstOnManualSync:true')&&auth.includes('originalFilesAutoUpload:false'),
   releaseAcceptanceContractPresent:workflow.includes('release_candidate_live_acceptance:'),
