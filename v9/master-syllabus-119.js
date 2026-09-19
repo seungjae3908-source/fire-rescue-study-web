@@ -27,7 +27,7 @@ const ems=[
   {id:'EC',title:'PART C · 해부생리·환자평가',subtitle:'해부생리 · 현장확인 · 1·2차평가 · 재평가',scopeIds:['E04','E08']},
   {id:'ED',title:'PART D · 기도·호흡',subtitle:'기도확보 · 흡인 · 산소 · 환기 · 호흡곤란',scopeIds:['E09','E10']},
   {id:'EE',title:'PART E · 순환·심장·소생술',subtitle:'심장질환 · 제세동 · 출혈 · 쇼크 · BLS',scopeIds:['E11','E13','E24']},
-  {id:'EF',title:'PART F · 내과응급',subtitle:'복통 · 의식장애 · 중독 · 알레르기',scopeIds:['E12','E17','E18']},
+  {id:'EF',title:'PART F · 내과응급',subtitle:'복통 · 간담췌 · 비뇨 · 조혈 · ENT · 비외상성 근골격 · 의식장애 · 중독 · 알레르기',scopeIds:['E12','E17','E18','E25'],requiredTopics:['위장관계 응급','간·담도·췌장 응급','비뇨생식기계 응급','조혈계 응급','감염질환 응급','눈·귀·코·목 응급','비외상성 근골격계 응급']},
   {id:'EG',title:'PART G · 외상',subtitle:'연부조직 · 화상 · 근골격 · 머리·척추',scopeIds:['E14','E15','E16']},
   {id:'EH',title:'PART H · 환경응급',subtitle:'한랭 · 열 · 익수 · 물림·쏘임',scopeIds:['E19']},
   {id:'EI',title:'PART I · 산과·소아·노인',subtitle:'분만 · 소아 · 노인',scopeIds:['E20','E21','E22']},
