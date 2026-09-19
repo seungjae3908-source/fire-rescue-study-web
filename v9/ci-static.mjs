@@ -66,9 +66,11 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===99,'ninety-nine building ECG rhythm brady-tachy electrical-therapy disaster CBRN transport cardiovascular shock endocrine sepsis toxicology newborn chest-trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.planned===99&&V.FinalGapQuestions119?.added===98&&V.FinalGapQuestions119?.skippedDuplicates?.length===1,'final-gap keeps ninety-nine planned topics with one verified evidence-tier replacement');
+const finalGapReplacement=V.FinalGapQuestions119.skippedDuplicates[0];
+ok(finalGapReplacement?.id==='119-finalgap-ecg-arrest-03'&&finalGapReplacement?.replacedBy==='119-verems-electrical-01'&&finalGapReplacement?.replacementGrade==='B','PEA final-gap duplicate is replaced only by the exact-page B-grade verified question');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===99&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===98&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'remaining final-gap questions stay practice-only and pass the exam-style gate after verified replacement');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAclsExamStandard=finalGapPractice.filter(q=>/^119-finalgap-acls-0[1-4]$/.test(q.id||''));
 ok(adultAclsExamStandard.length===4&&adultAclsExamStandard.every(q=>/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the 2020 KACPR source mandated by the 2026 exam plan');
