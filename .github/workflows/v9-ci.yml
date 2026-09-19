@@ -79,7 +79,7 @@ jobs:
           node-version: '22'
       - name: Install browser QA dependency
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Start branch-only static server
         run: |
@@ -118,7 +118,7 @@ jobs:
           node-version: '22'
       - name: Install browser QA dependency
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Start branch-only static server
         run: |
@@ -145,7 +145,7 @@ jobs:
           node-version: '22'
       - name: Install browser QA dependency
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Start branch-only static server
         run: |
@@ -183,7 +183,7 @@ jobs:
           node-version: '22'
       - name: Install source browser probe dependency
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Resolve official NFA PDF paths in Chromium
         run: node v9/source-catalog-browser.mjs
@@ -202,7 +202,7 @@ jobs:
         with:
           node-version: 22
       - name: Install live browser QA dependency
-        run: npm install --no-save playwright@1.55.0
+        run: npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Real deployed 119 preview official-PDF acceptance
@@ -223,7 +223,7 @@ jobs:
           node-version: '22'
       - name: Install page-anchor discovery browser
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Discover official PDF page anchors with source text
         run: node v9/page-anchor-discovery.mjs
@@ -242,7 +242,7 @@ jobs:
           node-version: '22'
       - name: Install focused sprinkler browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Verify six deployed sprinkler exact-page anchors
         run: node v9/sprinkler-live-e2e.mjs
@@ -263,7 +263,7 @@ jobs:
           node-version: '22'
       - name: Install PDF range inspector browser
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Inspect exact official PDF page range
         run: node v9/page-range-inspect.mjs
@@ -283,7 +283,7 @@ jobs:
           node-version: '22'
       - name: Install fire-phenomena browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Verify eight deployed fire-phenomena exact-page anchors
         run: node v9/fire-phenomena-live-e2e.mjs
@@ -302,7 +302,7 @@ jobs:
           node-version: '22'
       - name: Install hazardous-material browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Verify eight deployed hazardous-material exact-page anchors
         run: node v9/hazmat-live-e2e.mjs
@@ -322,7 +322,7 @@ jobs:
           node-version: '22'
       - name: Install cross-document source probe
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Find fire-investigation source document and pages
         run: node v9/cross-doc-fire-investigation.mjs
@@ -341,7 +341,7 @@ jobs:
           node-version: '22'
       - name: Install facility source search browser
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Search entire Prevention1 PDF for remaining facility anchors
         run: node v9/facility-source-search.mjs
@@ -360,7 +360,7 @@ jobs:
           node-version: '22'
       - name: Install facility live browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Verify remaining facility exact-page evidence in deployed Preview
         run: node v9/facilities-live-e2e.mjs
@@ -380,7 +380,7 @@ jobs:
           node-version: '22'
       - name: Install question-bank live browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Verify grounded question bank in deployed Preview
         run: node v9/question-bank-live-e2e.mjs
@@ -399,7 +399,7 @@ jobs:
           node-version: '22'
       - name: Install release-candidate browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Verify deployed release-candidate product
         run: node v9/release-candidate-live-e2e.mjs
@@ -415,7 +415,7 @@ jobs:
           node-version: '22'
       - name: Install image OCR browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Start branch-only static server
         run: |
@@ -445,7 +445,7 @@ jobs:
           node-version: '22'
       - name: Install deployed privacy/session browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Deployed expired-session fail-closed QA
         run: node v9/auth-session-e2e.mjs
@@ -469,7 +469,7 @@ jobs:
           node-version: '22'
       - name: Install production browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Production 119 release-candidate acceptance
         run: node v9/release-candidate-live-e2e.mjs
@@ -494,7 +494,7 @@ jobs:
           node-version: '22'
       - name: Install real mock browser QA
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Verify deployed real mock evidence pool
         run: node v9/real-mock-live-e2e.mjs
@@ -514,7 +514,7 @@ jobs:
           node-version: '22'
       - name: Install browser
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
       - name: Verify deployed preview boots on mobile and desktop
         run: node v9/live-student-ux-smoke.mjs
