@@ -44,7 +44,7 @@ const highYieldZero=concepts.filter(x=>x.highYield&&x.verified===0);
 const zeroVerified=concepts.filter(x=>x.verified===0);
 const zeroVerifiedTarget=47;
 const result={
-  version:'119-verified-question-coverage-v3',
+  version:'119-verified-question-coverage-v4',
   subjectTotals,
   structuredVerified:structuredVerified.length,
   target,
