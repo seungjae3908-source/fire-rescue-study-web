@@ -1,6 +1,7 @@
 'use strict';
 
 const { Readable } = require('node:stream');
+const { pipeline } = require('node:stream/promises');
 
 const BASE='https://www.nfa.go.kr';
 const LIST=BASE+'/nfsa/releaseinformation/archive/materials/';
@@ -268,6 +269,7 @@ module.exports=async function handler(req,res){
     return res.end(JSON.stringify({
       doc,name:row.name,upstreamStatus:upstream.status,magicOk,
       contentType:upstream.headers.get('content-type')||'',
+      contentLength:upstream.headers.get('content-length')||'',
       contentRange:upstream.headers.get('content-range')||'',
       acceptRanges:upstream.headers.get('accept-ranges')||''
     }));
@@ -286,8 +288,13 @@ module.exports=async function handler(req,res){
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('X-119-Official-Source','nfa');
   if(req.method==='HEAD'||!upstream.body)return res.end();
-  try{Readable.fromWeb(upstream.body).on('error',()=>{try{res.destroy()}catch{}}).pipe(res)}
-  catch{res.end(Buffer.from(await upstream.arrayBuffer()))}
+  try{
+    await pipeline(Readable.fromWeb(upstream.body),res);
+    return;
+  }catch(e){
+    console.error('OFFICIAL_PDF_PROXY_STREAM_ERROR',JSON.stringify({doc,error:String((e&&e.message)||e||'STREAM_FAILED').slice(0,200)}));
+    try{if(!res.headersSent){res.statusCode=502;return res.end('OFFICIAL_SOURCE_STREAM_FAILED')}res.destroy()}catch{}
+  }
 };
 
 module.exports.SOURCES=SOURCES;

@@ -14,9 +14,9 @@ p.calculations=[...new Map([
   }
 ].map(x=>[x.title,x])).values()];
 V.CalculationContract119={
-  version:'119-source-applicable-calculation-v1',
-  requiredIds:['F05-C01','F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07'],
-  falsePositiveRemoved:['F03-C03','F04-C02','F04-C03','F04-C04','F04-C05','F04-C06','F04-C08','F05-C08'],
-  sourcePolicy:'only concepts with actual formula/quantity-calculation applicability'
+  version:'119-source-applicable-calculation-v5',
+  requiredIds:['F03-C02','F03-C03','F04-C04','F05-C01','F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07','E07-C03','E09-C07','E14-C03'],
+  falsePositiveRemoved:['F04-C02','F04-C03','F04-C05','F04-C06','F04-C08','F05-C08'],
+  sourcePolicy:'only concepts with direct textbook/public-official or regulated-device source applicability, including transparent dimensional arithmetic over a source-declared factor'
 };
 })();

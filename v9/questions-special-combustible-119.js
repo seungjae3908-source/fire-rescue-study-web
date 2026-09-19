@@ -1,0 +1,17 @@
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{};if(!Array.isArray(V.questions))return;
+const source='화재예방법 시행령 제19조·별표2·별표3 · 국가법령정보센터';
+const Q=[
+{id:'119-specialcomb-01',grade:'P',subject:'fire',scopeId:'F05',conceptId:'F05-C01',difficulty:'low',type:'법령형',source,q:'화재예방법 시행령상 특수가연물에 해당하는 면화류의 기준수량은?',choices:['100kg 이상','200kg 이상','400kg 이상','1,000kg 이상'],a:1,choiceExplanations:['100kg은 면화류의 법정 기준수량이 아니다.','정답. 시행령 별표2는 면화류 200kg 이상을 기준으로 한다.','400kg은 나무껍질 및 대팻밥의 기준수량이다.','1,000kg은 넝마·종이부스러기, 사류, 볏짚류 등에 해당한다.']},
+{id:'119-specialcomb-02',grade:'P',subject:'fire',scopeId:'F05',conceptId:'F05-C01',difficulty:'mid',type:'법령형',source,q:'특수가연물 중 가연성액체류의 기준수량으로 옳은 것은?',choices:['200L 이상','1㎥ 이상','2㎥ 이상','10㎥ 이상'],a:2,choiceExplanations:['200L는 별표2의 가연성액체류 기준이 아니다.','1㎥는 현재 별표2 기준보다 작다.','정답. 가연성액체류는 2㎥ 이상이다.','10㎥는 목재가공품 및 나무부스러기의 기준수량이다.']},
+{id:'119-specialcomb-03',grade:'P',subject:'fire',scopeId:'F05',conceptId:'F05-C01',difficulty:'mid',type:'비교형',source,q:'특수가연물의 품명과 기준수량 연결로 옳은 것은?',choices:['석탄·목탄류 — 1,000kg 이상','목재가공품·나무부스러기 — 10㎥ 이상','발포 고무류·플라스틱류 — 3,000kg 이상','나무껍질·대팻밥 — 200kg 이상'],a:1,choiceExplanations:['석탄·목탄류는 10,000kg 이상이다.','정답. 목재가공품 및 나무부스러기는 10㎥ 이상이다.','발포시킨 고무류·플라스틱류는 20㎥ 이상 기준이다.','나무껍질 및 대팻밥은 400kg 이상이다.']},
+{id:'119-specialcomb-04',grade:'P',subject:'fire',scopeId:'F05',conceptId:'F05-C01',difficulty:'high',type:'상황형',source,q:'특수가연물을 실외에 쌓아 저장하는 경우 시행령 별표3상 기본 이격기준으로 옳은 것은?',choices:['대지경계선·도로·인접 건축물과 최소 1m','최소 3m','최소 6m','거리기준이 없다'],a:2,choiceExplanations:['1m는 별표3의 실외 저장 기본 이격기준이 아니다.','3m가 아니라 최소 6m 이상 간격을 두도록 규정한다.','정답. 실외 저장 시 대지경계선, 도로 및 인접 건축물과 최소 6m 이상 간격을 둔다.','별표3에는 실외 적치의 이격기준이 명시되어 있다.']},
+{id:'119-specialcomb-05',grade:'P',subject:'fire',scopeId:'F05',conceptId:'F05-C01',difficulty:'high',type:'예외형',source,q:'특수가연물 적치 높이에 관한 설명으로 옳은 것은?',choices:['소화설비 조건과 무관하게 항상 5m 이하이다','살수설비 등을 갖춘 경우에도 항상 10m 이하이다','살수설비 또는 조건에 맞는 대형수동식소화기 범위에 포함되면 15m 이하 기준이 적용될 수 있다','높이에 관한 기준은 없다'],a:2,choiceExplanations:['별표3은 5m 일률 기준을 두지 않는다.','해당 소화설비 조건을 충족하면 15m 이하 기준이 적용될 수 있다.','정답. 살수설비 또는 방사범위에 포함되는 대형수동식소화기 조건에서는 높이 15m 이하 기준이 적용된다.','별표3은 저장 높이에 관한 기준을 규정한다.']},
+{id:'119-specialcomb-06',grade:'P',subject:'fire',scopeId:'F05',conceptId:'F05-C01',difficulty:'mid',type:'구분형',source,q:'위험물과 특수가연물의 법적 분류를 구분한 설명으로 옳은 것은?',choices:['둘 다 위험물 제1류~제6류 분류를 그대로 사용한다','특수가연물은 화재예방법 시행령 별표2의 품명·수량 기준을 사용한다','특수가연물에는 기준수량 개념이 없다','위험물 지정수량과 특수가연물 기준수량은 항상 같은 숫자다'],a:1,choiceExplanations:['특수가연물은 위험물 제1류~제6류와 동일한 분류체계를 쓰지 않는다.','정답. 특수가연물은 화재예방법 시행령 별표2의 품명별 기준수량으로 판단한다.','특수가연물 역시 법령상 품명별 수량 기준이 있다.','두 제도는 적용 법령과 기준표가 달라 수량이 항상 같지 않다.']}
+];
+const seenId=new Set(V.questions.map(x=>x.id)),seenText=new Set(V.questions.map(x=>String(x.q||'').replace(/\s+/g,' ').trim().toLowerCase()));let added=0;
+for(const q of Q){const k=String(q.q).replace(/\s+/g,' ').trim().toLowerCase();if(seenId.has(q.id)||seenText.has(k))continue;q.ex=q.choiceExplanations[q.a];q.examStyle=V.QuestionQuality119?.isExamStyle?.(q)!==false;q.questionClass='exam-style';V.questions.push(q);seenId.add(q.id);seenText.add(k);added++}
+V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);V.QuestionDifficulty?.annotate?.(V.questions);
+V.SpecialCombustibleQuestions119={version:'119-special-combustible-practice-v1',added,ids:Q.map(x=>x.id),pastExamClaim:false};
+})();

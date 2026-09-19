@@ -13,6 +13,9 @@ try{
     const remoteFirst=V.Store.mergeStateSafe(baseState,remote,'member-a');
     const newerLocal=V.Store.mergeStateSafe({...baseState,profile:{...baseState.profile,examYear:'2035',updatedAt:2000},tutorPreferences:{explanationLevel:'concise',updatedAt:2000}},remote,'member-a');
     const guestPreferred=V.Store.mergeStateSafe(remote,{...baseState,profile:{...baseState.profile,examYear:'2036',dailyMinutes:80}},'member-a',{preferRightProfile:true});
+    const richLocal={...baseState,examHistory:[{id:'exam-rich',at:1500,score:98,fireCorrect:25,emsCorrect:39,totalAnswered:65,questionIds:['qA','qB'],answers:{qA:0,qB:2},incorrectQuestionIds:['qB'],detailVersion:1}]};
+    const remoteSummary={...baseState,examHistory:[{id:'exam-rich',at:1500,score:98,fireCorrect:25,emsCorrect:39,totalAnswered:65}]};
+    const richMerged=V.Store.mergeStateSafe(richLocal,remoteSummary,'member-a');
 
     const originalOwner=V.Store.ownerId;
     const f=new File(['PRIVATE CLOUD TEXT SAMPLE 789'],'member-private.txt',{type:'text/plain'});
@@ -38,6 +41,7 @@ try{
       latestAnswer:remoteFirst.answers.q1,
       remoteTutor:remoteFirst.tutorPreferences?.explanationLevel,
       localTutor:newerLocal.tutorPreferences?.explanationLevel,
+      richExam:richMerged.examHistory.find(x=>x.id==='exam-rich'),
       exportSafe,imported,otherDocs:otherDocs.length,foreignDelete,
       tombstone:!!tombstone,docsAfterDelete:docsAfterDelete.length,
       syncPolicy:V.Auth.syncPolicy,
@@ -50,6 +54,7 @@ try{
   assert(result.remoteProgress===77&&result.latestAnswer===2,'remote progress and answer history merge into member namespace');
   assert(result.remoteTutor==='detailed','newer remote tutor preferences win on sign-in');
   assert(result.localTutor==='concise','newer local tutor preferences survive an older remote snapshot');
+  assert(result.richExam?.questionIds?.length===2&&result.richExam?.answers?.qB===2&&result.richExam?.incorrectQuestionIds?.[0]==='qB','remote exam summary merge preserves richer local question-level analysis fields');
   assert(result.exportSafe,'private document sync export strips original file bytes and keeps owner ids');
   assert(result.tombstone&&result.docsAfterDelete===0,'local private-document deletion creates a tombstone and removes live local data');
   assert(result.imported.docs===0&&result.otherDocs===0,'another owner cannot import a member private-document bundle');

@@ -19,7 +19,7 @@ function pickProfile(left,right,preferRight=false){const l={...DEFAULT_PROFILE,.
   const lc=profileCustom(l),rc=profileCustom(r);if(!lc&&rc)return r;if(lc&&!rc)return l;if(!lc&&!rc)return l;
   return num(r.updatedAt)>=num(l.updatedAt)?r:l;
 }
-function mergeList(left,right,key='id'){const m=new Map();for(const row of [...(left||[]),...(right||[])]){if(!row)continue;const id=row[key]||JSON.stringify(row);const prev=m.get(id);if(!prev||stamp(row)>=stamp(prev))m.set(id,clone(row))}return[...m.values()]}
+function mergeList(left,right,key='id'){const m=new Map();for(const row of [...(left||[]),...(right||[])]){if(!row)continue;const id=row[key]||JSON.stringify(row),prev=m.get(id);if(!prev){m.set(id,clone(row));continue}const newer=stamp(row)>=stamp(prev)?{...clone(prev),...clone(row)}:{...clone(row),...clone(prev)};m.set(id,newer)}return[...m.values()]}
 function mergeMap(left,right){const out={...(left||{})};for(const [k,v] of Object.entries(right||{})){const prev=out[k];if(!prev||stamp(v)>=stamp(prev))out[k]=clone(v)}return out}
 function mergeStampedObject(left,right){const l=left||{},r=right||{};if(!Object.keys(l).length)return clone(r);if(!Object.keys(r).length)return clone(l);return stamp(r)>=stamp(l)?{...clone(l),...clone(r)}:{...clone(r),...clone(l)}}
 function latestAnswers(events,answers,confidence){const a={...(answers||{})},c={...(confidence||{})};for(const e of [...(events||[])].sort((x,y)=>num(x.at)-num(y.at))){if(!e?.questionId)continue;if(e.choice!==undefined&&e.choice!==null)a[e.questionId]=Number(e.choice);if(e.confidence)c[e.questionId]=e.confidence}return{answers:a,confidence:c}}
