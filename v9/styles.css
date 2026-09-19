@@ -783,3 +783,35 @@ small{font-size:max(11px,.78em)}
   .hazmat-table th{font-size:11px!important;line-height:1.35!important}
   .ecg-rhythm-card p,.therapy-card p{font-size:11px!important;line-height:1.5!important}
 }
+
+
+/* Quality 2.0 — long-label, table and PDF metadata layout hardening */
+.pdf-modal-head>div:first-child{min-width:0;flex:1 1 240px}
+.pdf-modal-head h2,.pdf-modal-head small{
+  max-width:100%;
+  white-space:normal!important;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+.resource-row>div:first-child,.doc-row>div:first-child{min-width:0}
+.resource-row b,.resource-row small,.doc-row b,.doc-row small{
+  max-width:100%;
+  white-space:normal;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+.compare{table-layout:fixed}
+.compare td:first-child,.compare th:first-child{width:32%;white-space:normal}
+.compare td:last-child{min-width:0;word-break:keep-all;overflow-wrap:anywhere}
+.hazmat-table{table-layout:fixed}
+.hazmat-table th:first-child,.hazmat-table td:first-child{width:auto;min-width:0;word-break:keep-all;overflow-wrap:anywhere}
+.hazmat-table th:last-child,.hazmat-table td:last-child{width:30%;white-space:nowrap}
+@media(max-width:720px){
+  .pdf-modal-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:8px!important}
+  .pdf-modal-head>div:first-child{grid-column:1/-1}
+  .pdf-modal-head>.spacer{display:none!important}
+  .pdf-modal-head h2{font-size:19px!important;line-height:1.35!important}
+  .pdf-modal-head small{font-size:12px!important;line-height:1.45!important}
+  .resource-row b,.doc-row b{font-size:15px;line-height:1.45}
+  .resource-row small,.doc-row small{font-size:12px!important;line-height:1.45}
+}
