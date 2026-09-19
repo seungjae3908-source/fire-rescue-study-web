@@ -26,11 +26,11 @@ const requiredDetailSignals=[
   {id:'E-CHEST',subject:'ems',title:'흉부손상',refs:['E14-C02'],terms:['기흉','흉']},
   {id:'E-ABD-PELVIS',subject:'ems',title:'복부·골반손상',refs:['E14-C02'],terms:['복부','골반']},
   {id:'E-MULTITRAUMA',subject:'ems',title:'다발성·중증외상',refs:['E14-C02'],terms:['중증외상']},
-  {id:'E-GU',subject:'ems',title:'비뇨생식기계 응급',refs:['E12-C05'],terms:['비뇨','콩팥','신장','요로']},
-  {id:'E-HEMA',subject:'ems',title:'조혈계 응급',refs:['E12-C05'],terms:['빈혈','혈소판','조혈','백혈']},
+  {id:'E-GU',subject:'ems',title:'비뇨생식기계 응급',refs:['E25-C02'],terms:['비뇨','콩팥','신장','요로']},
+  {id:'E-HEMA',subject:'ems',title:'조혈계 응급',refs:['E25-C03'],terms:['빈혈','혈소판','조혈','백혈']},
   {id:'E-INF',subject:'ems',title:'감염질환 응급',refs:['E03-C04'],terms:['감염']},
-  {id:'E-ENT',subject:'ems',title:'눈·귀·코·목 응급',refs:['E12-C05'],terms:['눈','귀','코','목']},
-  {id:'E-MSK-MED',subject:'ems',title:'비외상성 근골격계 응급',refs:['E15-C01'],terms:['비외상','퇴행','관절염','통풍']}
+  {id:'E-ENT',subject:'ems',title:'눈·귀·코·목 응급',refs:['E25-C04'],terms:['눈','귀','코','목']},
+  {id:'E-MSK-MED',subject:'ems',title:'비외상성 근골격계 응급',refs:['E25-C05'],terms:['비외상','퇴행','관절염','통풍']}
 ];
 
 const browser=await chromium.launch({headless:true});
