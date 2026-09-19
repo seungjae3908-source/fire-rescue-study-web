@@ -1,5 +1,12 @@
 {
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/v9/",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
