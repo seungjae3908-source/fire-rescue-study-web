@@ -35,8 +35,18 @@ function calculationBlocks(c,pack){
   return rows.map((x,i)=>`<section class="calc-lab" data-calculation-index="${i}"><div class="lesson-heading"><div><span class="eyebrow">계산문제</span><h3>${esc(x.title||'공식 계산')}</h3></div></div><div class="calc-formula">${esc(x.formula)}</div>${x.note?`<div class="calc-example"><b>계산 원칙</b><p>${esc(x.note)}</p>${x.example?`<p><code>${esc(x.example)}</code></p>`:''}</div>`:''}</section>`).join('');
 }
 function mustBlock(pack){
-  const rows=uniqueTextRows(pack?.must||[]).slice(0,3);if(!rows.length)return'';
-  return `<section class="study-must"><div class="study-must-title">★ 시험필수</div><ul>${rows.map(x=>`<li><span>${esc(x)}</span></li>`).join('')}</ul></section>`;
+  const rows=uniqueTextRows(pack?.must||[]);if(!rows.length)return'';
+  return `<section class="study-must"><div class="study-must-title">★ 시험필수 · 전부 보기</div><ul>${rows.map(x=>`<li><span class="study-star">★</span><span class="study-key-text">${esc(x)}</span></li>`).join('')}</ul></section>`;
+}
+function numberBlock(pack){
+  const unit=/\d|%|℃|°|cm|mm|kg|mL|\bL\b|초|분|시간|회|배|단계|류|쪽|년|개월/;
+  const deep=(pack?.deepSections||[]).flatMap(x=>[x?.body,...(x?.bullets||[])]),compare=(pack?.compare||[]).flatMap(x=>Array.isArray(x)?x:[]);
+  const rows=uniqueTextRows([...(pack?.must||[]),...(pack?.detail||[]),...deep,...compare].filter(x=>unit.test(String(x||'')))).slice(0,12);if(!rows.length)return'';
+  return `<section class="study-numbers"><div class="study-numbers-title">★ 숫자 · 단위 · 기준</div><ul>${rows.map(x=>`<li><span class="study-key-text">${esc(x)}</span></li>`).join('')}</ul></section>`;
+}
+function trapBlock(pack){
+  const rows=uniqueTextRows(pack?.traps||[]);if(!rows.length)return'';
+  return `<section class="study-traps"><div class="study-traps-title">⚠ 헷갈림 주의</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
 }
 function comparisonBlock(pack){return pack.compare?.length?`<section class="detail-compare"><h3>비슷한 개념 비교</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>핵심</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`:''}
 function specialCombustibleBlock(pack){
