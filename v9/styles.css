@@ -718,3 +718,18 @@ small{font-size:max(11px,.78em)}
 @media(max-width:720px){
   .note-preview-line{font-size:14px;line-height:1.65}
 }
+
+
+/* Quality 2.0 — pass-note organization */
+.note-search{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px;margin-top:10px}
+.note-filter-wrap{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.note-filter-chip{appearance:none;border:1px solid var(--line);border-radius:999px;background:#091827;color:#d9e5f2;padding:7px 9px;font-size:11px;font-weight:850;line-height:1.1}
+.note-filter-chip b{color:var(--blue);font-size:10px}
+.note-filter-chip.on{border-color:rgba(111,182,255,.55);background:rgba(111,182,255,.10);color:#fff}
+@media(max-width:720px){
+  .note-search{grid-template-columns:minmax(0,1fr) auto}
+  .note-search [data-note-search-clear]{grid-column:2}
+  .note-filter-wrap{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .note-filter-wrap::-webkit-scrollbar{display:none}
+  .note-filter-chip{flex:0 0 auto;min-height:36px}
+}
