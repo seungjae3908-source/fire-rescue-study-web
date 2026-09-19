@@ -8,10 +8,11 @@ const mechanism=/원리|작동|기전|과정|흐름|연쇄|흡수|억제|가압|
 const timing=/단계|시기|직전|직후|이전|이후|성장기|최성기|쇠퇴기|초기|순서|회복 후|소생 후/;
 const warning=/전조|징후|증상|주의|위험|금지|피한다|하지 않는다|경계|불안정|쇼크/;
 const beforeAfter=/이전|이후|전에는|후에는|직전|직후|발생 전|발생 후|회복 후|소생 후/;
+const metaHeading=/개념\s*구조와\s*읽는\s*순서|개념\s*이해|학습\s*순서/;
 function allText(p){
   return uniq([
     ...(p.detail||[]),...(p.features||[]),...(p.must||[]),...(p.traps||[]),...(p.flow||[]),
-    ...(p.deepSections||[]).flatMap(s=>[s.title,s.body,...(s.bullets||[])])
+    ...(p.deepSections||[]).flatMap(s=>[metaHeading.test(String(s.title||''))?'':s.title,s.body,...(s.bullets||[])])
   ]);
 }
 function pick(rows,re,n=4){return rows.filter(x=>re.test(x)).slice(0,n)}
