@@ -1,0 +1,14 @@
+{
+  "name": "119",
+  "short_name": "119",
+  "description": "소방학·응급처치학개론 합격 학습 OS",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#08111f",
+  "lang": "ko",
+  "icons": [
+    {"src":"../icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}
+  ]
+}

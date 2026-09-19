@@ -1,0 +1,37 @@
+{
+  "version": "119-study-staging-live-proof-v1",
+  "projectRef": "petlfbztqguuzkasfpug",
+  "productionProjectRef": "bawcbkoyovbeajkrnduq",
+  "verifiedAtUtc": "2026-09-18T10:37:09Z",
+  "migrationVersion": "20260918103709",
+  "migrationName": "study_v9_release_rls_closed_loop_20260918",
+  "studyAuthUsers": 2,
+  "studyMemberships": 2,
+  "cleanupCounts": {
+    "answers": 0,
+    "wrongs": 0,
+    "notes": 0,
+    "docs": 0,
+    "chunks": 0,
+    "sessions": 0,
+    "exams": 0,
+    "progress": 0,
+    "reviews": 0
+  },
+  "sourceBlobShas": {
+    "supabase/v9-schema.sql": "52319bd5f4e2206ae3277c0d82b275a3cbaef82e",
+    "supabase/v9-owner-hardening.sql": "5e8a15211868b688acafbd7902f2267abe370313",
+    "supabase/v9-live-backend-hardening.sql": "33fffa173b86bc99e8b8c95b2137cc3682b39d04",
+    "supabase/v9-shared-auth-routing.sql": "65fb9247c2e67f3b1e27eae0631aef7bd9245d76",
+    "supabase/v9-study-membership-trigger.sql": "cc46eb98d492614abce9c2681f8a0369dc01fb2f",
+    "supabase/tests/v9-live-closed-loop.sql": "76f402905ef42b4196424c93ea8021b44de5673c"
+  },
+  "assertions": {
+    "migrationSuccess": true,
+    "userARoundTrip": true,
+    "userBCannotReadA": true,
+    "userBCannotWriteA": true,
+    "cleanupVerified": true,
+    "investmentProductionTouched": false
+  }
+}

@@ -1,0 +1,489 @@
+name: V9 Development CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_coverage_audit:
+        description: 'Run the slow one-by-one official textbook coverage audit'
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches: [feat/v9-learning-workspace]
+    paths:
+      - 'v9/**'
+      - 'supabase/v9-schema.sql'
+      - 'supabase/v9-owner-hardening.sql'
+      - 'supabase/v9-live-backend-hardening.sql'
+      - 'supabase/v9-shared-auth-routing.sql'
+      - 'supabase/v9-study-membership-trigger.sql'
+      - 'supabase/tests/v9-live-closed-loop.sql'
+      - 'V9-ARCHITECTURE.md'
+      - '.github/workflows/v9-ci.yml'
+  pull_request:
+    paths:
+      - 'v9/**'
+      - 'supabase/v9-schema.sql'
+      - 'supabase/v9-owner-hardening.sql'
+      - 'supabase/v9-live-backend-hardening.sql'
+      - 'supabase/v9-shared-auth-routing.sql'
+      - 'supabase/v9-study-membership-trigger.sql'
+      - 'supabase/tests/v9-live-closed-loop.sql'
+      - 'V9-ARCHITECTURE.md'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for f in v9/*.js; do
+            echo "Checking $f"
+            node --check "$f"
+          done
+          node --check v9/api/official-pdf.js
+      - name: Static integrity / privacy / source truth
+        run: node v9/ci-static.mjs
+      - name: 176-concept + 119 textbook/content contract depth gate
+        run: node v9/content-depth.mjs
+      - name: 119 content contract blocker report
+        run: node v9/content-contract-audit.mjs
+      - name: 119 exam-style question contract coverage report
+        run: node v9/question-contract-audit.mjs
+      - name: 119 textbook-depth distribution report
+        run: node v9/textbook-depth-audit.mjs
+      - name: 119 remaining blocker detail report
+        run: node v9/remaining-blocker-audit.mjs
+      - name: 119 final release gate audit
+        run: node v9/release-gate-audit.mjs
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA dependency
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start branch-only static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/aitutor-v9-http.log 2>&1 &
+          echo $! > /tmp/aitutor-v9-http.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/aitutor-v9-http.log
+          exit 1
+      - name: Phase A remaining official-PDF evidence audit
+        run: node v9/phase-a-source-audit.mjs
+      - name: Phase B EMS official-PDF evidence audit
+        run: node v9/phase-b-ems-source-audit.mjs
+      - name: Personal PDF extraction and owner isolation QA
+        run: node v9/pdf-e2e.mjs
+      - name: PC/tablet/mobile 119 textbook + evidence flow QA
+        run: node v9/e2e.mjs
+      - name: Member merge and extracted-text sync isolation QA
+        run: node v9/sync-e2e.mjs
+      - name: Invalid/expired member session fail-closed QA
+        run: node v9/auth-session-e2e.mjs
+
+
+  coverage_anchor_audit:
+    name: coverage_anchor_audit (manual slow audit)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_coverage_audit }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA dependency
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start branch-only static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/aitutor-v9-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: One-by-one official textbook coverage anchor audit
+        run: node v9/coverage-anchor-audit.mjs
+
+
+  official_pdf_proxy_contract:
+    name: official_pdf_proxy_contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deterministic NFA attachment candidate selection
+        run: node v9/official-pdf-proxy-test.mjs
+
+  source_browser_diagnostic:
+    name: source_browser_diagnostic (non-release proof)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install source browser probe dependency
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Resolve official NFA PDF paths in Chromium
+        run: node v9/source-catalog-browser.mjs
+
+  live_preview_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'live preview acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+      STUDY_119_PROXY_RUNTIME_HEAD: f7c1b971966e5cae90d4009c8257af1b79144128
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install live browser QA dependency
+        run: npm install --no-save playwright@1.55.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Real deployed 119 preview official-PDF acceptance
+        run: node v9/live-preview-e2e.mjs
+
+  page_anchor_discovery:
+    if: "${{ contains(github.event.head_commit.message, 'page anchor discovery') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+      STUDY_119_DISCOVERY_IDS: F07-C01,F07-C02,F07-C03,F07-C04,F07-C06,F07-C07,F07-C08,F07-C09,F07-C10,F07-C11,F07-C12,F07-C13,F07-C14,F07-C15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install page-anchor discovery browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Discover official PDF page anchors with source text
+        run: node v9/page-anchor-discovery.mjs
+
+  sprinkler_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'sprinkler live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install focused sprinkler browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify six deployed sprinkler exact-page anchors
+        run: node v9/sprinkler-live-e2e.mjs
+
+  page_range_inspect:
+    if: "${{ contains(github.event.head_commit.message, 'page range inspect') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+      STUDY_119_INSPECT_ID: F07-C08
+      STUDY_119_INSPECT_PAGES: 347,349,353,357
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install PDF range inspector browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Inspect exact official PDF page range
+        run: node v9/page-range-inspect.mjs
+
+  fire_phenomena_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'fire phenomena live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+      STUDY_119_PROXY_RUNTIME_HEAD: e8c29ba9f750b03259b643fa1dfd664c75140fbf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install fire-phenomena browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify eight deployed fire-phenomena exact-page anchors
+        run: node v9/fire-phenomena-live-e2e.mjs
+
+  hazmat_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'hazmat live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install hazardous-material browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify eight deployed hazardous-material exact-page anchors
+        run: node v9/hazmat-live-e2e.mjs
+
+  cross_doc_fire_investigation:
+    if: "${{ contains(github.event.head_commit.message, 'cross doc fire investigation') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+      STUDY_119_CROSS_DOCS: fire2,prevention2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install cross-document source probe
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Find fire-investigation source document and pages
+        run: node v9/cross-doc-fire-investigation.mjs
+
+  facility_source_search:
+    if: "${{ contains(github.event.head_commit.message, 'facility source search') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install facility source search browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Search entire Prevention1 PDF for remaining facility anchors
+        run: node v9/facility-source-search.mjs
+
+  facilities_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'facilities live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 3bde71785ee42808f67f7a2e67474982f3883ffb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install facility live browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify remaining facility exact-page evidence in deployed Preview
+        run: node v9/facilities-live-e2e.mjs
+
+  question_bank_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'question bank live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 86e9303534d59e22123163ec301781f64b751b36
+      STUDY_119_QUESTION_CONCEPT: E04-C02
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install question-bank live browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify grounded question bank in deployed Preview
+        run: node v9/question-bank-live-e2e.mjs
+
+  release_candidate_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'release candidate live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: a7d1857a6c4f3bb23c6dcca20584bb3e3a629e35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install release-candidate browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify deployed release-candidate product
+        run: node v9/release-candidate-live-e2e.mjs
+
+  image_ocr_restore_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'image OCR acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install image OCR browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start branch-only static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/aitutor-v9-image-http.log 2>&1 &
+          echo $! > /tmp/aitutor-v9-image-http.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/aitutor-v9-image-http.log
+          exit 1
+      - name: Real image OCR + owner isolation + restore acceptance
+        run: node v9/image-ocr-e2e.mjs
+
+  deployed_private_session_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'deployed privacy session acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: dcb991893fbecfdc3f03395a4ad311e05201033c
+      STUDY_119_PDF_FIXTURE_URL: https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/dcb991893fbecfdc3f03395a4ad311e05201033c/v9/fixtures/private-sample.pdf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install deployed privacy/session browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Deployed expired-session fail-closed QA
+        run: node v9/auth-session-e2e.mjs
+      - name: Deployed personal PDF extraction/isolation QA
+        run: node v9/pdf-e2e.mjs
+      - name: Deployed image OCR + owner restore QA
+        run: node v9/image-ocr-e2e.mjs
+
+  production_root_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'production root live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      STUDY_119_PREVIEW_URL: https://fire-rescue-study-web.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 1f38cbd7f57d035ccdf993a8b1eed5d66a75fdb1
+      STUDY_119_PDF_FIXTURE_URL: https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/1f38cbd7f57d035ccdf993a8b1eed5d66a75fdb1/v9/fixtures/private-sample.pdf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install production browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Production 119 release-candidate acceptance
+        run: node v9/release-candidate-live-e2e.mjs
+      - name: Production expired-session fail-closed QA
+        run: node v9/auth-session-e2e.mjs
+      - name: Production personal PDF extraction/isolation QA
+        run: node v9/pdf-e2e.mjs
+      - name: Production image OCR + owner restore QA
+        run: node v9/image-ocr-e2e.mjs
+
+  real_mock_live_acceptance:
+    if: "${{ contains(github.event.head_commit.message, 'real mock live acceptance') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_APP_HEAD: 60fb20b333cc20d5342ed680d4824480cd22fcd3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real mock browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify deployed real mock evidence pool
+        run: node v9/real-mock-live-e2e.mjs
+
+
+  student_ux_live_smoke:
+    name: student_ux_live_smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
+      STUDY_119_EXPECTED_RUNTIME_HEAD: 9aeaadd12b01b36c2addda29860133d4296b9877
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify deployed preview boots on mobile and desktop
+        run: node v9/live-student-ux-smoke.mjs
