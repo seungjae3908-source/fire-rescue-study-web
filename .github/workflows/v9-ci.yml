@@ -8,6 +8,16 @@ on:
         required: false
         default: false
         type: boolean
+      preview_url:
+        description: 'Exact Vercel preview URL for manual deployed acceptance'
+        required: false
+        default: ''
+        type: string
+      expected_runtime_head:
+        description: 'Exact deployed runtime SHA expected at preview_url'
+        required: false
+        default: ''
+        type: string
   push:
     branches: [main, feat/v9-learning-workspace]
     paths:
@@ -60,6 +70,8 @@ jobs:
         run: node v9/content-depth.mjs
       - name: 119 content contract blocker report
         run: node v9/content-contract-audit.mjs
+      - name: Quality 3 semantic completeness gate
+        run: node v9/coverage3-semantic-audit.mjs
       - name: 119 exam-style question contract coverage report
         run: node v9/question-contract-audit.mjs
       - name: 119 textbook-depth distribution report
@@ -134,10 +146,9 @@ jobs:
 
 
   coverage2_backlog_report:
-    name: coverage2_backlog_report (non-release readiness)
+    name: coverage2_strict_gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -527,13 +538,14 @@ jobs:
         run: node v9/real-mock-live-e2e.mjs
 
 
-  student_ux_live_smoke:
-    name: student_ux_live_smoke
+  preview_exact_sha_acceptance:
+    name: preview_exact_sha_acceptance
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.preview_url != '' && inputs.expected_runtime_head != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_RUNTIME_HEAD: 9aeaadd12b01b36c2addda29860133d4296b9877
+      STUDY_119_PREVIEW_URL: ${{ inputs.preview_url }}
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ inputs.expected_runtime_head }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -543,5 +555,5 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
-      - name: Verify deployed preview boots on mobile and desktop
+      - name: Verify exact deployed preview SHA on mobile and desktop
         run: node v9/live-student-ux-smoke.mjs
