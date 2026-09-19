@@ -12,7 +12,7 @@ for(const file of [
   'content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js',
   'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
-  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js',
+  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js','quality2-study-schema-119.js',
   'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
   'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
 ]){
@@ -24,6 +24,18 @@ ok(V.curriculum.totalConcepts===V.curriculum.concepts.length&&V.curriculum.total
 ok(V.MasterSyllabus119?.groups?.fire?.length===6&&V.MasterSyllabus119?.groups?.ems?.length===10,'119 master syllabus groups fire/EMS into exam-oriented parts');
 ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content completion contract is loaded');
 ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style question quality gate is loaded');
+ok(V.StudyEmphasis119?.version==='119-study-emphasis-ssot-v1','study emphasis SSOT is loaded');
+ok(V.Quality2StudySchema119?.version==='119-quality2-study-schema-v2','study schema consumes the emphasis SSOT');
+const emphasisMismatches=(V.curriculum.concepts||[]).filter(concept=>{
+  const p=V.contentPacks.get(concept.id),e=V.StudyEmphasis119.forConcept(concept.id,{numberLimit:10}),s=V.Quality2StudySchema119.get(concept.id);
+  if(!e||!s)return true;
+  return JSON.stringify(e.features.slice(0,6))!==JSON.stringify(s.features)
+    ||JSON.stringify(e.must.slice(0,8))!==JSON.stringify(s.core)
+    ||JSON.stringify(e.numbers)!==JSON.stringify(s.numbers)
+    ||JSON.stringify(e.traps.slice(0,6))!==JSON.stringify(s.exceptions)
+    ||e.evidence.source!==s.evidence?.source;
+});
+ok(emphasisMismatches.length===0,'study emphasis SSOT matches all 181 schema outputs for feature/must/number/trap/evidence');
 const questionAudit=V.QuestionQuality119.audit();
 ok(questionAudit.examStyle>0,'exam-style question bank is non-empty');
 ok(questionAudit.duplicateTexts.length===0,'exam-style question text duplicates = 0');
@@ -533,6 +545,7 @@ ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sy
 ok(v9index.indexOf('./source-catalog-119.js')>v9index.indexOf('./pdf.js')&&v9index.indexOf('./source-catalog-119.js')<v9index.indexOf('./source-pdf.js'),'official source catalog loads before PDF engine');
 ok(v9index.indexOf('./source-pdf.js')>v9index.indexOf('./source-catalog-119.js')&&v9index.indexOf('./source-pdf.js')<v9index.indexOf('./app.js'),'official PDF highlight engine loads before app UI');
 ok(v9index.indexOf('./coverage-map-119.js')>v9index.indexOf('./calculation-contract-119.js')&&v9index.indexOf('./coverage-map-119.js')<v9index.indexOf('./store.js'),'full exam Coverage Map loads after content/question contracts and before runtime state');
+ok(v9index.indexOf('./study-emphasis-119.js')>v9index.indexOf('./quality2-comparison-families-119.js')&&v9index.indexOf('./study-emphasis-119.js')<v9index.indexOf('./quality2-study-schema-119.js'),'study emphasis SSOT loads before study schema');
 
 
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
@@ -569,6 +582,8 @@ ok(syncMerge.includes('{...clone(prev),...clone(row)}')&&syncMerge.includes('{..
 
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const appCode=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const passNoteCode=fs.readFileSync(new URL('./pass-note.js',import.meta.url),'utf8');
+ok(appCode.includes('StudyEmphasis119')&&passNoteCode.includes('StudyEmphasis119'),'study UI and pass notes both consume the emphasis SSOT');
 ok(appCode.includes('data-doc-list')&&appCode.includes('refreshDocsList()'),'personal-doc hydration updates only the document list and preserves the file input');
 ok(auth.includes("event==='SIGNED_OUT'")&&auth.includes('V.Store.switchOwner(V.Store.guestId)'), 'SIGNED_OUT auth events switch runtime ownership back to the guest namespace');
 ok(auth.includes("'session-expired'")&&auth.includes("'manual-signout'"),'auth runtime distinguishes session expiry from explicit logout');
