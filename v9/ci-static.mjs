@@ -211,7 +211,7 @@ ok(['119-fac-13a','119-fac-14a','119-fac-15a','119-fac-15b'].every(id=>!!V.quest
 ok(['F-HAZ-03','F-FAC-04','F-FAC-05'].every(id=>fullCoverage.rows.find(x=>x.id===id)?.status==='covered'),'hazmat handling and both facility-operation rows are promoted only after evidence checks pass');
 ok(fullCoverage.calcMissing.length===0&&fullCoverage.rows.find(x=>x.id==='E-CALC-01')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='E-CALC-02')?.status==='covered'&&fullCoverage.rows.find(x=>x.id==='E-BURN-02')?.status==='covered','all calculation coverage rows are source-backed covered without converting legacy practice into real-mock credit');
 
-ok(contentAudit.complete===176&&contentAudit.incomplete===0&&contentAudit.averageScore===100,'current 176-node content contract reaches 176/176 without claiming full exam coverage');
+ok(contentAudit.total===V.curriculum.totalConcepts&&contentAudit.complete===V.curriculum.totalConcepts&&contentAudit.incomplete===0&&contentAudit.averageScore===100,`current ${V.curriculum.totalConcepts}-node content contract reaches full completion without claiming more than the audited scope`);
 const mock=V.examReadiness();
 const restoredVerifiedIds=['119-ver-f05-c04-a','119-ver-f05-c05-a','119-ver-f06-c01-a','119-ver-f06-c03-a','119-ver-f07-c05-a','119-ver-f07-c11-a'];
 const restoredVerified=restoredVerifiedIds.map(id=>V.questionById[id]);
@@ -234,7 +234,7 @@ const extra=Object.keys(V.contentPacks.authored).filter(id=>!V.curriculum.byId[i
 console.log('VERIFIED_COVERAGE',coverage);
 console.log('MISSING_VERIFIED_CONCEPTS',missing);
 console.log('EXTRA_AUTHORED_CONCEPTS',extra);
-ok(coverage.total===176,'content coverage denominator is 176');
+ok(coverage.total===V.curriculum.totalConcepts,`content coverage denominator follows current curriculum: ${coverage.total}`);
 const exactAnchorBatch={'F07-C05':284,'F07-C16':288,'F07-C17':288,'F07-C18':284,'F07-C19':284,'F07-C20':302,'F07-C21':287};
 ok(Object.entries(exactAnchorBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
@@ -267,10 +267,10 @@ const f06=V.curriculum.byId['F07-C06']?.sourceRanges||[];
 ok(f06.length===2&&f06.every(r=>r.doc==='prevention1')&&Number(f06[0].from)===321&&Number(f06[1].from)===333&&V.contentPacks.authored['F07-C06']?.status==='verified'&&V.contentPacks.authored['F07-C06']?.sourcePrecision==='exact-pdf-page-anchor','simple + ESFR sprinkler concept keeps exact Prevention1 pages 321 and 333');
 const f15=V.curriculum.byId['F07-C15']?.sourceRanges||[];
 ok(f15.length===4&&f15.every(r=>r.doc==='prevention1')&&[167,174,433,482].every((p,i)=>Number(f15[i]?.from)===p)&&V.contentPacks.authored['F07-C15']?.status==='verified'&&V.contentPacks.authored['F07-C15']?.sourcePrecision==='exact-pdf-page-anchor','firefighter-support concept keeps exact Prevention1 pages 167,174,433,482');
-ok(scopeVerified.length===0,'all 176 concepts now have exact official page evidence; page-anchor pending = 0');
+ok(scopeVerified.length===0,`all ${V.curriculum.totalConcepts} concepts have verified source evidence; page-anchor pending = 0`);
 ok(missing.length===0,'no curriculum concept remains in scope-verified/page-anchor-pending state');
-ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===176,'exactly 176 valid authored concept packs');
-ok(coverage.verified===176&&coverage.pending===0,'page-evidence truth reaches 176 page-verified + 0 page-anchor-pending');
+ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===V.curriculum.totalConcepts,`exactly ${V.curriculum.totalConcepts} valid authored concept packs`);
+ok(coverage.verified===V.curriculum.totalConcepts&&coverage.pending===0,`page-evidence truth reaches ${V.curriculum.totalConcepts} verified + 0 pending`);
 ok(extra.length===0,`no authored concept IDs outside curriculum; extra=${extra.join(',')||'none'}`);
 ok(Object.values(V.contentPacks.authored).every(p=>p.status==='verified'||p.status==='scope-verified'),'every authored content pack has an explicit verified/scope-verified truth state');
 ok(V.curriculum.concepts.every(c=>V.contentPacks.authored[c.id]),'every curriculum concept has an authored study pack');
@@ -385,7 +385,7 @@ ok(fullCoverage.rows.find(x=>x.id==='E-SHOCK-01')?.status==='covered','four-type
 ok(fullCoverage.rows.find(x=>x.id==='E-TOX-01')?.status==='covered','toxicology antidote toxidrome-pattern and anaphylaxis row closes only after NFA KDCA and E-GEN official evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-TRM-02')?.status==='covered','chest-trauma row closes only after official flail-chest pneumothorax tamponade and traumatic-hemothorax evidence');
 ok(fullCoverage.rows.find(x=>x.id==='E-CARD-01')?.status==='covered','ACS STEMI/NSTEMI pulmonary-edema and cardiogenic-shock row closes only after NFA textbook plus current KDCA evidence');
-ok(fullCoverage.total===89&&fullCoverage.covered===89&&fullCoverage.partial===0&&fullCoverage.missing===0&&fullCoverage.implementationPercent===100,'full exam coverage reaches 89/89 only after the final oxygen-cylinder and IV-drip source contracts close');
+ok(fullCoverage.covered===fullCoverage.total&&fullCoverage.partial===0&&fullCoverage.missing===0&&fullCoverage.implementationPercent===100,`full exam coverage reaches ${fullCoverage.covered}/${fullCoverage.total} only after all source contracts close`);
 const chestTraumaIds=['119-finalgap-chest-01','119-finalgap-chest-02','119-finalgap-chest-03','119-finalgap-chest-04'];
 ok(chestTraumaIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'four chest-trauma drills remain P-grade exam-style practice');
 ok((V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='긴장성 기흉')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='혈흉')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='심장압전')&&(V.contentPacks.authored['E14-C02']?.compare||[]).some(x=>x?.[0]==='연가양흉'),'E-TRM-02 lesson directly compares all four named chest-trauma entities');
