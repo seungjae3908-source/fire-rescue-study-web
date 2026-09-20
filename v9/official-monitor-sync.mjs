@@ -14,6 +14,29 @@ async function previousSnapshot(){
     return x?.version==='119-official-monitor-snapshot-v1'&&Array.isArray(x.items)?x:null;
   }catch{return null}
 }
+function structuredChanges(oldRow,newRow){
+  const labels={
+    applicationStart:'원서접수 시작',
+    applicationEnd:'원서접수 마감',
+    writtenExam:'필기시험',
+    physicalExam:'체력시험',
+    interview:'면접시험',
+    finalResult:'최종발표'
+  };
+  const out=[];
+  for(const [key,label] of Object.entries(labels)){
+    const before=String(oldRow?.schedule?.[key]||''),after=String(newRow?.schedule?.[key]||'');
+    if(before!==after)out.push(label+' '+(before||'없음')+' → '+(after||'없음'));
+  }
+  const oldFiles=new Set((oldRow?.attachments||[]).map(x=>String(x?.url||'')).filter(Boolean));
+  const newFiles=new Set((newRow?.attachments||[]).map(x=>String(x?.url||'')).filter(Boolean));
+  const filesChanged=oldFiles.size!==newFiles.size||[...oldFiles].some(x=>!newFiles.has(x));
+  if(filesChanged)out.push('공식 첨부파일 변경');
+  if(!out.length&&String(oldRow?.title||'')!==String(newRow?.title||''))out.push('공고 제목 변경');
+  if(!out.length&&String(oldRow?.publishedAt||'')!==String(newRow?.publishedAt||''))out.push('게시일 정보 변경');
+  if(!out.length)out.push('공식 게시물 내용 변경');
+  return out.slice(0,8)
+}
 function applyDelta(snapshot,previous){
   const prev=new Map((previous?.items||[]).map(x=>[x.id,x]));
   const newIds=[],updatedIds=[];
@@ -22,7 +45,12 @@ function applyDelta(snapshot,previous){
     let changeState='same';
     if(!old){changeState='new';newIds.push(row.id)}
     else if(row.fingerprint&&old.fingerprint&&row.fingerprint!==old.fingerprint){changeState='updated';updatedIds.push(row.id)}
-    return{...row,changeState,previousFingerprint:changeState==='updated'?old.fingerprint||'':''}
+    return{
+      ...row,
+      changeState,
+      previousFingerprint:changeState==='updated'?old.fingerprint||'':'',
+      changeSummary:changeState==='updated'?structuredChanges(old,row):[]
+    }
   });
   snapshot.delta={newIds,updatedIds,newCount:newIds.length,updatedCount:updatedIds.length};
   return snapshot

@@ -72,6 +72,7 @@ assert(client.includes('downloadScheduleCalendar')&&client.includes('text/calend
 assert(client.includes('official-monitor-attachment')&&client.includes('officialAttachmentHint:true'),'student monitor tells the user to inspect the official attached notice when labeled dates are not present in HTML');
 const sync=fs.readFileSync(new URL('./official-monitor-sync.mjs',import.meta.url),'utf8');
 assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated'")&&sync.includes('updatedIds'),'scheduled snapshot marks same-notice revisions, including enriched detail revisions, without mutating curriculum');
+assert(sync.includes('structuredChanges')&&sync.includes('공식 첨부파일 변경')&&client.includes('official-monitor-change-summary'),'updated official notices expose structured date/file differences instead of only a generic changed label');
 assert(sw.includes('/api/official-monitor')&&sw.includes('notificationclick'),'service worker uses network-first monitor data and notification click handling');
 console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
 // Exact-head revision-monitor regression trigger.

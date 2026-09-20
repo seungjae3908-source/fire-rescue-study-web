@@ -32,7 +32,8 @@ const snapshot={
     scheduleCount:4,
     fingerprint:'1234567890abcdef1234',
     changeState:'updated',
-    previousFingerprint:'abcdef1234567890abcd'
+    previousFingerprint:'abcdef1234567890abcd',
+    changeSummary:['필기시험 2027-03-06 → 2027-03-13','공식 첨부파일 변경']
   }]
 };
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
@@ -67,6 +68,7 @@ try{
   const text=await page.locator('.official-monitor-card').innerText();
   assert(text.includes('최근 저장본 표시')&&text.includes('새 공고·변경 1건'),'monitor UI clearly marks stale cached data without hiding the official notice');
   assert(text.includes('공고 내용 변경'),'same-notice revision is visibly distinguished from a brand-new notice');
+  assert(text.includes('필기시험 2027-03-06 → 2027-03-13')&&text.includes('공식 첨부파일 변경'),'updated notice shows the exact structured schedule/file changes in the student UI');
   assert(text.includes('원서접수 2026-12-28 ~ 2027-01-03')&&text.includes('필기 2027-03-13')&&text.includes('면접 2027-05-12'),'official schedule dates extracted by the monitor are visible on the mobile notice card');
   assert(/D(?:-Day|[+-]\d+)/.test(text),'official schedule dates include a live D-day indicator');
   assert(text.includes('공식 소스 4/4'),'monitor UI reports all four official source groups');
