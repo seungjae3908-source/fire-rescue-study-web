@@ -180,7 +180,8 @@ export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
       reviewRequired: HIGH_IMPACT.test(title),
       targetYearMatch: noticeYear === TARGET_YEAR,
       baselineYearMatch: noticeYear === BASELINE_YEAR,
-      noticeYear
+      noticeYear,
+      notificationEligible: noticeYear === TARGET_YEAR
     };
     row.id = idFor(row);
     row.fingerprint = fingerprintFor(row, context);
@@ -271,6 +272,7 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       noThirdParty: true,
       noAutomaticCurriculumMutation: true,
       notifyOnlyRelevantOfficialNotices: true,
+      targetYearNotificationsOnly: true,
       noRelevantNoticeIsHealthy: true,
       detectSameNoticeMetadataRevision: true,
       snapshotBranch: 'chore/official-monitor-snapshot'

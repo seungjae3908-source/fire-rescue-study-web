@@ -25,7 +25,7 @@ const snapshot={
     reviewRequired:true,
     targetYearMatch:true,
     baselineYearMatch:false,
-    noticeYear:2027,
+    noticeYear:2027,notificationEligible:true,
     fingerprint:'1234567890abcdef1234',
     changeState:'updated',
     previousFingerprint:'abcdef1234567890abcd'

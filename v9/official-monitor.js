@@ -15,7 +15,8 @@ const write=x=>{try{localStorage.setItem(KEY,JSON.stringify(x))}catch{}};
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const official=url=>{try{const u=new URL(String(url||''));return u.protocol==='https:'&&ALLOWED.has(u.hostname.toLowerCase())}catch{return false}};
 const validSnapshot=x=>!!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&x.items.every(i=>i&&i.id&&i.title&&official(i.url));
-const eligibleFirstRun=i=>!!i.meaningful&&String(i.publishedAt||'')>=START_AT;
+const eligibleNotice=i=>!!i.meaningful&&i.notificationEligible!==false;
+const eligibleFirstRun=i=>eligibleNotice(i)&&String(i.publishedAt||'')>=START_AT;
 
 function summary(){
   return {
@@ -42,7 +43,7 @@ function unseenFor(snapshot,m){
   const seenIds=new Set(m.seenIds||[]);
   return !m.initialized
     ? snapshot.items.filter(eligibleFirstRun)
-    : snapshot.items.filter(i=>i.meaningful&&(!seenRevisions.has(revisionKey(i))&&(!seenIds.has(i.id)||i.changeState==='updated')));
+    : snapshot.items.filter(i=>eligibleNotice(i)&&(!seenRevisions.has(revisionKey(i))&&(!seenIds.has(i.id)||i.changeState==='updated')));
 }
 
 function syncBadge(){
@@ -73,7 +74,8 @@ function cardHtml(){
   const loading=m.status==='loading';
   const error=m.status==='error';
   const stale=m.status==='stale';
-  const latest=[...(m.unseenCount?m.unseen:m.items)].sort((a,b)=>priority(a)-priority(b)||String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))).slice(0,8);
+  const targetItems=(m.items||[]).filter(eligibleNotice);
+  const latest=[...(m.unseenCount?m.unseen:targetItems)].sort((a,b)=>priority(a)-priority(b)||String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))).slice(0,8);
   const sourceOk=(m.sources||[]).filter(x=>x.ok).length;
   const status=loading?'공식 사이트 확인 중':stale?'최근 저장본 표시 · 연결 확인 필요':error?'공식 감시 연결 확인 필요':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
   const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
