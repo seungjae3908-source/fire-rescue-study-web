@@ -155,7 +155,9 @@ const existingIds=new Set(V.questions.map(q=>q.id)),existingTexts=new Set(V.ques
 for(const c of concepts){
   const p=V.contentPacks.authored[c.id],ranges=c.sourceRanges||[];
   const pageGrounded=ranges.length>0&&ranges.every(r=>r.doc&&Number.isFinite(Number(r.from))&&Number.isFinite(Number(r.to)));
-  if(!p||p.status!=='verified'||!pageGrounded)throw new Error('QUESTION_FACTORY_SOURCE_NOT_PAGE_GROUNDED '+c.id);
+  const officialWebGrounded=(p?.officialLinks||[]).some(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')));
+  const sourceGrounded=pageGrounded||officialWebGrounded;
+  if(!p||p.status!=='verified'||!sourceGrounded)throw new Error('QUESTION_FACTORY_SOURCE_NOT_GROUNDED '+c.id);
   for(const cand of pickForConcept(c,p)){
     const id=`119-factory-${c.id.toLowerCase()}-${cand.kind}`;
     if(existingIds.has(id))continue;
