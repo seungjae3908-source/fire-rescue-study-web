@@ -24,6 +24,9 @@ export const SOURCES = [
     id: 'nfsa-notice',
     label: '중앙소방학교 고시·공고',
     strategy: 'first-ok',
+    requestTimeoutMs: 4000,
+    attempts: 1,
+    sourceGapMs: 0,
     required: false,
     detail: false,
     accept: /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|시행계획|변경공고|정정공고/i,
@@ -38,6 +41,9 @@ export const SOURCES = [
     id: 'nfsa-materials',
     label: '중앙소방학교 공식교재',
     strategy: 'first-ok',
+    requestTimeoutMs: 4000,
+    attempts: 1,
+    sourceGapMs: 0,
     required: false,
     detail: false,
     accept: /공통교재|소방전술[123]|구급.*(지침|기준|표준)|응급처치.*(지침|기준|표준)|공식교재/i,
@@ -358,16 +364,23 @@ export async function enrichOfficialRow(row, fetchImpl = fetch, options={}) {
 }
 
 async function collectSource(source,fetchImpl,options={}){
-  const policy=normalizedFetchPolicy(options);
+  const basePolicy=normalizedFetchPolicy(options);
+  const policy=normalizedFetchPolicy({
+    ...basePolicy,
+    requestTimeoutMs:source.requestTimeoutMs??basePolicy.requestTimeoutMs,
+    attempts:source.attempts??basePolicy.attempts,
+    sourceGapMs:source.sourceGapMs??basePolicy.sourceGapMs,
+    retryDelaysMs:source.retryDelaysMs??basePolicy.retryDelaysMs
+  });
   const items=[];
   let okCount=0,lastError='',lastErrorCode='',lastErrorUrl='',fallbackUsed=false;
   const groups=[
     {urls:source.urls||[],fallback:false},
     {urls:source.fallbackUrls||[],fallback:true}
   ];
+  const blockedOrigins=new Set();
   for(const group of groups){
     if(group.fallback&&okCount>0)break;
-    const blockedOrigins=new Set();
     for(const url of group.urls){
       let origin='';
       try{origin=new URL(url).origin}catch{}
@@ -479,6 +492,9 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       requiredSourceCount:SOURCES.filter(x=>x.required!==false).length,
       totalSourceCount:SOURCES.length,
       supplementalSourcesMayDegrade:true,
+      supplementalRequestTimeoutMs:4000,
+      supplementalRequestAttempts:1,
+      suppressSameOriginFallbackAfterTransportFailure:true,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
     healthy: requiredHealthy,
