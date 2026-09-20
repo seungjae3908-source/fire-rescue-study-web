@@ -199,9 +199,13 @@ try{
   assert(await m.locator('.book-section .study-star-btn.on').count()>=1,'saved core point visibly keeps its filled star state');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
+  await m.waitForSelector('.book-section .core-view .hazmat-class-grid');
+  assert(await m.locator('.book-section .core-view .hazmat-class-card').count()===6,'hazardous-material core keeps all six class names visible');
+  const hazCore=await m.locator('.book-section .core-view .hazmat-class-grid').innerText();
+  assert(hazCore.includes('제4류')&&hazCore.includes('제5류')&&hazCore.includes('제6류'),'hazardous-material core does not omit classes 4, 5 or 6');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.book-section .hazmat-class-grid');
-  assert(await m.locator('.book-section .hazmat-class-card').count()===6,'hazardous-material full six-class reference lives in detail instead of core');
+  assert(await m.locator('.book-section .hazmat-class-card').count()===6,'hazardous-material detail keeps the six-class reference');
   assert((await m.locator('.book-section .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material detail visibly reaches class 6');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
