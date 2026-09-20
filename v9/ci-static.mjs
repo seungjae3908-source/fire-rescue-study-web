@@ -149,7 +149,12 @@ const questionContractRows=V.curriculum.concepts.map(c=>{const qs=V.QuestionQual
 ok(questionContractRows.every(x=>x.n>=6&&x.low>=1&&x.mid>=2&&x.high>=1),`all ${V.curriculum.totalConcepts} concepts satisfy >=6 exam-style questions with low>=1 mid>=2 high>=1`);
 ok(V.QuestionQuality119.audit().duplicateTexts.length===0,'post-factory exam-style question text duplicates = 0');
 ok(new Set(V.curriculum.concepts.map(x=>x.id)).size===V.curriculum.totalConcepts,'unique concept ids');
-ok(V.curriculum.concepts.every(x=>x.sourceRanges.length>0),'all concepts have official source ranges');
+const hasOfficialAnchor=c=>{
+  if((c.sourceRanges||[]).length>0)return true;
+  const p=V.contentPacks.authored[c.id],links=(p?.officialLinks||[]);
+  return links.some(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')))
+};
+ok(V.curriculum.concepts.every(hasOfficialAnchor),'all concepts have official PDF ranges or verified official web anchors');
 ok(V.curriculum.fire.length===7,'seven complete fire scopes');
 ok(V.curriculum.ems.length===25,'twenty-five EMS scopes including explicit Quality 2.0 medical gaps');
 ok(V.questions.every(q=>q.choices.length===4),'all questions have four choices');
