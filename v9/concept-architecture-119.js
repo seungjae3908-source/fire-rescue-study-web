@@ -4,6 +4,8 @@ const V=window.AITUTOR_V9=window.AITUTOR_V9||{},C=V.curriculum,P=V.contentPacks?
 if(!C?.concepts||!P)return;
 
 const TEMPLATES={
+  history:{label:'발전과정형',detailOrder:['definition','timeline','periods','changes','significance','comparison','traps'],coreVisual:'timeline',genericSchema:false},
+  organizationTheory:{label:'조직관리론형',detailOrder:['definition','principles','strengths','limits','application','comparison','traps'],coreVisual:'matrix',genericSchema:false},
   governance:{label:'조직·행정형',detailOrder:['definition','structure','roles','legal','comparison','traps'],coreVisual:'hierarchy',genericSchema:false},
   law:{label:'법령·제도형',detailOrder:['definition','target','actor','requirements','procedure','exceptions','numbers','traps'],coreVisual:'matrix',genericSchema:false},
   phenomenon:{label:'화재현상형',detailOrder:['definition','conditions','mechanism','warning','progress','risk','comparison'],coreVisual:'flow',genericSchema:true},
@@ -24,6 +26,8 @@ const TEMPLATES={
 function infer(c){
   const id=c.id||'',s=c.scopeId||'',t=String(c.title||'');
   if(c.subject==='fire'){
+    if(/발전과정|연혁/.test(t))return history;
+    if(/조직관리/.test(t))return organizationTheory;
     if(s==='F01'||s==='F02')return governance;
     if(s==='F03')return phenomenon;
     if(s==='F04')return suppression;
@@ -42,7 +46,7 @@ function infer(c){
   if(s==='E03')return emsProcedure;
   return emsCondition
 }
-const governance='governance',law='law',phenomenon='phenomenon',suppression='suppression',hazmat='hazmat',investigation='investigation',facility='facility',emsSystem='emsSystem',emsAnatomy='emsAnatomy',emsAssessment='emsAssessment',emsProcedure='emsProcedure',emsCondition='emsCondition',emsTrauma='emsTrauma',emsResuscitation='emsResuscitation',equipment='equipment';
+const history='history',organizationTheory='organizationTheory',governance='governance',law='law',phenomenon='phenomenon',suppression='suppression',hazmat='hazmat',investigation='investigation',facility='facility',emsSystem='emsSystem',emsAnatomy='emsAnatomy',emsAssessment='emsAssessment',emsProcedure='emsProcedure',emsCondition='emsCondition',emsTrauma='emsTrauma',emsResuscitation='emsResuscitation',equipment='equipment';
 
 const map={};
 for(const c of C.concepts){
