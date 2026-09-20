@@ -154,7 +154,7 @@ function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.i
   }
   if(tab==='source')return sourceBlock(c,pack);
   if(tab==='ai')return aiChatBody(c);
-  return `<div class="lesson core-view">${quickCoreBlock(pack)}${coreEssentialBlock(c,pack)}</div>`;
+  return `<div class="lesson core-view">${quickCoreBlock(pack)}${coreEssentialBlock(c,pack)}${c.id==='F05-C01'?hazmatBlock(c):''}</div>`;
 }
 function lessonBook(c,pack){const tab=STUDY_TABS.some(([k])=>k===state().studyTab)?state().studyTab:'core';return `<article class="book-mobile"><nav class="book-jumpbar">${STUDY_TABS.map(([k,l])=>`<button class="${tab===k?'on':''}" data-study-tab="${k}">${l}</button>`).join('')}</nav><section class="book-section">${lessonContent(c,pack,tab)}</section></article>`}
 function conceptNeighbors(c){const list=V.curriculum.concepts.filter(x=>x.subject===c.subject),i=list.findIndex(x=>x.id===c.id);return{prev:i>0?list[i-1]:null,next:i>=0&&i<list.length-1?list[i+1]:null}}
