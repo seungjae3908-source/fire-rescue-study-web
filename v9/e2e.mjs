@@ -44,6 +44,8 @@ try{
   assert(!flashDetail.includes('30초 핵심')&&!flashDetail.includes('시험 직전 핵심'),'detail view does not repeat the core summary or core essentials');
   assert(await p.locator('.detail-num').count()===0,'decorative numbered detail badges are removed');
   assert(!flashDetail.includes('개념 구조와 읽는 순서'),'meta learning heading is removed/simplified');
+  await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C11',{keepTab:true}));
+  await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C11'&&window.AITUTOR_V9.Store.state.studyTab==='detail');
   const detailSelect=p.locator('.study-body-desktop [data-detail-jump-select]');
   assert(await detailSelect.count()===1&&await detailSelect.locator('option').count()>=4,'long desktop detail exposes a compact jumpable section selector');
   const detailJump=await detailSelect.locator('option').nth(1).getAttribute('value');
