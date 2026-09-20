@@ -65,7 +65,7 @@ async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCach
   try{const pdf=await Promise.race([task.promise,timer]),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await task.destroy?.().catch?.(()=>{});throw err}
 }
 async function locate(key,queries=[],options={}){const {pdf}=await openPdf(key),tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};const ranges=Array.isArray(options.bookRanges)?options.bookRanges.filter(x=>x&&x.doc===key):[],pageSet=new Set();if(ranges.length){for(const r of ranges){const from=Math.max(1,pdfPage(key,Number(r.from)||1)),to=Math.min(pdf.numPages,pdfPage(key,Number(r.to)||Number(r.from)||1));for(let n=from;n<=to;n++)pageSet.add(n)}}const pages=pageSet.size?[...pageSet].sort((a,b)=>a-b):Array.from({length:pdf.numPages},(_,i)=>i+1);let best={page:pages[0]||1,score:-1,pages:pdf.numPages};for(const n of pages){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
-function evidenceLines(items,viewport,p,queries=[]){
+function evidenceLines(items,viewport,p,queries=[],options={}){
   const rawQueries=(queries||[]).map(x=>String(x||'').replace(/\s+/g,' ').trim()).filter(Boolean),tokens=queryTokens(rawQueries);
   const rows=[];
   for(const item of items||[]){
@@ -81,6 +81,12 @@ function evidenceLines(items,viewport,p,queries=[]){
     const left=Math.min(...its.map(x=>x.x)),right=Math.max(...its.map(x=>x.x+x.w)),top=Math.min(...its.map(x=>x.top)),bottom=Math.max(...its.map(x=>x.top+x.h));
     return{text,n,left,right,top,bottom};
   }).filter(x=>x.n.length>=4).sort((a,b)=>a.top-b.top);
+
+  const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=3);
+  if(anchorTokens.length){
+    const exactAnchorLines=lines.filter(line=>anchorTokens.some(t=>line.n.includes(t)));
+    if(exactAnchorLines.length)return exactAnchorLines.slice(0,8)
+  }
 
   const candidates=[];
   const maxWindow=8;
@@ -132,7 +138,7 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const overlay=document.createElement('div');overlay.className='pdf-highlight-layer';overlay.style.width=viewport.width+'px';overlay.style.height=viewport.height+'px';wrap.appendChild(overlay);host.appendChild(wrap);
   const ctx=canvas.getContext('2d',{alpha:false}),transform=outputScale===1?undefined:[outputScale,0,0,outputScale,0,0];
   await pg.render({canvasContext:ctx,viewport,transform}).promise;
-  const tc=await pg.getTextContent(),evidence=evidenceLines(tc.items||[],viewport,p,queries);
+  const tc=await pg.getTextContent(),evidence=evidenceLines(tc.items||[],viewport,p,queries,{anchorTerms:opts.anchorTerms});
   for(const line of evidence){
     const mark=document.createElement('div');mark.className='pdf-evidence-line';
     mark.style.left=Math.max(0,line.left-2)+'px';mark.style.top=Math.min(viewport.height-3,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-line.left+2,line.right-line.left+4))+'px';mark.style.height='2px';
@@ -141,5 +147,5 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
   return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.text),name,origin,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,download,render,pdfPage,bookPage,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v9-short-concept-anchor-evidence'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,download,render,pdfPage,bookPage,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v10-deterministic-concept-anchor-lines'};
 })();

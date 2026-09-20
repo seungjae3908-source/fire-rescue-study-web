@@ -677,6 +677,7 @@ ok(officialProxy.includes("const BASE='https://www.nfa.go.kr'")&&officialProxy.i
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
 ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
 ok(sourcePdf.includes('qn.length<3'),'official PDF evidence accepts short Korean concept anchors such as 롤오버·플래시오버 instead of dropping all queries under eight characters');
+ok(sourcePdf.includes('anchorTokens')&&sourcePdf.includes('exactAnchorLines')&&sourcePdf.includes('anchorTerms:opts.anchorTerms'),'official PDF evidence deterministically prioritizes exact concept-anchor lines before scored surrounding text');
 ok(sourcePdf.includes('devicePixelRatio')&&sourcePdf.includes('outputScale'),'official PDF canvas uses device-pixel scaling for crisp mobile rendering');
 ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs are never server-uploaded and remain unmodified');
 ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialRemotePreferred:true'),'PDF evidence prefers official remote sources and never requires user upload');

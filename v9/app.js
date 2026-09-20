@@ -423,12 +423,12 @@ async function renderPdfEvidence(id,pageOverride=null){
     const progress=({loaded,total,percent})=>{const bar=root.querySelector('[data-pdf-progress]'),label=root.querySelector('[data-pdf-progress-label]');if(bar&&percent!=null)bar.style.width=Math.max(4,percent)+'%';if(label)label.textContent=percent!=null?`교재 저장 중 ${percent}%`:`교재 저장 중 · ${Math.max(1,Math.round((loaded||0)/1048576))}MB`};
     if(!page){badge.textContent='근거 위치 찾는 중…';const located=await V.SourcePDF.locate(key,queries);page=located.page;root.dataset.autoLocated='true'}
     badge.textContent=staticRange?'공식 교재 여는 중…':(availability.local?'저장된 교재 여는 중…':'교재 저장 중…');
-    let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:90000,onProgress:progress});
+    let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:90000,onProgress:progress,anchorTerms:anchorQueries});
     if(pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
       const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key);
       const located=await V.SourcePDF.locate(key,anchorQueries,{bookRanges:mapped}).catch(()=>null);
       if(located?.score>0&&located.page){
-        const anchorResult=await V.SourcePDF.render(key,located.page,host,anchorQueries,{timeoutMs:90000,onProgress:progress});
+        const anchorResult=await V.SourcePDF.render(key,located.page,host,anchorQueries,{timeoutMs:90000,onProgress:progress,anchorTerms:anchorQueries});
         if(hasAnchorEvidence(anchorResult,anchorQueries)){
           result=anchorResult;
           root.dataset.autoLocated='true'
