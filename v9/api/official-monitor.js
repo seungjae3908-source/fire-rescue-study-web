@@ -2,7 +2,7 @@
 const SNAPSHOT_ROOT='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data';
 const SNAPSHOT=SNAPSHOT_ROOT+'/official-monitor.json';
 const HEALTH=SNAPSHOT_ROOT+'/official-monitor-health.json';
-const HOSTS=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','nfsa.go.kr','cherish.nfsa.go.kr']);
+const HOSTS=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','cherish.nfsa.go.kr','gongmuwon.gosi.kr']);
 const MAX_STALE_MS=90*60*1000;
 
 function official(url){
