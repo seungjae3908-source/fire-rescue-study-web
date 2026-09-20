@@ -379,7 +379,9 @@ function suggestions(){
 function settings(){const configured=V.Auth?.configured?.(),u=V.Auth?.user,notice=runtime.authNotice,pending=runtime.pendingAuthEmail;return shell(`<div class="settings-page screen-scroll"><section class="card settings-account"><b>계정</b>${u?`<p><b>${esc(u.email)}</b></p><div class="settings-actions"><button class="btn primary" data-cloud-sync>동기화</button><button class="btn ghost" data-signout>로그아웃</button></div>`:configured?`${notice?`<div class="privacy settings-notice">${esc(notice)}</div>`:''}<div class="form-grid settings-auth-form"><label>이메일<input id="authEmail" class="input" type="email" autocomplete="email" value="${esc(pending||'')}"></label><label>비밀번호<input id="authPw" class="input" type="password" minlength="8" autocomplete="current-password"></label></div><div class="settings-actions"><button class="btn primary" data-signin>로그인</button><button class="btn" data-signup>회원가입</button><button class="btn ghost" data-resend-confirmation>인증메일 다시 보내기</button></div>`:'<p class="muted">현재 기기에 학습 기록을 저장합니다.</p>'}</section><section class="card"><b>시험 목표</b><div class="form-grid" style="margin-top:9px"><label>목표연도<input id="profileYear" class="input" value="${esc(state().profile.examYear)}"></label><label>시험일<input id="profileDate" class="input" type="date" value="${esc(state().profile.examDate)}"></label><label>하루 공부(분)<input id="profileDaily" class="input" type="number" min="5" max="1440" value="${state().profile.dailyMinutes||40}"></label><label>수준<select id="profileLevel" class="select">${['처음 시작','기초 있음','재도전'].map(x=>`<option ${state().profile.level===x?'selected':''}>${x}</option>`).join('')}</select></label></div><button class="btn primary" data-profile-save style="margin-top:9px">저장</button></section><section class="card"><b>백업 · 복원</b><div class="settings-actions" style="margin-top:9px"><button class="btn" data-export>내 기록 백업</button></div><label class="backup-file-label">백업 파일 선택<input id="importBackup" class="input" type="file" accept="application/json"></label></section><section class="card"><b>개인 자료</b><p class="muted">내 노트와 업로드 자료는 다른 회원에게 공개되지 않습니다.</p></section></div>`,'설정')}
 function view(){return({home,study,tutor,notes,bank,exam,wrong,stats,resources,suggestions,settings}[state().page]||home)()}
 function render(){document.querySelector('#app').innerHTML=view();const chat=$('#chatBox');if(chat)chat.scrollTop=chat.scrollHeight}
-function evidenceQueries(c,p){const title=String(c?.title||''),titleTerms=title.split(/[·,/()\s-]+/).filter(x=>x.length>=2);return [title,...titleTerms,p?.summary,...(p?.must||[]),...(p?.detail||[])].filter(Boolean).slice(0,16)}
+function sourceAnchorQueries(c){const stop=new Set(['개념','기초','종류','이론','구조','원리','정리','및']);const title=String(c?.title||'').trim(),terms=title.split(/[·,/()\s-]+/).map(x=>x.trim()).filter(x=>x.length>=3&&!stop.has(x));return [title,...terms].filter(Boolean).slice(0,6)}
+function evidenceQueries(c,p){return [...sourceAnchorQueries(c),p?.summary,...(p?.must||[]),...(p?.detail||[])].filter(Boolean).slice(0,16)}
+function hasAnchorEvidence(result,anchors){const lines=(result?.evidenceLines||[]).map(studyNorm),terms=(anchors||[]).map(studyNorm).filter(x=>x.length>=3);return terms.some(t=>lines.some(line=>line.includes(t)))}
 function sourceModal(id){return openPdfEvidence(id)}
 async function downloadOfficialPdf(key){if(!key||!V.SourcePDF?.download)return toast('다운로드할 PDF가 없습니다.');try{const r=await V.SourcePDF.download(key,{timeoutMs:120000});toast(`PDF 다운로드 시작 · ${r?.name||key}`)}catch(err){toast('PDF 다운로드 실패 · '+String(err?.message||err).slice(0,46))}}
 async function renderResourcePdf(key,pageOverride=1){
@@ -408,7 +410,7 @@ async function openResourcePdf(key){
 }
 async function renderPdfEvidence(id,pageOverride=null){
   const root=document.querySelector('#pdfEvidence');if(!root)return;
-  const c=V.curriculum.byId[id],p=V.contentPacks.get(id),range=(c?.sourceRanges||[])[0],key=range?.doc||'',host=root.querySelector('#pdfEvidenceHost'),badge=root.querySelector('[data-pdf-page-label]'),queries=evidenceQueries(c,p);
+  const c=V.curriculum.byId[id],p=V.contentPacks.get(id),range=(c?.sourceRanges||[])[0],key=range?.doc||'',host=root.querySelector('#pdfEvidenceHost'),badge=root.querySelector('[data-pdf-page-label]'),anchorQueries=sourceAnchorQueries(c),queries=evidenceQueries(c,p);
   if(!key||!V.SourcePDF){host.innerHTML='<div class="empty">연결된 원문이 없습니다.</div>';return}
   const availability=await V.SourcePDF.availability(key),official=availability.officialPage||V.SourcePDF.sourcePage(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static';
   if(!availability.local&&!availability.direct){badge.textContent='공식 원문';host.innerHTML=`<div class="source-connect official-fallback"><b>원문을 바로 불러올 수 없습니다.</b>${official?`<a class="btn primary block" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div>`;root.querySelector('.pdf-pager')?.classList.add('hidden');return}
@@ -422,16 +424,19 @@ async function renderPdfEvidence(id,pageOverride=null){
     if(!page){badge.textContent='근거 위치 찾는 중…';const located=await V.SourcePDF.locate(key,queries);page=located.page;root.dataset.autoLocated='true'}
     badge.textContent=staticRange?'공식 교재 여는 중…':(availability.local?'저장된 교재 여는 중…':'교재 저장 중…');
     let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:90000,onProgress:progress});
-    if(pageOverride==null&&result.hits===0&&queries.length){
+    if(pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
       const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key);
-      const located=await V.SourcePDF.locate(key,queries,{bookRanges:mapped}).catch(()=>null);
+      const located=await V.SourcePDF.locate(key,anchorQueries,{bookRanges:mapped}).catch(()=>null);
       if(located?.score>0&&located.page&&located.page!==result.page){
         result=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:90000,onProgress:progress});
         root.dataset.autoLocated='true'
       }
     }
+    const anchorVerified=hasAnchorEvidence(result,anchorQueries);
+    root.dataset.anchorVerified=anchorVerified?'true':'false';
     root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);
-    badge.textContent=result.bookPage?`교재 ${result.bookPage}쪽 · ${root.dataset.autoLocated==='true'?'근거 자동교정':'공식 근거'}`:`PDF ${result.page}/${result.pages}쪽 · 공식 근거`;
+    const truthLabel=anchorVerified?(root.dataset.autoLocated==='true'?'근거 자동교정':'공식 근거'):'근거 위치 확인 필요';
+    badge.textContent=result.bookPage?`교재 ${result.bookPage}쪽 · ${truthLabel}`:`PDF ${result.page}/${result.pages}쪽 · ${truthLabel}`;
     const prev=root.querySelector('[data-pdf-page="-1"]'),next=root.querySelector('[data-pdf-page="1"]');if(prev)prev.disabled=result.page<=1;if(next)next.disabled=result.page>=result.pages;
     root.querySelector('.pdf-pager')?.classList.remove('hidden')
   }catch(err){
