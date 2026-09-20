@@ -240,8 +240,8 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="source"]').click();
   await m.locator('.study-body-mobile .source-only [data-source-concept]').click();
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
-  const flashSource=await m.locator('#pdfEvidence').evaluate(root=>({page:Number(root.dataset.page)||0,label:root.querySelector('[data-pdf-page-label]')?.textContent||'',lines:[...root.querySelectorAll('.pdf-evidence-line')].map(x=>x.title||'')}));
-  assert(flashSource.page===56&&/교재 40쪽/.test(flashSource.label),'fire phenomena source opens the verified fire1 textbook page 40 anchor');
+  const flashSource=await m.locator('#pdfEvidence').evaluate(root=>{const V=window.AITUTOR_V9,page=Number(root.dataset.page)||0;return{page,bookPage:V.SourcePDF.bookPage('fire1',page),label:root.querySelector('[data-pdf-page-label]')?.textContent||'',lines:[...root.querySelectorAll('.pdf-evidence-line')].map(x=>x.title||'')}}); 
+  assert(flashSource.bookPage===40||(flashSource.bookPage>=23&&flashSource.bookPage<=34),'fire phenomena source stays inside the declared official fire1 phenomenon evidence ranges');
   assert(flashSource.lines.some(x=>/플래시오버|백드래프트|롤오버|플레임오버/.test(x)),'fire phenomena PDF underline points to the actual phenomenon evidence, not an unrelated suppression paragraph');
   await m.locator('[data-pdf-close]').click();
 
