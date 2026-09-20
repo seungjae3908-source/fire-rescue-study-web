@@ -38,6 +38,8 @@ const quality4AuditScript=fs.readFileSync(new URL('./quality4-highyield-audit.mj
 const officialMonitorWorkflow=fs.readFileSync(new URL('../.github/workflows/official-monitor.yml',import.meta.url),'utf8');
 const officialMonitorClient=fs.readFileSync(new URL('./official-monitor.js',import.meta.url),'utf8');
 const officialMonitorApi=fs.readFileSync(new URL('./api/official-monitor.js',import.meta.url),'utf8');
+const officialMonitorApiTest=fs.readFileSync(new URL('./official-monitor-api-test.mjs',import.meta.url),'utf8');
+const officialMonitorBrowserTest=fs.readFileSync(new URL('./official-monitor-browser-e2e.mjs',import.meta.url),'utf8');
 const officialMonitorRootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.url),'utf8');
 const authE2E=fs.readFileSync(new URL('./auth-session-e2e.mjs',import.meta.url),'utf8');
 const sql=fs.readFileSync(new URL('../supabase/tests/v9-live-closed-loop.sql',import.meta.url),'utf8');
@@ -66,6 +68,7 @@ const checks={
   skillFamilyRemediationContract:app.includes('function buildSkillTraining')&&app.includes('data-skill-train')&&e2e.includes('skill-family remediation starts a focused training run'),
   quality4HighYield:quality4HighYieldAudit?.missing===0&&quality4HighYieldAudit?.ready===quality4HighYieldAudit?.total&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_COMPLETE')&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_FAILED'),
   officialNoticeMonitorContract:officialMonitorWorkflow.includes("cron: '17 */6 * * *'")&&officialMonitorWorkflow.includes('chore/official-monitor-snapshot')&&!officialMonitorWorkflow.includes('git push origin HEAD:main')&&officialMonitorClient.includes('noAutomaticCurriculumMutation:true')&&officialMonitorClient.includes('cachedSnapshotFallback:true')&&officialMonitorApi.includes('chore/official-monitor-snapshot')&&officialMonitorRootApi.includes("require('../v9/api/official-monitor.js')")&&workflow.includes('Official notice monitor contract gate')&&workflow.includes('official_monitor_live_probe (non-release diagnostic)'),
+  officialNoticeMonitorRuntimeTests:workflow.includes('Official monitor root API handler gate')&&workflow.includes('Official monitor offline/cache fallback QA')&&officialMonitorApiTest.includes('OFFICIAL_MONITOR_API_TEST_COMPLETE')&&officialMonitorBrowserTest.includes('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{

@@ -91,6 +91,8 @@ jobs:
         run: node v9/mastery-v2-audit.mjs
       - name: Official notice monitor contract gate
         run: node v9/official-monitor-contract.mjs
+      - name: Official monitor root API handler gate
+        run: node v9/official-monitor-api-test.mjs
       - name: High-yield semantic depth profile report
         run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
@@ -152,6 +154,8 @@ jobs:
         run: node v9/image-ocr-e2e.mjs
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
         run: node v9/e2e.mjs
+      - name: Official monitor offline/cache fallback QA
+        run: node v9/official-monitor-browser-e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
         run: node v9/sync-e2e.mjs
       - name: Invalid/expired member session fail-closed QA
