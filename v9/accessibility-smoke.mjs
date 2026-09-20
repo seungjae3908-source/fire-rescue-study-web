@@ -66,5 +66,6 @@ try{
 
   assert(errors.length===0,'accessibility smoke has no browser runtime errors');
   console.log('ACCESSIBILITY_SMOKE_COMPLETE');
+// exact-head accessibility release proof
   await ctx.close();
 }finally{await browser.close()}
