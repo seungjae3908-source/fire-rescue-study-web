@@ -16,6 +16,8 @@ addText('F07-C05',[
   '헤드 또는 감지설비 작동 이후에는 방식별로 밸브 개방·충수·방수 순서가 달라지므로 습식·건식·준비작동식·일제살수식을 구분해 본다.'
 ]);
 
+addVisuals('F07-C05',['sprinkler-system']);
+
 addVisuals('E09-C02',['ems-breathing']);
 addVisuals('E09-C05',['ems-breathing']);
 addVisuals('E10-C02',['ems-breathing']);
