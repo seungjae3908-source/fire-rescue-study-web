@@ -44,8 +44,14 @@ try{
   assert(!flashDetail.includes('30초 핵심')&&!flashDetail.includes('시험 직전 핵심'),'detail view does not repeat the core summary or core essentials');
   assert(await p.locator('.detail-num').count()===0,'decorative numbered detail badges are removed');
   assert(!flashDetail.includes('개념 구조와 읽는 순서'),'meta learning heading is removed/simplified');
-  const aiRoute=await p.evaluate(()=>{const V=window.AITUTOR_V9;V.App.chooseConcept('F07-C08');const target=V.App.tutorConceptFor('플래시오버에 대해 알려줘');return{id:target.id,title:target.title,current:V.Store.state.conceptId}});
-  assert(aiRoute.current==='F07-C08'&&/플래시오버/.test(aiRoute.title)&&aiRoute.id!==aiRoute.current,'AI routes an explicit flashover question away from the currently open sprinkler concept');
+  await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C08'));
+  await p.locator('.tabbar [data-study-tab="ai"]').click();
+  const lockedAi=p.locator('.study-body-desktop [data-tutor-input]');
+  await lockedAi.fill('플래시오버에 대해 알려줘');
+  await p.locator('.study-body-desktop [data-tutor-send]').click();
+  await p.waitForFunction(()=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1];return V.Store.state.conceptId==='F07-C08'&&last?.role==='assistant'&&last?.outOfScope===true});
+  const lockedTruth=await p.evaluate(()=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1];return{current:V.Store.state.conceptId,text:last?.text||'',suggested:last?.suggestedConceptId||''}});
+  assert(lockedTruth.current==='F07-C08'&&/현재 학습 항목/.test(lockedTruth.text)&&lockedTruth.suggested&&lockedTruth.suggested!=='F07-C08','AI blocks a cross-concept flashover answer and keeps the current sprinkler concept');
   await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
   await p.locator('.tabbar [data-study-tab="ai"]').click();
   await p.waitForSelector('.study-body-desktop .study-ai [data-tutor-input]');
@@ -106,7 +112,9 @@ try{
   await p.locator('[data-resource-pdf-close]').click();
 
   await go(p,'settings');await cleanPage(p,'desktop settings');
-  assert((await p.locator('.page').innerText()).includes('개인 자료'),'settings keeps only user-relevant privacy information');
+  const settingsText=await p.locator('.page').innerText();
+  assert(settingsText.includes('개인 자료')&&settingsText.includes('공식 일정'),'settings keeps privacy information and official-only exam schedule truth');
+  assert(await p.locator('#profileDate').count()===0,'manual exam-date input is removed; official monitor owns the exam date');
 
   await p.evaluate(()=>window.AITUTOR_V9.App.go('tutor'));
   await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.studyTab==='ai');
@@ -136,11 +144,12 @@ try{
   assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문 AI','mobile tabs are 핵심/상세/문제/원문/AI');
   await m.locator('.book-jumpbar [data-study-tab="ai"]').click();
   const mobileAiInput=m.locator('.study-body-mobile [data-tutor-input]');
-  await mobileAiInput.fill('플래시오버에 대해 알려줘');
+  const mobileCurrent=await m.evaluate(()=>window.AITUTOR_V9.Store.state.conceptId);
+  await mobileAiInput.fill('이 개념 핵심만 30초 요약해줘');
   await m.locator('.study-body-mobile [data-tutor-send]').click();
-  await m.waitForFunction(()=>{const chat=window.AITUTOR_V9.Store.state.chat||[],last=chat[chat.length-1];return last?.role==='assistant'&&/플래시오버/.test(last.text||'')},{timeout:30000});
-  const mobileAiTruth=await m.evaluate(()=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1],target=V.curriculum.byId[last?.targetConceptId||''];return{text:last?.text||'',targetId:last?.targetConceptId||'',targetTitle:target?.title||'',current:V.Store.state.conceptId}});
-  assert(/플래시오버/.test(mobileAiTruth.text)&&/플래시오버/.test(mobileAiTruth.targetTitle)&&mobileAiTruth.targetId!==mobileAiTruth.current,'mobile AI tab uses the visible question and answers a flashover-specific concept instead of the open concept');
+  await m.waitForFunction(id=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1];return V.Store.state.conceptId===id&&last?.role==='assistant'&&last?.conceptId===id&&!last?.outOfScope},mobileCurrent,{timeout:30000});
+  const mobileAiTruth=await m.evaluate(()=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1];return{text:last?.text||'',conceptId:last?.conceptId||'',current:V.Store.state.conceptId}});
+  assert(mobileAiTruth.conceptId===mobileAiTruth.current&&mobileAiTruth.text.length>10,'mobile AI keeps the answer bound to the currently open concept');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
