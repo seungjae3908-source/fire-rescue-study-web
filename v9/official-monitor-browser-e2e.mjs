@@ -9,19 +9,20 @@ const snapshot={
   baselineYear:2026,
   officialOnly:true,
   healthy:true,
+  coverageComplete:true,
+  policy:{requiredSourceCount:1,totalSourceCount:3,wafBypassForbidden:true},
   sourceStatus:[
-    {id:'nfa-recruit',label:'소방청 채용·시험',ok:true,pagesOk:3,status:'ok',error:''},
-    {id:'nfa-notice',label:'소방청 공지사항',ok:true,pagesOk:3,status:'ok',error:''},
+    {id:'gosi-fire',label:'국가공무원 채용시스템 · 소방청',ok:true,pagesOk:1,status:'ok',error:''},
     {id:'nfsa-notice',label:'중앙소방학교 고시·공고',ok:true,pagesOk:1,status:'ok',error:''},
-    {id:'nfsa-materials',label:'중앙소방학교 공식교재',ok:true,pagesOk:2,status:'ok',error:''}
+    {id:'nfsa-materials',label:'중앙소방학교 공식교재',ok:true,pagesOk:1,status:'ok',error:''}
   ],
   items:[{
     id:'offline-test-2027',
-    sourceId:'nfa-recruit',
-    sourceLabel:'소방청 채용·시험',
+    sourceId:'gosi-fire',
+    sourceLabel:'국가공무원 채용시스템 · 소방청',
     title:'2027년 소방공무원 채용시험 시행계획 공고',
     publishedAt:'2026-10-01',
-    url:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=view&cntId=offline-test',
+    url:'https://gongmuwon.gosi.kr/spcsv/indexMain3.do',
     kind:'recruitment_notice',
     meaningful:true,
     reviewRequired:true,
@@ -71,7 +72,7 @@ try{
   assert(text.includes('필기시험 2027-03-06 → 2027-03-13')&&text.includes('공식 첨부파일 변경'),'updated notice shows the exact structured schedule/file changes in the student UI');
   assert(text.includes('원서접수 2026-12-28 ~ 2027-01-03')&&text.includes('필기 2027-03-13')&&text.includes('면접 2027-05-12'),'official schedule dates extracted by the monitor are visible on the mobile notice card');
   assert(/D(?:-Day|[+-]\d+)/.test(text),'official schedule dates include a live D-day indicator');
-  assert(text.includes('공식 소스 4/4'),'monitor UI reports all four official source groups');
+  assert(text.includes('공식 소스 3/3'),'monitor UI reports the three required official source groups');
   assert(await page.locator('[data-monitor-calendar]').count()===1,'monitor exposes calendar export when official schedule dates are available');
   const calendarDownload=page.waitForEvent('download');
   await page.locator('[data-monitor-calendar]').click();
@@ -82,7 +83,7 @@ try{
 assert(sw.includes("119-official-monitor-open")&&sw.includes("?page=resources#official-monitor"),'notification click deep-links to official monitor page and existing windows receive an open message');
 const client=await fs.promises.readFile(new URL('./official-monitor.js',import.meta.url),'utf8');
 assert(client.includes("navigator.serviceWorker?.addEventListener?.('message'")&&client.includes("openMonitorPage"),'official monitor client handles service-worker deep-link messages');
-assert(client.includes('completeSources=fresh&&sourceTotal>=4&&sourceOk===sourceTotal')&&client.includes('일부 공식소스 확인 필요'),'monitor UI fails closed when official-source coverage is incomplete or stale');
+assert(client.includes('requiredSourceCount:Number(state.snapshot?.policy?.requiredSourceCount')&&client.includes('totalSourceCount:Number(state.snapshot?.policy?.totalSourceCount')&&client.includes('completeSources=fresh&&m.coverageComplete===true')&&client.includes('시험 공고 감시 정상 · 교재/학교 보조소스 확인 필요'),'monitor UI separates required exam-source health from full supplemental coverage');
 console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
   await ctx.close();
 }finally{

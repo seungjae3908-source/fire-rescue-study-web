@@ -2,14 +2,16 @@
 const SNAPSHOT_ROOT='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data';
 const SNAPSHOT=SNAPSHOT_ROOT+'/official-monitor.json';
 const HEALTH=SNAPSHOT_ROOT+'/official-monitor-health.json';
-const HOSTS=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','nfsa.go.kr','cherish.nfsa.go.kr']);
+const HOSTS=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','cherish.nfsa.go.kr','gongmuwon.gosi.kr']);
 const MAX_STALE_MS=90*60*1000;
 
 function official(url){
   try{const u=new URL(String(url||''));return u.protocol==='https:'&&HOSTS.has(u.hostname.toLowerCase())}catch{return false}
 }
 function valid(x){
-  return !!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&x.items.every(i=>i?.id&&i?.title&&official(i.url));
+  const required=Number(x?.policy?.requiredSourceCount||0);
+  const total=Number(x?.policy?.totalSourceCount||x?.sourceStatus?.length||0);
+  return !!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&required>0&&total>=required&&x.sourceStatus.length===total&&x.items.every(i=>i?.id&&i?.title&&official(i.url));
 }
 function validHealth(x){
   return !!x&&x.version==='119-official-monitor-health-v1'&&Array.isArray(x.sourceStatus)&&typeof x.healthy==='boolean';
@@ -46,8 +48,8 @@ module.exports=async function handler(req,res){
   try{snapshot=await fetchSnapshot()}catch{}
   try{health=await fetchHealth()}catch{}
 
-  const snapshotStale=!snapshot||snapshot.healthy!==true||snapshot.degraded===true||ageMs(snapshot.generatedAt)>MAX_STALE_MS;
-  const recentKnownOutage=!!snapshot&&snapshot.degraded===true&&health?.healthy===false&&ageMs(health.generatedAt)<=MAX_STALE_MS;
+  const snapshotStale=!snapshot||snapshot.healthy!==true||ageMs(snapshot.generatedAt)>MAX_STALE_MS;
+  const recentKnownOutage=!!snapshot&&snapshot.healthy!==true&&health?.healthy===false&&ageMs(health.generatedAt)<=MAX_STALE_MS;
 
   if(recentKnownOutage){
     return send(res,snapshot,'degraded-snapshot',health,true);
@@ -56,7 +58,7 @@ module.exports=async function handler(req,res){
   if(snapshotStale){
     try{
       const live=await fetchLive();
-      if(live.healthy===true)return send(res,{...live,degraded:false,notificationSuppressed:false},'live-fallback',health,false);
+      if(live.healthy===true)return send(res,{...live,degraded:live.coverageComplete!==true,notificationSuppressed:false},'live-fallback',health,false);
       if(snapshot)return send(res,snapshot,'stale-snapshot',health,true);
       return res.status(503).json({error:'OFFICIAL_MONITOR_UNAVAILABLE',health});
     }catch{

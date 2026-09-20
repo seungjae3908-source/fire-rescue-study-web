@@ -77,6 +77,7 @@ function degradedSnapshot(live,lastGood){
     ...base,
     generatedAt:live.generatedAt,
     healthy:false,
+    coverageComplete:false,
     degraded:true,
     preservedLastGood:!!lastGood,
     notificationSuppressed:true,
@@ -95,13 +96,13 @@ let snapshot;
 if(live.healthy){
   snapshot=applyDelta({
     ...live,
-    degraded:false,
+    degraded:live.coverageComplete!==true,
     preservedLastGood:false,
     notificationSuppressed:false,
     lastAttemptAt:live.generatedAt,
     lastSuccessfulAt:live.generatedAt
   },previous);
-  if(lastGoodOutput)writeJson(lastGoodOutput,snapshot);
+  if(lastGoodOutput&&live.coverageComplete===true)writeJson(lastGoodOutput,snapshot);
 }else{
   snapshot=degradedSnapshot(live,previous?.healthy===true?previous:null);
 }
@@ -110,7 +111,8 @@ const health={
   version:'119-official-monitor-health-v1',
   generatedAt:live.generatedAt,
   healthy:live.healthy,
-  degraded:!live.healthy,
+  coverageComplete:live.coverageComplete===true,
+  degraded:live.healthy!==true||live.coverageComplete!==true,
   preservedLastGood:snapshot.preservedLastGood===true,
   lastSuccessfulAt:snapshot.lastSuccessfulAt||'',
   sourceStatus:live.sourceStatus,
@@ -125,6 +127,7 @@ writeJson(healthOutput,health);
 console.log('OFFICIAL_MONITOR_SYNC_SUMMARY',JSON.stringify({
   generatedAt:snapshot.generatedAt,
   healthy:snapshot.healthy,
+  coverageComplete:snapshot.coverageComplete===true,
   degraded:snapshot.degraded,
   preservedLastGood:snapshot.preservedLastGood,
   lastSuccessfulAt:snapshot.lastSuccessfulAt,
@@ -138,7 +141,7 @@ console.log('OFFICIAL_MONITOR_SYNC_SUMMARY',JSON.stringify({
 
 console.log('OFFICIAL_MONITOR_SYNC_OUTPUT',output);
 if(healthOutput)console.log('OFFICIAL_MONITOR_HEALTH_OUTPUT',healthOutput);
-if(lastGoodOutput&&live.healthy)console.log('OFFICIAL_MONITOR_LAST_GOOD_OUTPUT',lastGoodOutput);
+if(lastGoodOutput&&live.coverageComplete===true)console.log('OFFICIAL_MONITOR_LAST_GOOD_OUTPUT',lastGoodOutput);
 
 if(!live.healthy){
   console.error('OFFICIAL_MONITOR_SYNC_UNHEALTHY_PRESERVED',snapshot.preservedLastGood?'LAST_GOOD':'BOOTSTRAP_EMPTY');

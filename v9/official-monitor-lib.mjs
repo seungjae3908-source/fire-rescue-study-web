@@ -4,66 +4,60 @@ export const TARGET_YEAR = 2027;
 export const BASELINE_YEAR = 2026;
 export const OFFICIAL_HOSTS = new Set([
   'www.nfa.go.kr', 'nfa.go.kr',
-  'www.nfsa.go.kr', 'nfsa.go.kr', 'cherish.nfsa.go.kr'
+  'www.nfsa.go.kr', 'cherish.nfsa.go.kr',
+  'gongmuwon.gosi.kr'
 ]);
 
 export const SOURCES = [
   {
-    id: 'nfa-recruit',
-    label: '소방청 채용·시험',
-    strategy: 'all',
+    id: 'gosi-fire',
+    label: '국가공무원 채용시스템 · 소방청',
+    strategy: 'first-ok',
+    required: true,
+    requestTimeoutMs: 20000,
+    attempts: 2,
+    sourceGapMs: 0,
+    detail: false,
+    accept: /소방공무원|채용시험|시험일정|필기시험|시험과목|출제범위|문항수|시험시간|체력시험|가점|응시자격|원서접수|면접시험|임용령|응급처치학|소방학|시행계획|변경공고|정정공고/i,
     urls: [
-      'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1',
-      'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=2',
-      'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=3'
-    ],
-    fallbackUrls: [
-      'https://nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1',
-      'https://nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=2',
-      'https://nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=3'
-    ]
-  },
-  {
-    id: 'nfa-notice',
-    label: '소방청 공지사항',
-    strategy: 'all',
-    accept: /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|시행계획|변경공고|정정공고/i,
-    urls: [
-      'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=1',
-      'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=2',
-      'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=3'
-    ],
-    fallbackUrls: [
-      'https://nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=1',
-      'https://nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=2',
-      'https://nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=3'
+      'https://gongmuwon.gosi.kr/spcsv/indexMain3.do'
     ]
   },
   {
     id: 'nfsa-notice',
     label: '중앙소방학교 고시·공고',
     strategy: 'first-ok',
+    requestTimeoutMs: 4000,
+    attempts: 1,
+    sourceGapMs: 0,
+    required: false,
+    detail: false,
     accept: /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|시행계획|변경공고|정정공고/i,
     urls: [
-      'https://www.nfsa.go.kr/nfsa/news/notice/?mode=list&pageIdx=1',
-      'https://cherish.nfsa.go.kr/nfsa/news/notice/?mode=list&pageIdx=1',
-      'https://www.nfa.go.kr/nfsa/'
+      'https://cherish.nfsa.go.kr/nfsa/news/0011/job/?pageIdx=1'
+    ],
+    fallbackUrls: [
+      'https://cherish.nfsa.go.kr/nfsa/news/notice/?pageIdx=1'
     ]
   },
   {
     id: 'nfsa-materials',
     label: '중앙소방학교 공식교재',
-    strategy: 'all',
+    strategy: 'first-ok',
+    requestTimeoutMs: 4000,
+    attempts: 1,
+    sourceGapMs: 0,
+    required: false,
+    detail: false,
     accept: /공통교재|소방전술[123]|구급.*(지침|기준|표준)|응급처치.*(지침|기준|표준)|공식교재/i,
     urls: [
-      'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1',
-      'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=2',
-      'https://www.nfsa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1',
-      'https://nfsa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1',
-      'https://www.nfa.go.kr/nfsa/'
+      'https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/'
+    ],
+    fallbackUrls: [
+      'https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/?pageIdx=1'
     ]
   }
-];
+]
 
 const IMPORTANT = /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|공통교재|소방전술[123]|구급|교재|시행계획|변경공고|정정공고/i;
 const IGNORE = /공무직|환경미화|청년인턴|전문임기제|일반임기제|전문경력관|외래강사|연구논문|콘퍼런스|화재조사관|소방간부후보생|항공분야|법무분야/i;
@@ -294,7 +288,7 @@ function fetchErrorDetail(err){
 }
 function retryableFetchError(err){
   const value=(fetchErrorCode(err)+' '+String(err?.message||'')).toUpperCase();
-  return /FETCH|ABORT|TIMEOUT|ECONN|EAI_|ENET|EHOST|UND_|WAF_CHALLENGE|HTTP_(403|408|425|429|500|502|503|504)/.test(value);
+  return /FETCH|ABORT|TIMEOUT|ECONN|EAI_|ENET|EHOST|UND_|HTTP_(408|425|429|500|502|503|504)/.test(value);
 }
 function looksLikeWafChallenge(text){
   return /방문자\s*확인|자바스크립트.*활성|javascript.*(?:enable|required)|checking your browser|verify you are human|captcha|challenge-platform|cf-chl/i.test(String(text||''));
@@ -323,7 +317,7 @@ async function fetchText(url, fetchImpl, options={}) {
         redirect:'follow',
         signal:ctrl.signal,
         headers:{
-          'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153 Safari/537.36 119-study-monitor/2.0',
+          'user-agent':'119-study-official-monitor/3.0',
           accept:'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'accept-language':'ko-KR,ko;q=0.9,en;q=0.7',
           'cache-control':'no-cache',
@@ -347,7 +341,7 @@ async function fetchText(url, fetchImpl, options={}) {
 }
 
 export async function enrichOfficialRow(row, fetchImpl = fetch, options={}) {
-  if(!row?.reviewRequired||!isOfficialUrl(row.url))return row;
+  if(row?.detailEligible===false||!row?.reviewRequired||!isOfficialUrl(row.url))return row;
   const shouldCheck=row.targetYearMatch===true||row.explicitYear==null;
   if(!shouldCheck)return row;
   try{
@@ -373,16 +367,23 @@ export async function enrichOfficialRow(row, fetchImpl = fetch, options={}) {
 }
 
 async function collectSource(source,fetchImpl,options={}){
-  const policy=normalizedFetchPolicy(options);
+  const basePolicy=normalizedFetchPolicy(options);
+  const policy=normalizedFetchPolicy({
+    ...basePolicy,
+    requestTimeoutMs:source.requestTimeoutMs??basePolicy.requestTimeoutMs,
+    attempts:source.attempts??basePolicy.attempts,
+    sourceGapMs:source.sourceGapMs??basePolicy.sourceGapMs,
+    retryDelaysMs:source.retryDelaysMs??basePolicy.retryDelaysMs
+  });
   const items=[];
   let okCount=0,lastError='',lastErrorCode='',lastErrorUrl='',fallbackUsed=false;
   const groups=[
     {urls:source.urls||[],fallback:false},
     {urls:source.fallbackUrls||[],fallback:true}
   ];
+  const blockedOrigins=new Set();
   for(const group of groups){
     if(group.fallback&&okCount>0)break;
-    const blockedOrigins=new Set();
     for(const url of group.urls){
       let origin='';
       try{origin=new URL(url).origin}catch{}
@@ -390,7 +391,8 @@ async function collectSource(source,fetchImpl,options={}){
       try{
         const html=await fetchText(url,fetchImpl,policy);
         const parsed=parseNoticeList(html,{sourceId:source.id,sourceLabel:source.label,baseUrl:url});
-        const accepted=source.accept?parsed.filter(row=>source.accept.test(row.title)):parsed;
+        const accepted=(source.accept?parsed.filter(row=>source.accept.test(row.title)):parsed)
+          .map(row=>({...row,detailEligible:source.detail!==false}));
         items.push(...accepted);
         okCount++;
         if(group.fallback)fallbackUsed=true;
@@ -399,7 +401,7 @@ async function collectSource(source,fetchImpl,options={}){
         lastError=fetchErrorDetail(err);
         lastErrorCode=fetchErrorCode(err);
         lastErrorUrl=url;
-        if(origin&&retryableFetchError(err))blockedOrigins.add(origin);
+        if(origin&&(retryableFetchError(err)||fetchErrorCode(err)==='WAF_CHALLENGE'))blockedOrigins.add(origin);
       }
       if(policy.sourceGapMs>0)await sleep(policy.sourceGapMs);
     }
@@ -408,7 +410,7 @@ async function collectSource(source,fetchImpl,options={}){
   return{
     items,
     status:{
-      id:source.id,label:source.label,ok:okCount>0,pagesOk:okCount,
+      id:source.id,label:source.label,required:source.required!==false,ok:okCount>0,pagesOk:okCount,
       status:okCount>0?'ok':'error',
       error:okCount>0?'':lastError||'SOURCE_UNAVAILABLE',
       errorCode:okCount>0?'':lastErrorCode||'SOURCE_UNAVAILABLE',
@@ -457,8 +459,9 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
     .sort((a, b) => String(b.publishedAt || '').localeCompare(String(a.publishedAt || '')) || a.title.localeCompare(b.title, 'ko'));
 
   const successCount = sourceStatus.filter(x => x.ok).length;
-  const nfaRecruitOk = sourceStatus.some(x => x.id === 'nfa-recruit' && x.ok);
-  const nfaNoticeOk = sourceStatus.some(x => x.id === 'nfa-notice' && x.ok);
+  const requiredStatuses=sourceStatus.filter(x=>x.required);
+  const requiredHealthy=requiredStatuses.length>0&&requiredStatuses.every(x=>x.ok);
+  const coverageComplete=sourceStatus.length===SOURCES.length&&successCount===SOURCES.length;
 
   return {
     version: '119-official-monitor-snapshot-v1',
@@ -467,7 +470,7 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
     baselineYear: BASELINE_YEAR,
     officialOnly: true,
     policy: {
-      sources: ['소방청', '중앙소방학교'],
+      sources: ['국가공무원 채용시스템(소방청)', '중앙소방학교'],
       noThirdParty: true,
       noAutomaticCurriculumMutation: true,
       notifyOnlyRelevantOfficialNotices: true,
@@ -486,9 +489,21 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       deterministicBackoffMs:policy.retryDelaysMs,
       officialHostFailover:true,
       wafChallengeDetection:true,
+      wafBypassForbidden:true,
+      machineFriendlyRecruitmentSource:'https://gongmuwon.gosi.kr/spcsv/indexMain3.do',
+      requiredSourceIds:SOURCES.filter(x=>x.required!==false).map(x=>x.id),
+      requiredSourceCount:SOURCES.filter(x=>x.required!==false).length,
+      totalSourceCount:SOURCES.length,
+      supplementalSourcesMayDegrade:true,
+      requiredExamRequestTimeoutMs:20000,
+      requiredExamRequestAttempts:2,
+      supplementalRequestTimeoutMs:4000,
+      supplementalRequestAttempts:1,
+      suppressSameOriginFallbackAfterTransportFailure:true,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
-    healthy: nfaRecruitOk && nfaNoticeOk && successCount === sourceStatus.length,
+    healthy: requiredHealthy,
+    coverageComplete,
     hasRelevantItems: sorted.length > 0,
     sourceStatus,
     items: sorted.slice(0, 120)
