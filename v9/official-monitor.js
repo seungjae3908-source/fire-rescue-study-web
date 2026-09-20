@@ -6,7 +6,7 @@ const SNAPSHOT_URL='https://raw.githubusercontent.com/seungjae3908-source/fire-r
 const START_AT='2026-09-20';
 const REFRESH_MS=30*60*1000;
 const MAX_SNAPSHOT_AGE_MS=90*60*1000;
-const ALLOWED=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','nfsa.go.kr','cherish.nfsa.go.kr']);
+const ALLOWED=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','cherish.nfsa.go.kr','gongmuwon.gosi.kr']);
 let state={status:'idle',snapshot:null,unseen:[],lastFetched:0,error:'',transport:'',notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
 let timer=null;
 let observer=null;
