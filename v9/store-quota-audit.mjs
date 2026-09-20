@@ -36,3 +36,4 @@ assert(S.state.progress['F01-C01']?.mastery===88&&S.state.progress['F01-C01']?.a
 assert(S.storagePolicy.compactOnQuotaOnly===true&&S.storagePolicy.preserveUnresolvedWrongs===true,'storage policy is fail-safe and quota-triggered only');
 assert(S.state.migrations.storageCompactionVersion==='quota-v1','quota recovery records an explicit migration marker');
 console.log('STORE_QUOTA_RECOVERY_COMPLETE');
+// Exact-head quota recovery regression trigger.
