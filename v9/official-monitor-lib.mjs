@@ -94,11 +94,37 @@ function fingerprintFor(row, context) {
     .slice(0, 20);
 }
 
-function yearFrom(title, publishedAt) {
+function explicitYearFromTitle(title) {
   const t = String(title || '').match(/20\d{2}/);
-  if (t) return Number(t[0]);
+  return t ? Number(t[0]) : null;
+}
+function yearFrom(title, publishedAt) {
+  const t = explicitYearFromTitle(title);
+  if (t) return t;
   const d = String(publishedAt || '').match(/^20\d{2}/);
   return d ? Number(d[0]) : null;
+}
+function labeledDate(text,labelRe){
+  const src=String(text||''),m=labelRe.exec(src);
+  if(!m)return'';
+  return dateNear(src.slice(m.index,Math.min(src.length,m.index+110)));
+}
+export function extractOfficialDetail(html) {
+  const text=textOnly(html);
+  const schedule={
+    applicationStart:labeledDate(text,/접수일|원서\s*접수\s*(?:시작|기간)?/i),
+    applicationEnd:labeledDate(text,/마감일|원서\s*접수\s*(?:마감|종료)/i),
+    writtenExam:labeledDate(text,/필기\s*시험(?:일|일자|일정)?/i),
+    physicalExam:labeledDate(text,/체력\s*시험(?:일|일자|일정)?/i),
+    interview:labeledDate(text,/면접\s*시험(?:일|일자|일정)?/i),
+    finalResult:labeledDate(text,/최종\s*(?:합격자?\s*)?(?:발표|합격)/i)
+  };
+  for(const k of Object.keys(schedule))if(!schedule[k])delete schedule[k];
+  return{
+    targetYearMention:new RegExp('(?:^|[^0-9])'+TARGET_YEAR+'\\s*년').test(text),
+    schedule,
+    scheduleCount:Object.keys(schedule).length
+  };
 }
 
 export function classifyNotice(title) {
@@ -167,6 +193,7 @@ export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
     const publishedAt = dateNear(context);
     const url = resolveNoticeUrl(href, baseUrl);
     const kind = classifyNotice(title);
+    const explicitYear = explicitYearFromTitle(title);
     const noticeYear = yearFrom(title, publishedAt);
 
     const row = {
@@ -180,6 +207,7 @@ export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
       reviewRequired: HIGH_IMPACT.test(title),
       targetYearMatch: noticeYear === TARGET_YEAR,
       baselineYearMatch: noticeYear === BASELINE_YEAR,
+      explicitYear,
       noticeYear,
       notificationEligible: noticeYear === TARGET_YEAR
     };
@@ -213,6 +241,30 @@ async function fetchText(url, fetchImpl) {
     return await res.text();
   } finally {
     clearTimeout(timer);
+  }
+}
+
+
+export async function enrichOfficialRow(row, fetchImpl = fetch) {
+  if(!row?.reviewRequired||!isOfficialUrl(row.url))return row;
+  const shouldCheck=row.targetYearMatch===true||row.explicitYear==null;
+  if(!shouldCheck)return row;
+  try{
+    const html=await fetchText(row.url,fetchImpl);
+    const detail=extractOfficialDetail(html);
+    const targetYearMatch=row.targetYearMatch===true||detail.targetYearMention===true;
+    return{
+      ...row,
+      detailChecked:true,
+      targetYearMatch,
+      baselineYearMatch:targetYearMatch?false:row.baselineYearMatch,
+      noticeYear:targetYearMatch?TARGET_YEAR:row.noticeYear,
+      notificationEligible:targetYearMatch,
+      schedule:detail.schedule,
+      scheduleCount:detail.scheduleCount
+    };
+  }catch(err){
+    return{...row,detailChecked:false,detailError:String(err?.message||err).slice(0,80)}
   }
 }
 
@@ -254,7 +306,10 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
     if (!prev || (!prev.targetYearMatch && row.targetYearMatch)) unique.set(key, row);
   }
 
-  const sorted = [...unique.values()]
+  const enriched=[];
+  for(const row of unique.values())enriched.push(await enrichOfficialRow(row,fetchImpl));
+
+  const sorted = enriched
     .filter(x => x.meaningful)
     .sort((a, b) => String(b.publishedAt || '').localeCompare(String(a.publishedAt || '')) || a.title.localeCompare(b.title, 'ko'));
 
@@ -275,6 +330,9 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       targetYearNotificationsOnly: true,
       noRelevantNoticeIsHealthy: true,
       detectSameNoticeMetadataRevision: true,
+      verifyTargetYearFromOfficialDetail: true,
+      extractOfficialScheduleDates: true,
+      neverGuessMissingDates: true,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
     healthy: nfaRecruitOk && successCount >= 2,

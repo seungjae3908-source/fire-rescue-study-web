@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { parseNoticeList, classifyNotice, isRelevantTitle, isOfficialUrl, SOURCES } from './official-monitor-lib.mjs';
+import { parseNoticeList, classifyNotice, isRelevantTitle, isOfficialUrl, extractOfficialDetail, enrichOfficialRow, SOURCES } from './official-monitor-lib.mjs';
 
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 const fixture=[
@@ -19,6 +19,12 @@ assert(rows.every(x=>/^[a-f0-9]{20}$/.test(x.fingerprint||'')),'each official no
 assert(rows.find(x=>x.title.includes('2027년 소방공무원 채용시험 시행계획 공고'))?.notificationEligible===true,'explicit 2027 official notice is eligible for app notification');
 const oldYearRows=parseNoticeList('<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=old-year">2026년 소방공무원 채용시험 일정 공고</a></td><td>2026-09-21</td></tr></table>',{sourceId:'nfa-recruit',sourceLabel:'소방청 채용·시험',baseUrl:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1'});
 assert(oldYearRows[0]?.notificationEligible===false,'2026 official notice remains visible data but is not pushed as a new 2027 exam notice');
+const detail=extractOfficialDetail('<div>2027년 소방공무원 채용시험 안내 접수일 : 2026-12-28 마감일 : 2027-01-03 필기시험일 : 2027. 3. 13. 체력시험일 : 2027-04-02 면접시험일 : 2027/05/12 최종합격자 발표 : 2027-06-01</div>');
+assert(detail.targetYearMention===true&&detail.schedule.applicationStart==='2026-12-28'&&detail.schedule.applicationEnd==='2027-01-03','official detail parser extracts target year and application window without guessing');
+assert(detail.schedule.writtenExam==='2027-03-13'&&detail.schedule.physicalExam==='2027-04-02'&&detail.schedule.interview==='2027-05-12'&&detail.schedule.finalResult==='2027-06-01','official detail parser extracts labeled written/physical/interview/final dates');
+const yearless=parseNoticeList('<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=yearless">소방공무원 채용시험 시행계획 공고</a></td><td>2026-12-20</td></tr></table>',{sourceId:'nfa-recruit',sourceLabel:'소방청 채용·시험',baseUrl:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1'})[0];
+const enriched=await enrichOfficialRow(yearless,async()=>new Response('<div>2027년 소방공무원 채용시험 시행계획 접수일 2026-12-28 마감일 2027-01-03</div>',{status:200}));
+assert(enriched.targetYearMatch===true&&enriched.notificationEligible===true&&enriched.schedule?.applicationStart==='2026-12-28','yearless list title is promoted to 2027 only after official detail text confirms the target year');
 const originalRevision=parseNoticeList('<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=same-post">2027년 소방공무원 채용시험 일정 공고</a></td><td>2026-12-20</td></tr></table>',{sourceId:'nfa-recruit',sourceLabel:'소방청 채용·시험',baseUrl:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1'})[0];
 const correctedRevision=parseNoticeList('<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=same-post">2027년 소방공무원 채용시험 일정 정정공고</a></td><td>2026-12-21</td></tr></table>',{sourceId:'nfa-recruit',sourceLabel:'소방청 채용·시험',baseUrl:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1'})[0];
 assert(originalRevision.id===correctedRevision.id,'same official post keeps a stable identity when its title/date are corrected');
@@ -55,6 +61,8 @@ assert(client.includes('backgroundServerMonitor:true')&&client.includes('deviceP
 assert(client.includes('seenRevisionKeys')&&client.includes("changeState==='updated'")&&client.includes('공고 내용 변경'),'monitor re-alerts a previously seen notice only when its official revision fingerprint changes');
 assert(client.includes("completeSources=sourceOk===3")&&client.includes('일부 공식소스 확인 필요')&&client.includes('결과 확정 보류'),'monitor never claims no change while an official source is unavailable');
 assert(client.includes('eligibleNotice')&&client.includes('targetItems'),'client alerts and foregrounds target-year eligible official notices instead of old-year history');
+assert(libSource.includes('verifyTargetYearFromOfficialDetail: true')&&libSource.includes('extractOfficialScheduleDates: true')&&libSource.includes('neverGuessMissingDates: true'),'monitor verifies yearless target notices and extracts only labeled official schedule dates');
+assert(client.includes('official-monitor-schedule')&&client.includes('detailScheduleDisplay:true')&&client.includes('neverGuessMissingDates:true'),'student monitor displays structured official schedule dates without invented values');
 const sync=fs.readFileSync(new URL('./official-monitor-sync.mjs',import.meta.url),'utf8');
 assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated'")&&sync.includes('updatedIds'),'scheduled snapshot marks same-notice revisions without mutating curriculum');
 assert(sw.includes('/api/official-monitor')&&sw.includes('notificationclick'),'service worker uses network-first monitor data and notification click handling');

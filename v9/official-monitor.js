@@ -61,7 +61,14 @@ function dispatch(){
 
 function itemHtml(x,isNew){
   const label=x.changeState==='updated'?'공고 내용 변경':x.kind==='exam_schedule'?'시험 일정':x.reviewRequired?'검토 필요':'공식 공고';
-  return '<a class="official-monitor-item '+(isNew?'new':'')+'" href="'+esc(x.url)+'" target="_blank" rel="noopener"><div><span class="tag '+(x.reviewRequired||x.changeState==='updated'?'warn':'blue')+'">'+esc(label)+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sourceLabel)+(x.publishedAt?' · '+esc(x.publishedAt):'')+'</small></div><span aria-hidden="true">↗</span></a>';
+  const s=x.schedule||{},schedule=[];
+  if(s.applicationStart||s.applicationEnd)schedule.push('원서접수 '+(s.applicationStart||'?')+(s.applicationEnd?' ~ '+s.applicationEnd:''));
+  if(s.writtenExam)schedule.push('필기 '+s.writtenExam);
+  if(s.physicalExam)schedule.push('체력 '+s.physicalExam);
+  if(s.interview)schedule.push('면접 '+s.interview);
+  if(s.finalResult)schedule.push('최종발표 '+s.finalResult);
+  const scheduleHtml=schedule.length?'<small class="official-monitor-schedule">'+schedule.map(esc).join(' · ')+'</small>':'';
+  return '<a class="official-monitor-item '+(isNew?'new':'')+'" href="'+esc(x.url)+'" target="_blank" rel="noopener"><div><span class="tag '+(x.reviewRequired||x.changeState==='updated'?'warn':'blue')+'">'+esc(label)+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sourceLabel)+(x.publishedAt?' · '+esc(x.publishedAt):'')+'</small>'+scheduleHtml+'</div><span aria-hidden="true">↗</span></a>';
 }
 
 function renderKey(){
@@ -225,7 +232,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,devicePushWhenClosed:false}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,detailScheduleDisplay:true,neverGuessMissingDates:true,devicePushWhenClosed:false}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();
