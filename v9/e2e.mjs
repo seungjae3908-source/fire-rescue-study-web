@@ -254,8 +254,8 @@ try{
   assert(!/F\d\d-C\d\d/.test(mtoc)&&/1\.\s/.test(mtoc),'mobile TOC uses aligned numbered names without ids');
   await m.locator('.outline.open button[data-outline-close]').click();
 
-  const action=await m.locator('.page-study .actionbar').boundingBox(),nav=await m.locator('.mobile-nav').boundingBox();
-  assert(action&&nav&&action.y+action.height<=nav.y+2,'study action bar stays above bottom navigation');
+  const studyScroller=await m.locator('.study-body-mobile').boundingBox(),nav=await m.locator('.mobile-nav').boundingBox();
+  assert(studyScroller&&nav&&studyScroller.y+studyScroller.height<=nav.y+2,'learning scroller ends cleanly above the single bottom navigation');
   const scrollState=await m.locator('.study-body-mobile').evaluate(el=>({overflow:getComputedStyle(el).overflowY,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}));
   assert(['auto','scroll'].includes(scrollState.overflow),'mobile study uses one dedicated vertical body scroller');
   await noX(m,'mobile study detail');
