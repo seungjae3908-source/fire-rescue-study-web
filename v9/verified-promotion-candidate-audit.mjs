@@ -25,41 +25,52 @@ const V=window.AITUTOR_V9,Q=V.QuestionQuality119;
 if(!Q?.isExamStyle)throw new Error('QUESTION_QUALITY_RUNTIME_UNAVAILABLE');
 
 const badPractice=/복원|연습용|공식문제지\s*미확보|KOCW|reconstructed|practice-only/i;
-const externalOfficial=/가이드라인|KACPR|KOSHA|사이언스올|질병관리청|국가건강정보|E-GEN|법령|법제처|119법|현행|소방청\s*공식|공식\s*구급\s*교육문제|대한/i;
+const externalOfficial=/가이드라인|KOSHA|사이언스올|질병관리청|국가건강정보|E-GEN|법령|법제처|대한/i;
 const exactTextbook=/2026\s+(?:소방전술1(?:\(화재[12]\))?|소방전술3\(구급\)|예방실무[12])(?:\s+PDF)?[^\n]*?\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/;
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
+const policyLockedId=/^(?:119-calc-|119-q2calc-|119-calc3-|119-law-|119-specialcomb-|119-(?:cbrn|pals)-\d|119-finalgap-|119-pals-adv-|119-fireterm-|p-f)/;
 
-function candidate(q){
-  if(q.grade!=='P'||q.generatedPractice===true||!/^119-/.test(q.id||''))return null;
-  if(!Q.isExamStyle(q)||q.pastExamClaim===true)return null;
+function exactPageP(q){
+  if(q.grade!=='P'||q.generatedPractice===true||q.pastExamClaim===true||!Q.isExamStyle(q))return null;
   const source=norm(q.source);
   if(!exactTextbook.test(source)||badPractice.test(source))return null;
   const tier=externalOfficial.test(source)?'mixed-official':'textbook-only';
-  return{id:q.id,subject:q.subject,scopeId:q.scopeId,conceptId:q.conceptId,difficulty:q.difficulty,type:q.type,source,tier};
+  return{id:q.id,subject:q.subject,scopeId:q.scopeId,conceptId:q.conceptId,difficulty:q.difficulty,type:q.type,source,tier,policyLocked:policyLockedId.test(q.id||'')};
 }
 
-const rows=(V.questions||[]).map(candidate).filter(Boolean);
-const textbookOnly=rows.filter(x=>x.tier==='textbook-only');
-const mixedOfficial=rows.filter(x=>x.tier==='mixed-official');
+const exactPageRows=(V.questions||[]).map(exactPageP).filter(Boolean);
+const policyLocked=exactPageRows.filter(x=>x.policyLocked);
+const reviewable=exactPageRows.filter(x=>!x.policyLocked);
+const textbookOnly=reviewable.filter(x=>x.tier==='textbook-only');
+const mixedOfficial=reviewable.filter(x=>x.tier==='mixed-official');
 const verified=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B');
 const target={fire:250,ems:300};
 const current={fire:verified.filter(q=>q.subject==='fire').length,ems:verified.filter(q=>q.subject==='ems').length};
 const gap={fire:Math.max(0,target.fire-current.fire),ems:Math.max(0,target.ems-current.ems)};
 const countBy=(arr,key)=>arr.reduce((a,x)=>(a[x[key]]=(a[x[key]]||0)+1,a),{});
-const conceptRows=Object.entries(countBy(textbookOnly,'conceptId')).map(([conceptId,n])=>({conceptId,n,title:V.curriculum.byId?.[conceptId]?.title||''})).sort((a,b)=>b.n-a.n||a.conceptId.localeCompare(b.conceptId));
+const conceptRows=Object.entries(countBy(reviewable,'conceptId')).map(([conceptId,n])=>({conceptId,n,title:V.curriculum.byId?.[conceptId]?.title||'',verified:verified.filter(q=>q.conceptId===conceptId).length})).sort((a,b)=>b.n-a.n||a.verified-b.verified||a.conceptId.localeCompare(b.conceptId));
+const reviewableBySubject=countBy(reviewable,'subject'),lockedBySubject=countBy(policyLocked,'subject');
 
 const result={
-  version:'119-verified-promotion-candidate-audit-v1',
+  version:'119-verified-promotion-candidate-audit-v2',
+  policy:'REPORT_ONLY. Exact-page P is split into policy-locked practice and human-review candidates. Nothing is promoted automatically.',
   currentVerified:current,target,gap,
-  textbookOnly:{total:textbookOnly.length,bySubject:countBy(textbookOnly,'subject')},
-  mixedOfficial:{total:mixedOfficial.length,bySubject:countBy(mixedOfficial,'subject')},
-  potentialAfterTextbookOnly:{
-    fire:current.fire+(countBy(textbookOnly,'subject').fire||0),
-    ems:current.ems+(countBy(textbookOnly,'subject').ems||0)
+  exactPageP:{total:exactPageRows.length,bySubject:countBy(exactPageRows,'subject')},
+  policyLocked:{total:policyLocked.length,bySubject:lockedBySubject},
+  reviewable:{total:reviewable.length,bySubject:reviewableBySubject},
+  reviewableTextbookOnly:{total:textbookOnly.length,bySubject:countBy(textbookOnly,'subject')},
+  reviewableMixedOfficial:{total:mixedOfficial.length,bySubject:countBy(mixedOfficial,'subject')},
+  potentialAfterAllReviewable:{
+    fire:current.fire+(reviewableBySubject.fire||0),
+    ems:current.ems+(reviewableBySubject.ems||0)
+  },
+  remainingIfAllReviewablePass:{
+    fire:Math.max(0,target.fire-(current.fire+(reviewableBySubject.fire||0))),
+    ems:Math.max(0,target.ems-(current.ems+(reviewableBySubject.ems||0)))
   }
 };
 console.log('VERIFIED_PROMOTION_CANDIDATE_SUMMARY',JSON.stringify(result,null,2));
-console.log('VERIFIED_PROMOTION_TEXTBOOK_ONLY_BY_CONCEPT');console.table(conceptRows);
-console.log('VERIFIED_PROMOTION_TEXTBOOK_ONLY');console.table(textbookOnly);
-console.log('VERIFIED_PROMOTION_MIXED_OFFICIAL');console.table(mixedOfficial);
+console.log('VERIFIED_PROMOTION_REVIEWABLE_BY_CONCEPT');console.table(conceptRows);
+console.log('VERIFIED_PROMOTION_REVIEWABLE');console.table(reviewable);
+console.log('VERIFIED_PROMOTION_POLICY_LOCKED');console.table(policyLocked);
 console.log('VERIFIED_PROMOTION_CANDIDATE_AUDIT_COMPLETE');
