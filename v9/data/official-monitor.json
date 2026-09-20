@@ -1,0 +1,96 @@
+{
+  "version": "119-official-monitor-snapshot-v1",
+  "generatedAt": "2026-09-20T05:09:22.282Z",
+  "targetExamYear": 2027,
+  "baselineYear": 2026,
+  "officialOnly": true,
+  "policy": {
+    "sources": [
+      "소방청",
+      "중앙소방학교"
+    ],
+    "noThirdParty": true,
+    "noAutomaticCurriculumMutation": true,
+    "notifyOnlyRelevantOfficialNotices": true,
+    "targetYearNotificationsOnly": true,
+    "noRelevantNoticeIsHealthy": true,
+    "detectSameNoticeMetadataRevision": true,
+    "verifyTargetYearFromOfficialDetail": true,
+    "extractOfficialScheduleDates": true,
+    "neverGuessMissingDates": true,
+    "detectOfficialAttachments": true,
+    "sequentialSourceFetch": true,
+    "maxConcurrentSourceGroups": 1,
+    "detailConcurrency": 2,
+    "requestTimeoutMs": 9000,
+    "requestAttempts": 2,
+    "deterministicBackoffMs": [
+      0,
+      700
+    ],
+    "officialHostFailover": true,
+    "wafChallengeDetection": true,
+    "snapshotBranch": "chore/official-monitor-snapshot"
+  },
+  "healthy": false,
+  "hasRelevantItems": false,
+  "sourceStatus": [
+    {
+      "id": "nfa-recruit",
+      "label": "소방청 채용·시험",
+      "ok": false,
+      "pagesOk": 0,
+      "status": "error",
+      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
+      "errorCode": "WAF_CHALLENGE",
+      "errorUrl": "https://nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1",
+      "fallbackUsed": false
+    },
+    {
+      "id": "nfa-notice",
+      "label": "소방청 공지사항",
+      "ok": false,
+      "pagesOk": 0,
+      "status": "error",
+      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
+      "errorCode": "WAF_CHALLENGE",
+      "errorUrl": "https://nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=1",
+      "fallbackUsed": false
+    },
+    {
+      "id": "nfsa-notice",
+      "label": "중앙소방학교 고시·공고",
+      "ok": false,
+      "pagesOk": 0,
+      "status": "error",
+      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
+      "errorCode": "WAF_CHALLENGE",
+      "errorUrl": "https://www.nfa.go.kr/nfsa/",
+      "fallbackUsed": false
+    },
+    {
+      "id": "nfsa-materials",
+      "label": "중앙소방학교 공식교재",
+      "ok": false,
+      "pagesOk": 0,
+      "status": "error",
+      "error": "ERR_TLS_CERT_ALTNAME_INVALID: ERR_TLS_CERT_ALTNAME_INVALID: fetch failed: Hostname/IP does not match certificate's altnames: Host: nfsa.go.kr. is not in the cert's altnames: DNS:nf",
+      "errorCode": "ERR_TLS_CERT_ALTNAME_INVALID",
+      "errorUrl": "https://nfsa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1",
+      "fallbackUsed": false
+    }
+  ],
+  "items": [],
+  "degraded": true,
+  "preservedLastGood": false,
+  "notificationSuppressed": true,
+  "lastAttemptAt": "2026-09-20T05:09:22.282Z",
+  "lastSuccessfulAt": "",
+  "liveItemCount": 0,
+  "delta": {
+    "newIds": [],
+    "updatedIds": [],
+    "newCount": 0,
+    "updatedCount": 0
+  }
+}
