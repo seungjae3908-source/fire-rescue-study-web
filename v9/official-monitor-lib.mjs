@@ -19,6 +19,17 @@ export const SOURCES = [
     ]
   },
   {
+    id: 'nfa-notice',
+    label: '소방청 공지사항',
+    strategy: 'all',
+    accept: /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|시행계획|변경공고|정정공고/i,
+    urls: [
+      'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=1',
+      'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=2',
+      'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=3'
+    ]
+  },
+  {
     id: 'nfsa-notice',
     label: '중앙소방학교 고시·공고',
     strategy: 'first-ok',
@@ -109,8 +120,20 @@ function labeledDate(text,labelRe){
   if(!m)return'';
   return dateNear(src.slice(m.index,Math.min(src.length,m.index+110)));
 }
-export function extractOfficialDetail(html) {
+export function extractOfficialDetail(html, baseUrl='') {
   const text=textOnly(html);
+  const attachments=[];
+  const aRe=/<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
+  for(const m of String(html||'').matchAll(aRe)){
+    const href=(m[1].match(/\bhref\s*=\s*["']([^"']+)["']/i)||[])[1]||'';
+    const label=textOnly(m[2]);
+    const looksFile=/\.(pdf|hwpx?|hwp)(?:$|[?#])/i.test(href)||/PDF|HWPX?|첨부|다운로드|공고문|시행계획/i.test(label);
+    if(!looksFile||!baseUrl)continue;
+    const url=resolveNoticeUrl(href,baseUrl);
+    if(!isOfficialUrl(url))continue;
+    if(!attachments.some(x=>x.url===url))attachments.push({label:label||'첨부파일',url});
+    if(attachments.length>=8)break;
+  }
   const schedule={
     applicationStart:labeledDate(text,/접수일|원서\s*접수\s*(?:시작|기간)?/i),
     applicationEnd:labeledDate(text,/마감일|원서\s*접수\s*(?:마감|종료)/i),
@@ -123,7 +146,9 @@ export function extractOfficialDetail(html) {
   return{
     targetYearMention:new RegExp('(?:^|[^0-9])'+TARGET_YEAR+'\\s*년').test(text),
     schedule,
-    scheduleCount:Object.keys(schedule).length
+    scheduleCount:Object.keys(schedule).length,
+    attachments,
+    attachmentCount:attachments.length
   };
 }
 
@@ -251,7 +276,7 @@ export async function enrichOfficialRow(row, fetchImpl = fetch) {
   if(!shouldCheck)return row;
   try{
     const html=await fetchText(row.url,fetchImpl);
-    const detail=extractOfficialDetail(html);
+    const detail=extractOfficialDetail(html,row.url);
     const targetYearMatch=row.targetYearMatch===true||detail.targetYearMention===true;
     return{
       ...row,
@@ -261,7 +286,9 @@ export async function enrichOfficialRow(row, fetchImpl = fetch) {
       noticeYear:targetYearMatch?TARGET_YEAR:row.noticeYear,
       notificationEligible:targetYearMatch,
       schedule:detail.schedule,
-      scheduleCount:detail.scheduleCount
+      scheduleCount:detail.scheduleCount,
+      attachments:detail.attachments,
+      attachmentCount:detail.attachmentCount
     };
   }catch(err){
     return{...row,detailChecked:false,detailError:String(err?.message||err).slice(0,80)}
@@ -315,6 +342,7 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
 
   const successCount = sourceStatus.filter(x => x.ok).length;
   const nfaRecruitOk = sourceStatus.some(x => x.id === 'nfa-recruit' && x.ok);
+  const nfaNoticeOk = sourceStatus.some(x => x.id === 'nfa-notice' && x.ok);
 
   return {
     version: '119-official-monitor-snapshot-v1',
@@ -333,9 +361,10 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       verifyTargetYearFromOfficialDetail: true,
       extractOfficialScheduleDates: true,
       neverGuessMissingDates: true,
+      detectOfficialAttachments: true,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
-    healthy: nfaRecruitOk && successCount >= 2,
+    healthy: nfaRecruitOk && nfaNoticeOk && successCount === sourceStatus.length,
     hasRelevantItems: sorted.length > 0,
     sourceStatus,
     items: sorted.slice(0, 120)

@@ -11,6 +11,7 @@ const snapshot={
   healthy:true,
   sourceStatus:[
     {id:'nfa-recruit',label:'소방청 채용·시험',ok:true,pagesOk:3,status:'ok',error:''},
+    {id:'nfa-notice',label:'소방청 공지사항',ok:true,pagesOk:3,status:'ok',error:''},
     {id:'nfsa-notice',label:'중앙소방학교 고시·공고',ok:true,pagesOk:1,status:'ok',error:''},
     {id:'nfsa-materials',label:'중앙소방학교 공식교재',ok:true,pagesOk:2,status:'ok',error:''}
   ],
@@ -72,7 +73,7 @@ try{
 assert(sw.includes("119-official-monitor-open")&&sw.includes("?page=resources#official-monitor"),'notification click deep-links to official monitor page and existing windows receive an open message');
 const client=await fs.promises.readFile(new URL('./official-monitor.js',import.meta.url),'utf8');
 assert(client.includes("navigator.serviceWorker?.addEventListener?.('message'")&&client.includes("openMonitorPage"),'official monitor client handles service-worker deep-link messages');
-assert(client.includes("completeSources=sourceOk===3")&&client.includes('일부 공식소스 확인 필요'),'monitor UI fails closed when official-source coverage is incomplete');
+assert(client.includes('completeSources=sourceTotal>=4&&sourceOk===sourceTotal')&&client.includes('일부 공식소스 확인 필요'),'monitor UI fails closed when official-source coverage is incomplete');
 console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
   await ctx.close();
 }finally{

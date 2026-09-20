@@ -68,7 +68,8 @@ function itemHtml(x,isNew){
   if(s.interview)schedule.push('면접 '+s.interview);
   if(s.finalResult)schedule.push('최종발표 '+s.finalResult);
   const scheduleHtml=schedule.length?'<small class="official-monitor-schedule">'+schedule.map(esc).join(' · ')+'</small>':'';
-  return '<a class="official-monitor-item '+(isNew?'new':'')+'" href="'+esc(x.url)+'" target="_blank" rel="noopener"><div><span class="tag '+(x.reviewRequired||x.changeState==='updated'?'warn':'blue')+'">'+esc(label)+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sourceLabel)+(x.publishedAt?' · '+esc(x.publishedAt):'')+'</small>'+scheduleHtml+'</div><span aria-hidden="true">↗</span></a>';
+  const attachmentHtml=!schedule.length&&Number(x.attachmentCount||0)>0?'<small class="official-monitor-attachment">상세 일정은 공식 첨부 공고문 확인 · '+Number(x.attachmentCount||0)+'개</small>':'';
+  return '<a class="official-monitor-item '+(isNew?'new':'')+'" href="'+esc(x.url)+'" target="_blank" rel="noopener"><div><span class="tag '+(x.reviewRequired||x.changeState==='updated'?'warn':'blue')+'">'+esc(label)+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sourceLabel)+(x.publishedAt?' · '+esc(x.publishedAt):'')+'</small>'+scheduleHtml+attachmentHtml+'</div><span aria-hidden="true">↗</span></a>';
 }
 
 function renderKey(){
@@ -84,7 +85,8 @@ function cardHtml(){
   const targetItems=(m.items||[]).filter(eligibleNotice);
   const latest=[...(m.unseenCount?m.unseen:targetItems)].sort((a,b)=>priority(a)-priority(b)||String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))).slice(0,8);
   const sourceOk=(m.sources||[]).filter(x=>x.ok).length;
-  const completeSources=sourceOk===3;
+  const sourceTotal=(m.sources||[]).length;
+  const completeSources=sourceTotal>=4&&sourceOk===sourceTotal;
   const status=loading?'공식 사이트 확인 중':stale?'최근 저장본 표시 · 연결 확인 필요':error?'공식 감시 연결 확인 필요':!completeSources?'일부 공식소스 확인 실패 · 결과 확정 보류':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
   const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
   const unseenRevisions=new Set(m.unseen.map(revisionKey));
@@ -232,7 +234,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,detailScheduleDisplay:true,neverGuessMissingDates:true,devicePushWhenClosed:false}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,devicePushWhenClosed:false}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();
