@@ -316,27 +316,31 @@ async function collectSource(source,fetchImpl){
     const accepted=source.accept?parsed.filter(row=>source.accept.test(row.title)):parsed;
     return{url,accepted}
   };
-  const pending=source.urls.map(url=>load(url));
+  const pending=source.urls.map(url=>load(url).then(
+    value=>({ok:true,value}),
+    error=>({ok:false,error})
+  ));
   if(source.strategy==='first-ok'){
     let lastError='';
     for(const task of pending){
-      try{
-        const hit=await task;
+      const result=await task;
+      if(result.ok){
         return{
-          items:hit.accepted,
+          items:result.value.accepted,
           status:{id:source.id,label:source.label,ok:true,pagesOk:1,status:'ok',error:''}
         }
-      }catch(err){lastError=String(err?.message||err).slice(0,120)}
+      }
+      lastError=String(result.error?.message||result.error).slice(0,120)
     }
     return{
       items:[],
       status:{id:source.id,label:source.label,ok:false,pagesOk:0,status:'error',error:lastError}
     }
   }
-  const settled=await Promise.allSettled(pending);
-  const ok=settled.filter(x=>x.status==='fulfilled');
+  const settled=await Promise.all(pending);
+  const ok=settled.filter(x=>x.ok);
   const items=ok.flatMap(x=>x.value.accepted);
-  const errors=settled.filter(x=>x.status==='rejected').map(x=>String(x.reason?.message||x.reason).slice(0,120));
+  const errors=settled.filter(x=>!x.ok).map(x=>String(x.error?.message||x.error).slice(0,120));
   return{
     items,
     status:{
