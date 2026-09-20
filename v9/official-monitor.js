@@ -5,6 +5,7 @@ const KEY='aitutor9:official-monitor:v1';
 const SNAPSHOT_URL='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json';
 const START_AT='2026-09-20';
 const REFRESH_MS=30*60*1000;
+const MAX_SNAPSHOT_AGE_MS=90*60*1000;
 const ALLOWED=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','nfsa.go.kr','cherish.nfsa.go.kr']);
 let state={status:'idle',snapshot:null,unseen:[],lastFetched:0,error:'',transport:'',notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
 let timer=null;
@@ -30,6 +31,8 @@ function summary(){
     unseenCount:(state.unseen||[]).length,
     targetExamYear:state.snapshot?.targetExamYear||2027,
     baselineYear:state.snapshot?.baselineYear||2026,
+    degraded:state.snapshot?.degraded===true||state.snapshot?.healthy!==true,
+    lastSuccessfulAt:state.snapshot?.lastSuccessfulAt||state.snapshot?.generatedAt||'',
     lastFetched:state.lastFetched,
     transport:state.transport||'',
     notificationPermission:state.notificationPermission
@@ -76,6 +79,7 @@ function downloadScheduleCalendar(){
   return true
 }
 function unseenFor(snapshot,m){
+  if(snapshot?.healthy!==true||snapshot?.degraded===true||snapshot?.notificationSuppressed===true)return[];
   const seenRevisions=new Set(m.seenRevisionKeys||[]);
   const seenIds=new Set(m.seenIds||[]);
   return !m.initialized
@@ -127,8 +131,11 @@ function cardHtml(){
   const latest=[...(m.unseenCount?m.unseen:targetItems)].sort((a,b)=>priority(a)-priority(b)||String(b.publishedAt||'').localeCompare(String(a.publishedAt||''))).slice(0,8);
   const sourceOk=(m.sources||[]).filter(x=>x.ok).length;
   const sourceTotal=(m.sources||[]).length;
-  const completeSources=sourceTotal>=4&&sourceOk===sourceTotal;
-  const status=loading?'공식 사이트 확인 중':stale?'최근 저장본 표시 · 연결 확인 필요':error?'공식 감시 연결 확인 필요':!completeSources?'일부 공식소스 확인 실패 · 결과 확정 보류':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
+  const generatedMs=Date.parse(String(m.generatedAt||''));
+  const fresh=m.healthy===true&&Number.isFinite(generatedMs)&&Date.now()-generatedMs<=MAX_SNAPSHOT_AGE_MS&&!m.degraded;
+  const completeSources=fresh&&sourceTotal>=4&&sourceOk===sourceTotal;
+  const lastGood=m.lastSuccessfulAt?' · 마지막 정상 '+new Date(m.lastSuccessfulAt).toLocaleString('ko-KR'):'';
+  const status=loading?'공식 사이트 확인 중':stale||!fresh?'최근 저장본 표시 · 연결 확인 필요'+lastGood:error?'공식 감시 연결 확인 필요':!completeSources?'일부 공식소스 확인 실패 · 결과 확정 보류':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
   const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
   const unseenRevisions=new Set(m.unseen.map(revisionKey));
   const items=latest.length?latest.map(x=>itemHtml(x,unseenRevisions.has(revisionKey(x)))).join(''):'<div class="empty official-monitor-empty">새 시험 관련 공식 공고가 없습니다.</div>';
@@ -187,7 +194,7 @@ async function fetchNetworkSnapshot(force){
       if(!res.ok)throw new Error('HTTP_'+res.status);
       const snapshot=await res.json();
       if(!validSnapshot(snapshot))throw new Error('INVALID_OFFICIAL_MONITOR_SNAPSHOT');
-      return{snapshot,transport:candidate.transport}
+      return{snapshot,transport:snapshot.transport||candidate.transport}
     }catch(err){lastError=err}
   }
   throw lastError||new Error('OFFICIAL_MONITOR_UNAVAILABLE')
@@ -208,7 +215,9 @@ async function refresh({force=false}={}){
     }
     const persisted=read();
     write({...persisted,lastSnapshot:snapshot,lastSnapshotAt:Date.now(),lastTransport:transport});
-    state={status:'ready',snapshot,unseen,lastFetched:Date.now(),error:'',transport,notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
+    const generatedMs=Date.parse(String(snapshot.generatedAt||''));
+    const staleSnapshot=snapshot.healthy!==true||snapshot.degraded===true||!Number.isFinite(generatedMs)||Date.now()-generatedMs>MAX_SNAPSHOT_AGE_MS;
+    state={status:staleSnapshot?'stale':'ready',snapshot,unseen,lastFetched:Date.now(),error:'',transport,notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
     dispatch();
     await notifyUnseen();
     return summary();
@@ -277,7 +286,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,degradedSnapshotTruth:true,staleSnapshotNeverClaimsNoChange:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();
