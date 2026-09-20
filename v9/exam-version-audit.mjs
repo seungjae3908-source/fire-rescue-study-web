@@ -41,3 +41,4 @@ const result={
 console.log('EXAM_VERSION_119',JSON.stringify(result,null,2));
 if(blockers.length)throw new Error('EXAM_VERSION_TRUTH_FAILED '+JSON.stringify(blockers));
 console.log('EXAM_VERSION_TRUTH_COMPLETE');
+// Quality 4.0 target/baseline truth gate.
