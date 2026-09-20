@@ -53,6 +53,7 @@ assert(client.includes("'/api/official-monitor'")&&client.includes('SNAPSHOT_URL
 assert(client.includes('data-monitor-key')&&client.includes('old.dataset.monitorKey!==key'),'monitor DOM decoration is idempotent and cannot loop on its own MutationObserver');
 assert(client.includes('backgroundServerMonitor:true')&&client.includes('devicePushWhenClosed:false')&&client.includes('setAppBadge'),'monitor copy/contracts distinguish scheduled server monitoring from closed-app push and support installed-app badges');
 assert(client.includes('seenRevisionKeys')&&client.includes("changeState==='updated'")&&client.includes('공고 내용 변경'),'monitor re-alerts a previously seen notice only when its official revision fingerprint changes');
+assert(client.includes("completeSources=sourceOk===3")&&client.includes('일부 공식소스 확인 필요')&&client.includes('결과 확정 보류'),'monitor never claims no change while an official source is unavailable');
 assert(client.includes('eligibleNotice')&&client.includes('targetItems'),'client alerts and foregrounds target-year eligible official notices instead of old-year history');
 const sync=fs.readFileSync(new URL('./official-monitor-sync.mjs',import.meta.url),'utf8');
 assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated'")&&sync.includes('updatedIds'),'scheduled snapshot marks same-notice revisions without mutating curriculum');
