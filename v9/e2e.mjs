@@ -108,9 +108,12 @@ try{
   await go(p,'settings');await cleanPage(p,'desktop settings');
   assert((await p.locator('.page').innerText()).includes('개인 자료'),'settings keeps only user-relevant privacy information');
 
-  await go(p,'tutor');await cleanPage(p,'desktop AI question');
-  const tutorText=await p.locator('.page').innerText();
-  assert(!/F\d\d-C\d\d/.test(tutorText)&&!tutorText.includes('WebGPU'),'AI question screen hides internal concept ids and engine jargon');
+  await p.evaluate(()=>window.AITUTOR_V9.App.go('tutor'));
+  await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.studyTab==='ai');
+  await cleanPage(p,'desktop legacy AI route migration');
+  const tutorText=await p.locator('.study-body-desktop .study-ai').innerText();
+  assert(!/F\d\d-C\d\d/.test(tutorText)&&!tutorText.includes('WebGPU'),'legacy AI route migrates into the study AI tab without internal ids or engine jargon');
+  assert(await p.locator('.tutor-standalone').count()===0,'legacy standalone AI screen is no longer rendered');
 
   assert(derr.length===0,'desktop runtime errors = 0 '+derr.join(' | '));
   await desktop.close();
@@ -587,7 +590,11 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="quiz"]').click();
   assert(await m.locator('.book-section .lesson>h3').count()===0,'quiz tab avoids repeating the selected tab title as a body heading');
 
-  for(const route of ['home','study','tutor','notes','bank','exam','wrong','stats','resources','settings']){
+  await m.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='tutor';V.Store.state.studyTab='core';V.Store.save();V.App.render()});
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.studyTab==='ai');
+  assert(await m.locator('.study-body-mobile .study-ai').count()===1,'persisted legacy tutor page auto-migrates into the mobile study AI tab');
+
+  for(const route of ['home','study','notes','bank','exam','wrong','stats','resources','settings']){
     await go(m,route);
     await m.waitForSelector('.page');
     await noX(m,'mobile route '+route);
