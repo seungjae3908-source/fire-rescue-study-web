@@ -494,6 +494,7 @@ async function renderResourcePdf(key,pageOverride=1){
     if(prev)prev.disabled=result.page<=1;if(next)next.disabled=result.page>=result.pages;
     root.querySelector('.pdf-pager')?.classList.remove('hidden');
   }catch(err){
+    root.dataset.renderState='error';
     badge.textContent='원문을 불러오지 못했습니다';
     host.innerHTML=`<div class="source-connect official-fallback"><b>교재를 불러오지 못했습니다.</b><p>네트워크 상태를 확인한 뒤 다시 시도하세요.</p>${official?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div>`;
     root.querySelector('.pdf-pager')?.classList.add('hidden');
@@ -507,6 +508,7 @@ async function openResourcePdf(key){
 }
 async function renderPdfEvidence(id,pageOverride=null){
   const root=document.querySelector('#pdfEvidence');if(!root)return;
+  root.dataset.renderState='loading';delete root.dataset.anchorVerified;
   const c=V.curriculum.byId[id],p=V.contentPacks.get(id),range=(c?.sourceRanges||[])[0],key=range?.doc||'',host=root.querySelector('#pdfEvidenceHost'),badge=root.querySelector('[data-pdf-page-label]'),anchorQueries=sourceAnchorQueries(c),queries=evidenceQueries(c,p);
   if(!key||!V.SourcePDF){host.innerHTML='<div class="empty">연결된 원문이 없습니다.</div>';return}
   const availability=await V.SourcePDF.availability(key),official=availability.officialPage||V.SourcePDF.sourcePage(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static';
@@ -534,7 +536,7 @@ async function renderPdfEvidence(id,pageOverride=null){
     }
     const anchorVerified=hasAnchorEvidence(result,anchorQueries);
     root.dataset.anchorVerified=anchorVerified?'true':'false';
-    root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);
+    root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);root.dataset.renderState='ready';
     const truthLabel=anchorVerified?(root.dataset.autoLocated==='true'?'근거 자동교정':'공식 근거'):'근거 위치 확인 필요';
     badge.textContent=result.bookPage?`교재 ${result.bookPage}쪽 · ${truthLabel}`:`PDF ${result.page}/${result.pages}쪽 · ${truthLabel}`;
     const prev=root.querySelector('[data-pdf-page="-1"]'),next=root.querySelector('[data-pdf-page="1"]');if(prev)prev.disabled=result.page<=1;if(next)next.disabled=result.page>=result.pages;
