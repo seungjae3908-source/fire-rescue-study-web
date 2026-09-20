@@ -443,9 +443,12 @@ function suggestionRowsHtml(){
 }
 function refreshSuggestionsView(){
   if(state().page!=='suggestions')return;
-  const list=document.querySelector('.suggestion-list'),count=document.querySelector('[data-suggestion-count]');
+  const list=document.querySelector('.suggestion-list'),count=document.querySelector('[data-suggestion-count]'),page=document.querySelector('[data-suggestion-page]'),prev=document.querySelector('[data-suggest-prev]'),next=document.querySelector('[data-suggest-next]');
   if(list)list.innerHTML=runtime.suggestionsLoading?'<div class="empty" style="height:100px">불러오는 중…</div>':suggestionRowsHtml();
-  if(count)count.textContent=runtime.suggestionsLoading?'불러오는 중':`페이지 ${runtime.suggestionPage+1} · ${runtime.suggestions.length}건`
+  if(count)count.textContent=runtime.suggestionsLoading?'불러오는 중':`페이지 ${runtime.suggestionPage+1} · ${runtime.suggestions.length}건`;
+  if(page)page.textContent=`${runtime.suggestionPage+1}페이지`;
+  if(prev)prev.disabled=runtime.suggestionsLoading||runtime.suggestionPage<=0;
+  if(next)next.disabled=runtime.suggestionsLoading||!runtime.suggestionsHasMore
 }
 async function ensureSuggestions(force=false){
   const owner=V.Auth?.user?.id||'guest',size=runtime.suggestionPageSize||20,offset=(runtime.suggestionPage||0)*size;
@@ -465,7 +468,7 @@ function suggestions(){
   const draft=runtime.suggestionDraft||{category:'개선',title:'',body:'',anonymous:true};
   return shell(`<div class="suggestions-page screen-scroll"><section class="card suggestion-intro"><div class="toolbar"><div><span class="eyebrow">${admin?'관리자':'의견 보내기'}</span><h2>${admin?'건의사항 관리':'익명 건의함'}</h2></div><span class="spacer"></span><button class="btn small ghost" data-suggest-refresh>새로고침</button></div><p class="muted">${admin?'전체 회원의 건의사항을 확인하고 답글과 처리상태를 남길 수 있습니다. 익명 글은 작성자 신원을 화면에 표시하지 않습니다.':'다른 회원은 볼 수 없습니다. 작성자는 자기 글과 관리자 답변만 볼 수 있고, 관리자는 전체 건의사항을 확인합니다.'}</p></section>
   <section class="card suggestion-form"><b>새 건의사항</b><div class="form-grid" style="margin-top:10px"><label>분류<select id="suggestCategory" class="select">${(V.Suggestions?.CATEGORY||['개선','건의','오류','콘텐츠','기타']).map(x=>`<option ${x===draft.category?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>제목<input id="suggestTitle" class="input" maxlength="120" value="${esc(draft.title||'')}" placeholder="무엇을 개선하면 좋을까요?"></label></div><textarea id="suggestBody" class="textarea" maxlength="5000" placeholder="문제 화면, 원하는 개선점, 재현 방법 등을 자세히 적어주세요." style="margin-top:8px">${esc(draft.body||'')}</textarea><label class="suggest-anon"><input id="suggestAnonymous" type="checkbox" ${draft.anonymous!==false?'checked':''}> 익명으로 보내기</label>${runtime.suggestionError?`<div class="suggestion-form-error" role="alert">${esc(runtime.suggestionError)}</div>`:''}<button class="btn primary block" data-suggest-submit>건의사항 보내기</button></section>
-  <section class="card"><div class="toolbar"><b>${admin?'전체 건의사항':'내 건의사항'}</b><span class="spacer"></span><span class="tiny muted" data-suggestion-count>${runtime.suggestionsLoading?'불러오는 중':`페이지 ${runtime.suggestionPage+1} · ${runtime.suggestions.length}건`}</span></div><div class="suggestion-list">${runtime.suggestionsLoading?'<div class="empty" style="height:100px">불러오는 중…</div>':suggestionRowsHtml()}</div><div class="suggestion-pager"><button class="btn" data-suggest-prev ${runtime.suggestionPage<=0?'disabled':''}>← 이전 20개</button><span class="tiny muted">${runtime.suggestionPage+1}페이지</span><button class="btn primary" data-suggest-next ${runtime.suggestionsHasMore?'':'disabled'}>다음 20개 →</button></div></section></div>`,'건의함')
+  <section class="card"><div class="toolbar"><b>${admin?'전체 건의사항':'내 건의사항'}</b><span class="spacer"></span><span class="tiny muted" data-suggestion-count>${runtime.suggestionsLoading?'불러오는 중':`페이지 ${runtime.suggestionPage+1} · ${runtime.suggestions.length}건`}</span></div><div class="suggestion-list">${runtime.suggestionsLoading?'<div class="empty" style="height:100px">불러오는 중…</div>':suggestionRowsHtml()}</div><div class="suggestion-pager"><button class="btn" data-suggest-prev ${runtime.suggestionPage<=0?'disabled':''}>← 이전 20개</button><span class="tiny muted" data-suggestion-page>${runtime.suggestionPage+1}페이지</span><button class="btn primary" data-suggest-next ${runtime.suggestionsHasMore?'':'disabled'}>다음 20개 →</button></div></section></div>`,'건의함')
 }
 function settings(){
   const configured=V.Auth?.configured?.(),u=V.Auth?.user,notice=runtime.authNotice,pending=runtime.pendingAuthEmail,sched=officialScheduleState();
