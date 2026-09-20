@@ -159,7 +159,7 @@ try{
   await m.locator('.mobile-nav [data-go="study"]').click();await m.waitForSelector('.book-mobile');
   await cleanPage(m,'mobile study');
   assert(await m.locator('.page-study .top').isHidden(),'mobile study removes duplicate global header');
-  assert(await m.locator('.page-study .actionbar').isVisible(),'mobile study keeps previous/TOC/next navigation');
+  assert(await m.locator('.page-study .concept-nav').isHidden(),'mobile study removes the duplicate concept footer above the primary app navigation');
   assert(await m.locator('.book-jumpbar button').count()===5,'mobile study has five true content tabs');
   assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문 AI','mobile tabs are 핵심/상세/문제/원문/AI');
   await m.locator('.book-jumpbar [data-study-tab="ai"]').click();
@@ -178,6 +178,8 @@ try{
   assert(await m.locator('.book-section .question-card').first().locator('.tag').count()===0,'practice question hides difficulty/evidence badges before the student answers');
   assert(await m.locator('.book-section .question-card').count()===1,'concept practice shows exactly one question at a time instead of an infinite scroll list');
   assert(await m.locator('.book-section .study-quiz-pager').count()===1,'concept practice exposes previous/current/next navigation');
+  const quizPagerPosition=await m.locator('.book-section .study-quiz-pager').evaluate(el=>getComputedStyle(el).position);
+  assert(quizPagerPosition==='static','concept practice pager stays in document flow instead of creating a second sticky footer');
   const firstPracticeQuestion=(await m.locator('.book-section .question-card h2').innerText()).trim();
   const quizTotal=await m.locator('.book-section .study-quiz-progress b').innerText();
   assert(/^1\s*\/\s*\d+/.test(quizTotal),'concept practice starts at question 1 with an explicit total');
@@ -219,6 +221,18 @@ try{
   assert(await m.locator('.book-section .detail-num').count()===0,'mobile detail has no detached numeric badges');
   assert(await m.locator('.book-section .detail-view>.lead').count()===0,'detail tab does not repeat the core summary above structured detail');
   assert(await m.locator('.book-section .detail-view .study-must,.book-section .detail-view .study-quick,.book-section .detail-view .study-core-essentials').count()===0,'detail contains detail content only, without core blocks');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F01-C01',{keepTab:true}));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F01-C01');
+  const orgNode= m.locator('.book-section .vertical-org .org-node b').first();
+  await orgNode.waitFor();
+  const orgStyle=await orgNode.evaluate(el=>({writingMode:getComputedStyle(el).writingMode,wordBreak:getComputedStyle(el).wordBreak,width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,text:el.textContent||''}));
+  assert(orgStyle.writingMode==='horizontal-tb'&&orgStyle.width>orgStyle.height*1.4,'mobile fire-organization labels render horizontally instead of one Korean character per line');
+  const compareFirst= m.locator('.book-section .compare tbody tr').first();
+  await compareFirst.waitFor();
+  const compareLayout=await compareFirst.evaluate(el=>{const cells=[...el.querySelectorAll('td')];return{display:getComputedStyle(el).display,cells:cells.map(td=>({display:getComputedStyle(td).display,width:td.getBoundingClientRect().width,text:td.textContent||''}))}});
+  assert(compareLayout.display==='block'&&compareLayout.cells.length===2&&compareLayout.cells.every(x=>x.display==='block'&&x.width>250),'mobile comparison rows stack label and explanation at full width');
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03',{keepTab:true}));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
   const keyLine= m.locator('.book-section .detail-view .study-key-text').first();
   if(await keyLine.count()){const keyLineStyle=await keyLine.evaluate(el=>getComputedStyle(el).textDecorationLine);assert(!keyLineStyle.includes('underline'),'detail emphasis no longer makes normal study text look like links')}
   const dup=await m.locator('.book-section .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
