@@ -59,3 +59,4 @@ assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated
 assert(sw.includes('/api/official-monitor')&&sw.includes('notificationclick'),'service worker uses network-first monitor data and notification click handling');
 console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
 // Exact-head revision-monitor regression trigger.
+// Exact-head 2027-target monitor proof.
