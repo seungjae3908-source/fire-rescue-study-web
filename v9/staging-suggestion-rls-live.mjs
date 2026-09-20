@@ -3,7 +3,7 @@ import { randomUUID, randomBytes } from 'node:crypto';
 const base='https://petlfbztqguuzkasfpug.supabase.co';
 const key='sb_publishable_CxNMo2idqoaYJvbm8FTX8w_hre1kQ-c';
 const marker='study-v13-rls-live-20260920';
-const email=`rlsqa-${randomUUID()}@example.com`;
+const email=`rlsqa-${randomUUID()}@gmail.com`;
 const password='Aa9!'+randomBytes(18).toString('base64url');
 const headers={'apikey':key,'content-type':'application/json'};
 const json=async r=>{let d=null;try{d=await r.json()}catch{}return d};
