@@ -10,8 +10,8 @@ const chars=x=>String(x||'').replace(/\s+/g,'').length;
 for(const c of V.curriculum.concepts){
   const p=V.contentPacks.authored[c.id];
   if(!p){fail.push(`${c.id}: missing pack`);continue}
-  const summary=String(p.summary||'').trim(),details=(p.detail||[]).map(String),must=(p.must||[]).map(String),traps=(p.traps||[]).map(String),compare=(p.compare||[]).flat().map(String),flow=(p.flow||[]).map(String),source=String(p.source||'');
-  const detailChars=chars(details.join('')),totalChars=chars([summary,...details,...must,...traps,...compare,...flow].join(' '));
+  const summary=String(p.summary||'').trim(),details=(p.detail||[]).map(String),deep=(p.deepSections||[]).flatMap(x=>[x?.title,x?.body,...(x?.bullets||[])]).filter(Boolean).map(String),must=(p.must||[]).map(String),traps=(p.traps||[]).map(String),compare=(p.compare||[]).flat().map(String),flow=(p.flow||[]).map(String),source=String(p.source||'');
+  const renderedDetail=deep.length?deep:details,detailChars=chars(renderedDetail.join('')),totalChars=chars([summary,...renderedDetail,...must,...traps,...compare,...flow].join(' '));
   const placeholder=/원문\s*(검증|확인)|근거\s*(확인|필요)|연결\s*대기|추후\s*확인|임의로\s*(생성|추정|채움|작성)/.test([summary,...details,...must,...traps].join(' '));
   const pageAnchored=p.status==='verified';
   const officialWeb=(p.officialLinks||[]).some(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')));
@@ -20,7 +20,7 @@ for(const c of V.curriculum.concepts){
   const checks={
     sourceState:pageAnchored||officialScopePending,
     summary:chars(summary)>=20,
-    details:details.length>=2&&detailChars>=55,
+    details:renderedDetail.length>=2&&detailChars>=55,
     must:must.length>=2,
     traps:traps.length>=1,
     instructionalDensity:totalChars>=180,
@@ -28,8 +28,8 @@ for(const c of V.curriculum.concepts){
     noPlaceholder:!placeholder
   };
   const score=Object.values(checks).filter(Boolean).length;
-  rows.push({id:c.id,title:c.title,detailChars,totalChars,detailCount:details.length,must:must.length,traps:traps.length,score,enriched:!!p.depthEnriched});
-  const bad=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);if(bad.length)fail.push(`${c.id} ${c.title}: ${bad.join(', ')} (detailChars=${detailChars}, totalChars=${totalChars}, detailCount=${details.length}, must=${must.length})`);
+  rows.push({id:c.id,title:c.title,detailChars,totalChars,detailCount:renderedDetail.length,must:must.length,traps:traps.length,score,enriched:!!p.depthEnriched});
+  const bad=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);if(bad.length)fail.push(`${c.id} ${c.title}: ${bad.join(', ')} (detailChars=${detailChars}, totalChars=${totalChars}, detailCount=${renderedDetail.length}, must=${must.length})`);
 }
 rows.sort((a,b)=>a.totalChars-b.totalChars||a.id.localeCompare(b.id));
 console.log('CONTENT_DEPTH_WORST_20');console.table(rows.slice(0,20));
