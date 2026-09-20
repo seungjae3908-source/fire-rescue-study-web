@@ -69,7 +69,7 @@ try{
   const before=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
   await p.locator('[data-study-next]').click();
   const after=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
-  assert(before.id!==after.id&&after.tab==='detail','next concept keeps current learning tab without reopening TOC');
+  assert(before.id!==after.id&&after.tab===before.tab,'next concept keeps whichever learning tab is currently selected without reopening TOC');
 
   await go(p,'exam');await cleanPage(p,'desktop exam');
   const examText=await p.locator('.page').innerText();
