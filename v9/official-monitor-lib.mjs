@@ -22,18 +22,24 @@ export const SOURCES = [
     id: 'nfsa-notice',
     label: '중앙소방학교 고시·공고',
     strategy: 'first-ok',
+    accept: /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|시행계획|변경공고|정정공고/i,
     urls: [
       'https://www.nfsa.go.kr/nfsa/news/notice/?mode=list&pageIdx=1',
-      'https://cherish.nfsa.go.kr/nfsa/news/notice/?mode=list&pageIdx=1'
+      'https://cherish.nfsa.go.kr/nfsa/news/notice/?mode=list&pageIdx=1',
+      'https://www.nfa.go.kr/nfsa/'
     ]
   },
   {
     id: 'nfsa-materials',
     label: '중앙소방학교 공식교재',
     strategy: 'all',
+    accept: /공통교재|소방전술[123]|구급.*(지침|기준|표준)|응급처치.*(지침|기준|표준)|공식교재/i,
     urls: [
+      'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1',
+      'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=2',
       'https://www.nfsa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1',
-      'https://www.nfsa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=2'
+      'https://nfsa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1',
+      'https://www.nfa.go.kr/nfsa/'
     ]
   }
 ];
@@ -191,7 +197,9 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
     for (const url of source.urls) {
       try {
         const html = await fetchText(url, fetchImpl);
-        items.push(...parseNoticeList(html, { sourceId: source.id, sourceLabel: source.label, baseUrl: url }));
+        const parsed = parseNoticeList(html, { sourceId: source.id, sourceLabel: source.label, baseUrl: url });
+        const accepted = source.accept ? parsed.filter(row => source.accept.test(row.title)) : parsed;
+        items.push(...accepted);
         okCount++;
         if (source.strategy === 'first-ok') break;
       } catch (err) {
