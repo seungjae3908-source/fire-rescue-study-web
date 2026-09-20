@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { parseNoticeList, classifyNotice, isRelevantTitle, isOfficialUrl, extractOfficialDetail, enrichOfficialRow, collectOfficialNotices, SOURCES } from './official-monitor-lib.mjs';
+import { parseNoticeList, classifyNotice, isRelevantTitle, isOfficialUrl, extractOfficialDetail, enrichOfficialRow, collectOfficialNotices, SOURCES, MONITOR_FETCH_POLICY } from './official-monitor-lib.mjs';
 
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 const fixture=[
@@ -39,7 +39,8 @@ assert(!isRelevantTitle('2027년 중앙소방학교 환경미화 공무직 채�
 assert(SOURCES.some(x=>x.id==='nfa-recruit')&&SOURCES.some(x=>x.id==='nfa-notice')&&SOURCES.some(x=>x.id==='nfsa-notice')&&SOURCES.some(x=>x.id==='nfsa-materials'),'monitor covers NFA recruitment, NFA general notices, NFSA notices and official materials');
 const libSource=fs.readFileSync(new URL('./official-monitor-lib.mjs',import.meta.url),'utf8');
 assert(libSource.includes('noRelevantNoticeIsHealthy: true')&&libSource.includes('healthy: nfaRecruitOk && nfaNoticeOk && successCount === sourceStatus.length'),'monitor health requires every declared official source, including NFA general notices, to be reachable');
-assert(libSource.includes('parallelSourceFetch:true')&&libSource.includes('DETAIL_CONCURRENCY=6')&&libSource.includes('FETCH_TIMEOUT_MS=15000'),'monitor bounds live collection with parallel source fetch, six-way detail enrichment and fifteen-second request timeouts');
+assert(libSource.includes('sequentialSourceFetch:true')&&libSource.includes('maxConcurrentSourceGroups:1')&&MONITOR_FETCH_POLICY.detailConcurrency===2&&MONITOR_FETCH_POLICY.requestTimeoutMs===9000,'monitor avoids burst traffic with sequential source groups, low detail concurrency and bounded request timeouts');
+assert(libSource.includes('wafChallengeDetection:true')&&libSource.includes('officialHostFailover:true')&&MONITOR_FETCH_POLICY.attempts===2,'monitor detects visitor/WAF challenge pages and uses bounded official-host failover retries');
 const nfaNotice=SOURCES.find(x=>x.id==='nfa-notice'),nfsaNotice=SOURCES.find(x=>x.id==='nfsa-notice'),nfsaMaterials=SOURCES.find(x=>x.id==='nfsa-materials');
 assert(nfaNotice.urls.some(x=>x.includes('/nfa/news/notice/')),'NFA general notice monitoring covers the official notice board where annual recruitment plans are published');
 assert(nfsaNotice.urls.includes('https://www.nfa.go.kr/nfsa/'),'NFSA notice monitoring has an NFA-hosted school-home fallback');
@@ -48,16 +49,25 @@ assert(nfsaMaterials.accept.test('2027년 공통교재 [소방전술3]')&&!nfsaM
 
 
 let activeFetches=0,maxActiveFetches=0;
-const fakeList='<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=parallel-test">2027년 소방공무원 채용시험 시행계획 공고</a></td><td>2026-12-20</td></tr></table>';
+const fakeList='<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=sequential-test">2027년 소방공무원 채용시험 시행계획 공고</a></td><td>2026-12-20</td></tr></table>';
 const fakeFetch=async(url)=>{
   activeFetches++;maxActiveFetches=Math.max(maxActiveFetches,activeFetches);
-  await new Promise(r=>setTimeout(r,8));
+  await new Promise(r=>setTimeout(r,2));
   activeFetches--;
   return new Response(fakeList,{status:200,headers:{'content-type':'text/html'}});
 };
-const parallelSnapshot=await collectOfficialNotices(fakeFetch,new Date('2026-12-20T00:00:00Z'));
-assert(parallelSnapshot.healthy===true&&parallelSnapshot.sourceStatus.length===SOURCES.length,'parallel collector preserves four-source fail-closed health semantics');
-assert(maxActiveFetches>=4,'parallel collector performs official source requests concurrently instead of serially');
+const sequentialSnapshot=await collectOfficialNotices(fakeFetch,new Date('2026-12-20T00:00:00Z'),{attempts:1,retryDelaysMs:[0],sourceGapMs:0,detailConcurrency:1});
+assert(sequentialSnapshot.healthy===true&&sequentialSnapshot.sourceStatus.length===SOURCES.length,'sequential collector preserves four-source fail-closed health semantics');
+assert(maxActiveFetches===1,'collector avoids source burst traffic and keeps the deterministic contract test single-flight');
+
+const wafFailoverFetch=async(url)=>{
+  const host=new URL(String(url)).hostname;
+  if(host==='www.nfa.go.kr')return new Response('<html><title>방문자 확인</title><body>JavaScript 활성 후 다시 접속</body></html>',{status:200});
+  return new Response(fakeList,{status:200,headers:{'content-type':'text/html'}});
+};
+const wafFailoverSnapshot=await collectOfficialNotices(wafFailoverFetch,new Date('2026-12-20T00:00:00Z'),{attempts:1,retryDelaysMs:[0],sourceGapMs:0,detailConcurrency:1});
+assert(wafFailoverSnapshot.healthy===true,'official non-www/NFSA fallback keeps the monitor healthy when the primary NFA host returns a visitor challenge');
+assert(wafFailoverSnapshot.sourceStatus.find(x=>x.id==='nfa-recruit')?.fallbackUsed===true&&wafFailoverSnapshot.sourceStatus.find(x=>x.id==='nfa-notice')?.fallbackUsed===true,'NFA recruitment and notice sources record official-host failover use');
 
 const workflow=fs.readFileSync(new URL('../.github/workflows/official-monitor.yml',import.meta.url),'utf8');
 const vercel=fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8');
@@ -68,12 +78,15 @@ const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 
 assert(workflow.includes("cron: '17 * * * *'"),'official monitor runs every hour');
 assert(workflow.includes('chore/official-monitor-snapshot'),'scheduled monitor writes only to the isolated snapshot branch');
+assert(workflow.includes('continue-on-error: true')&&workflow.includes('official-monitor-health.json')&&workflow.includes('official-monitor-last-good.json'),'scheduled monitor publishes health/degraded bootstrap state while preserving a separate last-good snapshot');
+assert(workflow.includes('Fail closed when live official collection is unhealthy')&&workflow.includes('OFFICIAL_MONITOR_LIVE_COLLECTION_UNHEALTHY'),'scheduled monitor persists outage evidence before the workflow still fails closed');
 assert(!workflow.includes('git push origin HEAD:main'),'scheduled monitor never pushes main');
 assert(vercel.includes('"chore/**": false'),'snapshot branch is excluded from Vercel deployments');
-assert(api.includes('chore/official-monitor-snapshot')&&api.includes('MAX_STALE_MS=90*60*1000')&&api.includes('OFFICIAL_MONITOR_UNAVAILABLE'),'app API reads isolated snapshot, refreshes stale data after 90 minutes and keeps a safe unavailable fallback');
+assert(api.includes('chore/official-monitor-snapshot')&&api.includes('MAX_STALE_MS=90*60*1000')&&api.includes('degraded-snapshot')&&api.includes('OFFICIAL_MONITOR_UNAVAILABLE'),'app API reads isolated snapshot/health state, avoids retry storms during a recent known outage and keeps a safe unavailable fallback');
 assert(rootApi.includes("require('../v9/api/official-monitor.js')"),'project-root Vercel API route delegates to the Study monitor implementation');
 assert(client.includes('noAutomaticCurriculumMutation:true')&&client.includes('data-monitor-refresh'),'client keeps official notice monitoring separate from curriculum mutation and exposes controls');
 assert(client.includes("'/api/official-monitor'")&&client.includes('SNAPSHOT_URL')&&client.includes('cachedSnapshotFallback:true'),'client uses root app API first, then static/cached snapshot fallbacks');
+assert(client.includes('MAX_SNAPSHOT_AGE_MS=90*60*1000')&&client.includes('staleSnapshotNeverClaimsNoChange:true')&&client.includes('notificationSuppressed'),'client never converts an old/degraded snapshot into a no-change claim or a new-notice push');
 assert(client.includes('data-monitor-key')&&client.includes('old.dataset.monitorKey!==key'),'monitor DOM decoration is idempotent and cannot loop on its own MutationObserver');
 assert(client.includes('backgroundServerMonitor:true')&&client.includes('devicePushWhenClosed:false')&&client.includes('setAppBadge')&&client.includes('매시간'),'monitor copy/contracts distinguish hourly server monitoring from closed-app push and support installed-app badges');
 assert(client.includes('seenRevisionKeys')&&client.includes("changeState==='updated'")&&client.includes('공고 내용 변경'),'monitor re-alerts a previously seen notice only when its official revision fingerprint changes');
@@ -86,6 +99,7 @@ assert(client.includes('downloadScheduleCalendar')&&client.includes('text/calend
 assert(client.includes('official-monitor-attachment')&&client.includes('officialAttachmentHint:true'),'student monitor tells the user to inspect the official attached notice when labeled dates are not present in HTML');
 const sync=fs.readFileSync(new URL('./official-monitor-sync.mjs',import.meta.url),'utf8');
 assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated'")&&sync.includes('updatedIds'),'scheduled snapshot marks same-notice revisions, including enriched detail revisions, without mutating curriculum');
+assert(sync.includes('official-monitor-last-good.json')&&sync.includes('degradedSnapshot')&&sync.includes('notificationSuppressed:true'),'sync preserves last-good notice items across an outage and publishes a truthful degraded bootstrap when no last-good snapshot exists');
 assert(sync.includes('structuredChanges')&&sync.includes('공식 첨부파일 변경')&&client.includes('official-monitor-change-summary'),'updated official notices expose structured date/file differences instead of only a generic changed label');
 assert(sw.includes('/api/official-monitor')&&sw.includes('notificationclick'),'service worker uses network-first monitor data and notification click handling');
 console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
