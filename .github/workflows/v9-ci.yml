@@ -117,14 +117,14 @@ jobs:
     name: official_monitor_live_probe (non-release diagnostic)
     continue-on-error: true
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Probe live NFA/NFSA notice pages
-        run: node v9/official-monitor-live-probe.mjs
+        run: timeout 75s node v9/official-monitor-live-probe.mjs
 
   browser:
     runs-on: ubuntu-latest
