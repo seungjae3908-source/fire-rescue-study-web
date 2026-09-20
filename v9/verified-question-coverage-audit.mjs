@@ -68,6 +68,7 @@ console.log('VERIFIED_QUESTION_COVERAGE_HIGH_YIELD_UNDER_THREE');console.table(h
 console.log('VERIFIED_QUESTION_COVERAGE_HIGH_YIELD_GAPS');console.table(highYieldGaps);
 console.log('VERIFIED_QUESTION_COVERAGE_LOWEST_80');console.table(concepts.slice(0,80));
 if(structuredVerified.length!==verified.length)throw new Error('VERIFIED_QUESTION_STRUCTURE_GAP '+JSON.stringify({verified:verified.length,structured:structuredVerified.length}));
+if(subjectTotals.fire<target.fire||subjectTotals.ems<target.ems)throw new Error('VERIFIED_SUBJECT_TARGET_MISSING '+JSON.stringify({subjectTotals,target,gap:result.gap}));
 if(zeroVerifiedEms.length)throw new Error('EMS_ZERO_VERIFIED_REMAINS '+JSON.stringify(zeroVerifiedEms.map(x=>({id:x.id,title:x.title}))));
 if(zeroVerifiedFire.length)throw new Error('FIRE_ZERO_VERIFIED_REMAINS '+JSON.stringify(zeroVerifiedFire.map(x=>({id:x.id,title:x.title}))));
 if(zeroVerified.length)throw new Error('ZERO_VERIFIED_CONCEPT_REMAINS '+JSON.stringify(zeroVerified.map(x=>({id:x.id,title:x.title,subject:x.subject}))));
