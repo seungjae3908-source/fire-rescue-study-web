@@ -21,7 +21,8 @@ const checks={
   runtimeLoadsAfterCatalog:index.indexOf('source-catalog-119.js')>=0&&index.indexOf('exam-version-119.js')>index.indexOf('source-catalog-119.js'),
   offlineCachesContract:sw.includes("'./exam-version-119.js'"),
   noSilent2027Claim:audit?.targetYearOfficialScopeConfirmed===false,
-  noChangeNoNotify:audit?.meaningfulChangeCount===0&&V.ExamVersion119.policy.noChangeNoNotify===true
+  noChangeNoNotifyPolicy:V.ExamVersion119.policy.noChangeNoNotify===true,
+  notificationListMatchesFilter:audit?.meaningfulChangeCount===V.ExamVersion119.meaningfulChanges().length
 };
 const blockers=[
   ...(audit?.blockers||[]),

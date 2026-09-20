@@ -71,7 +71,7 @@ function audit(){
       x.officialSources.every(officialUrl)
     )),
     noSilentBaselinePromotion:s.targetYearOfficialScopeConfirmed===false&&s.contentBaselineYear===CONTENT_BASELINE_YEAR,
-    noChangeNoNotify:meaningfulChanges().length===0
+    notificationFilterOfficialOnly:meaningfulChanges().every(x=>x.officialSources.every(officialUrl))
   };
   const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
   return{...s,checks,blockers,ready:blockers.length===0};

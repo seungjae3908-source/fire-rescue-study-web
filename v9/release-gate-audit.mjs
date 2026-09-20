@@ -51,7 +51,8 @@ const checks={
   authSyncRemoteFirst:auth.includes('remoteFirstOnSignIn:true')&&auth.includes('remoteFirstOnManualSync:true')&&auth.includes('originalFilesAutoUpload:false'),
   releaseAcceptanceContractPresent:workflow.includes('release_candidate_live_acceptance:'),
   privacyAcceptanceContractPresent:workflow.includes('deployed_private_session_acceptance:'),
-  exactPreviewAcceptanceContractPresent:workflow.includes('preview_exact_sha_acceptance:'),\n  examVersionTruth:V.ExamVersion119?.audit?.().ready===true,
+  exactPreviewAcceptanceContractPresent:workflow.includes('preview_exact_sha_acceptance:'),
+  examVersionTruth:V.ExamVersion119?.audit?.().ready===true,
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
@@ -83,7 +84,8 @@ const blockers=[];
 for(const [k,v] of Object.entries(checks))if(!v)blockers.push('CONTRACT_'+k);
 if(!stagingLive)blockers.push('STUDY_STAGING_AUTH_SYNC_RLS_LIVE_PROOF_MISSING');
 const result={
-  version:'119-release-gate-audit-v2',
+  version:'119-release-gate-audit-v3',
+  examVersion:V.ExamVersion119?.summary?.()||null,
   content:{complete:audit.complete,total:audit.total,averageScore:audit.averageScore,blockers:audit.blockers},
   pageEvidence:coverage,
   fullExamCoverage:fullExamCoverage?{total:fullExamCoverage.total,covered:fullExamCoverage.covered,partial:fullExamCoverage.partial,missing:fullExamCoverage.missing,implementationPercent:fullExamCoverage.implementationPercent}:null,
