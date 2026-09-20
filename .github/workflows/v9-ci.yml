@@ -170,8 +170,6 @@ jobs:
         run: node v9/auth-session-e2e.mjs
       - name: Private suggestion board + admin reply QA
         run: node v9/suggestions-e2e.mjs
-      - name: One-shot live Study suggestion auth/RLS acceptance
-        run: node v9/staging-suggestion-rls-live.mjs
 
 
   global_typography_audit:
