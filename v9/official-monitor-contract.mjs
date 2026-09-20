@@ -74,3 +74,4 @@ console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
 // Exact-head 2027-target monitor proof.
 // Partial-source fail-closed regression trigger.
 // Exact-head official detail schedule regression trigger.
+// Exact-head NFA notice-board coverage regression trigger.
