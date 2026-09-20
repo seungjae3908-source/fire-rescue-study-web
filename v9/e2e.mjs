@@ -674,8 +674,9 @@ try{
     await go(page,'study');await page.waitForSelector('.book-mobile');
     await noX(page,`mobile ${width} study`);
     assert(await page.locator('.book-jumpbar button').count()===5,`mobile ${width} keeps five study tabs`);
-    const action=await page.locator('.page-study .actionbar').boundingBox(),nav=await page.locator('.mobile-nav').boundingBox();
-    assert(action&&nav&&action.y+action.height<=nav.y+2,`mobile ${width} study controls stay above bottom navigation`);
+    assert(await page.locator('.page-study .concept-nav').isHidden(),`mobile ${width} removes duplicate concept footer`);
+    const studyScroller=await page.locator('.study-body-mobile').boundingBox(),nav=await page.locator('.mobile-nav').boundingBox();
+    assert(studyScroller&&nav&&studyScroller.y+studyScroller.height<=nav.y+2,`mobile ${width} learning scroller ends above bottom navigation`);
     await go(page,'exam');await noX(page,`mobile ${width} exam`);
     assert(errs.length===0,`mobile ${width} runtime errors = 0 ${errs.join(' | ')}`);
     await ctx.close();
