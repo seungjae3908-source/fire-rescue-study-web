@@ -260,10 +260,13 @@ export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
   return [...dedupe.values()];
 }
 
+const FETCH_TIMEOUT_MS=8000;
+const DETAIL_CONCURRENCY=6;
+
 async function fetchText(url, fetchImpl) {
   if (!isOfficialUrl(url)) throw new Error('NON_OFFICIAL_SOURCE');
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetchImpl(url, {
       redirect: 'follow',
@@ -279,7 +282,6 @@ async function fetchText(url, fetchImpl) {
     clearTimeout(timer);
   }
 }
-
 
 export async function enrichOfficialRow(row, fetchImpl = fetch) {
   if(!row?.reviewRequired||!isOfficialUrl(row.url))return row;
@@ -307,36 +309,62 @@ export async function enrichOfficialRow(row, fetchImpl = fetch) {
   }
 }
 
-export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()) {
-  const items = [];
-  const sourceStatus = [];
-
-  for (const source of SOURCES) {
-    let okCount = 0;
-    let lastError = '';
-
-    for (const url of source.urls) {
-      try {
-        const html = await fetchText(url, fetchImpl);
-        const parsed = parseNoticeList(html, { sourceId: source.id, sourceLabel: source.label, baseUrl: url });
-        const accepted = source.accept ? parsed.filter(row => source.accept.test(row.title)) : parsed;
-        items.push(...accepted);
-        okCount++;
-        if (source.strategy === 'first-ok') break;
-      } catch (err) {
-        lastError = String(err?.message || err).slice(0, 120);
-      }
+async function collectSource(source,fetchImpl){
+  const load=async url=>{
+    const html=await fetchText(url,fetchImpl);
+    const parsed=parseNoticeList(html,{sourceId:source.id,sourceLabel:source.label,baseUrl:url});
+    const accepted=source.accept?parsed.filter(row=>source.accept.test(row.title)):parsed;
+    return{url,accepted}
+  };
+  const pending=source.urls.map(url=>load(url));
+  if(source.strategy==='first-ok'){
+    let lastError='';
+    for(const task of pending){
+      try{
+        const hit=await task;
+        return{
+          items:hit.accepted,
+          status:{id:source.id,label:source.label,ok:true,pagesOk:1,status:'ok',error:''}
+        }
+      }catch(err){lastError=String(err?.message||err).slice(0,120)}
     }
-
-    sourceStatus.push({
-      id: source.id,
-      label: source.label,
-      ok: okCount > 0,
-      pagesOk: okCount,
-      status: okCount > 0 ? 'ok' : 'error',
-      error: okCount > 0 ? '' : lastError
-    });
+    return{
+      items:[],
+      status:{id:source.id,label:source.label,ok:false,pagesOk:0,status:'error',error:lastError}
+    }
   }
+  const settled=await Promise.allSettled(pending);
+  const ok=settled.filter(x=>x.status==='fulfilled');
+  const items=ok.flatMap(x=>x.value.accepted);
+  const errors=settled.filter(x=>x.status==='rejected').map(x=>String(x.reason?.message||x.reason).slice(0,120));
+  return{
+    items,
+    status:{
+      id:source.id,label:source.label,ok:ok.length>0,pagesOk:ok.length,
+      status:ok.length>0?'ok':'error',
+      error:ok.length>0?'':errors[errors.length-1]||'SOURCE_UNAVAILABLE'
+    }
+  }
+}
+
+async function mapLimit(rows,limit,fn){
+  const out=new Array(rows.length);
+  let cursor=0;
+  const workers=Array.from({length:Math.min(limit,rows.length)},async()=>{
+    while(true){
+      const i=cursor++;
+      if(i>=rows.length)return;
+      out[i]=await fn(rows[i],i)
+    }
+  });
+  await Promise.all(workers);
+  return out
+}
+
+export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()) {
+  const sourceResults=await Promise.all(SOURCES.map(source=>collectSource(source,fetchImpl)));
+  const items=sourceResults.flatMap(x=>x.items);
+  const sourceStatus=sourceResults.map(x=>x.status);
 
   const unique = new Map();
   for (const row of items) {
@@ -345,8 +373,8 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
     if (!prev || (!prev.targetYearMatch && row.targetYearMatch)) unique.set(key, row);
   }
 
-  const enriched=[];
-  for(const row of unique.values())enriched.push(await enrichOfficialRow(row,fetchImpl));
+  const uniqueRows=[...unique.values()];
+  const enriched=await mapLimit(uniqueRows,DETAIL_CONCURRENCY,row=>enrichOfficialRow(row,fetchImpl));
 
   const sorted = enriched
     .filter(x => x.meaningful)
@@ -374,6 +402,9 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       extractOfficialScheduleDates: true,
       neverGuessMissingDates: true,
       detectOfficialAttachments: true,
+      parallelSourceFetch:true,
+      detailConcurrency:DETAIL_CONCURRENCY,
+      requestTimeoutMs:FETCH_TIMEOUT_MS,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
     healthy: nfaRecruitOk && nfaNoticeOk && successCount === sourceStatus.length,

@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { parseNoticeList, classifyNotice, isRelevantTitle, isOfficialUrl, extractOfficialDetail, enrichOfficialRow, SOURCES } from './official-monitor-lib.mjs';
+import { parseNoticeList, classifyNotice, isRelevantTitle, isOfficialUrl, extractOfficialDetail, enrichOfficialRow, collectOfficialNotices, SOURCES } from './official-monitor-lib.mjs';
 
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 const fixture=[
@@ -39,11 +39,25 @@ assert(!isRelevantTitle('2027년 중앙소방학교 환경미화 공무직 채�
 assert(SOURCES.some(x=>x.id==='nfa-recruit')&&SOURCES.some(x=>x.id==='nfa-notice')&&SOURCES.some(x=>x.id==='nfsa-notice')&&SOURCES.some(x=>x.id==='nfsa-materials'),'monitor covers NFA recruitment, NFA general notices, NFSA notices and official materials');
 const libSource=fs.readFileSync(new URL('./official-monitor-lib.mjs',import.meta.url),'utf8');
 assert(libSource.includes('noRelevantNoticeIsHealthy: true')&&libSource.includes('healthy: nfaRecruitOk && nfaNoticeOk && successCount === sourceStatus.length'),'monitor health requires every declared official source, including NFA general notices, to be reachable');
+assert(libSource.includes('parallelSourceFetch:true')&&libSource.includes('DETAIL_CONCURRENCY=6')&&libSource.includes('FETCH_TIMEOUT_MS=8000'),'monitor bounds live collection with parallel source fetch, six-way detail enrichment and eight-second request timeouts');
 const nfaNotice=SOURCES.find(x=>x.id==='nfa-notice'),nfsaNotice=SOURCES.find(x=>x.id==='nfsa-notice'),nfsaMaterials=SOURCES.find(x=>x.id==='nfsa-materials');
 assert(nfaNotice.urls.some(x=>x.includes('/nfa/news/notice/')),'NFA general notice monitoring covers the official notice board where annual recruitment plans are published');
 assert(nfsaNotice.urls.includes('https://www.nfa.go.kr/nfsa/'),'NFSA notice monitoring has an NFA-hosted school-home fallback');
 assert(nfsaMaterials.urls.some(x=>x.startsWith('https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/'))&&nfsaMaterials.urls.includes('https://www.nfa.go.kr/nfsa/'),'official textbook monitoring prefers NFA-hosted materials and falls back to the official school home');
 assert(nfsaMaterials.accept.test('2027년 공통교재 [소방전술3]')&&!nfsaMaterials.accept.test('2027년 소방공무원 채용시험 시행계획 공고'),'materials source accepts textbook/standard changes without relabeling recruitment notices as textbooks');
+
+
+let activeFetches=0,maxActiveFetches=0;
+const fakeList='<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=parallel-test">2027년 소방공무원 채용시험 시행계획 공고</a></td><td>2026-12-20</td></tr></table>';
+const fakeFetch=async(url)=>{
+  activeFetches++;maxActiveFetches=Math.max(maxActiveFetches,activeFetches);
+  await new Promise(r=>setTimeout(r,8));
+  activeFetches--;
+  return new Response(fakeList,{status:200,headers:{'content-type':'text/html'}});
+};
+const parallelSnapshot=await collectOfficialNotices(fakeFetch,new Date('2026-12-20T00:00:00Z'));
+assert(parallelSnapshot.healthy===true&&parallelSnapshot.sourceStatus.length===SOURCES.length,'parallel collector preserves four-source fail-closed health semantics');
+assert(maxActiveFetches>=4,'parallel collector performs official source requests concurrently instead of serially');
 
 const workflow=fs.readFileSync(new URL('../.github/workflows/official-monitor.yml',import.meta.url),'utf8');
 const vercel=fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8');
