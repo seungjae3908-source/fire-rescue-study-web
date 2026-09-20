@@ -5,16 +5,17 @@ const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 const snapshot={
   version:'119-official-monitor-snapshot-v1',
   generatedAt:'2026-10-01T00:00:00.000Z',
-  targetExamYear:2027,baselineYear:2026,officialOnly:true,healthy:true,
+  targetExamYear:2027,baselineYear:2026,officialOnly:true,healthy:true,coverageComplete:true,
+  policy:{requiredSourceCount:1,totalSourceCount:3,wafBypassForbidden:true},
   sourceStatus:[
-    {id:'nfa-recruit',label:'소방청 채용·시험',ok:true},
-    {id:'nfsa-notice',label:'중앙소방학교 고시·공고',ok:true},
-    {id:'nfsa-materials',label:'중앙소방학교 공식교재',ok:true}
+    {id:'gosi-fire',label:'국가공무원 채용시스템 · 소방청',required:true,ok:true},
+    {id:'nfsa-notice',label:'중앙소방학교 고시·공고',required:false,ok:true},
+    {id:'nfsa-materials',label:'중앙소방학교 공식교재',required:false,ok:true}
   ],
   items:[{
-    id:'a11y-monitor',sourceId:'nfa-recruit',sourceLabel:'소방청 채용·시험',
+    id:'a11y-monitor',sourceId:'gosi-fire',sourceLabel:'국가공무원 채용시스템 · 소방청',
     title:'2027년 소방공무원 채용시험 일정 공고',publishedAt:'2026-10-01',
-    url:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=view&cntId=a11y',
+    url:'https://gongmuwon.gosi.kr/spcsv/indexMain3.do',
     kind:'exam_schedule',meaningful:true,reviewRequired:true,targetYearMatch:true,
     baselineYearMatch:false,noticeYear:2027,fingerprint:'1234567890abcdef1234',changeState:'new'
   }]
