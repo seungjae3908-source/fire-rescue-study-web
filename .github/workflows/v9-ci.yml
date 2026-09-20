@@ -56,8 +56,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: JavaScript syntax
@@ -99,8 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install browser QA dependency
@@ -140,8 +140,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install browser QA dependency
@@ -166,8 +166,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install browser QA dependency
@@ -193,8 +193,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install browser QA dependency
@@ -218,8 +218,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Deterministic NFA attachment candidate selection
@@ -231,8 +231,8 @@ jobs:
     timeout-minutes: 10
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install source browser probe dependency
@@ -251,8 +251,8 @@ jobs:
       STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
       STUDY_119_PROXY_RUNTIME_HEAD: f7c1b971966e5cae90d4009c8257af1b79144128
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: 22
       - name: Install live browser QA dependency
@@ -271,8 +271,8 @@ jobs:
       STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
       STUDY_119_DISCOVERY_IDS: F07-C01,F07-C02,F07-C03,F07-C04,F07-C06,F07-C07,F07-C08,F07-C09,F07-C10,F07-C11,F07-C12,F07-C13,F07-C14,F07-C15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install page-anchor discovery browser
@@ -290,8 +290,8 @@ jobs:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
       STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install focused sprinkler browser QA
@@ -311,8 +311,8 @@ jobs:
       STUDY_119_INSPECT_ID: F07-C08
       STUDY_119_INSPECT_PAGES: 347,349,353,357
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install PDF range inspector browser
@@ -331,8 +331,8 @@ jobs:
       STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
       STUDY_119_PROXY_RUNTIME_HEAD: e8c29ba9f750b03259b643fa1dfd664c75140fbf
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install fire-phenomena browser QA
@@ -350,8 +350,8 @@ jobs:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
       STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install hazardous-material browser QA
@@ -370,8 +370,8 @@ jobs:
       STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
       STUDY_119_CROSS_DOCS: fire2,prevention2
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install cross-document source probe
@@ -389,8 +389,8 @@ jobs:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
       STUDY_119_EXPECTED_APP_HEAD: 68ea44b416f3e5604770d84f462fb1184bd1beaf
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install facility source search browser
@@ -408,8 +408,8 @@ jobs:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
       STUDY_119_EXPECTED_APP_HEAD: 3bde71785ee42808f67f7a2e67474982f3883ffb
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install facility live browser QA
@@ -428,8 +428,8 @@ jobs:
       STUDY_119_EXPECTED_APP_HEAD: 86e9303534d59e22123163ec301781f64b751b36
       STUDY_119_QUESTION_CONCEPT: E04-C02
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install question-bank live browser QA
@@ -447,8 +447,8 @@ jobs:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
       STUDY_119_EXPECTED_APP_HEAD: a7d1857a6c4f3bb23c6dcca20584bb3e3a629e35
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install release-candidate browser QA
@@ -463,8 +463,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install image OCR browser QA
@@ -493,8 +493,8 @@ jobs:
       STUDY_119_EXPECTED_APP_HEAD: dcb991893fbecfdc3f03395a4ad311e05201033c
       STUDY_119_PDF_FIXTURE_URL: https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/dcb991893fbecfdc3f03395a4ad311e05201033c/v9/fixtures/private-sample.pdf
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install deployed privacy/session browser QA
@@ -517,8 +517,8 @@ jobs:
       STUDY_119_EXPECTED_APP_HEAD: 1f38cbd7f57d035ccdf993a8b1eed5d66a75fdb1
       STUDY_119_PDF_FIXTURE_URL: https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/1f38cbd7f57d035ccdf993a8b1eed5d66a75fdb1/v9/fixtures/private-sample.pdf
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install production browser QA
@@ -542,8 +542,8 @@ jobs:
       STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
       STUDY_119_EXPECTED_APP_HEAD: 60fb20b333cc20d5342ed680d4824480cd22fcd3
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install real mock browser QA
@@ -563,8 +563,8 @@ jobs:
       STUDY_119_PREVIEW_URL: ${{ inputs.preview_url }}
       STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ inputs.expected_runtime_head }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - name: Install browser

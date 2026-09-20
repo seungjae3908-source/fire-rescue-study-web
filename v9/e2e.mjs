@@ -76,6 +76,9 @@ try{
 
   await go(p,'resources');await cleanPage(p,'desktop resources');
   assert((await p.locator('.page').innerText()).includes('공식 자료'),'resources page is student-facing');
+  const resourceTruthText=await p.locator('.page').innerText();
+  assert(resourceTruthText.includes('목표 2027년')&&resourceTruthText.includes('2026 공식 기준'),'resources page separates 2027 target exam from the current 2026 official content baseline');
+  assert(!resourceTruthText.includes('공식 변경사항'),'resources page does not announce an official change when the meaningful-change list is empty');
   assert(!(await p.locator('.page').innerText()).includes('Gate'),'resources page hides release/content gates');
   assert(await p.locator('[data-resource-doc]').count()===10,'resources page exposes all ten official textbooks as in-app PDF actions');
   assert(await p.locator('.resources-119 a[target="_blank"]').count()===0,'resources page no longer sends the normal study flow to an external tab');
@@ -279,6 +282,7 @@ try{
   const reportText=await m.locator('.exam-report').innerText();
   assert(reportText.includes('64/65')&&reportText.includes('오답·미응답 분석')&&reportText.includes('1문항'),'finished mock opens a 65-question score + wrong-answer analysis');
   assert(reportText.includes('내 답')&&reportText.includes('정답')&&reportText.includes('정답 근거'),'exam analysis shows selected answer, correct answer and explanation');
+  assert(reportText.includes('문제 유형 분석')&&reportText.includes('공식 시험의 출제비율을 의미하지 않습니다.'),'exam analysis exposes normalized learning-skill performance without claiming an official exam weight');
   assert(await m.locator('.exam-report [data-concept]').count()>=1&&await m.locator('.exam-report [data-source-concept]').count()>=1,'exam analysis links wrong questions to concept review and official evidence');
   await noX(m,'mobile exam analysis');
   await m.locator('[data-report-close]').click();
