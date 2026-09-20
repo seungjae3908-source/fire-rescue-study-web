@@ -1,6 +1,7 @@
 'use strict';
 (()=>{const V=window.AITUTOR_V9=window.AITUTOR_V9||{},X=V.Visual119;if(!X)return;Object.assign(X.data,{
 'fire-org-chain':['시·도지사','소방본부','소방서','119안전센터·구조대·구급대'],
+'fire-history-timeline':['1426 금화도감','1925 경성소방서','1958 소방법','1992 시·도 소방본부','2004 소방방재청','2017 소방청','2020 국가직 전환'],
 'fire-force-triad':['인력','소방차량·장비','소방용수','통합 대응능력'],
 'fire-water-facilities':['소화전','급수탑','저수조','현장 급수'],
 'fire-scene-authority':['위급상황','소방대 출동','활동구역 통제','구조·구급·진압','필요 시 피난명령'],
