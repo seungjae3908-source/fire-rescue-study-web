@@ -40,8 +40,16 @@ function unseenFor(snapshot,m){
   return !m.initialized?snapshot.items.filter(eligibleFirstRun):snapshot.items.filter(i=>i.meaningful&&!seen.has(i.id));
 }
 
+function syncBadge(){
+  const n=(state.unseen||[]).length;
+  try{
+    if(n&&navigator.setAppBadge)navigator.setAppBadge(n).catch(()=>{});
+    else if(!n&&navigator.clearAppBadge)navigator.clearAppBadge().catch(()=>{});
+  }catch{}
+}
 function dispatch(){
   window.dispatchEvent(new CustomEvent('aitutor-official-monitor',{detail:summary()}));
+  syncBadge();
   decorate();
 }
 
@@ -65,8 +73,8 @@ function cardHtml(){
   const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
   const unseenIds=new Set(m.unseen.map(x=>x.id));
   const items=latest.length?latest.map(x=>itemHtml(x,unseenIds.has(x.id))).join(''):'<div class="empty official-monitor-empty">새 시험 관련 공식 공고가 없습니다.</div>';
-  const notifyLabel=m.notificationPermission==='granted'?'기기 알림 켜짐':m.notificationPermission==='denied'?'기기 알림 차단됨':'기기 알림 켜기';
-  return '<section class="card official-monitor-card" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+(m.unseenCount?'<span class="tag warn">새 공고 '+m.unseenCount+'건</span>':'<span class="tag good">새 변경 없음</span>')+'</div><p class="muted">앱 인프라가 6시간마다 소방청·중앙소방학교 공식 게시판만 확인합니다. 공고를 발견해도 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/3</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
+  const notifyLabel=m.notificationPermission==='granted'?'앱 알림 켜짐':m.notificationPermission==='denied'?'앱 알림 차단됨':'앱 알림 켜기';
+  return '<section class="card official-monitor-card" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+(m.unseenCount?'<span class="tag warn">새 공고 '+m.unseenCount+'건</span>':'<span class="tag good">새 변경 없음</span>')+'</div><p class="muted">앱 인프라가 6시간마다 소방청·중앙소방학교 공식 게시판만 확인합니다. 앱을 열거나 다시 활성화하면 새 공고를 표시하며, 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/3</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
 }
 
 function bannerHtml(){
@@ -195,7 +203,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,devicePushWhenClosed:false}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();
