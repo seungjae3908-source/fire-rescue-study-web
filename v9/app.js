@@ -354,11 +354,12 @@ function fallbackTutor(prompt,c,pack){
 }
 function tutorConceptFor(prompt){
   const q=studyNorm(prompt),current=currentConcept();if(!q)return current;
+  const generic=new Set(['개념','유형','정의','기본','개요','평가','처치','원리','방법','사용법','체계','상황','핵심','요약','시험','설명','비교','구분','상세','정리','특징','종류']);
   let best=current,bestScore=0;
   for(const concept of V.curriculum?.concepts||[]){
-    const raw=String(concept.title||''),terms=[raw,...raw.split(/[·,/()\s-]+/)].map(x=>studyNorm(x)).filter(x=>x.length>=2);
-    let score=0;
-    for(const term of new Set(terms))if(q.includes(term))score+=term.length*10+(term===studyNorm(raw)?80:0);
+    const raw=String(concept.title||''),full=studyNorm(raw),parts=raw.split(/[·,/()\s-]+/).map(x=>studyNorm(x)).filter(x=>x.length>=2&&!generic.has(x));
+    let score=full&&q.includes(full)?full.length*10+80:0;
+    for(const term of new Set(parts))if(q.includes(term))score+=term.length*10;
     if(score>bestScore){bestScore=score;best=concept}
   }
   return bestScore>=20?best:current
