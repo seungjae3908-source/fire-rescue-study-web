@@ -14,6 +14,9 @@ export const SOURCES = [
     label: '국가공무원 채용시스템 · 소방청',
     strategy: 'first-ok',
     required: true,
+    requestTimeoutMs: 20000,
+    attempts: 2,
+    sourceGapMs: 0,
     detail: false,
     accept: /소방공무원|채용시험|시험일정|필기시험|시험과목|출제범위|문항수|시험시간|체력시험|가점|응시자격|원서접수|면접시험|임용령|응급처치학|소방학|시행계획|변경공고|정정공고/i,
     urls: [
@@ -492,6 +495,8 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       requiredSourceCount:SOURCES.filter(x=>x.required!==false).length,
       totalSourceCount:SOURCES.length,
       supplementalSourcesMayDegrade:true,
+      requiredExamRequestTimeoutMs:20000,
+      requiredExamRequestAttempts:2,
       supplementalRequestTimeoutMs:4000,
       supplementalRequestAttempts:1,
       suppressSameOriginFallbackAfterTransportFailure:true,
