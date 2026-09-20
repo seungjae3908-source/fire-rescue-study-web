@@ -6,10 +6,9 @@ const originalFetch=globalThis.fetch;
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 
 const sourceStatus=[
-  {id:'nfa-recruit',label:'소방청 채용·시험',ok:true,pagesOk:3,status:'ok',error:''},
-  {id:'nfa-notice',label:'소방청 공지사항',ok:true,pagesOk:3,status:'ok',error:''},
+  {id:'gosi-fire',label:'국가공무원 채용시스템 · 소방청',ok:true,pagesOk:1,status:'ok',error:''},
   {id:'nfsa-notice',label:'중앙소방학교 고시·공고',ok:true,pagesOk:1,status:'ok',error:''},
-  {id:'nfsa-materials',label:'중앙소방학교 공식교재',ok:true,pagesOk:2,status:'ok',error:''}
+  {id:'nfsa-materials',label:'중앙소방학교 공식교재',ok:true,pagesOk:1,status:'ok',error:''}
 ];
 const snapshot={
   version:'119-official-monitor-snapshot-v1',
@@ -19,14 +18,15 @@ const snapshot={
   officialOnly:true,
   healthy:true,
   degraded:false,
+  policy:{requiredSourceCount:3,wafBypassForbidden:true},
   sourceStatus,
   items:[{
     id:'api-test-2027',
-    sourceId:'nfa-recruit',
-    sourceLabel:'소방청 채용·시험',
+    sourceId:'gosi-fire',
+    sourceLabel:'국가공무원 채용시스템 · 소방청',
     title:'2027년 소방공무원 채용시험 시행계획 공고',
     publishedAt:'2026-12-20',
-    url:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=view&cntId=api-test',
+    url:'https://gongmuwon.gosi.kr/spcsv/indexMain3.do',
     kind:'recruitment_notice',
     meaningful:true,
     reviewRequired:true,
