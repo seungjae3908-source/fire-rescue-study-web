@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-09-20T05:45:18.871Z",
+  "generatedAt": "2026-09-20T09:51:05.622Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -80,8 +80,8 @@
       "ok": false,
       "pagesOk": 0,
       "status": "error",
-      "error": "20: This operation was aborted",
-      "errorCode": "20",
+      "error": "ERR_TLS_CERT_ALTNAME_INVALID: ERR_TLS_CERT_ALTNAME_INVALID: fetch failed: Hostname/IP does not match certificate's altnames: Host: cherish.nfsa.go.kr. is not in the cert's altnames",
+      "errorCode": "ERR_TLS_CERT_ALTNAME_INVALID",
       "errorUrl": "https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/",
       "fallbackUsed": false
     }
@@ -104,7 +104,7 @@
       "id": "bf93be7c1723157418f55d7a",
       "fingerprint": "6a2c0f40cf688eb494bf",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -125,7 +125,7 @@
       "id": "b9019b7708f3c1557baabf7a",
       "fingerprint": "ab1e152de94b9a11a45f",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -146,7 +146,7 @@
       "id": "d3f1aceec82ac3fa5f384460",
       "fingerprint": "b614ade199d3f2a3a42e",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -167,7 +167,7 @@
       "id": "283aab1c739f39d143dfda19",
       "fingerprint": "1cf815f33fd7997b19d7",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -188,7 +188,7 @@
       "id": "3afb71a5edb8f935f23b34e7",
       "fingerprint": "4517ab46374548b336d8",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -209,7 +209,7 @@
       "id": "108b50cc4bfaace7b950a142",
       "fingerprint": "5d66418d9263b563a0c8",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -230,7 +230,7 @@
       "id": "831ce17b2fe9fcd73885ecab",
       "fingerprint": "35f4276bb90a2b2a597e",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -251,7 +251,7 @@
       "id": "7066cbc49b5c14053906e571",
       "fingerprint": "550bec3544e7f203c4be",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -272,7 +272,7 @@
       "id": "9fa98ca3ed43703da0358f5e",
       "fingerprint": "477cc84e7ab36bbe00e3",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     }
@@ -280,22 +280,12 @@
   "degraded": true,
   "preservedLastGood": false,
   "notificationSuppressed": false,
-  "lastAttemptAt": "2026-09-20T05:45:18.871Z",
-  "lastSuccessfulAt": "2026-09-20T05:45:18.871Z",
+  "lastAttemptAt": "2026-09-20T09:51:05.622Z",
+  "lastSuccessfulAt": "2026-09-20T09:51:05.622Z",
   "delta": {
-    "newIds": [
-      "bf93be7c1723157418f55d7a",
-      "b9019b7708f3c1557baabf7a",
-      "d3f1aceec82ac3fa5f384460",
-      "283aab1c739f39d143dfda19",
-      "3afb71a5edb8f935f23b34e7",
-      "108b50cc4bfaace7b950a142",
-      "831ce17b2fe9fcd73885ecab",
-      "7066cbc49b5c14053906e571",
-      "9fa98ca3ed43703da0358f5e"
-    ],
+    "newIds": [],
     "updatedIds": [],
-    "newCount": 9,
+    "newCount": 0,
     "updatedCount": 0
   }
 }

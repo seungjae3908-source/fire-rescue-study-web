@@ -1,11 +1,11 @@
 {
   "version": "119-official-monitor-health-v1",
-  "generatedAt": "2026-09-20T05:45:18.871Z",
+  "generatedAt": "2026-09-20T09:51:05.622Z",
   "healthy": true,
   "coverageComplete": false,
   "degraded": true,
   "preservedLastGood": false,
-  "lastSuccessfulAt": "2026-09-20T05:45:18.871Z",
+  "lastSuccessfulAt": "2026-09-20T09:51:05.622Z",
   "sourceStatus": [
     {
       "id": "gosi-fire",
@@ -38,8 +38,8 @@
       "ok": false,
       "pagesOk": 0,
       "status": "error",
-      "error": "20: This operation was aborted",
-      "errorCode": "20",
+      "error": "ERR_TLS_CERT_ALTNAME_INVALID: ERR_TLS_CERT_ALTNAME_INVALID: fetch failed: Hostname/IP does not match certificate's altnames: Host: cherish.nfsa.go.kr. is not in the cert's altnames",
+      "errorCode": "ERR_TLS_CERT_ALTNAME_INVALID",
       "errorUrl": "https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/",
       "fallbackUsed": false
     }
