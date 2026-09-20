@@ -163,4 +163,5 @@ V.OfficialMonitor119={
   refresh,markSeen,enableNotifications,summary,start,
   policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true}
 };
+window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();

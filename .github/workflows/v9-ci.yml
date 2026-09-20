@@ -31,6 +31,7 @@ on:
       - 'V9-ARCHITECTURE.md'
       - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
+      - '.github/workflows/official-monitor.yml'
   pull_request:
     paths:
       - 'v9/**'
@@ -43,6 +44,7 @@ on:
       - 'V9-ARCHITECTURE.md'
       - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
+      - '.github/workflows/official-monitor.yml'
 
 concurrency:
   group: v9-development-${{ github.event.pull_request.number || github.ref }}
@@ -68,6 +70,9 @@ jobs:
             node --check "$f"
           done
           node --check v9/api/official-pdf.js
+          node --check v9/api/official-monitor.js
+          node --check v9/official-monitor-lib.mjs
+          node --check v9/official-monitor-sync.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -82,6 +87,8 @@ jobs:
         run: node v9/exam-version-audit.mjs
       - name: Adaptive mastery v2 deterministic gate
         run: node v9/mastery-v2-audit.mjs
+      - name: Official notice monitor contract gate
+        run: node v9/official-monitor-contract.mjs
       - name: High-yield semantic depth profile report
         run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report

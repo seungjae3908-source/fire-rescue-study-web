@@ -7,7 +7,7 @@ const forbidden=['fail-closed','page-verified','Release Gate','검증문제·범
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
 function collectErrors(page){const out=[];page.on('pageerror',e=>out.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon|404.*official-pdf/i.test(m.text()))out.push('console:'+m.text())});page.on('requestfailed',r=>{const u=r.url();if(/cdn\.jsdelivr\.net|tesseract|pdf\.worker|pdf\.min\.mjs/i.test(u))out.push('requestfailed:'+u+' '+(r.failure()?.errorText||''))});return out}
-async function boot(page){await page.route('**/api/official-pdf?**',async route=>{await route.fulfill({status:200,contentType:'application/pdf',headers:{'accept-ranges':'bytes','cache-control':'no-store'},body:fixture})});await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');await page.waitForFunction(()=>!!window.AITUTOR_V9?.App)}
+async function boot(page){await page.route('**/api/official-pdf?**',async route=>{await route.fulfill({status:200,contentType:'application/pdf',headers:{'accept-ranges':'bytes','cache-control':'no-store'},body:fixture})});await page.route('**/api/official-monitor**',async route=>{await route.fulfill({status:200,contentType:'application/json',headers:{'cache-control':'no-store'},body:"{\"version\":\"119-official-monitor-snapshot-v1\",\"generatedAt\":\"2026-10-01T00:00:00.000Z\",\"targetExamYear\":2027,\"baselineYear\":2026,\"officialOnly\":true,\"healthy\":true,\"sourceStatus\":[{\"id\":\"nfa-recruit\",\"label\":\"소방청 채용·시험\",\"ok\":true},{\"id\":\"nfsa-notice\",\"label\":\"중앙소방학교 고시·공고\",\"ok\":true},{\"id\":\"nfsa-materials\",\"label\":\"중앙소방학교 공식교재\",\"ok\":true}],\"items\":[{\"id\":\"e2e-2027-notice\",\"sourceId\":\"nfa-recruit\",\"sourceLabel\":\"소방청 채용·시험\",\"title\":\"2027년 소방공무원 채용시험 시행계획 공고\",\"publishedAt\":\"2026-10-01\",\"url\":\"https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=view&cntId=e2e\",\"kind\":\"recruitment_notice\",\"meaningful\":true,\"reviewRequired\":true,\"targetYearMatch\":true,\"baselineYearMatch\":false,\"noticeYear\":2027}]}"})});await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');await page.waitForFunction(()=>!!window.AITUTOR_V9?.App)}
 async function cleanPage(page,label){const text=await page.locator('body').innerText();for(const x of forbidden)assert(!text.includes(x),label+' hides internal text: '+x);await noX(page,label)}
 async function go(page,id){await page.evaluate(id=>window.AITUTOR_V9.App.go(id),id);await page.waitForFunction(id=>window.AITUTOR_V9.Store.state.page===id,id)}
 
@@ -78,6 +78,11 @@ try{
 
   await go(p,'resources');await cleanPage(p,'desktop resources');
   assert((await p.locator('.page').innerText()).includes('공식 자료'),'resources page is student-facing');
+  await p.waitForFunction(()=>window.AITUTOR_V9.OfficialMonitor119?.summary?.().status==='ready');
+  const monitorText=await p.locator('.official-monitor-card').innerText();
+  assert(monitorText.includes('공식 공고 자동감시')&&monitorText.includes('새 공고 1건'),'resources page shows a new official 2027 notice from the in-app monitor');
+  assert(monitorText.includes('소방청·중앙소방학교 공식 게시판만 확인'),'official monitor UI states its official-source-only policy');
+  assert(await p.locator('.official-monitor-item.new').count()===1,'new official notice is highlighted exactly once');
   const resourceTruthText=await p.locator('.page').innerText();
   assert(resourceTruthText.includes('목표 2027년')&&resourceTruthText.includes('2026 공식 기준'),'resources page separates 2027 target exam from the current 2026 official content baseline');
   assert(!resourceTruthText.includes('공식 변경사항'),'resources page does not announce an official change when the meaningful-change list is empty');
