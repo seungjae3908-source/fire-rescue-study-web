@@ -39,7 +39,7 @@ assert(!isRelevantTitle('2027년 중앙소방학교 환경미화 공무직 채�
 assert(SOURCES.some(x=>x.id==='nfa-recruit')&&SOURCES.some(x=>x.id==='nfa-notice')&&SOURCES.some(x=>x.id==='nfsa-notice')&&SOURCES.some(x=>x.id==='nfsa-materials'),'monitor covers NFA recruitment, NFA general notices, NFSA notices and official materials');
 const libSource=fs.readFileSync(new URL('./official-monitor-lib.mjs',import.meta.url),'utf8');
 assert(libSource.includes('noRelevantNoticeIsHealthy: true')&&libSource.includes('healthy: nfaRecruitOk && nfaNoticeOk && successCount === sourceStatus.length'),'monitor health requires every declared official source, including NFA general notices, to be reachable');
-assert(libSource.includes('parallelSourceFetch:true')&&libSource.includes('DETAIL_CONCURRENCY=6')&&libSource.includes('FETCH_TIMEOUT_MS=8000'),'monitor bounds live collection with parallel source fetch, six-way detail enrichment and eight-second request timeouts');
+assert(libSource.includes('parallelSourceFetch:true')&&libSource.includes('DETAIL_CONCURRENCY=6')&&libSource.includes('FETCH_TIMEOUT_MS=15000'),'monitor bounds live collection with parallel source fetch, six-way detail enrichment and fifteen-second request timeouts');
 const nfaNotice=SOURCES.find(x=>x.id==='nfa-notice'),nfsaNotice=SOURCES.find(x=>x.id==='nfsa-notice'),nfsaMaterials=SOURCES.find(x=>x.id==='nfsa-materials');
 assert(nfaNotice.urls.some(x=>x.includes('/nfa/news/notice/')),'NFA general notice monitoring covers the official notice board where annual recruitment plans are published');
 assert(nfsaNotice.urls.includes('https://www.nfa.go.kr/nfsa/'),'NFSA notice monitoring has an NFA-hosted school-home fallback');
