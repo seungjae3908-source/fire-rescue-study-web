@@ -14,7 +14,7 @@ const files=[
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
   'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js',
   'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js','question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','questions-verified-fire-target1-119.js','questions-verified-fire-target2-119.js','questions-verified-ems-target1-119.js','questions-verified-ems-target2-119.js','textbook-grounded-119.js',
-  'visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
+  'visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js','source-catalog-119.js','exam-version-119.js'
 ];
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 const V=window.AITUTOR_V9;
@@ -51,7 +51,7 @@ const checks={
   authSyncRemoteFirst:auth.includes('remoteFirstOnSignIn:true')&&auth.includes('remoteFirstOnManualSync:true')&&auth.includes('originalFilesAutoUpload:false'),
   releaseAcceptanceContractPresent:workflow.includes('release_candidate_live_acceptance:'),
   privacyAcceptanceContractPresent:workflow.includes('deployed_private_session_acceptance:'),
-  exactPreviewAcceptanceContractPresent:workflow.includes('preview_exact_sha_acceptance:'),
+  exactPreviewAcceptanceContractPresent:workflow.includes('preview_exact_sha_acceptance:'),\n  examVersionTruth:V.ExamVersion119?.audit?.().ready===true,
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
