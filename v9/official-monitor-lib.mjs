@@ -13,6 +13,7 @@ export const SOURCES = [
     id: 'gosi-fire',
     label: '국가공무원 채용시스템 · 소방청',
     strategy: 'first-ok',
+    required: true,
     detail: false,
     accept: /소방공무원|채용시험|시험일정|필기시험|시험과목|출제범위|문항수|시험시간|체력시험|가점|응시자격|원서접수|면접시험|임용령|응급처치학|소방학|시행계획|변경공고|정정공고/i,
     urls: [
@@ -23,6 +24,7 @@ export const SOURCES = [
     id: 'nfsa-notice',
     label: '중앙소방학교 고시·공고',
     strategy: 'first-ok',
+    required: false,
     detail: false,
     accept: /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|시행계획|변경공고|정정공고/i,
     urls: [
@@ -36,6 +38,7 @@ export const SOURCES = [
     id: 'nfsa-materials',
     label: '중앙소방학교 공식교재',
     strategy: 'first-ok',
+    required: false,
     detail: false,
     accept: /공통교재|소방전술[123]|구급.*(지침|기준|표준)|응급처치.*(지침|기준|표준)|공식교재/i,
     urls: [
@@ -391,7 +394,7 @@ async function collectSource(source,fetchImpl,options={}){
   return{
     items,
     status:{
-      id:source.id,label:source.label,ok:okCount>0,pagesOk:okCount,
+      id:source.id,label:source.label,required:source.required!==false,ok:okCount>0,pagesOk:okCount,
       status:okCount>0?'ok':'error',
       error:okCount>0?'':lastError||'SOURCE_UNAVAILABLE',
       errorCode:okCount>0?'':lastErrorCode||'SOURCE_UNAVAILABLE',
@@ -440,6 +443,9 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
     .sort((a, b) => String(b.publishedAt || '').localeCompare(String(a.publishedAt || '')) || a.title.localeCompare(b.title, 'ko'));
 
   const successCount = sourceStatus.filter(x => x.ok).length;
+  const requiredStatuses=sourceStatus.filter(x=>x.required);
+  const requiredHealthy=requiredStatuses.length>0&&requiredStatuses.every(x=>x.ok);
+  const coverageComplete=sourceStatus.length===SOURCES.length&&successCount===SOURCES.length;
 
   return {
     version: '119-official-monitor-snapshot-v1',
@@ -469,10 +475,14 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       wafChallengeDetection:true,
       wafBypassForbidden:true,
       machineFriendlyRecruitmentSource:'https://gongmuwon.gosi.kr/spcsv/indexMain3.do',
-      requiredSourceCount:SOURCES.length,
+      requiredSourceIds:SOURCES.filter(x=>x.required!==false).map(x=>x.id),
+      requiredSourceCount:SOURCES.filter(x=>x.required!==false).length,
+      totalSourceCount:SOURCES.length,
+      supplementalSourcesMayDegrade:true,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
-    healthy: sourceStatus.length === SOURCES.length && successCount === SOURCES.length,
+    healthy: requiredHealthy,
+    coverageComplete,
     hasRelevantItems: sorted.length > 0,
     sourceStatus,
     items: sorted.slice(0, 120)
