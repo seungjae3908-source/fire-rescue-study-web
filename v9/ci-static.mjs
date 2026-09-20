@@ -14,7 +14,7 @@ for(const file of [
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
   'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js','quality2-study-schema-119.js',
   'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
-  'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
+  'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','questions-verified-fire-target1-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
 ]){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
@@ -85,6 +85,10 @@ const verifiedHighYield4=(V.questions||[]).filter(q=>/^119-verhy4-/.test(q.id||'
 ok(V.VerifiedHighYield4119?.added===31&&verifiedHighYield4.length===31,'high-yield level-four batch adds thirty-one exact-page questions');
 ok(verifiedHighYield4.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'high-yield level-four batch stays B-grade, page-verified and never claims past-exam status');
 ok(verifiedHighYield4.every(q=>/(소방전술|예방실무).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'high-yield level-four batch carries exact official textbook page evidence');
+const verifiedFireTarget1=(V.questions||[]).filter(q=>/^119-vertarget-fire1-/.test(q.id||''));
+ok(V.VerifiedFireTarget1119?.added===41&&verifiedFireTarget1.length===41,'fire target1 adds forty-one new exact-page B-grade questions');
+ok(verifiedFireTarget1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.reviewStatus==='source-reviewed'&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'fire target1 remains source-reviewed B-grade evidence with no past-exam claim');
+ok(verifiedFireTarget1.every(q=>/2026\s+소방전술1.*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'fire target1 carries exact 2026 NFA textbook page evidence');
 ok(V.CalculationQuestions119?.added===21,'calculation practice bank adds twenty-one calculation drills with explicit evidence tiers');
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
 ok(calculationPractice.length===21&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
