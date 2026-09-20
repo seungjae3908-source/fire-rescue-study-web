@@ -133,7 +133,8 @@ function cardHtml(){
   const sourceTotal=(m.sources||[]).length;
   const generatedMs=Date.parse(String(m.generatedAt||''));
   const fresh=m.healthy===true&&Number.isFinite(generatedMs)&&Date.now()-generatedMs<=MAX_SNAPSHOT_AGE_MS&&!m.degraded;
-  const completeSources=fresh&&sourceTotal>=4&&sourceOk===sourceTotal;
+  const requiredSourceCount=Number(m.snapshot?.policy?.requiredSourceCount||sourceTotal||0);
+  const completeSources=fresh&&requiredSourceCount>0&&sourceTotal===requiredSourceCount&&sourceOk===sourceTotal;
   const lastGood=m.lastSuccessfulAt?' · 마지막 정상 '+new Date(m.lastSuccessfulAt).toLocaleString('ko-KR'):'';
   const status=loading?'공식 사이트 확인 중':stale||!fresh?'최근 저장본 표시 · 연결 확인 필요'+lastGood:error?'공식 감시 연결 확인 필요':!completeSources?'일부 공식소스 확인 실패 · 결과 확정 보류':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
   const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
@@ -142,13 +143,13 @@ function cardHtml(){
   const notifyLabel=m.notificationPermission==='granted'?'앱 알림 켜짐':m.notificationPermission==='denied'?'앱 알림 차단됨':'앱 알림 켜기';
   const resultTag=m.unseenCount?'<span class="tag warn">새 공고·변경 '+m.unseenCount+'건</span>':completeSources?'<span class="tag good">새 변경 없음</span>':'<span class="tag warn">일부 공식소스 확인 필요</span>';
   const calendarTarget=targetItems.find(x=>scheduleEntries(x).length>0);
-  return '<section class="card official-monitor-card" aria-live="polite" aria-atomic="false" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+resultTag+'</div><p class="muted">앱 인프라가 매시간 소방청·중앙소방학교 공식 게시판만 확인합니다. 앱을 열거나 다시 활성화하면 새 공고를 표시하며, 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/'+(sourceTotal||4)+'</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(calendarTarget?'<button class="btn small ghost" data-monitor-calendar>일정 캘린더 저장</button>':'')+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
+  return '<section class="card official-monitor-card" aria-live="polite" aria-atomic="false" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+resultTag+'</div><p class="muted">앱 인프라가 매시간 국가공무원 채용시스템의 소방청 채용·시험 정보와 중앙소방학교 공식 공고·교재만 확인합니다. WAF를 우회하지 않으며, 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/'+(requiredSourceCount||sourceTotal||0)+'</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(calendarTarget?'<button class="btn small ghost" data-monitor-calendar>일정 캘린더 저장</button>':'')+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
 }
 
 function bannerHtml(){
   const m=summary();
   if(!m.unseenCount)return'';
-  return '<section class="card official-monitor-banner" aria-live="polite" data-official-monitor-banner data-monitor-key="'+esc(renderKey())+'"><button class="official-monitor-banner-btn" data-monitor-open><span><b>새 공식 시험 공고·변경 '+m.unseenCount+'건</b><small>소방청·중앙소방학교 공식 출처만 확인</small></span><strong>확인 →</strong></button></section>';
+  return '<section class="card official-monitor-banner" aria-live="polite" data-official-monitor-banner data-monitor-key="'+esc(renderKey())+'"><button class="official-monitor-banner-btn" data-monitor-open><span><b>새 공식 시험 공고·변경 '+m.unseenCount+'건</b><small>국가공무원 채용시스템·중앙소방학교 공식 출처만 확인</small></span><strong>확인 →</strong></button></section>';
 }
 
 function decorate(){
@@ -286,7 +287,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,degradedSnapshotTruth:true,staleSnapshotNeverClaimsNoChange:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,degradedSnapshotTruth:true,staleSnapshotNeverClaimsNoChange:true,wafBypassForbidden:true,machineFriendlyOfficialSources:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();
