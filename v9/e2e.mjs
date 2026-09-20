@@ -53,6 +53,8 @@ try{
   const studySchemaAudit=await p.evaluate(()=>{const V=window.AITUTOR_V9,rows=V.curriculum.concepts.map(c=>V.Quality2StudySchema119?.get?.(c.id)).filter(Boolean);return{total:V.curriculum.concepts.length,schemas:rows.length,baseReady:rows.filter(x=>x.quick30&&x.definition&&x.features?.length>=3&&x.core?.length>=3&&x.sourceRanges?.length).length,withConditions:rows.filter(x=>x.applicability?.conditions).length,withMechanism:rows.filter(x=>x.applicability?.mechanisms).length,withTiming:rows.filter(x=>x.applicability?.timingStages).length,withWarnings:rows.filter(x=>x.applicability?.warningSigns).length,withNumbers:rows.filter(x=>x.applicability?.numbers).length,withCompare:rows.filter(x=>x.applicability?.comparison).length}}); 
   assert(studySchemaAudit.schemas===studySchemaAudit.total&&studySchemaAudit.baseReady===studySchemaAudit.total,'every current concept has grounded 30-second, definition, features, core and official source anchors');
   assert(studySchemaAudit.withMechanism>0&&studySchemaAudit.withWarnings>0&&studySchemaAudit.withNumbers>0&&studySchemaAudit.withCompare>0,'applicable concepts expose structured mechanisms warnings numbers and comparison sections without forcing them onto every concept');
+  const quality4HighYield=await p.evaluate(()=>window.AITUTOR_V9.Quality4HighYield119?.audit?.());
+  assert(quality4HighYield?.ready&&quality4HighYield?.missing===0,'quality 4 high-yield semantic/visual contract is complete');
 
   const before=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
   await p.locator('[data-study-next]').click();
