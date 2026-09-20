@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-09-20T09:51:05.622Z",
+  "generatedAt": "2026-09-20T14:15:39.824Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -45,7 +45,7 @@
     "suppressSameOriginFallbackAfterTransportFailure": true,
     "snapshotBranch": "chore/official-monitor-snapshot"
   },
-  "healthy": true,
+  "healthy": false,
   "coverageComplete": false,
   "hasRelevantItems": true,
   "sourceStatus": [
@@ -53,12 +53,12 @@
       "id": "gosi-fire",
       "label": "국가공무원 채용시스템 · 소방청",
       "required": true,
-      "ok": true,
-      "pagesOk": 1,
-      "status": "ok",
-      "error": "",
-      "errorCode": "",
-      "errorUrl": "",
+      "ok": false,
+      "pagesOk": 0,
+      "status": "error",
+      "error": "UND_ERR_CONNECT_TIMEOUT: UND_ERR_CONNECT_TIMEOUT: fetch failed: Connect Timeout Error (attempted address: gongmuwon.gosi.kr:443, timeout: 10000ms): fetch failed",
+      "errorCode": "UND_ERR_CONNECT_TIMEOUT",
+      "errorUrl": "https://gongmuwon.gosi.kr/spcsv/indexMain3.do",
       "fallbackUsed": false
     },
     {
@@ -80,8 +80,8 @@
       "ok": false,
       "pagesOk": 0,
       "status": "error",
-      "error": "ERR_TLS_CERT_ALTNAME_INVALID: ERR_TLS_CERT_ALTNAME_INVALID: fetch failed: Hostname/IP does not match certificate's altnames: Host: cherish.nfsa.go.kr. is not in the cert's altnames",
-      "errorCode": "ERR_TLS_CERT_ALTNAME_INVALID",
+      "error": "20: This operation was aborted",
+      "errorCode": "20",
       "errorUrl": "https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/",
       "fallbackUsed": false
     }
@@ -278,14 +278,15 @@
     }
   ],
   "degraded": true,
-  "preservedLastGood": false,
-  "notificationSuppressed": false,
-  "lastAttemptAt": "2026-09-20T09:51:05.622Z",
+  "preservedLastGood": true,
+  "notificationSuppressed": true,
+  "lastAttemptAt": "2026-09-20T14:15:39.824Z",
   "lastSuccessfulAt": "2026-09-20T09:51:05.622Z",
   "delta": {
     "newIds": [],
     "updatedIds": [],
     "newCount": 0,
     "updatedCount": 0
-  }
+  },
+  "liveItemCount": 0
 }
