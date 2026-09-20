@@ -22,7 +22,7 @@ try{
     await page.evaluate(()=>window.AITUTOR_V9.App.go('study'));
     await page.waitForSelector('.workspace',{timeout:30000});
     const tabCount=vp.isMobile?await page.locator('.book-jumpbar button').count():await page.locator('.tabbar button').count();
-    assert(tabCount===4,'study exposes four learning tabs '+vp.width);
+    assert(tabCount===5,'study exposes five learning tabs '+vp.width);
     await noX(page,'study '+vp.width);
 
     if(vp.isMobile){
