@@ -15,6 +15,7 @@ for(const c of V.curriculum.concepts){
   const placeholder=/원문\s*(검증|확인)|근거\s*(확인|필요)|연결\s*대기|추후\s*확인|임의로\s*(생성|추정|채움|작성)/.test([summary,...details,...must,...traps].join(' '));
   const pageAnchored=p.status==='verified';
   const officialWeb=(p.officialLinks||[]).some(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')));
+  const curriculumAnchored=(c.sourceRanges||[]).some(x=>x?.doc&&(Number.isFinite(Number(x?.from))||Number.isFinite(Number(x?.to))));
   const officialScopePending=p.status==='scope-verified'&&/공식|2026|예방실무|소방전술|화재조사|소방용어/.test(source);
   const checks={
     sourceState:pageAnchored||officialScopePending,
@@ -23,7 +24,7 @@ for(const c of V.curriculum.concepts){
     must:must.length>=2,
     traps:traps.length>=1,
     instructionalDensity:totalChars>=180,
-    source:pageAnchored?((/\d/.test(source)&&/(쪽|p\.?|페이지)/i.test(source))||officialWeb):officialScopePending,
+    source:pageAnchored?((/\d/.test(source)&&/(쪽|p\.?|페이지)/i.test(source))||officialWeb||curriculumAnchored):officialScopePending,
     noPlaceholder:!placeholder
   };
   const score=Object.values(checks).filter(Boolean).length;
