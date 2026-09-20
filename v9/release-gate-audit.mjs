@@ -34,6 +34,7 @@ const lite=fs.readFileSync(new URL('./supabase-lite.js',import.meta.url),'utf8')
 const e2e=fs.readFileSync(new URL('./e2e.mjs',import.meta.url),'utf8');
 const pdfE2E=fs.readFileSync(new URL('./pdf-e2e.mjs',import.meta.url),'utf8');
 const imageE2E=fs.readFileSync(new URL('./image-ocr-e2e.mjs',import.meta.url),'utf8');
+const quality4AuditScript=fs.readFileSync(new URL('./quality4-highyield-audit.mjs',import.meta.url),'utf8');
 const authE2E=fs.readFileSync(new URL('./auth-session-e2e.mjs',import.meta.url),'utf8');
 const sql=fs.readFileSync(new URL('../supabase/tests/v9-live-closed-loop.sql',import.meta.url),'utf8');
 
@@ -59,7 +60,7 @@ const checks={
   adaptiveMasteryV2Contract:mastery.includes("version:'119-mastery-v2'")&&workflow.includes('Adaptive mastery v2 deterministic gate'),
   questionSkillFamilyTaxonomy:V.QuestionType119?.audit?.().ready===true&&V.QuestionType119?.policy?.notOfficialExamWeight===true,
   skillFamilyRemediationContract:app.includes('function buildSkillTraining')&&app.includes('data-skill-train')&&e2e.includes('skill-family remediation starts a focused training run'),
-  quality4HighYield:quality4HighYieldAudit?.ready===true&&workflow.includes('node v9/quality4-highyield-audit.mjs'),
+  quality4HighYield:quality4HighYieldAudit?.ready===true&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_COMPLETE')&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_FAILED'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
