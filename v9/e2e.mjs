@@ -82,7 +82,7 @@ try{
   assert((await p.locator('.page').innerText()).includes('공식 자료'),'resources page is student-facing');
   await p.waitForFunction(()=>window.AITUTOR_V9.OfficialMonitor119?.summary?.().status==='ready');
   const monitorText=await p.locator('.official-monitor-card').innerText();
-  assert(monitorText.includes('공식 공고 자동감시')&&monitorText.includes('새 공고 1건'),'resources page shows a new official 2027 notice from the in-app monitor');
+  assert(monitorText.includes('공식 공고 자동감시')&&monitorText.includes('새 공고·변경 1건'),'resources page shows a new official 2027 notice from the in-app monitor');
   assert(monitorText.includes('소방청·중앙소방학교 공식 게시판만 확인'),'official monitor UI states its official-source-only policy');
   assert(monitorText.includes('앱을 열거나 다시 활성화하면 새 공고를 표시'),'monitor UI accurately explains foreground/reactivation notification behavior');
   assert(await p.locator('.official-monitor-item.new').count()===1,'new official notice is highlighted exactly once');
