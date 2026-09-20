@@ -274,6 +274,8 @@
 .exam-report-grid b{font-size:18px}
 .weak-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 .weak-chip{border:1px solid rgba(255,198,109,.28);background:rgba(255,198,109,.07);border-radius:999px;padding:7px 10px;font-size:12px}
+.skill-train-chip{color:inherit;font-family:inherit;cursor:pointer;text-align:left}
+.skill-train-chip:hover,.skill-train-chip:focus-visible{border-color:rgba(255,198,109,.58);background:rgba(255,198,109,.13);outline:none}
 .exam-miss-list{display:grid;gap:10px;margin-top:10px}
 .exam-miss{border:1px solid var(--line);background:#081524;border-radius:14px;padding:14px}
 .exam-miss-head{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:11px}
@@ -876,4 +878,35 @@ small{font-size:max(11px,.78em)}
     white-space:nowrap!important;
     overflow:visible!important;
   }
+}
+
+/* Official recruitment / textbook monitor */
+.official-monitor-card{display:grid;gap:11px}
+.official-monitor-card h2{margin:3px 0 0;font-size:20px}
+.official-monitor-meta{display:flex;gap:7px;flex-wrap:wrap}
+.official-monitor-meta span{border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-size:10px;color:var(--muted)}
+.official-monitor-actions{margin-top:1px}
+.official-monitor-list{display:grid;gap:7px}
+.official-monitor-item{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#091827;border-radius:12px;padding:11px 12px;color:inherit;text-decoration:none}
+.official-monitor-item.new{border-color:rgba(255,198,109,.48);background:rgba(255,198,109,.055)}
+.official-monitor-item>div{min-width:0;display:grid;gap:5px}
+.official-monitor-item b{font-size:13px;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
+.official-monitor-item small{font-size:10px;color:var(--muted)}
+.official-monitor-item>span{flex:0 0 auto;color:var(--blue)}
+.official-monitor-empty{height:82px}
+.official-monitor-banner{padding:0;overflow:hidden}
+.official-monitor-banner-btn{width:100%;border:0;background:rgba(255,198,109,.055);color:inherit;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left}
+.official-monitor-banner-btn span{display:grid;gap:4px}
+.official-monitor-banner-btn b{font-size:13px}
+.official-monitor-banner-btn small{font-size:10px;color:var(--muted)}
+.official-monitor-banner-btn strong{font-size:11px;color:var(--yellow)}
+@media(max-width:720px){
+  .official-monitor-card h2{font-size:18px}
+  .official-monitor-meta{display:grid;grid-template-columns:1fr}
+  .official-monitor-meta span{border-radius:10px}
+  .official-monitor-actions{display:grid;grid-template-columns:1fr 1fr}
+  .official-monitor-actions .btn:last-child:nth-child(3){grid-column:1/-1}
+  .official-monitor-item{align-items:flex-start}
+  .official-monitor-item b{font-size:14px}
+  .official-monitor-item small{font-size:11px}
 }

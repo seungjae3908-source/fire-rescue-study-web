@@ -7,7 +7,7 @@ const forbidden=['fail-closed','page-verified','Release Gate','검증문제·범
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
 function collectErrors(page){const out=[];page.on('pageerror',e=>out.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon|404.*official-pdf/i.test(m.text()))out.push('console:'+m.text())});page.on('requestfailed',r=>{const u=r.url();if(/cdn\.jsdelivr\.net|tesseract|pdf\.worker|pdf\.min\.mjs/i.test(u))out.push('requestfailed:'+u+' '+(r.failure()?.errorText||''))});return out}
-async function boot(page){await page.route('**/api/official-pdf?**',async route=>{await route.fulfill({status:200,contentType:'application/pdf',headers:{'accept-ranges':'bytes','cache-control':'no-store'},body:fixture})});await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');await page.waitForFunction(()=>!!window.AITUTOR_V9?.App)}
+async function boot(page){await page.route('**/api/official-pdf?**',async route=>{await route.fulfill({status:200,contentType:'application/pdf',headers:{'accept-ranges':'bytes','cache-control':'no-store'},body:fixture})});await page.route('**/api/official-monitor**',async route=>{await route.fulfill({status:200,contentType:'application/json',headers:{'cache-control':'no-store'},body:"{\"version\":\"119-official-monitor-snapshot-v1\",\"generatedAt\":\"2026-10-01T00:00:00.000Z\",\"targetExamYear\":2027,\"baselineYear\":2026,\"officialOnly\":true,\"healthy\":true,\"sourceStatus\":[{\"id\":\"nfa-recruit\",\"label\":\"소방청 채용·시험\",\"ok\":true},{\"id\":\"nfsa-notice\",\"label\":\"중앙소방학교 고시·공고\",\"ok\":true},{\"id\":\"nfsa-materials\",\"label\":\"중앙소방학교 공식교재\",\"ok\":true}],\"items\":[{\"id\":\"e2e-2027-notice\",\"sourceId\":\"nfa-recruit\",\"sourceLabel\":\"소방청 채용·시험\",\"title\":\"2027년 소방공무원 채용시험 시행계획 공고\",\"publishedAt\":\"2026-10-01\",\"url\":\"https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=view&cntId=e2e\",\"kind\":\"recruitment_notice\",\"meaningful\":true,\"reviewRequired\":true,\"targetYearMatch\":true,\"baselineYearMatch\":false,\"noticeYear\":2027}]}"})});await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');await page.waitForFunction(()=>!!window.AITUTOR_V9?.App)}
 async function cleanPage(page,label){const text=await page.locator('body').innerText();for(const x of forbidden)assert(!text.includes(x),label+' hides internal text: '+x);await noX(page,label)}
 async function go(page,id){await page.evaluate(id=>window.AITUTOR_V9.App.go(id),id);await page.waitForFunction(id=>window.AITUTOR_V9.Store.state.page===id,id)}
 
@@ -17,6 +17,8 @@ try{
   const p=await desktop.newPage(),derr=collectErrors(p);
   await boot(p);
   assert((await p.locator('.mobile-nav').isHidden()),'desktop hides mobile navigation');
+  await p.waitForTimeout(150);
+  assert(await p.locator('.app').count()===1,'official monitor mutation observer does not starve or duplicate the app shell');
   assert(!(await p.locator('body').innerText()).includes('준비도'),'global header no longer repeats readiness');
 
   await go(p,'study');await p.waitForSelector('.workspace');
@@ -53,6 +55,8 @@ try{
   const studySchemaAudit=await p.evaluate(()=>{const V=window.AITUTOR_V9,rows=V.curriculum.concepts.map(c=>V.Quality2StudySchema119?.get?.(c.id)).filter(Boolean);return{total:V.curriculum.concepts.length,schemas:rows.length,baseReady:rows.filter(x=>x.quick30&&x.definition&&x.features?.length>=3&&x.core?.length>=3&&x.sourceRanges?.length).length,withConditions:rows.filter(x=>x.applicability?.conditions).length,withMechanism:rows.filter(x=>x.applicability?.mechanisms).length,withTiming:rows.filter(x=>x.applicability?.timingStages).length,withWarnings:rows.filter(x=>x.applicability?.warningSigns).length,withNumbers:rows.filter(x=>x.applicability?.numbers).length,withCompare:rows.filter(x=>x.applicability?.comparison).length}}); 
   assert(studySchemaAudit.schemas===studySchemaAudit.total&&studySchemaAudit.baseReady===studySchemaAudit.total,'every current concept has grounded 30-second, definition, features, core and official source anchors');
   assert(studySchemaAudit.withMechanism>0&&studySchemaAudit.withWarnings>0&&studySchemaAudit.withNumbers>0&&studySchemaAudit.withCompare>0,'applicable concepts expose structured mechanisms warnings numbers and comparison sections without forcing them onto every concept');
+  const quality4HighYield=await p.evaluate(()=>window.AITUTOR_V9.Quality4HighYield119?.audit?.());
+  assert(quality4HighYield?.ready&&quality4HighYield?.missing===0,'quality 4 high-yield semantic/visual contract is complete');
 
   const before=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
   await p.locator('[data-study-next]').click();
@@ -76,9 +80,19 @@ try{
 
   await go(p,'resources');await cleanPage(p,'desktop resources');
   assert((await p.locator('.page').innerText()).includes('공식 자료'),'resources page is student-facing');
+  await p.waitForFunction(()=>window.AITUTOR_V9.OfficialMonitor119?.summary?.().status==='ready');
+  const monitorText=await p.locator('.official-monitor-card').innerText();
+  assert(monitorText.includes('공식 공고 자동감시')&&monitorText.includes('새 공고·변경 1건'),'resources page shows a new official 2027 notice from the in-app monitor');
+  assert(monitorText.includes('소방청·중앙소방학교 공식 게시판만 확인'),'official monitor UI states its official-source-only policy');
+  assert(monitorText.includes('앱을 열거나 다시 활성화하면 새 공고를 표시'),'monitor UI accurately explains foreground/reactivation notification behavior');
+  assert(await p.locator('.official-monitor-item.new').count()===1,'new official notice is highlighted exactly once');
+  const resourceTruthText=await p.locator('.page').innerText();
+  assert(resourceTruthText.includes('목표 2027년')&&resourceTruthText.includes('2026 공식 기준'),'resources page separates 2027 target exam from the current 2026 official content baseline');
+  assert(!resourceTruthText.includes('공식 변경사항'),'resources page does not announce an official change when the meaningful-change list is empty');
   assert(!(await p.locator('.page').innerText()).includes('Gate'),'resources page hides release/content gates');
   assert(await p.locator('[data-resource-doc]').count()===10,'resources page exposes all ten official textbooks as in-app PDF actions');
-  assert(await p.locator('.resources-119 a[target="_blank"]').count()===0,'resources page no longer sends the normal study flow to an external tab');
+  assert(await p.locator('.resources-119 a[target="_blank"]:not(.official-monitor-item)').count()===0,'normal textbook study flow stays in-app while official-monitor notices may open their official source');
+  assert(await p.locator('.official-monitor-item[target="_blank"]').count()===1,'official monitor links directly to the allowlisted official source');
   await p.locator('[data-resource-doc]').first().click();await p.waitForSelector('#resourcePdf canvas',{timeout:60000});
   assert(await p.locator('#resourcePdf canvas').count()===1,'official resource opens inside the app with the shared PDF renderer');
   await p.locator('[data-resource-pdf-close]').click();
@@ -279,6 +293,16 @@ try{
   const reportText=await m.locator('.exam-report').innerText();
   assert(reportText.includes('64/65')&&reportText.includes('오답·미응답 분석')&&reportText.includes('1문항'),'finished mock opens a 65-question score + wrong-answer analysis');
   assert(reportText.includes('내 답')&&reportText.includes('정답')&&reportText.includes('정답 근거'),'exam analysis shows selected answer, correct answer and explanation');
+  assert(reportText.includes('문제 유형 분석')&&reportText.includes('공식 시험의 출제비율을 의미하지 않습니다.'),'exam analysis exposes normalized learning-skill performance without claiming an official exam weight');
+  assert(await m.locator('[data-skill-train]').count()>=1,'exam analysis exposes one-tap remediation for observed learning-skill families');
+  const reportIdBeforeSkill=await m.evaluate(()=>window.AITUTOR_V9.App.runtime.examReportId);
+  const skillKey=await m.locator('[data-skill-train]').first().getAttribute('data-skill-train');
+  await m.locator('[data-skill-train]').first().click();
+  await m.waitForSelector('.exam-run-workspace');
+  const skillRun=await m.evaluate(key=>{const V=window.AITUTOR_V9,e=V.App.runtime.exam;return{mode:e?.mode,key:e?.trainingKey,total:e?.qs?.length||0,allFamily:e?.qs?.every(q=>V.QuestionType119.classify(q).key===key),title:e?.title||''}},skillKey);
+  assert(skillRun.mode==='training'&&skillRun.key==='skill:'+skillKey&&skillRun.total>0&&skillRun.allFamily,'skill-family remediation starts a focused training run containing only the selected family');
+  await m.evaluate(reportId=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.App.runtime.examReportId=reportId;V.Store.state.page='stats';V.Store.save();V.App.render()},reportIdBeforeSkill);
+  await m.waitForSelector('.exam-report');
   assert(await m.locator('.exam-report [data-concept]').count()>=1&&await m.locator('.exam-report [data-source-concept]').count()>=1,'exam analysis links wrong questions to concept review and official evidence');
   await noX(m,'mobile exam analysis');
   await m.locator('[data-report-close]').click();

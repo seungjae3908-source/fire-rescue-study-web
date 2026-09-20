@@ -7,7 +7,7 @@ const files=[
   'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js',
   'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js','questions-verified-ems-batch1-119.js','questions-verified-fire-batch1-119.js',
-  'question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
+  'question-difficulty.js','question-quality-119.js','question-type-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
   'content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js',
   'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
@@ -48,6 +48,7 @@ const dist={};for(const r of rows)dist[r.n]=(dist[r.n]||0)+1;
 const zero=rows.filter(r=>r.n===0),under6=rows.filter(r=>r.n<6),notReady=rows.filter(r=>!r.ready);
 const existingNeed=under6.reduce((s,r)=>s+r.needed,0);
 const calc=V.CalculationTraining119?.audit?.()||null;
+const skillFamilies=V.QuestionType119?.audit?.()||null;
 
 const summary={
   version:'119-question-contract-current-runtime-v2',
@@ -63,20 +64,22 @@ const summary={
   underSixConcepts:under6.length,
   contractReadyConcepts:rows.length-notReady.length,
   minimumAdditionalQuestionsToReachSixPerConcept:existingNeed,
-  calculationTraining:calc?{ready:calc.ready,families:calc.rows?.length||0,added:calc.added,stageCount:calc.stageCount}:null
+  calculationTraining:calc?{ready:calc.ready,families:calc.rows?.length||0,added:calc.added,stageCount:calc.stageCount}:null,
+  skillFamilies
 };
 console.log('QUESTION_CONTRACT_119_SUMMARY',JSON.stringify(summary,null,2));
 console.log('QUESTION_CONTRACT_ZERO_CONCEPTS');console.table(zero);
 console.log('QUESTION_CONTRACT_NOT_READY');console.table(notReady);
 console.log('QUESTION_CONTRACT_EXISTING_COVERAGE');console.table(rows.filter(r=>r.n>0).sort((a,b)=>b.n-a.n||a.id.localeCompare(b.id)));
 
-if(audit.duplicateTexts.length||zero.length||under6.length||notReady.length||!calc?.ready){
+if(audit.duplicateTexts.length||zero.length||under6.length||notReady.length||!calc?.ready||!skillFamilies?.ready){
   throw new Error('QUESTION_CONTRACT_119_FAILED '+JSON.stringify({
     duplicateTexts:audit.duplicateTexts.length,
     zero:zero.length,
     under6:under6.length,
     notReady:notReady.length,
-    calculationSixStage:!!calc?.ready
+    calculationSixStage:!!calc?.ready,
+    skillFamilyTaxonomy:!!skillFamilies?.ready
   }));
 }
 console.log('QUESTION_CONTRACT_119_AUDIT_COMPLETE');

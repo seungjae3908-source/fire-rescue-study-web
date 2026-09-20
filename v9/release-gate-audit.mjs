@@ -8,16 +8,17 @@ const files=[
   'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js',
   'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js','questions-verified-ems-batch1-119.js','questions-verified-fire-batch1-119.js',
-  'question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
+  'question-difficulty.js','question-quality-119.js','question-type-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
   'content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js',
   'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
-  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js',
+  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js','quality2-study-schema-119.js',
   'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js','question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','questions-verified-fire-target1-119.js','questions-verified-fire-target2-119.js','questions-verified-ems-target1-119.js','questions-verified-ems-target2-119.js','textbook-grounded-119.js',
-  'visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
+  'visual-completion-119.js','quality4-highyield-119.js','calculation-contract-119.js','coverage-map-119.js','source-catalog-119.js','exam-version-119.js'
 ];
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 const V=window.AITUTOR_V9;
+const quality4HighYieldAudit=V.Quality4HighYield119?.audit?.()||null;
 const audit=V.ContentContract119.audit(),coverage=V.contentPacks.coverage(),fullExamCoverage=V.CoverageMap119?.audit?.(),qa=V.QuestionQuality119.audit(),mock=V.examReadiness(),calcTraining=V.CalculationTraining119?.audit?.();
 const perConceptQuestionContract=V.curriculum.concepts.every(c=>{const q=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const x of q)d[x.difficulty]=(d[x.difficulty]||0)+1;return q.length>=6&&d.low>=1&&d.mid>=2&&d.high>=1});
 const verifiedQuestions=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B');
@@ -26,11 +27,24 @@ const textbookVerifiedQuestions=verifiedQuestions.filter(q=>/소방전술|예방
 const exactPage=/\d+(?:\s*[~\-–]\s*\d+)?\s*쪽|page\s*\d+/i;
 const verifiedQuestionPageEvidence=textbookVerifiedQuestions.length>0&&textbookVerifiedQuestions.every(q=>exactPage.test(String(q.source||'')));
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const examSession=fs.readFileSync(new URL('./exam-session-119.js',import.meta.url),'utf8');
+const examSessionE2E=fs.readFileSync(new URL('./exam-session-e2e.mjs',import.meta.url),'utf8');
+const mastery=fs.readFileSync(new URL('./mastery.js',import.meta.url),'utf8');
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const lite=fs.readFileSync(new URL('./supabase-lite.js',import.meta.url),'utf8');
 const e2e=fs.readFileSync(new URL('./e2e.mjs',import.meta.url),'utf8');
 const pdfE2E=fs.readFileSync(new URL('./pdf-e2e.mjs',import.meta.url),'utf8');
 const imageE2E=fs.readFileSync(new URL('./image-ocr-e2e.mjs',import.meta.url),'utf8');
+const quality4AuditScript=fs.readFileSync(new URL('./quality4-highyield-audit.mjs',import.meta.url),'utf8');
+const officialMonitorWorkflow=fs.readFileSync(new URL('../.github/workflows/official-monitor.yml',import.meta.url),'utf8');
+const officialMonitorClient=fs.readFileSync(new URL('./official-monitor.js',import.meta.url),'utf8');
+const officialMonitorApi=fs.readFileSync(new URL('./api/official-monitor.js',import.meta.url),'utf8');
+const officialMonitorApiTest=fs.readFileSync(new URL('./official-monitor-api-test.mjs',import.meta.url),'utf8');
+const officialMonitorBrowserTest=fs.readFileSync(new URL('./official-monitor-browser-e2e.mjs',import.meta.url),'utf8');
+const accessibilitySmoke=fs.readFileSync(new URL('./accessibility-smoke.mjs',import.meta.url),'utf8');
+const performanceBudget=fs.readFileSync(new URL('./performance-budget-audit.mjs',import.meta.url),'utf8');
+const officialMonitorRootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.url),'utf8');
 const authE2E=fs.readFileSync(new URL('./auth-session-e2e.mjs',import.meta.url),'utf8');
 const sql=fs.readFileSync(new URL('../supabase/tests/v9-live-closed-loop.sql',import.meta.url),'utf8');
 
@@ -52,6 +66,17 @@ const checks={
   releaseAcceptanceContractPresent:workflow.includes('release_candidate_live_acceptance:'),
   privacyAcceptanceContractPresent:workflow.includes('deployed_private_session_acceptance:'),
   exactPreviewAcceptanceContractPresent:workflow.includes('preview_exact_sha_acceptance:'),
+  examVersionTruth:V.ExamVersion119?.audit?.().ready===true,
+  adaptiveMasteryV2Contract:mastery.includes("version:'119-mastery-v2'")&&workflow.includes('Adaptive mastery v2 deterministic gate'),
+  storageQuotaRecoveryContract:workflow.includes('Local storage quota recovery gate')&&fs.readFileSync(new URL('./store.js',import.meta.url),'utf8').includes("storageCompactionVersion:'quota-v1'"),
+  runtimePerformanceBudgetContract:workflow.includes('Static runtime performance budget gate')&&performanceBudget.includes('PERFORMANCE_BUDGET_COMPLETE')&&performanceBudget.includes('totalBytes:1850000'),
+  questionSkillFamilyTaxonomy:V.QuestionType119?.audit?.().ready===true&&V.QuestionType119?.policy?.notOfficialExamWeight===true,
+  skillFamilyRemediationContract:app.includes('function buildSkillTraining')&&app.includes('data-skill-train')&&e2e.includes('skill-family remediation starts a focused training run'),
+  quality4HighYield:quality4HighYieldAudit?.missing===0&&quality4HighYieldAudit?.ready===quality4HighYieldAudit?.total&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_COMPLETE')&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_FAILED'),
+  officialNoticeMonitorContract:officialMonitorWorkflow.includes("cron: '17 * * * *'")&&officialMonitorWorkflow.includes('chore/official-monitor-snapshot')&&!officialMonitorWorkflow.includes('git push origin HEAD:main')&&officialMonitorClient.includes('noAutomaticCurriculumMutation:true')&&officialMonitorClient.includes('cachedSnapshotFallback:true')&&officialMonitorClient.includes('scheduleDday:true')&&officialMonitorClient.includes('scheduleCalendarExport:true')&&officialMonitorApi.includes('chore/official-monitor-snapshot')&&officialMonitorApi.includes('MAX_STALE_MS=90*60*1000')&&officialMonitorRootApi.includes("require('../v9/api/official-monitor.js')")&&workflow.includes('Official notice monitor contract gate')&&workflow.includes('official_monitor_live_probe (non-release diagnostic)'),
+  officialNoticeMonitorRuntimeTests:workflow.includes('Official monitor root API handler gate')&&workflow.includes('Official monitor offline/cache fallback QA')&&officialMonitorApiTest.includes('OFFICIAL_MONITOR_API_TEST_COMPLETE')&&officialMonitorBrowserTest.includes('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE'),
+  accessibilitySmokeContract:workflow.includes('Keyboard and accessibility semantic smoke QA')&&accessibilitySmoke.includes('ACCESSIBILITY_SMOKE_COMPLETE')&&app.includes('aria-current="page"')&&app.includes('aria-live="polite"'),
+  activeExamRecoveryContract:examSession.includes("version:'119-active-exam-v1'")&&examSession.includes('questionIdsOnly:true')&&app.includes('persistActiveExam()')&&app.includes('data-exam-timer')&&app.includes('data-exam-abandon')&&workflow.includes('Active exam reload recovery and timer QA')&&examSessionE2E.includes('EXAM_SESSION_RECOVERY_E2E_COMPLETE'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
@@ -83,7 +108,9 @@ const blockers=[];
 for(const [k,v] of Object.entries(checks))if(!v)blockers.push('CONTRACT_'+k);
 if(!stagingLive)blockers.push('STUDY_STAGING_AUTH_SYNC_RLS_LIVE_PROOF_MISSING');
 const result={
-  version:'119-release-gate-audit-v2',
+  version:'119-release-gate-audit-v3',
+  examVersion:V.ExamVersion119?.summary?.()||null,
+  quality4HighYield:quality4HighYieldAudit,
   content:{complete:audit.complete,total:audit.total,averageScore:audit.averageScore,blockers:audit.blockers},
   pageEvidence:coverage,
   fullExamCoverage:fullExamCoverage?{total:fullExamCoverage.total,covered:fullExamCoverage.covered,partial:fullExamCoverage.partial,missing:fullExamCoverage.missing,implementationPercent:fullExamCoverage.implementationPercent}:null,
