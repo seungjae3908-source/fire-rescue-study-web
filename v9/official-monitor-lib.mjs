@@ -133,9 +133,22 @@ function resolveNoticeUrl(raw, baseUrl) {
   }
 }
 
+function stableOfficialKey(row) {
+  try {
+    const u=new URL(String(row.url||''));
+    const stableParams=['cntId','cntid','bbsId','bbsid','nttId','nttid','boardId','boardid'];
+    const ids=stableParams.map(k=>[k,u.searchParams.get(k)]).filter(([,v])=>v);
+    if(ids.length){
+      const strong=ids.filter(([k])=>!/board/i.test(k));
+      const selected=strong.length?strong:ids;
+      return [row.sourceId,u.hostname.toLowerCase(),u.pathname,...selected.flat()].join('|');
+    }
+  } catch {}
+  return [row.sourceId,row.title,row.publishedAt,row.url].join('|');
+}
 function idFor(row) {
   return createHash('sha256')
-    .update([row.sourceId, row.title, row.publishedAt, row.url].join('\n'))
+    .update(stableOfficialKey(row))
     .digest('hex')
     .slice(0, 24);
 }
