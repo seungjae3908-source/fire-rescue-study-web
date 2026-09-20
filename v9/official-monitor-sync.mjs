@@ -2,17 +2,33 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { collectOfficialNotices } from './official-monitor-lib.mjs';
 
-const PREVIOUS_URL='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json';
-const idx = process.argv.indexOf('--output');
-const output = idx >= 0 && process.argv[idx + 1] ? process.argv[idx + 1] : 'v9/data/official-monitor.json';
+const SNAPSHOT_ROOT='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data';
+const PREVIOUS_URL=SNAPSHOT_ROOT+'/official-monitor.json';
+const LAST_GOOD_URL=SNAPSHOT_ROOT+'/official-monitor-last-good.json';
 
-async function previousSnapshot(){
+function argValue(name,fallback){
+  const idx=process.argv.indexOf(name);
+  return idx>=0&&process.argv[idx+1]?process.argv[idx+1]:fallback;
+}
+const output=argValue('--output','v9/data/official-monitor.json');
+const lastGoodOutput=argValue('--last-good-output','');
+const healthOutput=argValue('--health-output','');
+
+async function readRemote(url){
   try{
-    const res=await fetch(PREVIOUS_URL,{headers:{'user-agent':'119-study-official-monitor-sync/2.0','cache-control':'no-cache'}});
+    const res=await fetch(url,{headers:{'user-agent':'119-study-official-monitor-sync/3.0','cache-control':'no-cache'}});
     if(!res.ok)return null;
     const x=await res.json();
-    return x?.version==='119-official-monitor-snapshot-v1'&&Array.isArray(x.items)?x:null;
+    return x?.version==='119-official-monitor-snapshot-v1'&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)?x:null;
   }catch{return null}
+}
+async function previousSnapshot(){
+  return await readRemote(LAST_GOOD_URL)||await readRemote(PREVIOUS_URL);
+}
+function writeJson(file,value){
+  if(!file)return;
+  fs.mkdirSync(path.dirname(file),{recursive:true});
+  fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');
 }
 function structuredChanges(oldRow,newRow){
   const labels={
@@ -55,25 +71,78 @@ function applyDelta(snapshot,previous){
   snapshot.delta={newIds,updatedIds,newCount:newIds.length,updatedCount:updatedIds.length};
   return snapshot
 }
+function degradedSnapshot(live,lastGood){
+  const base=lastGood?{...lastGood,items:lastGood.items.map(x=>({...x,changeState:'same',changeSummary:[]}))}:{...live,items:[]};
+  return{
+    ...base,
+    generatedAt:live.generatedAt,
+    healthy:false,
+    degraded:true,
+    preservedLastGood:!!lastGood,
+    notificationSuppressed:true,
+    lastAttemptAt:live.generatedAt,
+    lastSuccessfulAt:lastGood?.lastSuccessfulAt||lastGood?.generatedAt||'',
+    sourceStatus:live.sourceStatus,
+    liveItemCount:live.items.length,
+    delta:{newIds:[],updatedIds:[],newCount:0,updatedCount:0}
+  };
+}
 
 const previous=await previousSnapshot();
-const snapshot=applyDelta(await collectOfficialNotices(fetch, new Date()),previous);
+const live=await collectOfficialNotices(fetch,new Date());
+let snapshot;
 
-console.log('OFFICIAL_MONITOR_SYNC_SUMMARY', JSON.stringify({
-  generatedAt: snapshot.generatedAt,
-  healthy: snapshot.healthy,
-  sources: snapshot.sourceStatus,
-  items: snapshot.items.length,
-  targetYear: snapshot.items.filter(x => x.targetYearMatch).length,
-  reviewRequired: snapshot.items.filter(x => x.reviewRequired).length,
+if(live.healthy){
+  snapshot=applyDelta({
+    ...live,
+    degraded:false,
+    preservedLastGood:false,
+    notificationSuppressed:false,
+    lastAttemptAt:live.generatedAt,
+    lastSuccessfulAt:live.generatedAt
+  },previous);
+  if(lastGoodOutput)writeJson(lastGoodOutput,snapshot);
+}else{
+  snapshot=degradedSnapshot(live,previous?.healthy===true?previous:null);
+}
+
+const health={
+  version:'119-official-monitor-health-v1',
+  generatedAt:live.generatedAt,
+  healthy:live.healthy,
+  degraded:!live.healthy,
+  preservedLastGood:snapshot.preservedLastGood===true,
+  lastSuccessfulAt:snapshot.lastSuccessfulAt||'',
+  sourceStatus:live.sourceStatus,
+  liveItems:live.items.length,
+  targetYear:live.items.filter(x=>x.targetYearMatch).length,
+  reviewRequired:live.items.filter(x=>x.reviewRequired).length
+};
+
+writeJson(output,snapshot);
+writeJson(healthOutput,health);
+
+console.log('OFFICIAL_MONITOR_SYNC_SUMMARY',JSON.stringify({
+  generatedAt:snapshot.generatedAt,
+  healthy:snapshot.healthy,
+  degraded:snapshot.degraded,
+  preservedLastGood:snapshot.preservedLastGood,
+  lastSuccessfulAt:snapshot.lastSuccessfulAt,
+  sources:snapshot.sourceStatus,
+  items:snapshot.items.length,
+  liveItems:live.items.length,
+  targetYear:live.items.filter(x=>x.targetYearMatch).length,
+  reviewRequired:live.items.filter(x=>x.reviewRequired).length,
   delta:snapshot.delta
-}, null, 2));
+},null,2));
 
-if (!snapshot.healthy) {
-  console.error('OFFICIAL_MONITOR_SYNC_UNHEALTHY');
+console.log('OFFICIAL_MONITOR_SYNC_OUTPUT',output);
+if(healthOutput)console.log('OFFICIAL_MONITOR_HEALTH_OUTPUT',healthOutput);
+if(lastGoodOutput&&live.healthy)console.log('OFFICIAL_MONITOR_LAST_GOOD_OUTPUT',lastGoodOutput);
+
+if(!live.healthy){
+  console.error('OFFICIAL_MONITOR_SYNC_UNHEALTHY_PRESERVED',snapshot.preservedLastGood?'LAST_GOOD':'BOOTSTRAP_EMPTY');
   process.exit(2);
 }
 
-fs.mkdirSync(path.dirname(output), { recursive: true });
-fs.writeFileSync(output, JSON.stringify(snapshot, null, 2) + '\n');
-console.log('OFFICIAL_MONITOR_SYNC_COMPLETE', output);
+console.log('OFFICIAL_MONITOR_SYNC_COMPLETE',output);
