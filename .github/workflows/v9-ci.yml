@@ -76,6 +76,8 @@ jobs:
         run: node v9/content-contract-audit.mjs
       - name: Quality 3 semantic completeness gate
         run: node v9/coverage3-semantic-audit.mjs
+      - name: High-yield semantic depth profile report
+        run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
         run: node v9/question-contract-audit.mjs
       - name: A/B verified question coverage gap report
