@@ -260,7 +260,7 @@ export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
   return [...dedupe.values()];
 }
 
-const FETCH_TIMEOUT_MS=8000;
+const FETCH_TIMEOUT_MS=15000;
 const DETAIL_CONCURRENCY=6;
 
 async function fetchText(url, fetchImpl) {
