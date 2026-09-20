@@ -80,3 +80,4 @@ console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
 // Exact-head official detail schedule regression trigger.
 // Exact-head NFA notice-board coverage regression trigger.
 // Exact-head hourly-freshness regression trigger.
+// Exact-head detail-revision fingerprint regression trigger.
