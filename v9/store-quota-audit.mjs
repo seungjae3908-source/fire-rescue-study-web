@@ -3,15 +3,17 @@ import vm from 'node:vm';
 
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 const mem=new Map();
-let failLarge=true;
+let failStateOnce=true;
 globalThis.localStorage={
   getItem:k=>mem.has(k)?mem.get(k):null,
   setItem(k,v){
-    if(failLarge&&String(v).length>50000){const e=new Error('quota');e.name='QuotaExceededError';throw e}
+    if(failStateOnce&&String(k).startsWith('aitutor9:state:')){
+      failStateOnce=false;
+      const e=new Error('quota');e.name='QuotaExceededError';throw e
+    }
     mem.set(k,String(v))
   }
 };
-globalThis.crypto={randomUUID:()=>Math.random().toString(36).slice(2)};
 globalThis.window={AITUTOR_V9:{questionById:{}}};
 vm.runInThisContext(fs.readFileSync(new URL('./store.js',import.meta.url),'utf8'),{filename:'store.js'});
 const S=window.AITUTOR_V9.Store,s=S.state;
