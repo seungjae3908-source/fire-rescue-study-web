@@ -89,6 +89,8 @@ jobs:
         run: node v9/exam-version-audit.mjs
       - name: Adaptive mastery v2 deterministic gate
         run: node v9/mastery-v2-audit.mjs
+      - name: Local storage quota recovery gate
+        run: node v9/store-quota-audit.mjs
       - name: Official notice monitor contract gate
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
