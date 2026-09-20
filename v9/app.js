@@ -63,7 +63,8 @@ function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(
 function uniqueSections(rows=[]){const out=[];for(const row of rows){if(!row?.body)continue;if(out.some(x=>sameStudyText(x.body,row.body)))continue;out.push(row)}return out}
 function detailSection(x,index=0){if(!x)return'';const rawTitle=String(x.title||'').trim();if(/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/.test(rawTitle))return'';const body=studentStudyText(x.body),bullets=uniqueTextRows((x.bullets||[]).filter(Boolean),x.body).map(studentStudyText).filter(Boolean);return `<section class="detail-section" data-detail-section="${index}"><div class="detail-copy"><h3>${esc(sectionTitle(rawTitle||'개념'))}</h3>${body?`<p>${esc(body)}</p>`:''}${bullets.length?`<ul class="detail-key-list">${bullets.map(v=>`<li class="detail-key"><span class="study-star">★</span><span class="study-key-text">${esc(v)}</span></li>`).join('')}</ul>`:''}</div></section>`}
 function detailToc(rows=[]){
-  const items=rows.map((x,i)=>({i,title:sectionTitle(String(x?.title||'').trim())})).filter(x=>x.title&&!/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서/.test(x.title)).slice(0,12);
+  const meta=/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/;
+  const items=rows.map((x,i)=>{const raw=String(x?.title||'').trim();return{i,raw,title:sectionTitle(raw)}}).filter(x=>x.raw&&!meta.test(x.raw)&&x.title).slice(0,12);
   return items.length>2?`<nav class="detail-toc" aria-label="상세 목차"><b>상세 목차</b><div>${items.map(x=>`<button class="btn small ghost" data-detail-jump="${x.i}">${esc(x.title)}</button>`).join('')}</div></nav>`:''
 }
 function visualBlocks(pack){return (pack?.visuals||[]).map(id=>V.Visual119?.render?.(id)||'').join('')}
