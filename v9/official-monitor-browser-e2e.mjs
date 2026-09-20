@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import {chromium} from 'playwright';
 
 const base='http://127.0.0.1:4173/v9/index.html';
@@ -64,7 +65,11 @@ try{
   assert(text.includes('최근 저장본 표시')&&text.includes('새 공고·변경 1건'),'monitor UI clearly marks stale cached data without hiding the official notice');
   assert(text.includes('공고 내용 변경'),'same-notice revision is visibly distinguished from a brand-new notice');
   assert(errors.length===0,'monitor offline fallback produces no browser runtime errors');
-  console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
+  const sw=await fs.promises.readFile(new URL('./sw.js',import.meta.url),'utf8');
+assert(sw.includes("119-official-monitor-open")&&sw.includes("?page=resources#official-monitor"),'notification click deep-links to official monitor page and existing windows receive an open message');
+const client=await fs.promises.readFile(new URL('./official-monitor.js',import.meta.url),'utf8');
+assert(client.includes("navigator.serviceWorker?.addEventListener?.('message'")&&client.includes("openMonitorPage"),'official monitor client handles service-worker deep-link messages');
+console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
   await ctx.close();
 }finally{
   await browser.close();

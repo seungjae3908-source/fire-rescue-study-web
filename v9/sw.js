@@ -29,9 +29,13 @@ self.addEventListener('fetch',event=>{
 
 self.addEventListener('notificationclick',event=>{
   event.notification?.close();
-  event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(rows=>{
+  event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(async rows=>{
     const existing=rows.find(c=>'focus' in c);
-    if(existing)return existing.focus();
-    return self.clients.openWindow('./');
+    if(existing){
+      await existing.focus();
+      if('postMessage' in existing)existing.postMessage({type:'119-official-monitor-open',page:'resources'});
+      return existing;
+    }
+    return self.clients.openWindow('./?page=resources#official-monitor');
   }));
 });

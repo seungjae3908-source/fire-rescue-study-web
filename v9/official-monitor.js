@@ -191,6 +191,10 @@ async function enableNotifications(){
   return result;
 }
 
+function openMonitorPage(){
+  window.AITUTOR_V9?.App?.go?.('resources');
+  setTimeout(()=>document.querySelector('[data-official-monitor-card]')?.scrollIntoView({behavior:'smooth',block:'start'}),0);
+}
 function start(){
   if(observer)observer.disconnect();
   const root=document.querySelector('#app');
@@ -198,7 +202,7 @@ function start(){
   document.addEventListener('click',async e=>{
     const b=e.target instanceof Element?e.target.closest('[data-monitor-refresh],[data-monitor-seen],[data-monitor-notify],[data-monitor-open]'):null;
     if(!b)return;
-    if(b.hasAttribute('data-monitor-open')){window.AITUTOR_V9?.App?.go?.('resources');return}
+    if(b.hasAttribute('data-monitor-open')){openMonitorPage();return}
     if(b.hasAttribute('data-monitor-refresh')){await refresh({force:true});return}
     if(b.hasAttribute('data-monitor-seen')){markSeen();return}
     if(b.hasAttribute('data-monitor-notify')){await enableNotifications();return}
@@ -207,6 +211,12 @@ function start(){
   if(timer)clearInterval(timer);
   timer=setInterval(()=>{if(document.visibilityState==='visible')refresh().catch(()=>{})},REFRESH_MS);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh().catch(()=>{})});
+  navigator.serviceWorker?.addEventListener?.('message',e=>{if(e.data?.type==='119-official-monitor-open')openMonitorPage()});
+  const qs=new URLSearchParams(location.search);
+  if(qs.get('page')==='resources'||location.hash==='#official-monitor'){
+    history.replaceState(null,'',location.pathname+location.hash);
+    setTimeout(openMonitorPage,0);
+  }
   decorate();
 }
 
