@@ -515,7 +515,7 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.book-section .detail-view');
   const triageText=await m.locator('.page-study').innerText();
-  assert(triageText.includes('기록지·중증도 분류')&&triageText.includes('START')&&triageText.includes('호흡 · 맥박 · 의식'),'START triage is a visible learner-facing section instead of a hidden audit gap');
+  assert(triageText.includes('기록지·중증도 분류')&&triageText.includes('START')&&/호흡\s*·\s*맥박\s*·\s*의식/.test(triageText),'START triage remains visible in detailed learner content without relying on the removed duplicate must block');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E20-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E20-C03');
