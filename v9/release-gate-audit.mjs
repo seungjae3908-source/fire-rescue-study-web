@@ -21,6 +21,7 @@ const V=window.AITUTOR_V9;
 const audit=V.ContentContract119.audit(),coverage=V.contentPacks.coverage(),fullExamCoverage=V.CoverageMap119?.audit?.(),qa=V.QuestionQuality119.audit(),mock=V.examReadiness(),calcTraining=V.CalculationTraining119?.audit?.();
 const perConceptQuestionContract=V.curriculum.concepts.every(c=>{const q=V.QuestionQuality119.forConcept(c.id),d={low:0,mid:0,high:0};for(const x of q)d[x.difficulty]=(d[x.difficulty]||0)+1;return q.length>=6&&d.low>=1&&d.mid>=2&&d.high>=1});
 const verifiedQuestions=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B');
+const verifiedBySubject={fire:verifiedQuestions.filter(q=>q.subject==='fire').length,ems:verifiedQuestions.filter(q=>q.subject==='ems').length};
 const textbookVerifiedQuestions=verifiedQuestions.filter(q=>/소방전술|예방실무|소방법령|공식교재|교재/.test(String(q.source||'')));
 const exactPage=/\d+(?:\s*[~\-–]\s*\d+)?\s*쪽|page\s*\d+/i;
 const verifiedQuestionPageEvidence=textbookVerifiedQuestions.length>0&&textbookVerifiedQuestions.every(q=>exactPage.test(String(q.source||'')));
@@ -39,6 +40,7 @@ const checks={
   fullExamCoverageComplete:!!fullExamCoverage&&fullExamCoverage.missing===0&&fullExamCoverage.partial===0,
   questionContract:qa.examStyle>=1056&&qa.duplicateTexts.length===0&&perConceptQuestionContract,
   verifiedQuestionPageEvidence,
+  verifiedSubjectTargets:verifiedBySubject.fire>=250&&verifiedBySubject.ems>=300,
   calculationSixStage:!!calcTraining&&calcTraining.ready===true&&calcTraining.allGeneratedPractice===true&&calcTraining.rows?.length===7,
   realMockVerifiedReady:mock.ready===true&&mock.scopeComplete===true&&mock.fire>=25&&mock.ems>=40&&mock.missingFireScopes.length===0&&mock.missingEmsScopes.length===0,
   pwaOfflineContract:e2e.includes('v9 PWA shell reloads while offline'),
@@ -85,7 +87,7 @@ const result={
   content:{complete:audit.complete,total:audit.total,averageScore:audit.averageScore,blockers:audit.blockers},
   pageEvidence:coverage,
   fullExamCoverage:fullExamCoverage?{total:fullExamCoverage.total,covered:fullExamCoverage.covered,partial:fullExamCoverage.partial,missing:fullExamCoverage.missing,implementationPercent:fullExamCoverage.implementationPercent}:null,
-  questions:{examStyle:qa.examStyle,duplicateTexts:qa.duplicateTexts.length,verified:verifiedQuestions.length,textbookVerified:textbookVerifiedQuestions.length,textbookVerifiedExactPage:textbookVerifiedQuestions.filter(q=>exactPage.test(String(q.source||''))).length},
+  questions:{examStyle:qa.examStyle,duplicateTexts:qa.duplicateTexts.length,verified:verifiedQuestions.length,verifiedBySubject,verifiedTarget:{fire:250,ems:300},textbookVerified:textbookVerifiedQuestions.length,textbookVerifiedExactPage:textbookVerifiedQuestions.filter(q=>exactPage.test(String(q.source||''))).length},
   calculationTraining:calcTraining,
   realMock:{ready:mock.ready,fire:mock.fire,ems:mock.ems,missingFireScopes:mock.missingFireScopes,missingEmsScopes:mock.missingEmsScopes},
   checks,
