@@ -9,7 +9,8 @@ function official(url){
   try{const u=new URL(String(url||''));return u.protocol==='https:'&&HOSTS.has(u.hostname.toLowerCase())}catch{return false}
 }
 function valid(x){
-  return !!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&x.items.every(i=>i?.id&&i?.title&&official(i.url));
+  const required=Number(x?.policy?.requiredSourceCount||x?.sourceStatus?.length||0);
+  return !!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&required>0&&x.sourceStatus.length===required&&x.items.every(i=>i?.id&&i?.title&&official(i.url));
 }
 function validHealth(x){
   return !!x&&x.version==='119-official-monitor-health-v1'&&Array.isArray(x.sourceStatus)&&typeof x.healthy==='boolean';
