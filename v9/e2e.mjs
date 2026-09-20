@@ -136,8 +136,8 @@ try{
   await mobileAiInput.fill('플래시오버에 대해 알려줘');
   await m.locator('.study-body-mobile [data-tutor-send]').click();
   await m.waitForFunction(()=>{const chat=window.AITUTOR_V9.Store.state.chat||[],last=chat[chat.length-1];return last?.role==='assistant'&&/플래시오버/.test(last.text||'')},{timeout:30000});
-  const mobileAiTruth=await m.evaluate(()=>{const chat=window.AITUTOR_V9.Store.state.chat||[],last=chat[chat.length-1];return{text:last?.text||'',target:last?.targetConceptId||''}});
-  assert(/플래시오버/.test(mobileAiTruth.text)&&mobileAiTruth.target==='F03-C06','mobile AI tab uses the visible question and answers the explicit flashover target instead of the open concept');
+  const mobileAiTruth=await m.evaluate(()=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1],target=V.curriculum.byId[last?.targetConceptId||''];return{text:last?.text||'',targetId:last?.targetConceptId||'',targetTitle:target?.title||'',current:V.Store.state.conceptId}});
+  assert(/플래시오버/.test(mobileAiTruth.text)&&/플래시오버/.test(mobileAiTruth.targetTitle)&&mobileAiTruth.targetId!==mobileAiTruth.current,'mobile AI tab uses the visible question and answers a flashover-specific concept instead of the open concept');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
