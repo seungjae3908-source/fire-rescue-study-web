@@ -31,12 +31,21 @@ jobs:
         with:
           node-version: '22'
       - name: Collect official NFA/NFSA notices
-        run: node v9/official-monitor-sync.mjs --output /tmp/official-monitor.json
-      - name: Publish isolated monitor snapshot
+        id: collect
+        continue-on-error: true
+        run: >-
+          node v9/official-monitor-sync.mjs
+          --output /tmp/official-monitor.json
+          --health-output /tmp/official-monitor-health.json
+          --last-good-output /tmp/official-monitor-last-good.json
+      - name: Publish isolated monitor snapshot and health
+        if: ${{ always() && steps.collect.outcome != 'cancelled' }}
         env:
           SNAPSHOT_BRANCH: chore/official-monitor-snapshot
         run: |
           set -euo pipefail
+          test -s /tmp/official-monitor.json
+          test -s /tmp/official-monitor-health.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin "$SNAPSHOT_BRANCH" >/dev/null 2>&1; then
@@ -47,10 +56,22 @@ jobs:
           fi
           mkdir -p v9/data
           cp /tmp/official-monitor.json v9/data/official-monitor.json
-          git add v9/data/official-monitor.json
+          cp /tmp/official-monitor-health.json v9/data/official-monitor-health.json
+          if [ -s /tmp/official-monitor-last-good.json ]; then
+            cp /tmp/official-monitor-last-good.json v9/data/official-monitor-last-good.json
+          fi
+          git add v9/data/official-monitor.json v9/data/official-monitor-health.json
+          if [ -f v9/data/official-monitor-last-good.json ]; then
+            git add v9/data/official-monitor-last-good.json
+          fi
           if git diff --cached --quiet; then
             echo "OFFICIAL_MONITOR_NO_CHANGE"
-            exit 0
+          else
+            git commit -m "chore(monitor): refresh official notice snapshot"
+            git push origin "HEAD:$SNAPSHOT_BRANCH"
           fi
-          git commit -m "chore(monitor): refresh official notices"
-          git push origin "HEAD:$SNAPSHOT_BRANCH"
+      - name: Fail closed when live official collection is unhealthy
+        if: ${{ steps.collect.outcome == 'failure' }}
+        run: |
+          echo "OFFICIAL_MONITOR_LIVE_COLLECTION_UNHEALTHY"
+          exit 2
