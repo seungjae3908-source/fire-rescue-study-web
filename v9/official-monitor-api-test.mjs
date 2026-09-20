@@ -17,8 +17,9 @@ const snapshot={
   baselineYear:2026,
   officialOnly:true,
   healthy:true,
+  coverageComplete:true,
   degraded:false,
-  policy:{requiredSourceCount:3,wafBypassForbidden:true},
+  policy:{requiredSourceCount:1,totalSourceCount:3,wafBypassForbidden:true},
   sourceStatus,
   items:[{
     id:'api-test-2027',
