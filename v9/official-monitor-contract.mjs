@@ -50,16 +50,16 @@ const rootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.u
 const client=fs.readFileSync(new URL('./official-monitor.js',import.meta.url),'utf8');
 const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 
-assert(workflow.includes("cron: '17 */6 * * *'"),'official monitor runs every six hours');
+assert(workflow.includes("cron: '17 * * * *'"),'official monitor runs every hour');
 assert(workflow.includes('chore/official-monitor-snapshot'),'scheduled monitor writes only to the isolated snapshot branch');
 assert(!workflow.includes('git push origin HEAD:main'),'scheduled monitor never pushes main');
 assert(vercel.includes('"chore/**": false'),'snapshot branch is excluded from Vercel deployments');
-assert(api.includes('chore/official-monitor-snapshot')&&api.includes('OFFICIAL_MONITOR_UNAVAILABLE'),'app API reads isolated snapshot with safe unavailable fallback');
+assert(api.includes('chore/official-monitor-snapshot')&&api.includes('MAX_STALE_MS=90*60*1000')&&api.includes('OFFICIAL_MONITOR_UNAVAILABLE'),'app API reads isolated snapshot, refreshes stale data after 90 minutes and keeps a safe unavailable fallback');
 assert(rootApi.includes("require('../v9/api/official-monitor.js')"),'project-root Vercel API route delegates to the Study monitor implementation');
 assert(client.includes('noAutomaticCurriculumMutation:true')&&client.includes('data-monitor-refresh'),'client keeps official notice monitoring separate from curriculum mutation and exposes controls');
 assert(client.includes("'/api/official-monitor'")&&client.includes('SNAPSHOT_URL')&&client.includes('cachedSnapshotFallback:true'),'client uses root app API first, then static/cached snapshot fallbacks');
 assert(client.includes('data-monitor-key')&&client.includes('old.dataset.monitorKey!==key'),'monitor DOM decoration is idempotent and cannot loop on its own MutationObserver');
-assert(client.includes('backgroundServerMonitor:true')&&client.includes('devicePushWhenClosed:false')&&client.includes('setAppBadge'),'monitor copy/contracts distinguish scheduled server monitoring from closed-app push and support installed-app badges');
+assert(client.includes('backgroundServerMonitor:true')&&client.includes('devicePushWhenClosed:false')&&client.includes('setAppBadge')&&client.includes('매시간'),'monitor copy/contracts distinguish hourly server monitoring from closed-app push and support installed-app badges');
 assert(client.includes('seenRevisionKeys')&&client.includes("changeState==='updated'")&&client.includes('공고 내용 변경'),'monitor re-alerts a previously seen notice only when its official revision fingerprint changes');
 assert(client.includes('completeSources=sourceTotal>=4&&sourceOk===sourceTotal')&&client.includes("sourceOk+'/'+(sourceTotal||4)")&&client.includes('일부 공식소스 확인 필요')&&client.includes('결과 확정 보류'),'monitor reports dynamic official-source coverage and never claims no change while any declared official source is unavailable');
 assert(client.includes('eligibleNotice')&&client.includes('targetItems'),'client alerts and foregrounds target-year eligible official notices instead of old-year history');

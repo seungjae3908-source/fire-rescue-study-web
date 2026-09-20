@@ -8,7 +8,7 @@ on:
       - 'v9/official-monitor-lib.mjs'
       - 'v9/official-monitor-sync.mjs'
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 concurrency:

@@ -1,7 +1,7 @@
 'use strict';
 const SNAPSHOT='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json';
 const HOSTS=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','nfsa.go.kr','cherish.nfsa.go.kr']);
-const MAX_STALE_MS=12*60*60*1000;
+const MAX_STALE_MS=90*60*1000;
 
 function official(url){
   try{const u=new URL(String(url||''));return u.protocol==='https:'&&HOSTS.has(u.hostname.toLowerCase())}catch{return false}
