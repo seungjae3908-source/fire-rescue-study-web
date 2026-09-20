@@ -88,3 +88,4 @@ console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
 }
 // Deep-link regression trigger.
 // Exact-head calendar-export regression trigger.
+// Exact-head ICS download regression trigger.
