@@ -126,6 +126,7 @@ extendTextbook('F07-C21',[
 function secondPass(id,{detail=[],sections=[],must=[],traps=[],compare=[]}={}){
   const p=P[id];if(!p)return;
   extendTextbook(id,detail,sections);
+  if(norm(p.summary).length<65&&detail[0])p.summary=concise(detail[0],125);
   p.must=uniq([...(p.must||[]),...must]);
   p.traps=uniq([...(p.traps||[]),...traps]);
   if(compare.length){const seen=new Set((p.compare||[]).map(r=>key((r||[]).join('|'))));for(const row of compare){const k=key((row||[]).join('|'));if(k&&!seen.has(k)){p.compare.push(row);seen.add(k)}}}
