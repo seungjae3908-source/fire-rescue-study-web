@@ -19,7 +19,7 @@ async function create({category='개선',title='',body='',anonymous=true}={}){
   if(title.length<2)throw Error('TITLE_REQUIRED');if(body.length<2)throw Error('BODY_REQUIRED');
   if(!CATEGORY.includes(category))category='기타';
   const row={id:id(),user_id:user.id,category,title,body,anonymous:anonymous!==false,status:'접수',admin_reply:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
-  const r=await client.from(T).upsert([row]);if(r.error)throw r.error;return row
+  const r=await client.from(T).insert([row]);if(r.error)throw r.error;return row
 }
 async function adminReply(suggestionId,{status='수렴완료',reply=''}={}){
   if(!STATUS.includes(status))throw Error('INVALID_STATUS');if(!(await isAdmin()))throw Error('ADMIN_REQUIRED');
