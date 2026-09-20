@@ -91,6 +91,8 @@ jobs:
         run: node v9/mastery-v2-audit.mjs
       - name: Local storage quota recovery gate
         run: node v9/store-quota-audit.mjs
+      - name: Static runtime performance budget gate
+        run: node v9/performance-budget-audit.mjs
       - name: Official notice monitor contract gate
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
