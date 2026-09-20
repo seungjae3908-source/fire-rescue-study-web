@@ -16,8 +16,9 @@ const write=x=>{try{localStorage.setItem(KEY,JSON.stringify(x))}catch{}};
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const official=url=>{try{const u=new URL(String(url||''));return u.protocol==='https:'&&ALLOWED.has(u.hostname.toLowerCase())}catch{return false}};
 const validSnapshot=x=>{
-  const required=Number(x?.policy?.requiredSourceCount||x?.sourceStatus?.length||0);
-  return !!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&required>0&&x.sourceStatus.length===required&&x.items.every(i=>i&&i.id&&i.title&&official(i.url));
+  const required=Number(x?.policy?.requiredSourceCount||0);
+  const total=Number(x?.policy?.totalSourceCount||x?.sourceStatus?.length||0);
+  return !!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&required>0&&total>=required&&x.sourceStatus.length===total&&x.items.every(i=>i&&i.id&&i.title&&official(i.url));
 };
 const eligibleNotice=i=>!!i.meaningful&&i.notificationEligible!==false;
 const eligibleFirstRun=i=>eligibleNotice(i)&&String(i.publishedAt||'')>=START_AT;
@@ -34,7 +35,9 @@ function summary(){
     unseenCount:(state.unseen||[]).length,
     targetExamYear:state.snapshot?.targetExamYear||2027,
     baselineYear:state.snapshot?.baselineYear||2026,
-    requiredSourceCount:Number(state.snapshot?.policy?.requiredSourceCount||state.snapshot?.sourceStatus?.length||0),
+    requiredSourceCount:Number(state.snapshot?.policy?.requiredSourceCount||0),
+    totalSourceCount:Number(state.snapshot?.policy?.totalSourceCount||state.snapshot?.sourceStatus?.length||0),
+    coverageComplete:state.snapshot?.coverageComplete===true,
     degraded:state.snapshot?.degraded===true||state.snapshot?.healthy!==true,
     lastSuccessfulAt:state.snapshot?.lastSuccessfulAt||state.snapshot?.generatedAt||'',
     lastFetched:state.lastFetched,
@@ -83,7 +86,7 @@ function downloadScheduleCalendar(){
   return true
 }
 function unseenFor(snapshot,m){
-  if(snapshot?.healthy!==true||snapshot?.degraded===true||snapshot?.notificationSuppressed===true)return[];
+  if(snapshot?.healthy!==true||snapshot?.notificationSuppressed===true)return[];
   const seenRevisions=new Set(m.seenRevisionKeys||[]);
   const seenIds=new Set(m.seenIds||[]);
   return !m.initialized
@@ -136,18 +139,20 @@ function cardHtml(){
   const sourceOk=(m.sources||[]).filter(x=>x.ok).length;
   const sourceTotal=(m.sources||[]).length;
   const generatedMs=Date.parse(String(m.generatedAt||''));
-  const fresh=m.healthy===true&&Number.isFinite(generatedMs)&&Date.now()-generatedMs<=MAX_SNAPSHOT_AGE_MS&&!m.degraded;
-  const requiredSourceCount=Number(m.requiredSourceCount||sourceTotal||0);
-  const completeSources=fresh&&requiredSourceCount>0&&sourceTotal===requiredSourceCount&&sourceOk===sourceTotal;
+  const fresh=m.healthy===true&&Number.isFinite(generatedMs)&&Date.now()-generatedMs<=MAX_SNAPSHOT_AGE_MS;
+  const requiredSourceCount=Number(m.requiredSourceCount||0);
+  const totalSourceCount=Number(m.totalSourceCount||sourceTotal||0);
+  const requiredHealthy=(m.sources||[]).filter(x=>x.required!==false).every(x=>x.ok);
+  const completeSources=fresh&&m.coverageComplete===true&&requiredHealthy&&sourceTotal===totalSourceCount&&sourceOk===sourceTotal;
   const lastGood=m.lastSuccessfulAt?' · 마지막 정상 '+new Date(m.lastSuccessfulAt).toLocaleString('ko-KR'):'';
-  const status=loading?'공식 사이트 확인 중':stale||!fresh?'최근 저장본 표시 · 연결 확인 필요'+lastGood:error?'공식 감시 연결 확인 필요':!completeSources?'일부 공식소스 확인 실패 · 결과 확정 보류':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
+  const status=loading?'공식 사이트 확인 중':stale||!fresh?'최근 저장본 표시 · 연결 확인 필요'+lastGood:error?'공식 감시 연결 확인 필요':!completeSources?'시험 공고 감시 정상 · 교재/학교 보조소스 확인 필요':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
   const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
   const unseenRevisions=new Set(m.unseen.map(revisionKey));
   const items=latest.length?latest.map(x=>itemHtml(x,unseenRevisions.has(revisionKey(x)))).join(''):'<div class="empty official-monitor-empty">새 시험 관련 공식 공고가 없습니다.</div>';
   const notifyLabel=m.notificationPermission==='granted'?'앱 알림 켜짐':m.notificationPermission==='denied'?'앱 알림 차단됨':'앱 알림 켜기';
   const resultTag=m.unseenCount?'<span class="tag warn">새 공고·변경 '+m.unseenCount+'건</span>':completeSources?'<span class="tag good">새 변경 없음</span>':'<span class="tag warn">일부 공식소스 확인 필요</span>';
   const calendarTarget=targetItems.find(x=>scheduleEntries(x).length>0);
-  return '<section class="card official-monitor-card" aria-live="polite" aria-atomic="false" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+resultTag+'</div><p class="muted">앱 인프라가 매시간 국가공무원 채용시스템의 소방청 채용·시험 정보와 중앙소방학교 공식 공고·교재만 확인합니다. WAF를 우회하지 않으며, 앱을 열거나 다시 활성화하면 새 공고를 표시합니다. 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/'+(requiredSourceCount||sourceTotal||0)+'</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(calendarTarget?'<button class="btn small ghost" data-monitor-calendar>일정 캘린더 저장</button>':'')+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
+  return '<section class="card official-monitor-card" aria-live="polite" aria-atomic="false" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+resultTag+'</div><p class="muted">앱 인프라가 매시간 국가공무원 채용시스템의 소방청 채용·시험 정보와 중앙소방학교 공식 공고·교재만 확인합니다. WAF를 우회하지 않으며, 앱을 열거나 다시 활성화하면 새 공고를 표시합니다. 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/'+(totalSourceCount||sourceTotal||0)+'</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(calendarTarget?'<button class="btn small ghost" data-monitor-calendar>일정 캘린더 저장</button>':'')+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
 }
 
 function bannerHtml(){
@@ -221,7 +226,7 @@ async function refresh({force=false}={}){
     const persisted=read();
     write({...persisted,lastSnapshot:snapshot,lastSnapshotAt:Date.now(),lastTransport:transport});
     const generatedMs=Date.parse(String(snapshot.generatedAt||''));
-    const staleSnapshot=snapshot.healthy!==true||snapshot.degraded===true||!Number.isFinite(generatedMs)||Date.now()-generatedMs>MAX_SNAPSHOT_AGE_MS;
+    const staleSnapshot=snapshot.healthy!==true||!Number.isFinite(generatedMs)||Date.now()-generatedMs>MAX_SNAPSHOT_AGE_MS;
     state={status:staleSnapshot?'stale':'ready',snapshot,unseen,lastFetched:Date.now(),error:'',transport,notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
     dispatch();
     await notifyUnseen();
@@ -291,7 +296,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,degradedSnapshotTruth:true,staleSnapshotNeverClaimsNoChange:true,wafBypassForbidden:true,machineFriendlyOfficialSources:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,degradedSnapshotTruth:true,staleSnapshotNeverClaimsNoChange:true,wafBypassForbidden:true,machineFriendlyOfficialSources:true,requiredExamSourceCanStayHealthyWhileSupplementalSourceDegrades:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();
