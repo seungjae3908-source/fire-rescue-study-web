@@ -12,4 +12,4 @@
 'disaster-preparedness':['자원 비축','통신수단','매뉴얼','합동훈련'],
 'emergency-rescue-command':['소방청','중앙긴급구조통제단','지역 긴급구조통제단','현장 지휘'],
 'disaster-situation-room':['정보 수집','상황 분석','전파','초동조치','기관간 협조']
-});})();
+});X.layouts=X.layouts||{};X.layouts['fire-org-chain']='vertical-org';})();
