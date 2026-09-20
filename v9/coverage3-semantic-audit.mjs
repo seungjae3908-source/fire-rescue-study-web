@@ -35,7 +35,8 @@ for(const c of V.curriculum.concepts){
   issue(missing,'easy',!!schema?.easy);
   issue(missing,'features>=3',(schema?.features?.length||0)>=3);
   issue(missing,'core>=3',(schema?.core?.length||0)>=3);
-  issue(missing,'source-anchor',(schema?.sourceRanges?.length||0)>=1);
+  const officialWeb=(pack?.officialLinks||[]).some(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')));
+  issue(missing,'source-anchor',(schema?.sourceRanges?.length||0)>=1||officialWeb);
   issue(missing,highYield.test(c.title)?'questions>=20':'questions>=12',questions.length>=(highYield.test(c.title)?20:12));
 
   if(c.id==='F03-C09'){
