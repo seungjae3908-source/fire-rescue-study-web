@@ -8,6 +8,16 @@ on:
         required: false
         default: false
         type: boolean
+      preview_url:
+        description: 'Exact Vercel preview URL for manual deployed acceptance'
+        required: false
+        default: ''
+        type: string
+      expected_runtime_head:
+        description: 'Exact deployed runtime SHA expected at preview_url'
+        required: false
+        default: ''
+        type: string
   push:
     branches: [main, feat/v9-learning-workspace]
     paths:
@@ -33,6 +43,10 @@ on:
       - 'V9-ARCHITECTURE.md'
       - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
+
+concurrency:
+  group: v9-development-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -60,8 +74,16 @@ jobs:
         run: node v9/content-depth.mjs
       - name: 119 content contract blocker report
         run: node v9/content-contract-audit.mjs
+      - name: Quality 3 semantic completeness gate
+        run: node v9/coverage3-semantic-audit.mjs
+      - name: High-yield semantic depth profile report
+        run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
         run: node v9/question-contract-audit.mjs
+      - name: A/B verified question coverage gap report
+        run: node v9/verified-question-coverage-audit.mjs
+      - name: B-grade promotion candidate report
+        run: node v9/verified-promotion-candidate-audit.mjs
       - name: 119 textbook-depth distribution report
         run: node v9/textbook-depth-audit.mjs
       - name: 119 remaining blocker detail report
@@ -97,6 +119,8 @@ jobs:
         run: node v9/phase-b-ems-source-audit.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
+      - name: Korean image OCR quality + owner isolation QA
+        run: node v9/image-ocr-e2e.mjs
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
         run: node v9/e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
@@ -134,10 +158,9 @@ jobs:
 
 
   coverage2_backlog_report:
-    name: coverage2_backlog_report (non-release readiness)
+    name: coverage2_strict_gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -527,13 +550,14 @@ jobs:
         run: node v9/real-mock-live-e2e.mjs
 
 
-  student_ux_live_smoke:
-    name: student_ux_live_smoke
+  preview_exact_sha_acceptance:
+    name: preview_exact_sha_acceptance
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.preview_url != '' && inputs.expected_runtime_head != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      STUDY_119_PREVIEW_URL: https://study-119-preview.vercel.app/
-      STUDY_119_EXPECTED_RUNTIME_HEAD: 9aeaadd12b01b36c2addda29860133d4296b9877
+      STUDY_119_PREVIEW_URL: ${{ inputs.preview_url }}
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ inputs.expected_runtime_head }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -543,5 +567,5 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
-      - name: Verify deployed preview boots on mobile and desktop
+      - name: Verify exact deployed preview SHA on mobile and desktop
         run: node v9/live-student-ux-smoke.mjs

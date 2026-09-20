@@ -213,24 +213,30 @@ try{
   assert(await m.locator('[data-calc-bank]').count()===1,'exam landing exposes a dedicated calculation practice action');
   await m.locator('[data-calc-bank]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='bank');
   await m.waitForSelector('.question-card');
-  const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형');return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id)}}); 
-  assert(calcBank.filter==='calc'&&calcBank.count>=45&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with the expanded source-backed drill bank');
+  const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형'),audit=V.CalculationTraining119?.audit?.();return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id),audit}}); 
+  assert(calcBank.filter==='calc'&&calcBank.count>=87&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with the expanded source-backed drill bank');
   assert(calcBank.ids.filter(id=>/^119-calc-/.test(id)).length===21,'calculation practice preserves the 21 reviewed legacy/source-backed calculation drills');
   assert(calcBank.ids.filter(id=>/^119-q2calc-/.test(id)).length===24,'calculation Quality 2.0 adds 24 numeric variants without past-exam credit');
-  assert(await m.locator('.calc-chip').count()>=8,'calculation training exposes formula-family filters');
+  assert(calcBank.ids.filter(id=>/^119-calc3-/.test(id)).length===42,'calculation Quality 3.0 adds seven families times six staged drills');
+  assert(calcBank.audit?.ready===true&&calcBank.audit?.rows?.length===7&&calcBank.audit.rows.every(x=>Object.values(x.stages).every(n=>n>=1)),'all calculation families cover understand basic unit reverse trap and exam stages');
+  assert(await m.locator('[data-calc-group]').count()>=8,'calculation training exposes formula-family filters');
+  assert(await m.locator('[data-calc-stage]').count()===7,'calculation training exposes all plus six explicit learning stages');
   await m.locator('[data-calc-group="oxygen"]').click();
-  const oxygenGroup=await m.evaluate(()=>({group:window.AITUTOR_V9.App.runtime.calcGroup,stem:document.querySelector('.question-card h2')?.textContent||''}));
-  assert(oxygenGroup.group==='oxygen'&&/산소통/.test(oxygenGroup.stem),'calculation family filter switches to oxygen-cylinder drills');
+  await m.locator('[data-calc-stage="reverse"]').click();
+  const oxygenGroup=await m.evaluate(()=>({group:window.AITUTOR_V9.App.runtime.calcGroup,stage:window.AITUTOR_V9.App.runtime.calcStage,stem:document.querySelector('.question-card h2')?.textContent||''}));
+  assert(oxygenGroup.group==='oxygen'&&oxygenGroup.stage==='reverse'&&/시작압력/.test(oxygenGroup.stem),'calculation filters reach the oxygen reverse-calculation stage');
   await noX(m,'mobile calculation practice');
   const calcEvidence=await m.evaluate(()=>{const V=window.AITUTOR_V9;return{
     oxygen:(V.contentPacks.authored['E09-C07']?.calculations||[]).map(x=>({formula:x.formula,tier:x.evidenceTier,note:x.note})),
     drip:(V.contentPacks.authored['E07-C03']?.calculations||[]).map(x=>({formula:x.formula,tier:x.evidenceTier,note:x.note})),
     oxygenQs:V.questions.filter(q=>/^119-calc-oxygen-/.test(q.id||'')).map(q=>q.grade),
-    dripQs:V.questions.filter(q=>/^119-calc-drip-/.test(q.id||'')).map(q=>q.grade)
+    dripQs:V.questions.filter(q=>/^119-calc-drip-/.test(q.id||'')).map(q=>q.grade),
+    staged:V.questions.filter(q=>/^119-calc3-/.test(q.id||'')).map(q=>({grade:q.grade,family:q.calcFamily,stage:q.calcStage,past:q.pastExamClaim}))
   }});
   assert(calcEvidence.oxygen.some(x=>x.tier==='reconstructed-exam-practice')&&calcEvidence.oxygen.some(x=>x.tier==='official-source-practice'&&/P - R/.test(x.formula||'')),'oxygen-cylinder lesson keeps reconstructed practice separate from the official-source calculation contract');
   assert(calcEvidence.drip.some(x=>x.tier==='standard-education-practice')&&calcEvidence.drip.some(x=>x.tier==='regulated-device-source-practice'&&/gtt\/min/.test(x.formula||'')),'IV-drip lesson keeps legacy education practice separate from regulated-device source calculation');
   assert(calcEvidence.oxygenQs.length===4&&calcEvidence.dripQs.length===4&&[...calcEvidence.oxygenQs,...calcEvidence.dripQs].every(x=>x==='P'),'legacy and newly source-backed oxygen/drip calculation drills all remain P-grade and cannot enter verified real-mock credit');
+  assert(calcEvidence.staged.length===42&&calcEvidence.staged.every(x=>x.grade==='P'&&x.past===false),'all staged calculation drills remain P-grade and outside real-mock credit');
   await go(m,'exam');await m.waitForSelector('.exam-start');
   const realStart=m.locator('[data-exam-start="real"]');
   assert(await realStart.count()===1,'real mock start is enabled only after verified fire+EMS scope coverage closes');
@@ -330,19 +336,27 @@ try{
   assert(viewer.trim().length>20&&viewer.includes('[1쪽]'),'uploaded PDF extracted text can be opened and checked');
   await m.locator('[data-doc-viewer-close]').click();
 
+  const ocrReference='소방 구급 산소 119 2468 500mL 30% 100mmHg';
   const pngBase64=await m.evaluate(async()=>{
-    const canvas=document.createElement('canvas');canvas.width=1400;canvas.height=360;
+    const canvas=document.createElement('canvas');canvas.width=1800;canvas.height=520;
     const g=canvas.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,canvas.width,canvas.height);
-    g.fillStyle='#000';g.font='bold 92px Arial, sans-serif';g.textBaseline='middle';g.fillText('119 RESCUE OCR 2468',70,180);
+    g.fillStyle='#000';g.textBaseline='middle';g.font='bold 104px "Noto Sans CJK KR","Noto Sans KR","Malgun Gothic",Arial,sans-serif';
+    g.fillText('소방 구급 산소',70,155);
+    g.font='bold 94px Arial,"Noto Sans KR",sans-serif';g.fillText('119 2468 500mL 30% 100mmHg',70,360);
     const blob=await new Promise((res,rej)=>canvas.toBlob(x=>x?res(x):rej(Error('PNG_CREATE_FAILED')),'image/png'));
     return await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(blob)});
   });
-  await m.locator('#personalFile').setInputFiles({name:'ocr-ui.png',mimeType:'image/png',buffer:Buffer.from(pngBase64,'base64')});
-  await m.waitForFunction(()=>window.AITUTOR_V9.App.runtime.docs.some(d=>d.title==='ocr-ui.png'),null,{timeout:180000});
-  const imageRow=m.locator('.doc-row').filter({hasText:'ocr-ui.png'});
+  await m.locator('#personalFile').setInputFiles({name:'ocr-benchmark.png',mimeType:'image/png',buffer:Buffer.from(pngBase64,'base64')});
+  await m.waitForFunction(()=>window.AITUTOR_V9.App.runtime.docs.some(d=>d.title==='ocr-benchmark.png'),null,{timeout:180000});
+  const imageRow=m.locator('.doc-row').filter({hasText:'ocr-benchmark.png'});
   await imageRow.locator('[data-doc-open]').click();await m.waitForSelector('.doc-viewer');
   const ocrText=await m.locator('.doc-viewer-text').innerText();
-  assert(/RESCUE/i.test(ocrText)&&/2468/.test(ocrText),'uploaded photo OCR text can be opened and checked');
+  const ocrMetrics=await m.evaluate(({reference,observed})=>window.AITUTOR_V9.PrivateDocs.ocrBenchmarkMetrics(reference,observed),{reference:ocrReference,observed:ocrText});
+  console.log('OCR_BENCHMARK_119',JSON.stringify({reference:ocrReference,observed:ocrText,metrics:ocrMetrics}));
+  assert(ocrMetrics.koreanRecall>=.67,'OCR benchmark recognizes at least two-thirds of Korean key tokens');
+  assert(ocrMetrics.numericRecall===1,'OCR benchmark preserves every critical numeric token');
+  assert(ocrMetrics.unitRecall>=.67,'OCR benchmark preserves at least two-thirds of critical unit tokens');
+  assert(ocrMetrics.cer<=.35,'OCR benchmark normalized character error rate stays at or below 35%');
   await m.locator('[data-doc-viewer-close]').click();
   await noX(m,'mobile notes');
 

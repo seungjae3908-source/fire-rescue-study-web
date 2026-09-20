@@ -127,4 +127,5 @@ V.TextbookGrounded119={
   targetChars:TARGET,enriched,depthClosed,sectionsClosed,trapsClosed,memoryClosed,
   sourcePolicy:'verified content pack + numeric official sourceRanges; no new source claims'
 };
+V.Quality2StudySchema119?.refreshAll?.();
 })();

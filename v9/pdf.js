@@ -39,6 +39,16 @@ function nativePdfText(tc){
   }
   return normalizeText(out.join('\n'))
 }
+function benchmarkNorm(s){return String(s||'').replace(/\[\s*\d+\s*쪽\s*\]/g,' ').normalize('NFKC').toLowerCase().replace(/[^0-9a-z가-힣%./-]/g,'')}
+function editDistance(a,b){a=[...String(a||'')];b=[...String(b||'')];let prev=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const cur=[i];for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur}return prev[b.length]}
+function tokenRecall(reference,observed,re){const ref=String(reference||'').match(re)||[];if(!ref.length)return 1;const obs=benchmarkNorm(observed);let hit=0;for(const raw of ref){const t=benchmarkNorm(raw);if(t&&obs.includes(t))hit++}return hit/ref.length}
+function ocrBenchmarkMetrics(reference,observed){
+  const ref=benchmarkNorm(reference),obs=benchmarkNorm(observed),cer=ref.length?editDistance(ref,obs)/ref.length:0;
+  const koreanRecall=tokenRecall(reference,observed,/[가-힣]{2,}/g);
+  const numericRecall=tokenRecall(reference,observed,/\d+(?:\.\d+)?/g);
+  const unitRecall=tokenRecall(reference,observed,/(?:mL|mmHg|kg|mg|cm|mm|psi|%|J\/kg|회\/분|℃)/gi);
+  return{cer:Number(cer.toFixed(3)),koreanRecall:Number(koreanRecall.toFixed(3)),numericRecall:Number(numericRecall.toFixed(3)),unitRecall:Number(unitRecall.toFixed(3)),referenceChars:ref.length,observedChars:obs.length}
+}
 function textQuality(text){
   if(V.LocalAI?.textQuality)return V.LocalAI.textQuality(text);
   const t=String(text||'').replace(/\s+/g,' ').trim(),compact=t.replace(/\s/g,'');if(!compact)return 0;
@@ -137,5 +147,5 @@ async function search(query,{kind,limit=8}={}){const qs=tokens(query);if(!qs.len
 async function privateGrounding(query,limit=5){const hits=await search(query,{kind:'personal',limit});return hits.map(h=>`[내 개인자료 · ${h.doc.title} · ${h.page}쪽]\n${h.text.slice(0,900)}`).join('\n\n')}
 async function exportForSync(){const ownerId=V.Store.ownerId,docs=await listDocuments('personal'),outDocs=[],outChunks=[];for(const d of docs){const {original,...safe}=d;outDocs.push({...safe,ownerId,private:true,original:undefined});for(const c of await chunksFor(d.id))outChunks.push({...c,ownerId,kind:'personal'})}const deleted=Object.entries(tombstones()).map(([id,deletedAt])=>({id,ownerId,deletedAt:Number(deletedAt)||Date.now()}));return{ownerId,docs:outDocs,chunks:outChunks,deleted}}
 async function importFromSync(remoteDocs=[],remoteChunks=[]){const ownerId=V.Store.ownerId,owned=(remoteDocs||[]).filter(x=>x&&x.ownerId===ownerId),deleted=owned.filter(x=>Number(x.deletedAt)>0),live=owned.filter(x=>!Number(x.deletedAt)),local=new Map((await listDocuments()).map(x=>[x.id,x])),ts=tombstones();let deletedCount=0;for(const row of deleted){const when=Number(row.deletedAt)||0,prev=local.get(row.id),localStamp=Math.max(Number(prev?.updatedAt||prev?.createdAt||0),Number(ts[row.id]||0));if(when<localStamp)continue;await purge(row.id);ts[row.id]=when;local.delete(row.id);deletedCount++}const allowed=new Set(live.map(x=>x.id));if(!live.length){V.Store.save();return{docs:0,chunks:0,deleted:deletedCount}}const accepted=new Set(),d=await db(),t=d.transaction(['docs','chunks'],'readwrite'),docStore=t.objectStore('docs'),chunkStore=t.objectStore('chunks');for(const row of live){const prev=local.get(row.id),remoteStamp=Number(row.updatedAt||row.createdAt||0),localStamp=Math.max(Number(prev?.updatedAt||prev?.createdAt||0),Number(ts[row.id]||0));if(localStamp>remoteStamp)continue;accepted.add(row.id);delete ts[row.id];const clean={...row,ownerId,kind:'personal',private:true,original:null,deletedAt:0};docStore.put(clean)}let chunkCount=0;for(const row of remoteChunks||[]){if(!row||row.ownerId!==ownerId||!allowed.has(row.docId)||(!accepted.has(row.docId)&&local.has(row.docId)))continue;chunkStore.put({...row,ownerId,kind:'personal',tokenSet:row.tokenSet||tokens(row.text)});chunkCount++}await txDone(t);V.Store.save();return{docs:accepted.size,chunks:chunkCount,deleted:deletedCount}}
-V.PrivateDocs={db,ingest,listDocuments,chunksFor,remove,search,privateGrounding,exportForSync,importFromSync,pdfPageNeedsOcr,nativePdfText,textQuality,privacyRules:{defaultPrivate:true,serverUpload:false,extractedTextCloudSync:'manual-member-sync',originalCloudSyncOptIn:true,crossUserSharing:false,deletionTombstones:true}};
+V.PrivateDocs={db,ingest,listDocuments,chunksFor,remove,search,privateGrounding,exportForSync,importFromSync,pdfPageNeedsOcr,nativePdfText,textQuality,ocrBenchmarkMetrics,privacyRules:{defaultPrivate:true,serverUpload:false,extractedTextCloudSync:'manual-member-sync',originalCloudSyncOptIn:true,crossUserSharing:false,deletionTombstones:true}};
 })();

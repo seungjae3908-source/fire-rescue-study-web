@@ -7,14 +7,14 @@ for(const file of [
   'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','curriculum-ems-quality2-119.js','master-syllabus-119.js',
   'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js',
-  'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js',
+  'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js','questions-verified-ems-batch1-119.js','questions-verified-fire-batch1-119.js',
   'question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
   'content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js',
   'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
-  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js',
-  'questions-calculation-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
-  'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
+  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js','quality2-study-schema-119.js',
+  'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
+  'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','questions-verified-fire-target1-119.js','questions-verified-fire-target2-119.js','questions-verified-ems-target1-119.js','questions-verified-ems-target2-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js'
 ]){
   const code=fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8');
   vm.runInThisContext(code,{filename:file});
@@ -24,6 +24,18 @@ ok(V.curriculum.totalConcepts===V.curriculum.concepts.length&&V.curriculum.total
 ok(V.MasterSyllabus119?.groups?.fire?.length===6&&V.MasterSyllabus119?.groups?.ems?.length===10,'119 master syllabus groups fire/EMS into exam-oriented parts');
 ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content completion contract is loaded');
 ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style question quality gate is loaded');
+ok(V.StudyEmphasis119?.version==='119-study-emphasis-ssot-v1','study emphasis SSOT is loaded');
+ok(V.Quality2StudySchema119?.version==='119-quality2-study-schema-v2','study schema consumes the emphasis SSOT');
+const emphasisMismatches=(V.curriculum.concepts||[]).filter(concept=>{
+  const p=V.contentPacks.get(concept.id),e=V.StudyEmphasis119.forConcept(concept.id,{numberLimit:10}),s=V.Quality2StudySchema119.get(concept.id);
+  if(!e||!s)return true;
+  return JSON.stringify(e.features.slice(0,6))!==JSON.stringify(s.features)
+    ||JSON.stringify(e.must.slice(0,8))!==JSON.stringify(s.core)
+    ||JSON.stringify(e.numbers)!==JSON.stringify(s.numbers)
+    ||JSON.stringify(e.traps.slice(0,6))!==JSON.stringify(s.exceptions)
+    ||e.evidence.source!==s.evidence?.source;
+});
+ok(emphasisMismatches.length===0,'study emphasis SSOT matches all 181 schema outputs for feature/must/number/trap/evidence');
 const questionAudit=V.QuestionQuality119.audit();
 ok(questionAudit.examStyle>0,'exam-style question bank is non-empty');
 ok(questionAudit.duplicateTexts.length===0,'exam-style question text duplicates = 0');
@@ -37,10 +49,68 @@ ok(reviewed119.every(V.QuestionQuality119.isExamStyle),'every manually-authored 
 ok(V.QuestionFactory119?.generated===generated119.length&&generated119.length>0,'grounded factory reports exactly the generated practice questions it added');
 ok(V.Quality2QuestionFactory119?.added===generatedQ2.length&&generatedQ2.length>0,'Quality 2.0 factory reports exactly the additional source-grounded practice questions it added');
 ok(generated119.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q))&&generatedQ2.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'all generated factory questions stay P-grade practice and pass the exam-style contract');
+const verifiedEmsBatch1=(V.questions||[]).filter(q=>/^119-verems-/.test(q.id||''));
+ok(V.VerifiedEMSBatch119?.added===37&&verifiedEmsBatch1.length===37,'verified EMS batch1 plus high-yield reinforcement adds thirty-seven exact-page questions');
+ok(verifiedEmsBatch1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS batch1 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedEmsBatch1.every(q=>/소방전술3\(구급\).*\d+(?:\s*[~\-–]\s*\d+)?\s*쪽/.test(String(q.source||''))),'verified EMS batch1 carries exact textbook page evidence');
+const verifiedFireBatch1=(V.questions||[]).filter(q=>/^119-verfire-/.test(q.id||''));
+ok(V.VerifiedFireBatch119?.added===18&&verifiedFireBatch1.length===18,'verified fire batch1 adds eighteen exact-page questions');
+ok(verifiedFireBatch1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified fire batch1 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedFireBatch1.every(q=>/(소방전술1|예방실무1|예방실무2).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified fire batch1 carries exact textbook page evidence');
+const verifiedEmsBatch2=(V.questions||[]).filter(q=>/^119-verems2-/.test(q.id||''));
+ok(V.VerifiedEMSBatch2119?.added===11&&verifiedEmsBatch2.length===11,'verified EMS batch2 adds eleven exact-page high-yield gap questions');
+ok(verifiedEmsBatch2.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS batch2 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedEmsBatch2.every(q=>/소방전술3\(구급\).*\d+(?:\s*[~\-–]\s*\d+)?\s*쪽/.test(String(q.source||''))),'verified EMS batch2 carries exact textbook page evidence');
+const verifiedEmsBatch3=(V.questions||[]).filter(q=>/^119-verems3-/.test(q.id||''));
+ok(V.VerifiedEMSBatch3119?.added===29&&verifiedEmsBatch3.length===29,'verified EMS batch3 adds twenty-nine exact-page high-yield questions');
+ok(verifiedEmsBatch3.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS batch3 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedEmsBatch3.every(q=>/소방전술3\(구급\).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified EMS batch3 carries exact textbook page evidence');
+const verifiedFireBatch2=(V.questions||[]).filter(q=>/^119-verfire2-/.test(q.id||''));
+ok(V.VerifiedFireBatch2119?.added===9&&verifiedFireBatch2.length===9,'verified fire batch2 adds nine exact-page high-yield questions');
+ok(verifiedFireBatch2.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified fire batch2 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedFireBatch2.every(q=>/(소방전술1|예방실무1|예방실무2).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified fire batch2 carries exact textbook page evidence');
+const verifiedEmsBreadth1=(V.questions||[]).filter(q=>/^119-verbreadth1-/.test(q.id||''));
+ok(V.VerifiedEMSBreadth119?.added===20&&verifiedEmsBreadth1.length===20,'verified EMS breadth batch1 adds twenty exact-page zero-gap questions');
+ok(verifiedEmsBreadth1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS breadth batch1 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedEmsBreadth1.every(q=>/소방전술3\(구급\).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified EMS breadth batch1 carries exact textbook page evidence');
+const verifiedEmsBreadth2=(V.questions||[]).filter(q=>/^119-verbreadth2-/.test(q.id||''));
+ok(V.VerifiedEMSBreadth2119?.added===21&&verifiedEmsBreadth2.length===21,'verified EMS breadth batch2 closes twenty-one remaining zero-verified EMS concepts');
+ok(verifiedEmsBreadth2.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS breadth batch2 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedEmsBreadth2.every(q=>/소방전술3\(구급\).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified EMS breadth batch2 carries exact textbook page evidence');
+const verifiedFireBreadth2=(V.questions||[]).filter(q=>/^119-verfirebreadth2-/.test(q.id||''));
+ok(V.VerifiedFireBreadth2119?.added===26&&verifiedFireBreadth2.length===26,'verified fire breadth batch2 closes twenty-six remaining zero-verified fire concepts');
+ok(verifiedFireBreadth2.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified fire breadth batch2 stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedFireBreadth2.every(q=>/(소방전술1|예방실무1|예방실무2).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'verified fire breadth batch2 carries exact textbook page evidence');
+const verifiedHighYield4=(V.questions||[]).filter(q=>/^119-verhy4-/.test(q.id||''));
+ok(V.VerifiedHighYield4119?.added===31&&verifiedHighYield4.length===31,'high-yield level-four batch adds thirty-one exact-page questions');
+ok(verifiedHighYield4.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'high-yield level-four batch stays B-grade, page-verified and never claims past-exam status');
+ok(verifiedHighYield4.every(q=>/(소방전술|예방실무).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'high-yield level-four batch carries exact official textbook page evidence');
+const verifiedFireTarget1=(V.questions||[]).filter(q=>/^119-vertarget-fire1-/.test(q.id||''));
+ok(V.VerifiedFireTarget1119?.added===41&&verifiedFireTarget1.length===41,'fire target1 adds forty-one new exact-page B-grade questions');
+ok(verifiedFireTarget1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.reviewStatus==='source-reviewed'&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'fire target1 remains source-reviewed B-grade evidence with no past-exam claim');
+ok(verifiedFireTarget1.every(q=>/2026\s+소방전술1.*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'fire target1 carries exact 2026 NFA textbook page evidence');
+const verifiedFireTarget2=(V.questions||[]).filter(q=>/^119-vertarget-fire2-/.test(q.id||''));
+ok(V.VerifiedFireTarget2119?.added===41&&verifiedFireTarget2.length===41,'fire target2 adds final forty-one exact-page B-grade questions');
+ok(verifiedFireTarget2.every(q=>q.grade==='B'&&q.pageVerified===true&&q.reviewStatus==='source-reviewed'&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'fire target2 remains source-reviewed B-grade evidence with no past-exam claim');
+ok(verifiedFireTarget2.every(q=>/(2026\s+소방전술1|2026\s+예방실무).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'fire target2 carries exact 2026 NFA textbook page evidence');
+const verifiedEmsTarget1=(V.questions||[]).filter(q=>/^119-vertarget-ems1-/.test(q.id||''));
+ok(V.VerifiedEMSTarget1119?.added===48&&verifiedEmsTarget1.length===48,'EMS target1 adds forty-eight new exact-page B-grade questions');
+ok(verifiedEmsTarget1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.reviewStatus==='source-reviewed'&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'EMS target1 remains source-reviewed B-grade evidence with no past-exam claim');
+ok(verifiedEmsTarget1.every(q=>/2026\s+소방전술3\(구급\).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'EMS target1 carries exact 2026 NFA textbook page evidence');
+const verifiedEmsTarget2=(V.questions||[]).filter(q=>/^119-vertarget-ems2-/.test(q.id||''));
+ok(V.VerifiedEMSTarget2119?.added===47&&verifiedEmsTarget2.length===47,'EMS target2 adds final forty-seven exact-page B-grade questions');
+ok(verifiedEmsTarget2.every(q=>q.grade==='B'&&q.pageVerified===true&&q.reviewStatus==='source-reviewed'&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'EMS target2 remains source-reviewed B-grade evidence with no past-exam claim');
+ok(verifiedEmsTarget2.every(q=>/2026\s+소방전술3\(구급\).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'EMS target2 carries exact 2026 NFA textbook page evidence');
 ok(V.CalculationQuestions119?.added===21,'calculation practice bank adds twenty-one calculation drills with explicit evidence tiers');
 const calculationPractice=(V.questions||[]).filter(q=>/^119-calc-/.test(q.id||''));
 ok(calculationPractice.length===21&&calculationPractice.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'all calculation questions remain practice-only and pass the exam-style quality gate');
 ok(calculationPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'calculation practice makes no unsupported past-exam claim');
+const calcQ2=(V.questions||[]).filter(q=>/^119-q2calc-/.test(q.id||''));
+ok(calcQ2.length===24&&calcQ2.every(q=>q.grade==='P'&&q.type==='계산형'&&V.QuestionQuality119.isExamStyle(q)),'Quality 2.0 keeps twenty-four numeric calculation variants practice-only');
+const calcV3=(V.questions||[]).filter(q=>/^119-calc3-/.test(q.id||''));
+const calcV3Audit=V.CalculationTraining119?.audit?.();
+ok(calcV3.length===42&&calcV3.every(q=>q.grade==='P'&&q.type==='계산형'&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'six-stage calculation bank adds forty-two P-grade drills without past-exam credit');
+ok(calcV3Audit?.ready===true&&calcV3Audit?.rows?.length===7&&calcV3Audit.rows.every(x=>Object.values(x.stages).every(n=>n>=1)),'all seven calculation families cover understand basic unit reverse trap and exam stages');
 ok(V.LawQuestions119?.added===18,'eighteen current-law practice questions are loaded');
 const lawPractice=(V.questions||[]).filter(q=>/^119-law-/.test(q.id||''));
 ok(lawPractice.length===18&&lawPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'current-law questions stay practice-only and pass the exam-style gate');
@@ -52,9 +122,11 @@ ok(V.EMSGapPractice119?.added===10,'ten CBRN and pediatric-resuscitation source-
 const emsGapPractice=(V.questions||[]).filter(q=>/^119-(cbrn|pals)-\d/.test(q.id||''));
 ok(emsGapPractice.length===10&&emsGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'CBRN/PALS questions stay practice-only and pass the exam-style gate');
 ok(emsGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'CBRN/PALS practice makes no unsupported past-exam claim');
-ok(V.FinalGapQuestions119?.added===99,'ninety-nine building ECG rhythm brady-tachy electrical-therapy disaster CBRN transport cardiovascular shock endocrine sepsis toxicology newborn chest-trauma burn respiratory GI drug infection ACLS and post-ROSC source-backed practice questions are loaded');
+ok(V.FinalGapQuestions119?.planned===99&&V.FinalGapQuestions119?.added===98&&V.FinalGapQuestions119?.skippedDuplicates?.length===1,'final-gap keeps ninety-nine planned topics with one verified evidence-tier replacement');
+const finalGapReplacement=V.FinalGapQuestions119.skippedDuplicates[0];
+ok(finalGapReplacement?.id==='119-finalgap-ecg-arrest-03'&&finalGapReplacement?.replacedBy==='119-verems-electrical-01'&&finalGapReplacement?.replacementGrade==='B','PEA final-gap duplicate is replaced only by the exact-page B-grade verified question');
 const finalGapPractice=(V.questions||[]).filter(q=>/^119-finalgap-/.test(q.id||''));
-ok(finalGapPractice.length===99&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'final-gap questions remain practice-only and pass the exam-style gate');
+ok(finalGapPractice.length===98&&finalGapPractice.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'remaining final-gap questions stay practice-only and pass the exam-style gate after verified replacement');
 ok(finalGapPractice.every(q=>!/기출|실제 출제|과거시험/.test(String(q.q||''))),'final-gap practice makes no unsupported past-exam claim');
 const adultAclsExamStandard=finalGapPractice.filter(q=>/^119-finalgap-acls-0[1-4]$/.test(q.id||''));
 ok(adultAclsExamStandard.length===4&&adultAclsExamStandard.every(q=>/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(q.source||''))),'four adult arrest-algorithm drills are bound to the 2020 KACPR source mandated by the 2026 exam plan');
@@ -126,7 +198,7 @@ ok(fullCoverage.rows.find(x=>x.id==='F-BLD-05')?.status==='covered','kitchen ele
 ok(fullCoverage.rows.find(x=>x.id==='F-SUP-03')?.status==='covered','foam concentration expansion-ratio and concentrate-quantity calculation row closes only after direct textbook ratio definitions');
 ok(V.FireTerminologyQuestions119?.added===71,'seventy-one fire terminology/science/behavior/calculation/special-fire practice questions are loaded');
 const phaseAFireTermIds=['119-fireterm-01','119-fireterm-02','119-fireterm-03','119-fireterm-04','119-fireterm-05','119-fireterm-06','119-fireterm-07','119-fireterm-08','119-fireterm-09','119-fireterm-10','119-fireterm-11','119-fireterm-12','119-fireterm-13','119-fireterm-14','119-fireterm-15','119-fireterm-16','119-fireterm-17','119-fireterm-18','119-fireterm-19','119-fireterm-20','119-fireterm-21','119-fireterm-22','119-fireterm-23','119-fireterm-24','119-fireterm-25','119-fireterm-26','119-fireterm-27','119-fireterm-28','119-fireterm-29','119-fireterm-30','119-fireterm-31','119-fireterm-32','119-fireterm-33','119-fireterm-34','119-fireterm-35','119-fireterm-36','119-fireterm-37','119-fireterm-38','119-fireterm-39','119-fireterm-40','119-fireterm-41','119-fireterm-42','119-fireterm-43','119-fireterm-44','119-fireterm-45','119-fireterm-46','119-fireterm-47','119-fireterm-48','119-fireterm-49','119-fireterm-50','119-fireterm-51','119-fireterm-52','119-fireterm-53','119-fireterm-54','119-fireterm-55','119-fireterm-56','119-fireterm-57','119-fireterm-58','119-fireterm-59','119-fireterm-60','119-fireterm-61','119-fireterm-62','119-fireterm-63','119-fireterm-64','119-fireterm-65','119-fireterm-66','119-fireterm-67','119-fireterm-68','119-fireterm-69','119-fireterm-70','119-fireterm-71'];
-ok(phaseAFireTermIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'Phase A ignition-range-MOC focused questions remain P-grade exam-style practice');
+ok(phaseAFireTermIds.every(id=>V.questionById[id]?.grade==='P'&&V.QuestionQuality119.isExamStyle(V.questionById[id])),'Phase A fire terminology questions remain P-grade exam-style practice');
 ok(['119-fireterm-01','119-fireterm-02','119-fireterm-07','119-fireterm-08'].every(id=>/화재2\) 303~306쪽/.test(V.questionById[id]?.source||'')),'flash-fire-autoignition closure is bound to exact textbook pages 303~306');
 ok(['119-fireterm-03','119-fireterm-04'].every(id=>/화재2\) 306~307쪽/.test(V.questionById[id]?.source||'')),'flammability-range closure is bound to exact textbook pages 306~307');
 ok(['119-fireterm-05','119-fireterm-06'].every(id=>/화재2\) 226쪽/.test(V.questionById[id]?.source||'')),'MOC closure is bound to exact textbook page 226');
@@ -406,8 +478,9 @@ ok((V.contentPacks.authored['E03-C05']?.officialLinks||[]).some(x=>/educationGui
 ok((V.contentPacks.authored['E21-C04']?.visuals||[]).includes('ems-pediatric-resuscitation')&&!!V.Visual119.render('ems-pediatric-resuscitation'),'pediatric resuscitation flow renders as a real study visual');
 ok(V.curriculum.byId['F03-C05']?.title==='화재 진행 영향요인·건축구조'&&(V.contentPacks.authored['F03-C05']?.compare||[]).some(x=>/목조건축물/.test(String(x?.[0]))),'building-fire lesson compares wood and fire-resistive construction');
 ok(V.curriculum.byId['E11-C02']?.title==='심질환·심전도 리듬'&&(V.contentPacks.authored['E11-C02']?.detail||[]).some(x=>/좁은 QRS/.test(x)&&/방실차단/.test(x)),'ECG lesson includes NFA three-lead categories and QRS-based rhythm approach');
-const arrestEcgIds=['119-finalgap-ecg-arrest-01','119-finalgap-ecg-arrest-02','119-finalgap-ecg-arrest-03','119-finalgap-ecg-arrest-04'];
-ok(arrestEcgIds.every(id=>V.questionById[id]?.grade==='P'&&/2020년 한국심폐소생술 가이드라인/.test(String(V.questionById[id]?.source||''))),'four cardiac-arrest ECG recognition drills stay practice-only and exam-standard source-bound');
+const arrestEcgPracticeIds=['119-finalgap-ecg-arrest-01','119-finalgap-ecg-arrest-02','119-finalgap-ecg-arrest-04'];
+ok(arrestEcgPracticeIds.every(id=>V.questionById[id]?.grade==='P'&&/2020년 한국심폐소생술 가이드라인/.test(String(V.questionById[id]?.source||''))),'three non-duplicated cardiac-arrest ECG drills stay P-grade and exam-standard source-bound');
+ok(V.questionById['119-verems-electrical-01']?.grade==='B'&&V.questionById['119-verems-electrical-01']?.pageVerified===true&&/2020년 한국심폐소생술 가이드라인 140~145쪽/.test(String(V.questionById['119-verems-electrical-01']?.source||'')),'PEA arrest-rhythm drill is upgraded to exact-page B-grade evidence instead of duplicated P-grade practice');
 ok((V.contentPacks.authored['E11-C04']?.visuals||[]).includes('ems-ecg-arrest-rhythms')&&(V.contentPacks.authored['E11-C05']?.visuals||[]).includes('ems-ecg-arrest-rhythms'),'VF/pVT and PEA/asystole lessons share the dedicated four-rhythm ECG visual');
 ok(Array.isArray(V.Visual119?.data?.['ems-ecg-arrest-rhythms'])&&V.Visual119.data['ems-ecg-arrest-rhythms'].length===4,'ECG visual contract exposes exactly four arrest rhythms');
 ok(/ecg-rhythm-grid/.test(V.Visual119.render('ems-ecg-arrest-rhythms')||'')&&/시험 판독용 학습 도식/.test(V.Visual119.render('ems-ecg-arrest-rhythms')||''),'dedicated ECG renderer produces waveform cards and labels them as study schematics');
@@ -472,6 +545,7 @@ ok(sw.includes("'./questions-pals-advanced-119.js'"),'official pediatric ALS pra
 ok(sw.includes("'./questions-fire-terminology-119.js'"),'exact-page fire terminology practice bank is offline-cached');
 ok(sw.includes("'./exam-gap-enrichment-119.js'"),'exam gap enrichment is offline-cached');
 ok(sw.includes("'./questions-calculation-119.js'"),'calculation practice bank is offline-cached');
+ok(sw.includes("'./calculation-training-v3-119.js'"),'six-stage calculation training is offline-cached');
 ok(sw.includes("'./questions-law-119.js'"),'current-law practice bank is offline-cached');
 ok(sw.includes("'./questions-special-combustible-119.js'"),'special-combustible practice bank is offline-cached');
 ok(sw.includes("'./questions-ems-gap-practice-119.js'"),'CBRN/PALS practice bank is offline-cached');
@@ -487,6 +561,7 @@ ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sy
 ok(v9index.indexOf('./source-catalog-119.js')>v9index.indexOf('./pdf.js')&&v9index.indexOf('./source-catalog-119.js')<v9index.indexOf('./source-pdf.js'),'official source catalog loads before PDF engine');
 ok(v9index.indexOf('./source-pdf.js')>v9index.indexOf('./source-catalog-119.js')&&v9index.indexOf('./source-pdf.js')<v9index.indexOf('./app.js'),'official PDF highlight engine loads before app UI');
 ok(v9index.indexOf('./coverage-map-119.js')>v9index.indexOf('./calculation-contract-119.js')&&v9index.indexOf('./coverage-map-119.js')<v9index.indexOf('./store.js'),'full exam Coverage Map loads after content/question contracts and before runtime state');
+ok(v9index.indexOf('./study-emphasis-119.js')>v9index.indexOf('./quality2-comparison-families-119.js')&&v9index.indexOf('./study-emphasis-119.js')<v9index.indexOf('./quality2-study-schema-119.js'),'study emphasis SSOT loads before study schema');
 
 
 const sql=fs.readFileSync(new URL('../supabase/v9-schema.sql',import.meta.url),'utf8');
@@ -523,6 +598,8 @@ ok(syncMerge.includes('{...clone(prev),...clone(row)}')&&syncMerge.includes('{..
 
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const appCode=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const passNoteCode=fs.readFileSync(new URL('./pass-note.js',import.meta.url),'utf8');
+ok(appCode.includes('StudyEmphasis119')&&passNoteCode.includes('StudyEmphasis119'),'study UI and pass notes both consume the emphasis SSOT');
 ok(appCode.includes('data-doc-list')&&appCode.includes('refreshDocsList()'),'personal-doc hydration updates only the document list and preserves the file input');
 ok(auth.includes("event==='SIGNED_OUT'")&&auth.includes('V.Store.switchOwner(V.Store.guestId)'), 'SIGNED_OUT auth events switch runtime ownership back to the guest namespace');
 ok(auth.includes("'session-expired'")&&auth.includes("'manual-signout'"),'auth runtime distinguishes session expiry from explicit logout');
