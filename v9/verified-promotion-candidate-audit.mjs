@@ -25,7 +25,7 @@ const V=window.AITUTOR_V9,Q=V.QuestionQuality119;
 if(!Q?.isExamStyle)throw new Error('QUESTION_QUALITY_RUNTIME_UNAVAILABLE');
 
 const badPractice=/복원|연습용|공식문제지\s*미확보|KOCW|reconstructed|practice-only/i;
-const externalOfficial=/가이드라인|KOSHA|사이언스올|질병관리청|국가건강정보|E-GEN|법령|법제처|대한/i;
+const externalOfficial=/가이드라인|KACPR|KOSHA|사이언스올|질병관리청|국가건강정보|E-GEN|법령|법제처|119법|현행|소방청\s*공식|공식\s*구급\s*교육문제|대한/i;
 const exactTextbook=/2026\s+(?:소방전술1(?:\(화재[12]\))?|소방전술3\(구급\)|예방실무[12])(?:\s+PDF)?[^\n]*?\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/;
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
 
