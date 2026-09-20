@@ -274,6 +274,8 @@
 .exam-report-grid b{font-size:18px}
 .weak-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 .weak-chip{border:1px solid rgba(255,198,109,.28);background:rgba(255,198,109,.07);border-radius:999px;padding:7px 10px;font-size:12px}
+.skill-train-chip{color:inherit;font-family:inherit;cursor:pointer;text-align:left}
+.skill-train-chip:hover,.skill-train-chip:focus-visible{border-color:rgba(255,198,109,.58);background:rgba(255,198,109,.13);outline:none}
 .exam-miss-list{display:grid;gap:10px;margin-top:10px}
 .exam-miss{border:1px solid var(--line);background:#081524;border-radius:14px;padding:14px}
 .exam-miss-head{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:11px}

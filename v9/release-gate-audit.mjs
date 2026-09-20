@@ -26,6 +26,7 @@ const textbookVerifiedQuestions=verifiedQuestions.filter(q=>/소방전술|예방
 const exactPage=/\d+(?:\s*[~\-–]\s*\d+)?\s*쪽|page\s*\d+/i;
 const verifiedQuestionPageEvidence=textbookVerifiedQuestions.length>0&&textbookVerifiedQuestions.every(q=>exactPage.test(String(q.source||'')));
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const mastery=fs.readFileSync(new URL('./mastery.js',import.meta.url),'utf8');
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const lite=fs.readFileSync(new URL('./supabase-lite.js',import.meta.url),'utf8');
@@ -56,6 +57,7 @@ const checks={
   examVersionTruth:V.ExamVersion119?.audit?.().ready===true,
   adaptiveMasteryV2Contract:mastery.includes("version:'119-mastery-v2'")&&workflow.includes('Adaptive mastery v2 deterministic gate'),
   questionSkillFamilyTaxonomy:V.QuestionType119?.audit?.().ready===true&&V.QuestionType119?.policy?.notOfficialExamWeight===true,
+  skillFamilyRemediationContract:app.includes('function buildSkillTraining')&&app.includes('data-skill-train')&&e2e.includes('skill-family remediation starts a focused training run'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
