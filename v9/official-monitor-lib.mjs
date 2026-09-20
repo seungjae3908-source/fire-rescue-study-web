@@ -258,10 +258,12 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       noThirdParty: true,
       noAutomaticCurriculumMutation: true,
       notifyOnlyRelevantOfficialNotices: true,
+      noRelevantNoticeIsHealthy: true,
       detectSameNoticeMetadataRevision: true,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
-    healthy: nfaRecruitOk && successCount >= 2 && sorted.length > 0,
+    healthy: nfaRecruitOk && successCount >= 2,
+    hasRelevantItems: sorted.length > 0,
     sourceStatus,
     items: sorted.slice(0, 120)
   };
