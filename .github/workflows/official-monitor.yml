@@ -1,0 +1,56 @@
+name: 119 Official Notice Monitor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/official-monitor.yml'
+      - 'v9/official-monitor-lib.mjs'
+      - 'v9/official-monitor-sync.mjs'
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: 119-official-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: ${{ github.repository == 'seungjae3908-source/fire-rescue-study-web' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Collect official NFA/NFSA notices
+        run: node v9/official-monitor-sync.mjs --output /tmp/official-monitor.json
+      - name: Publish isolated monitor snapshot
+        env:
+          SNAPSHOT_BRANCH: chore/official-monitor-snapshot
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin "$SNAPSHOT_BRANCH" >/dev/null 2>&1; then
+            git fetch origin "$SNAPSHOT_BRANCH"
+            git switch -C "$SNAPSHOT_BRANCH" "origin/$SNAPSHOT_BRANCH"
+          else
+            git switch -c "$SNAPSHOT_BRANCH"
+          fi
+          mkdir -p v9/data
+          cp /tmp/official-monitor.json v9/data/official-monitor.json
+          git add v9/data/official-monitor.json
+          if git diff --cached --quiet; then
+            echo "OFFICIAL_MONITOR_NO_CHANGE"
+            exit 0
+          fi
+          git commit -m "chore(monitor): refresh official notices"
+          git push origin "HEAD:$SNAPSHOT_BRANCH"

@@ -1,0 +1,166 @@
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
+const KEY='aitutor9:official-monitor:v1';
+const START_AT='2026-09-20';
+const REFRESH_MS=30*60*1000;
+const ALLOWED=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','nfsa.go.kr','cherish.nfsa.go.kr']);
+let state={status:'idle',snapshot:null,unseen:[],lastFetched:0,error:'',notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
+let timer=null;
+let observer=null;
+
+const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return{}}};
+const write=x=>{try{localStorage.setItem(KEY,JSON.stringify(x))}catch{}};
+const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const official=url=>{try{const u=new URL(String(url||''));return u.protocol==='https:'&&ALLOWED.has(u.hostname.toLowerCase())}catch{return false}};
+const validSnapshot=x=>!!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&x.items.every(i=>i&&i.id&&i.title&&official(i.url));
+const eligibleFirstRun=i=>!!i.meaningful&&String(i.publishedAt||'')>=START_AT;
+
+function summary(){
+  return {
+    status:state.status,
+    error:state.error,
+    generatedAt:state.snapshot?.generatedAt||'',
+    healthy:state.snapshot?.healthy===true,
+    items:state.snapshot?.items||[],
+    sources:state.snapshot?.sourceStatus||[],
+    unseen:state.unseen||[],
+    unseenCount:(state.unseen||[]).length,
+    targetExamYear:state.snapshot?.targetExamYear||2027,
+    baselineYear:state.snapshot?.baselineYear||2026,
+    lastFetched:state.lastFetched,
+    notificationPermission:state.notificationPermission
+  };
+}
+
+function unseenFor(snapshot,m){
+  const seen=new Set(m.seenIds||[]);
+  return !m.initialized?snapshot.items.filter(eligibleFirstRun):snapshot.items.filter(i=>i.meaningful&&!seen.has(i.id));
+}
+
+function dispatch(){
+  window.dispatchEvent(new CustomEvent('aitutor-official-monitor',{detail:summary()}));
+  decorate();
+}
+
+function itemHtml(x,isNew){
+  return '<a class="official-monitor-item '+(isNew?'new':'')+'" href="'+esc(x.url)+'" target="_blank" rel="noopener"><div><span class="tag '+(x.reviewRequired?'warn':'blue')+'">'+(x.reviewRequired?'검토 필요':'공식 공고')+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sourceLabel)+(x.publishedAt?' · '+esc(x.publishedAt):'')+'</small></div><span aria-hidden="true">↗</span></a>';
+}
+
+function cardHtml(){
+  const m=summary();
+  const loading=m.status==='loading';
+  const error=m.status==='error';
+  const latest=(m.unseenCount?m.unseen:m.items).slice(0,8);
+  const sourceOk=(m.sources||[]).filter(x=>x.ok).length;
+  const status=loading?'공식 사이트 확인 중':error?'공식 감시 연결 확인 필요':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
+  const unseenIds=new Set(m.unseen.map(x=>x.id));
+  const items=latest.length?latest.map(x=>itemHtml(x,unseenIds.has(x.id))).join(''):'<div class="empty official-monitor-empty">새 시험 관련 공식 공고가 없습니다.</div>';
+  const notifyLabel=m.notificationPermission==='granted'?'기기 알림 켜짐':m.notificationPermission==='denied'?'기기 알림 차단됨':'기기 알림 켜기';
+  return '<section class="card official-monitor-card" data-official-monitor-card><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+(m.unseenCount?'<span class="tag warn">새 공고 '+m.unseenCount+'건</span>':'<span class="tag good">새 변경 없음</span>')+'</div><p class="muted">앱 인프라가 6시간마다 소방청·중앙소방학교 공식 게시판만 확인합니다. 공고를 발견해도 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/3</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
+}
+
+function bannerHtml(){
+  const m=summary();
+  if(!m.unseenCount)return'';
+  return '<section class="card official-monitor-banner" data-official-monitor-banner><button class="official-monitor-banner-btn" data-monitor-open><span><b>새 공식 시험 공고 '+m.unseenCount+'건</b><small>소방청·중앙소방학교 공식 출처만 확인</small></span><strong>확인 →</strong></button></section>';
+}
+
+function decorate(){
+  const resources=document.querySelector('.page-resources .resources-119');
+  if(resources&&!resources.querySelector('[data-official-monitor-card]'))resources.insertAdjacentHTML('afterbegin',cardHtml());
+  const card=resources?.querySelector('[data-official-monitor-card]');
+  if(card)card.outerHTML=cardHtml();
+
+  const home=document.querySelector('.page-home .home-main');
+  const old=home?.querySelector('[data-official-monitor-banner]');
+  const html=bannerHtml();
+  if(old&&!html)old.remove();
+  else if(old&&html)old.outerHTML=html;
+  else if(home&&html)home.insertAdjacentHTML('afterbegin',html);
+}
+
+async function notifyUnseen(){
+  const s=summary(),m=read();
+  if(!s.unseenCount||typeof Notification==='undefined'||Notification.permission!=='granted')return;
+  const key=s.unseen.map(x=>x.id).sort().join(',');
+  if(m.lastNotifiedKey===key)return;
+  const first=s.unseen[0];
+  const body=s.unseenCount===1?first.title:first.title+' 외 '+(s.unseenCount-1)+'건';
+  try{
+    const reg=await navigator.serviceWorker?.ready;
+    if(reg?.showNotification)await reg.showNotification('119 시험 공식 공고',{body,tag:'119-official-notice',renotify:false,data:{page:'resources'}});
+    else new Notification('119 시험 공식 공고',{body});
+    write({...m,lastNotifiedKey:key});
+  }catch{}
+}
+
+async function refresh({force=false}={}){
+  if(!force&&state.status==='loading')return summary();
+  if(!force&&state.lastFetched&&Date.now()-state.lastFetched<REFRESH_MS)return summary();
+  state={...state,status:'loading',error:''};dispatch();
+  try{
+    const res=await fetch('./api/official-monitor'+(force?'?t='+Date.now():''),{cache:force?'no-store':'default'});
+    if(!res.ok)throw new Error('HTTP_'+res.status);
+    const snapshot=await res.json();
+    if(!validSnapshot(snapshot))throw new Error('INVALID_OFFICIAL_MONITOR_SNAPSHOT');
+    const m=read();
+    const unseen=unseenFor(snapshot,m);
+    if(!m.initialized){
+      const oldIds=snapshot.items.filter(i=>!eligibleFirstRun(i)).map(i=>i.id);
+      write({...m,initialized:true,initializedAt:Date.now(),seenIds:[...new Set([...(m.seenIds||[]),...oldIds])].slice(-500)});
+    }
+    state={status:'ready',snapshot,unseen,lastFetched:Date.now(),error:'',notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
+    dispatch();
+    await notifyUnseen();
+    return summary();
+  }catch(err){
+    state={...state,status:'error',lastFetched:Date.now(),error:String(err?.message||err).slice(0,120)};
+    dispatch();
+    return summary();
+  }
+}
+
+function markSeen(){
+  const s=summary(),m=read(),ids=new Set(s.unseen.map(x=>x.id));
+  const seen=[...new Set([...(m.seenIds||[]),...ids])].slice(-500);
+  write({...m,initialized:true,seenIds:seen,lastSeenAt:Date.now(),lastNotifiedKey:''});
+  state={...state,unseen:[]};
+  dispatch();
+  return summary();
+}
+
+async function enableNotifications(){
+  if(typeof Notification==='undefined')return'unsupported';
+  const result=await Notification.requestPermission();
+  state={...state,notificationPermission:result};
+  dispatch();
+  if(result==='granted')await notifyUnseen();
+  return result;
+}
+
+function start(){
+  if(observer)observer.disconnect();
+  const root=document.querySelector('#app');
+  if(root){observer=new MutationObserver(()=>decorate());observer.observe(root,{childList:true,subtree:true})}
+  document.addEventListener('click',async e=>{
+    const b=e.target instanceof Element?e.target.closest('[data-monitor-refresh],[data-monitor-seen],[data-monitor-notify],[data-monitor-open]'):null;
+    if(!b)return;
+    if(b.hasAttribute('data-monitor-open')){window.AITUTOR_V9?.App?.go?.('resources');return}
+    if(b.hasAttribute('data-monitor-refresh')){await refresh({force:true});return}
+    if(b.hasAttribute('data-monitor-seen')){markSeen();return}
+    if(b.hasAttribute('data-monitor-notify')){await enableNotifications();return}
+  });
+  refresh().catch(()=>{});
+  if(timer)clearInterval(timer);
+  timer=setInterval(()=>{if(document.visibilityState==='visible')refresh().catch(()=>{})},REFRESH_MS);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh().catch(()=>{})});
+  decorate();
+}
+
+V.OfficialMonitor119={
+  version:'119-official-monitor-client-v1',
+  refresh,markSeen,enableNotifications,summary,start,
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true}
+};
+})();
