@@ -38,6 +38,43 @@ function summary(){
 
 const revisionKey=i=>String(i?.id||'')+':'+String(i?.fingerprint||'legacy');
 const priority=i=>({change_notice:0,exam_schedule:1,exam_scope:2,exam_policy:3,recruitment_notice:4,official_textbook:5,official_standard:6})[i?.kind]??9;
+const DAY_MS=86400000;
+function dateUtc(value){
+  const m=String(value||'').match(/^(20\d{2})-(\d{2})-(\d{2})$/);
+  return m?Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3])):null
+}
+function dday(value){
+  const target=dateUtc(value);if(target===null)return'';
+  const now=new Date(),today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+  const n=Math.round((target-today)/DAY_MS);
+  return n===0?'D-Day':n>0?'D-'+n:'D+'+Math.abs(n)
+}
+function scheduleEntries(x){
+  const s=x?.schedule||{},rows=[];
+  if(s.applicationStart)rows.push({label:'원서접수 시작',date:s.applicationStart});
+  if(s.applicationEnd)rows.push({label:'원서접수 마감',date:s.applicationEnd});
+  if(s.writtenExam)rows.push({label:'필기시험',date:s.writtenExam});
+  if(s.physicalExam)rows.push({label:'체력시험',date:s.physicalExam});
+  if(s.interview)rows.push({label:'면접시험',date:s.interview});
+  if(s.finalResult)rows.push({label:'최종발표',date:s.finalResult});
+  return rows
+}
+function icsEscape(value){return String(value||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;')}
+function icsDate(value){return String(value||'').replace(/-/g,'')}
+function downloadScheduleCalendar(){
+  const m=summary(),pool=[...(m.unseen||[]),...(m.items||[])],item=pool.find(x=>eligibleNotice(x)&&scheduleEntries(x).length);
+  if(!item)return false;
+  const rows=scheduleEntries(item),stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//119 Study//Official Exam Schedule//KO','CALSCALE:GREGORIAN'];
+  rows.forEach((row,i)=>{
+    lines.push('BEGIN:VEVENT','UID:119-'+item.id+'-'+i+'@study119','DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+icsDate(row.date),'SUMMARY:'+icsEscape('119 '+row.label+' · '+item.title),'DESCRIPTION:'+icsEscape('공식 출처: '+item.url),'URL:'+item.url,'END:VEVENT')
+  });
+  lines.push('END:VCALENDAR');
+  const blob=new Blob([lines.join('\r\n')+'\r\n'],{type:'text/calendar;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='119-'+(m.targetExamYear||2027)+'-official-schedule.ics';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),0);
+  return true
+}
 function unseenFor(snapshot,m){
   const seenRevisions=new Set(m.seenRevisionKeys||[]);
   const seenIds=new Set(m.seenIds||[]);
@@ -62,11 +99,14 @@ function dispatch(){
 function itemHtml(x,isNew){
   const label=x.changeState==='updated'?'공고 내용 변경':x.kind==='exam_schedule'?'시험 일정':x.reviewRequired?'검토 필요':'공식 공고';
   const s=x.schedule||{},schedule=[];
-  if(s.applicationStart||s.applicationEnd)schedule.push('원서접수 '+(s.applicationStart||'?')+(s.applicationEnd?' ~ '+s.applicationEnd:''));
-  if(s.writtenExam)schedule.push('필기 '+s.writtenExam);
-  if(s.physicalExam)schedule.push('체력 '+s.physicalExam);
-  if(s.interview)schedule.push('면접 '+s.interview);
-  if(s.finalResult)schedule.push('최종발표 '+s.finalResult);
+  if(s.applicationStart||s.applicationEnd){
+    const start=s.applicationStart||'?';const end=s.applicationEnd?' ~ '+s.applicationEnd:'';
+    schedule.push('원서접수 '+start+end+(s.applicationStart?' · '+dday(s.applicationStart):''))
+  }
+  if(s.writtenExam)schedule.push('필기 '+s.writtenExam+' · '+dday(s.writtenExam));
+  if(s.physicalExam)schedule.push('체력 '+s.physicalExam+' · '+dday(s.physicalExam));
+  if(s.interview)schedule.push('면접 '+s.interview+' · '+dday(s.interview));
+  if(s.finalResult)schedule.push('최종발표 '+s.finalResult+' · '+dday(s.finalResult));
   const scheduleHtml=schedule.length?'<small class="official-monitor-schedule">'+schedule.map(esc).join(' · ')+'</small>':'';
   const attachmentHtml=!schedule.length&&Number(x.attachmentCount||0)>0?'<small class="official-monitor-attachment">상세 일정은 공식 첨부 공고문 확인 · '+Number(x.attachmentCount||0)+'개</small>':'';
   return '<a class="official-monitor-item '+(isNew?'new':'')+'" href="'+esc(x.url)+'" target="_blank" rel="noopener"><div><span class="tag '+(x.reviewRequired||x.changeState==='updated'?'warn':'blue')+'">'+esc(label)+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sourceLabel)+(x.publishedAt?' · '+esc(x.publishedAt):'')+'</small>'+scheduleHtml+attachmentHtml+'</div><span aria-hidden="true">↗</span></a>';
@@ -93,7 +133,8 @@ function cardHtml(){
   const items=latest.length?latest.map(x=>itemHtml(x,unseenRevisions.has(revisionKey(x)))).join(''):'<div class="empty official-monitor-empty">새 시험 관련 공식 공고가 없습니다.</div>';
   const notifyLabel=m.notificationPermission==='granted'?'앱 알림 켜짐':m.notificationPermission==='denied'?'앱 알림 차단됨':'앱 알림 켜기';
   const resultTag=m.unseenCount?'<span class="tag warn">새 공고·변경 '+m.unseenCount+'건</span>':completeSources?'<span class="tag good">새 변경 없음</span>':'<span class="tag warn">일부 공식소스 확인 필요</span>';
-  return '<section class="card official-monitor-card" aria-live="polite" aria-atomic="false" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+resultTag+'</div><p class="muted">앱 인프라가 6시간마다 소방청·중앙소방학교 공식 게시판만 확인합니다. 앱을 열거나 다시 활성화하면 새 공고를 표시하며, 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/3</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
+  const calendarTarget=targetItems.find(x=>scheduleEntries(x).length>0);
+  return '<section class="card official-monitor-card" aria-live="polite" aria-atomic="false" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+resultTag+'</div><p class="muted">앱 인프라가 6시간마다 소방청·중앙소방학교 공식 게시판만 확인합니다. 앱을 열거나 다시 활성화하면 새 공고를 표시하며, 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/3</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(calendarTarget?'<button class="btn small ghost" data-monitor-calendar>일정 캘린더 저장</button>':'')+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
 }
 
 function bannerHtml(){
@@ -211,12 +252,13 @@ function start(){
   const root=document.querySelector('#app');
   if(root){observer=new MutationObserver(()=>decorate());observer.observe(root,{childList:true,subtree:true})}
   document.addEventListener('click',async e=>{
-    const b=e.target instanceof Element?e.target.closest('[data-monitor-refresh],[data-monitor-seen],[data-monitor-notify],[data-monitor-open]'):null;
+    const b=e.target instanceof Element?e.target.closest('[data-monitor-refresh],[data-monitor-seen],[data-monitor-notify],[data-monitor-open],[data-monitor-calendar]'):null;
     if(!b)return;
     if(b.hasAttribute('data-monitor-open')){openMonitorPage();return}
     if(b.hasAttribute('data-monitor-refresh')){await refresh({force:true});return}
     if(b.hasAttribute('data-monitor-seen')){markSeen();return}
     if(b.hasAttribute('data-monitor-notify')){await enableNotifications();return}
+    if(b.hasAttribute('data-monitor-calendar')){downloadScheduleCalendar();return}
   });
   refresh().catch(()=>{});
   if(timer)clearInterval(timer);
@@ -234,7 +276,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,devicePushWhenClosed:false}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();

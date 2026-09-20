@@ -68,6 +68,9 @@ try{
   assert(text.includes('최근 저장본 표시')&&text.includes('새 공고·변경 1건'),'monitor UI clearly marks stale cached data without hiding the official notice');
   assert(text.includes('공고 내용 변경'),'same-notice revision is visibly distinguished from a brand-new notice');
   assert(text.includes('원서접수 2026-12-28 ~ 2027-01-03')&&text.includes('필기 2027-03-13')&&text.includes('면접 2027-05-12'),'official schedule dates extracted by the monitor are visible on the mobile notice card');
+  assert(/D(?:-Day|[+-]\d+)/.test(text),'official schedule dates include a live D-day indicator');
+  assert(text.includes('공식 소스 4/4'),'monitor UI reports all four official source groups');
+  assert(await page.locator('[data-monitor-calendar]').count()===1,'monitor exposes calendar export when official schedule dates are available');
   assert(errors.length===0,'monitor offline fallback produces no browser runtime errors');
   const sw=await fs.promises.readFile(new URL('./sw.js',import.meta.url),'utf8');
 assert(sw.includes("119-official-monitor-open")&&sw.includes("?page=resources#official-monitor"),'notification click deep-links to official monitor page and existing windows receive an open message');
