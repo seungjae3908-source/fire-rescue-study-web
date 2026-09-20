@@ -267,6 +267,7 @@ try{
   await m.locator('.study-body-mobile .source-only [data-source-concept]').click();
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   const flashSource=await m.locator('#pdfEvidence').evaluate(root=>{const V=window.AITUTOR_V9,page=Number(root.dataset.page)||0;return{page,bookPage:V.SourcePDF.bookPage('fire1',page),verified:root.dataset.anchorVerified,label:root.querySelector('[data-pdf-page-label]')?.textContent||'',lines:[...root.querySelectorAll('.pdf-evidence-line')].map(x=>x.title||'')}}); 
+  console.log('FLASH_SOURCE_DEBUG',JSON.stringify(flashSource));
   assert(flashSource.bookPage===40||(flashSource.bookPage>=23&&flashSource.bookPage<=34),'fire phenomena source stays inside the declared official fire1 phenomenon evidence ranges');
   assert(flashSource.verified==='true'&&flashSource.lines.some(x=>/플래시오버|백드래프트|롤오버|플레임오버/.test(x)),'fire phenomena PDF is accepted only when the underlined evidence contains a phenomenon-specific concept term');
   await m.locator('[data-pdf-close]').click();
