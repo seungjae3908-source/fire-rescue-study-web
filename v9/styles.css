@@ -990,3 +990,8 @@ small{font-size:max(11px,.78em)}
   .pdf-evidence-modal .pdf-evidence-host{min-height:58vh;max-height:70vh}
   .official-date-readonly>strong{font-size:16px}
 }
+
+.visual-flow.vertical-org{display:flex;flex-direction:column;align-items:stretch;gap:6px;max-width:620px;margin:0 auto}
+.vertical-org .org-node{min-width:0;width:100%;justify-content:center;text-align:center;padding:14px 16px}
+.vertical-org .org-node b{font-size:15px}
+.vertical-org .org-arrow{display:block!important;transform:none!important;text-align:center;color:var(--blue);font-size:22px;line-height:1}
