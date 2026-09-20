@@ -44,9 +44,10 @@ try{
   assert(!flashDetail.includes('30초 핵심')&&!flashDetail.includes('시험 직전 핵심'),'detail view does not repeat the core summary or core essentials');
   assert(await p.locator('.detail-num').count()===0,'decorative numbered detail badges are removed');
   assert(!flashDetail.includes('개념 구조와 읽는 순서'),'meta learning heading is removed/simplified');
-  assert(await p.locator('.study-body-desktop .detail-toc button').count()>=3,'long desktop detail exposes a compact jumpable section outline');
-  const detailJump=await p.locator('.study-body-desktop .detail-toc button').first().getAttribute('data-detail-jump');
-  assert(detailJump!==null&&await p.locator(`.study-body-desktop [data-detail-section="${detailJump}"]`).count()===1,'detail outline points to a real textbook section in the active pane');
+  const detailSelect=p.locator('.study-body-desktop [data-detail-jump-select]');
+  assert(await detailSelect.count()===1&&await detailSelect.locator('option').count()>=4,'long desktop detail exposes a compact jumpable section selector');
+  const detailJump=await detailSelect.locator('option').nth(1).getAttribute('value');
+  assert(detailJump!==null&&await p.locator(`.study-body-desktop [data-detail-section="${detailJump}"]`).count()===1,'detail selector points to a real textbook section in the active pane');
   const architectureTruth=await p.evaluate(()=>{const V=window.AITUTOR_V9,ids=['F01-C01','F01-C06','F01-C07','F03-C06','F05-C05','F07-C05','E08-C01','E24-C01'];return{total:V.curriculum.concepts.length,mapped:Object.keys(V.ConceptArchitecture119?.map||{}).length,types:Object.fromEntries(ids.map(id=>[id,V.ConceptArchitecture119?.typeOf?.(id)||'']))}});
   assert(architectureTruth.mapped===architectureTruth.total,'every fire and EMS concept has an explicit study architecture type');
   assert(architectureTruth.types['F01-C01']==='governance'&&architectureTruth.types['F01-C06']==='history'&&architectureTruth.types['F01-C07']==='organizationTheory'&&architectureTruth.types['F03-C06']==='phenomenon'&&architectureTruth.types['F05-C05']==='hazmat'&&architectureTruth.types['E08-C01']==='emsAssessment'&&architectureTruth.types['E24-C01']==='emsResuscitation','fire and EMS concepts receive domain-specific templates, including split history and organization theory');
