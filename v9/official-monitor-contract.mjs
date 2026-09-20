@@ -77,3 +77,4 @@ console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
 // Partial-source fail-closed regression trigger.
 // Exact-head official detail schedule regression trigger.
 // Exact-head NFA notice-board coverage regression trigger.
+// Exact-head hourly-freshness regression trigger.
