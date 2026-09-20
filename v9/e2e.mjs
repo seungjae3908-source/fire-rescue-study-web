@@ -48,8 +48,8 @@ try{
   assert(aiRoute.current==='F07-C08'&&/플래시오버/.test(aiRoute.title)&&aiRoute.id!==aiRoute.current,'AI routes an explicit flashover question away from the currently open sprinkler concept');
   await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
   await p.locator('.tabbar [data-study-tab="ai"]').click();
-  await p.waitForSelector('.study-ai #tutorInput');
-  assert(await p.locator('.study-ai').count()===1,'AI question is a first-class study tab instead of a duplicate right-side panel');
+  await p.waitForSelector('.study-body-desktop .study-ai [data-tutor-input]');
+  assert(await p.locator('.study-body-desktop .study-ai').count()===1&&await p.locator('.study-rail').count()===0,'AI question is a first-class visible study tab instead of a duplicate right-side panel');
   const quality2Content=await p.evaluate(()=>{const V=window.AITUTOR_V9,flash=V.contentPacks.get('F03-C09'),foam=V.contentPacks.get('F07-C08'),baseQs=V.questions.filter(q=>/^119-q2-(foamprop|flash)-/.test(q.id||'')),gapQs=V.questions.filter(q=>/^119-q2-(haz-special|sprinkler-base)-/.test(q.id||''));return{flashText:[flash.summary,...(flash.detail||[]),...(flash.must||[])].join(' '),flashCompare:flash.compare?.length||0,flashDeep:flash.deepSections?.length||0,foamText:[foam.summary,...(foam.detail||[]),...(foam.must||[])].join(' '),foamCompare:foam.compare?.length||0,foamDeep:foam.deepSections?.length||0,foamQs:V.questions.filter(q=>q.conceptId==='F07-C08'&&/^119-q2-foamprop-/.test(q.id||'')).length,flashQs:V.questions.filter(q=>q.conceptId==='F03-C09'&&/^119-q2-flash-/.test(q.id||'')).length,baseQuality2:baseQs.length,gapQuality2:gapQs.length,allB:[...baseQs,...gapQs].every(q=>q.grade==='B'&&q.choices?.length===4&&q.choiceExplanations?.length===4)}}); 
   assert(/483~649℃/.test(quality2Content.flashText)&&/20 kW\/㎡/.test(quality2Content.flashText)&&quality2Content.flashCompare>=4&&quality2Content.flashDeep>=5,'flashover quality2 content includes official phase, radiation, temperature range, before/after and four-way comparison');
   assert(/라인 프로포셔너/.test(quality2Content.foamText)&&/펌프 프로포셔너/.test(quality2Content.foamText)&&/프레셔 프로포셔너/.test(quality2Content.foamText)&&/프레셔사이드 프로포셔너/.test(quality2Content.foamText)&&quality2Content.foamCompare>=4&&quality2Content.foamDeep>=6,'foam quality2 content covers all four proportioners with operating principles and comparison');
@@ -131,6 +131,13 @@ try{
   assert(await m.locator('.page-study .actionbar').isVisible(),'mobile study keeps previous/TOC/next navigation');
   assert(await m.locator('.book-jumpbar button').count()===5,'mobile study has five true content tabs');
   assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문 AI','mobile tabs are 핵심/상세/문제/원문/AI');
+  await m.locator('.book-jumpbar [data-study-tab="ai"]').click();
+  const mobileAiInput=m.locator('.study-body-mobile [data-tutor-input]');
+  await mobileAiInput.fill('플래시오버에 대해 알려줘');
+  await m.locator('.study-body-mobile [data-tutor-send]').click();
+  await m.waitForFunction(()=>{const chat=window.AITUTOR_V9.Store.state.chat||[],last=chat[chat.length-1];return last?.role==='assistant'&&/플래시오버/.test(last.text||'')},{timeout:30000});
+  const mobileAiTruth=await m.evaluate(()=>{const chat=window.AITUTOR_V9.Store.state.chat||[],last=chat[chat.length-1];return{text:last?.text||'',target:last?.targetConceptId||''}});
+  assert(/플래시오버/.test(mobileAiTruth.text)&&mobileAiTruth.target==='F03-C06','mobile AI tab uses the visible question and answers the explicit flashover target instead of the open concept');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
