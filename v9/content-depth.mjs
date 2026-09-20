@@ -12,7 +12,7 @@ for(const c of V.curriculum.concepts){
   if(!p){fail.push(`${c.id}: missing pack`);continue}
   const summary=String(p.summary||'').trim(),details=(p.detail||[]).map(String),deep=(p.deepSections||[]).flatMap(x=>[x?.title,x?.body,...(x?.bullets||[])]).filter(Boolean).map(String),must=(p.must||[]).map(String),traps=(p.traps||[]).map(String),compare=(p.compare||[]).flat().map(String),flow=(p.flow||[]).map(String),source=String(p.source||'');
   const renderedDetail=deep.length?deep:details,detailChars=chars(renderedDetail.join('')),totalChars=chars([summary,...renderedDetail,...must,...traps,...compare,...flow].join(' '));
-  const placeholder=/원문\s*(검증|확인)|근거\s*(확인|필요)|연결\s*대기|추후\s*확인|임의로\s*(생성|추정|채움|작성)/.test([summary,...details,...must,...traps].join(' '));
+  const placeholder=/원문\s*(검증|확인)|근거\s*(확인|필요)|연결\s*대기|추후\s*확인|임의로\s*(생성|추정|채움|작성)/.test([summary,...renderedDetail,...must,...traps].join(' '));
   const pageAnchored=p.status==='verified';
   const officialWeb=(p.officialLinks||[]).some(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')));
   const curriculumAnchored=(c.sourceRanges||[]).some(x=>x?.doc&&(Number.isFinite(Number(x?.from))||Number.isFinite(Number(x?.to))));
