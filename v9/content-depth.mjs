@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 globalThis.window={AITUTOR_V9:{}};
-for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','content-packs.js','fire-admin-split-119.js','questions.js','questions-fire-admin-split-119.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js']){
+for(const file of ['curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','curriculum-ems-quality2-119.js','content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js','depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js','fire-depth-119.js','governance-depth-119.js','investigation-depth-119.js','facilities-depth-119.js','quality2-content-119.js','hazmat-reference-2026.js','hazmat-depth-119.js','suppression-depth-119.js','ems-rich-2026.js','ems-depth-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','fire-admin-split-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','quality4-highyield-119.js','study-emphasis-119.js']){
   vm.runInThisContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),{filename:file});
 }
 const V=window.AITUTOR_V9,rows=[],fail=[];
