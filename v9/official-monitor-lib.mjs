@@ -310,43 +310,26 @@ export async function enrichOfficialRow(row, fetchImpl = fetch) {
 }
 
 async function collectSource(source,fetchImpl){
-  const load=async url=>{
-    const html=await fetchText(url,fetchImpl);
-    const parsed=parseNoticeList(html,{sourceId:source.id,sourceLabel:source.label,baseUrl:url});
-    const accepted=source.accept?parsed.filter(row=>source.accept.test(row.title)):parsed;
-    return{url,accepted}
-  };
-  const pending=source.urls.map(url=>load(url).then(
-    value=>({ok:true,value}),
-    error=>({ok:false,error})
-  ));
-  if(source.strategy==='first-ok'){
-    let lastError='';
-    for(const task of pending){
-      const result=await task;
-      if(result.ok){
-        return{
-          items:result.value.accepted,
-          status:{id:source.id,label:source.label,ok:true,pagesOk:1,status:'ok',error:''}
-        }
-      }
-      lastError=String(result.error?.message||result.error).slice(0,120)
-    }
-    return{
-      items:[],
-      status:{id:source.id,label:source.label,ok:false,pagesOk:0,status:'error',error:lastError}
+  const items=[];
+  let okCount=0,lastError='';
+  for(const url of source.urls){
+    try{
+      const html=await fetchText(url,fetchImpl);
+      const parsed=parseNoticeList(html,{sourceId:source.id,sourceLabel:source.label,baseUrl:url});
+      const accepted=source.accept?parsed.filter(row=>source.accept.test(row.title)):parsed;
+      items.push(...accepted);
+      okCount++;
+      if(source.strategy==='first-ok')break
+    }catch(err){
+      lastError=String(err?.message||err).slice(0,120)
     }
   }
-  const settled=await Promise.all(pending);
-  const ok=settled.filter(x=>x.ok);
-  const items=ok.flatMap(x=>x.value.accepted);
-  const errors=settled.filter(x=>!x.ok).map(x=>String(x.error?.message||x.error).slice(0,120));
   return{
     items,
     status:{
-      id:source.id,label:source.label,ok:ok.length>0,pagesOk:ok.length,
-      status:ok.length>0?'ok':'error',
-      error:ok.length>0?'':errors[errors.length-1]||'SOURCE_UNAVAILABLE'
+      id:source.id,label:source.label,ok:okCount>0,pagesOk:okCount,
+      status:okCount>0?'ok':'error',
+      error:okCount>0?'':lastError||'SOURCE_UNAVAILABLE'
     }
   }
 }
@@ -407,6 +390,7 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       neverGuessMissingDates: true,
       detectOfficialAttachments: true,
       parallelSourceFetch:true,
+      maxConcurrentSourceGroups:SOURCES.length,
       detailConcurrency:DETAIL_CONCURRENCY,
       requestTimeoutMs:FETCH_TIMEOUT_MS,
       snapshotBranch: 'chore/official-monitor-snapshot'
