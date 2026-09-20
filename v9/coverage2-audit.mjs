@@ -4,8 +4,8 @@ const base=process.env.STUDY_119_BRANCH_URL||'http://127.0.0.1:4173/v9/index.htm
 const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
 
 const requiredDetailSignals=[
-  {id:'F-ORG-HISTORY',subject:'fire',title:'소방 발전과정',refs:['F01-C01'],terms:['발전과정','발전 과정','소방행정체제']},
-  {id:'F-ORG-MGMT',subject:'fire',title:'조직관리 기초이론',refs:['F01-C01'],terms:['조직관리','조직 관리']},
+  {id:'F-ORG-HISTORY',subject:'fire',title:'소방 발전과정',refs:['F01-C06'],terms:['발전과정','소방행정','소방청']},
+  {id:'F-ORG-MGMT',subject:'fire',title:'조직관리 기초이론',refs:['F01-C07'],terms:['조직관리','계층제','명령통일','통솔범위']},
   {id:'F-ORG-RES',subject:'fire',title:'인적·물적·재정적 자원관리',refs:['F01-C02','F01-C03'],terms:['인적','물적','재정']},
   {id:'F-ORG-PRIVATE',subject:'fire',title:'민간 소방조직·안전관리·설계시공감리점검',refs:['F01-C05'],terms:['소방안전관리','위험물안전관리','감리','점검']},
   {id:'F-FAC-PROP',subject:'fire',title:'포 혼합장치 4종',refs:['F07-C08'],terms:['라인프로포셔너','펌프프로포셔너','프레셔프로포셔너','프레셔사이드프로포셔너']},
