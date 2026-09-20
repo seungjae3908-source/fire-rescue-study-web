@@ -7,7 +7,7 @@ const viewports=[
   {width:412,height:915,mobile:true},
   {width:768,height:1024,mobile:false}
 ];
-const tabs=['core','detail','quiz','source'];
+const tabs=['core','detail','quiz','source','ai'];
 const maxIssues=120;
 const issues=[];
 const warnings=[];
