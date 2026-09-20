@@ -17,6 +17,8 @@ try{
   const p=await desktop.newPage(),derr=collectErrors(p);
   await boot(p);
   assert((await p.locator('.mobile-nav').isHidden()),'desktop hides mobile navigation');
+  await p.waitForTimeout(150);
+  assert(await p.locator('.app').count()===1,'official monitor mutation observer does not starve or duplicate the app shell');
   assert(!(await p.locator('body').innerText()).includes('준비도'),'global header no longer repeats readiness');
 
   await go(p,'study');await p.waitForSelector('.workspace');
@@ -88,7 +90,8 @@ try{
   assert(!resourceTruthText.includes('공식 변경사항'),'resources page does not announce an official change when the meaningful-change list is empty');
   assert(!(await p.locator('.page').innerText()).includes('Gate'),'resources page hides release/content gates');
   assert(await p.locator('[data-resource-doc]').count()===10,'resources page exposes all ten official textbooks as in-app PDF actions');
-  assert(await p.locator('.resources-119 a[target="_blank"]').count()===0,'resources page no longer sends the normal study flow to an external tab');
+  assert(await p.locator('.resources-119 a[target="_blank"]:not(.official-monitor-item)').count()===0,'normal textbook study flow stays in-app while official-monitor notices may open their official source');
+  assert(await p.locator('.official-monitor-item[target="_blank"]').count()===1,'official monitor links directly to the allowlisted official source');
   await p.locator('[data-resource-doc]').first().click();await p.waitForSelector('#resourcePdf canvas',{timeout:60000});
   assert(await p.locator('#resourcePdf canvas').count()===1,'official resource opens inside the app with the shared PDF renderer');
   await p.locator('[data-resource-pdf-close]').click();

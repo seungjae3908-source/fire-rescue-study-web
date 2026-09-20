@@ -49,6 +49,11 @@ function itemHtml(x,isNew){
   return '<a class="official-monitor-item '+(isNew?'new':'')+'" href="'+esc(x.url)+'" target="_blank" rel="noopener"><div><span class="tag '+(x.reviewRequired?'warn':'blue')+'">'+(x.reviewRequired?'검토 필요':'공식 공고')+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sourceLabel)+(x.publishedAt?' · '+esc(x.publishedAt):'')+'</small></div><span aria-hidden="true">↗</span></a>';
 }
 
+function renderKey(){
+  const m=summary();
+  return [m.status,m.generatedAt,m.lastFetched,m.unseenCount,m.notificationPermission,m.transport,m.error].join('|')
+}
+
 function cardHtml(){
   const m=summary();
   const loading=m.status==='loading';
@@ -61,27 +66,28 @@ function cardHtml(){
   const unseenIds=new Set(m.unseen.map(x=>x.id));
   const items=latest.length?latest.map(x=>itemHtml(x,unseenIds.has(x.id))).join(''):'<div class="empty official-monitor-empty">새 시험 관련 공식 공고가 없습니다.</div>';
   const notifyLabel=m.notificationPermission==='granted'?'기기 알림 켜짐':m.notificationPermission==='denied'?'기기 알림 차단됨':'기기 알림 켜기';
-  return '<section class="card official-monitor-card" data-official-monitor-card><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+(m.unseenCount?'<span class="tag warn">새 공고 '+m.unseenCount+'건</span>':'<span class="tag good">새 변경 없음</span>')+'</div><p class="muted">앱 인프라가 6시간마다 소방청·중앙소방학교 공식 게시판만 확인합니다. 공고를 발견해도 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/3</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
+  return '<section class="card official-monitor-card" data-official-monitor-card data-monitor-key="'+esc(renderKey())+'"><div class="toolbar"><div><span class="eyebrow">공식 공고 자동감시</span><h2>2027 시험 공고 · 일정 · 교재 변경</h2></div><span class="spacer"></span>'+(m.unseenCount?'<span class="tag warn">새 공고 '+m.unseenCount+'건</span>':'<span class="tag good">새 변경 없음</span>')+'</div><p class="muted">앱 인프라가 6시간마다 소방청·중앙소방학교 공식 게시판만 확인합니다. 공고를 발견해도 학습 기준은 자동 변경하지 않고 원문 검토가 먼저입니다.</p><div class="official-monitor-meta"><span>'+esc(status)+'</span><span>공식 소스 '+sourceOk+'/3</span><span>목표 '+esc(m.targetExamYear)+' · 현재 기준 '+esc(m.baselineYear)+'</span></div><div class="toolbar official-monitor-actions"><button class="btn small" data-monitor-refresh>'+(loading?'확인 중…':'지금 확인')+'</button><button class="btn small ghost" data-monitor-notify '+(m.notificationPermission==='denied'?'disabled':'')+'>'+esc(notifyLabel)+'</button>'+(m.unseenCount?'<button class="btn small ghost" data-monitor-seen>확인 완료</button>':'')+'</div><div class="official-monitor-list">'+items+'</div></section>';
 }
 
 function bannerHtml(){
   const m=summary();
   if(!m.unseenCount)return'';
-  return '<section class="card official-monitor-banner" data-official-monitor-banner><button class="official-monitor-banner-btn" data-monitor-open><span><b>새 공식 시험 공고 '+m.unseenCount+'건</b><small>소방청·중앙소방학교 공식 출처만 확인</small></span><strong>확인 →</strong></button></section>';
+  return '<section class="card official-monitor-banner" data-official-monitor-banner data-monitor-key="'+esc(renderKey())+'"><button class="official-monitor-banner-btn" data-monitor-open><span><b>새 공식 시험 공고 '+m.unseenCount+'건</b><small>소방청·중앙소방학교 공식 출처만 확인</small></span><strong>확인 →</strong></button></section>';
 }
 
 function decorate(){
+  const key=renderKey();
   const resources=document.querySelector('.page-resources .resources-119');
-  if(resources&&!resources.querySelector('[data-official-monitor-card]'))resources.insertAdjacentHTML('afterbegin',cardHtml());
-  const card=resources?.querySelector('[data-official-monitor-card]');
-  if(card)card.outerHTML=cardHtml();
+  let card=resources?.querySelector('[data-official-monitor-card]');
+  if(resources&&!card){resources.insertAdjacentHTML('afterbegin',cardHtml());card=resources.querySelector('[data-official-monitor-card]')}
+  else if(card&&card.dataset.monitorKey!==key)card.outerHTML=cardHtml();
 
   const home=document.querySelector('.page-home .home-main');
   const old=home?.querySelector('[data-official-monitor-banner]');
   const html=bannerHtml();
   if(old&&!html)old.remove();
-  else if(old&&html)old.outerHTML=html;
-  else if(home&&html)home.insertAdjacentHTML('afterbegin',html);
+  else if(old&&html&&old.dataset.monitorKey!==key)old.outerHTML=html;
+  else if(home&&html&&!old)home.insertAdjacentHTML('afterbegin',html);
 }
 
 async function notifyUnseen(){
