@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 const mem=new Map();
-let failStateOnce=true;
+let failStateOnce=false;
 globalThis.localStorage={
   getItem:k=>mem.has(k)?mem.get(k):null,
   setItem(k,v){
@@ -16,6 +16,7 @@ globalThis.localStorage={
 };
 globalThis.window={AITUTOR_V9:{questionById:{}}};
 vm.runInThisContext(fs.readFileSync(new URL('./store.js',import.meta.url),'utf8'),{filename:'store.js'});
+failStateOnce=true;
 const S=window.AITUTOR_V9.Store,s=S.state;
 s.notes=[{id:'keep-note',body:'x'.repeat(12000),createdAt:1}];
 s.progress={'F01-C01':{conceptId:'F01-C01',mastery:88,attempts:999,correct:900}};
