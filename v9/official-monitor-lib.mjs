@@ -32,15 +32,15 @@ export const SOURCES = [
     label: '중앙소방학교 공식교재',
     strategy: 'all',
     urls: [
-      'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1',
-      'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=2'
+      'https://www.nfsa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=1',
+      'https://www.nfsa.go.kr/nfsa/releaseinformation/archive/materials/?mode=list&pageIdx=2'
     ]
   }
 ];
 
-const IMPORTANT = /소방공무원|채용시험|시험일정|필기시험|시험과목|출제범위|문항수|시험시간|응급처치학|소방학|공통교재|소방전술[123]|구급|교재|시행계획|변경공고|정정공고/i;
-const IGNORE = /공무직|환경미화|청년인턴|전문임기제|일반임기제|전문경력관|외래강사|연구논문|콘퍼런스|화재조사관|소방간부후보생/i;
-const HIGH_IMPACT = /변경공고|정정공고|시행계획|시험일정|필기시험|시험과목|출제범위|문항수|시험시간|응급처치학|소방학|공통교재|소방전술3|구급/i;
+const IMPORTANT = /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|공통교재|소방전술[123]|구급|교재|시행계획|변경공고|정정공고/i;
+const IGNORE = /공무직|환경미화|청년인턴|전문임기제|일반임기제|전문경력관|외래강사|연구논문|콘퍼런스|화재조사관|소방간부후보생|항공분야|법무분야/i;
+const HIGH_IMPACT = /변경공고|정정공고|시행계획|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|공통교재|소방전술3|구급/i;
 
 export function isOfficialUrl(value) {
   try {
@@ -84,6 +84,7 @@ export function classifyNotice(title) {
   if (/변경공고|정정공고/.test(t)) return 'change_notice';
   if (/시험일정|필기시험.*(일정|장소)|장소.*공고/.test(t)) return 'exam_schedule';
   if (/시험과목|출제범위|문항수|시험시간|응급처치학|소방학/.test(t)) return 'exam_scope';
+  if (/체력시험|가점|응시자격|원서접수|시험방법|신체검사|면접시험/.test(t)) return 'exam_policy';
   if (/공통교재|소방전술[123]|교재/.test(t)) return 'official_textbook';
   if (/구급.*(지침|기준|표준)|응급처치.*(지침|기준|표준)/.test(t)) return 'official_standard';
   if (/시행계획|소방공무원.*채용시험/.test(t)) return 'recruitment_notice';

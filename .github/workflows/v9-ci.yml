@@ -71,8 +71,10 @@ jobs:
           done
           node --check v9/api/official-pdf.js
           node --check v9/api/official-monitor.js
+          node --check api/official-monitor.js
           node --check v9/official-monitor-lib.mjs
           node --check v9/official-monitor-sync.mjs
+          node --check v9/official-monitor-live-probe.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -103,6 +105,20 @@ jobs:
         run: node v9/remaining-blocker-audit.mjs
       - name: 119 final release gate audit
         run: node v9/release-gate-audit.mjs
+
+
+  official_monitor_live_probe:
+    name: official_monitor_live_probe (non-release diagnostic)
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Probe live NFA/NFSA notice pages
+        run: node v9/official-monitor-live-probe.mjs
 
   browser:
     runs-on: ubuntu-latest

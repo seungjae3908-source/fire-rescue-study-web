@@ -2,10 +2,11 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const KEY='aitutor9:official-monitor:v1';
+const SNAPSHOT_URL='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json';
 const START_AT='2026-09-20';
 const REFRESH_MS=30*60*1000;
 const ALLOWED=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','nfsa.go.kr','cherish.nfsa.go.kr']);
-let state={status:'idle',snapshot:null,unseen:[],lastFetched:0,error:'',notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
+let state={status:'idle',snapshot:null,unseen:[],lastFetched:0,error:'',transport:'',notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
 let timer=null;
 let observer=null;
 
@@ -29,6 +30,7 @@ function summary(){
     targetExamYear:state.snapshot?.targetExamYear||2027,
     baselineYear:state.snapshot?.baselineYear||2026,
     lastFetched:state.lastFetched,
+    transport:state.transport||'',
     notificationPermission:state.notificationPermission
   };
 }
@@ -51,9 +53,11 @@ function cardHtml(){
   const m=summary();
   const loading=m.status==='loading';
   const error=m.status==='error';
+  const stale=m.status==='stale';
   const latest=(m.unseenCount?m.unseen:m.items).slice(0,8);
   const sourceOk=(m.sources||[]).filter(x=>x.ok).length;
-  const status=loading?'공식 사이트 확인 중':error?'공식 감시 연결 확인 필요':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
+  const status=loading?'공식 사이트 확인 중':stale?'최근 저장본 표시 · 연결 확인 필요':error?'공식 감시 연결 확인 필요':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
+  const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
   const unseenIds=new Set(m.unseen.map(x=>x.id));
   const items=latest.length?latest.map(x=>itemHtml(x,unseenIds.has(x.id))).join(''):'<div class="empty official-monitor-empty">새 시험 관련 공식 공고가 없습니다.</div>';
   const notifyLabel=m.notificationPermission==='granted'?'기기 알림 켜짐':m.notificationPermission==='denied'?'기기 알림 차단됨':'기기 알림 켜기';
@@ -95,27 +99,51 @@ async function notifyUnseen(){
   }catch{}
 }
 
+async function fetchNetworkSnapshot(force){
+  const suffix=force?'?t='+Date.now():'';
+  const candidates=[
+    {url:'/api/official-monitor'+suffix,transport:'app-api'},
+    {url:SNAPSHOT_URL+suffix,transport:'snapshot-fallback'}
+  ];
+  let lastError=null;
+  for(const candidate of candidates){
+    try{
+      const res=await fetch(candidate.url,{cache:force?'no-store':'default'});
+      if(!res.ok)throw new Error('HTTP_'+res.status);
+      const snapshot=await res.json();
+      if(!validSnapshot(snapshot))throw new Error('INVALID_OFFICIAL_MONITOR_SNAPSHOT');
+      return{snapshot,transport:candidate.transport}
+    }catch(err){lastError=err}
+  }
+  throw lastError||new Error('OFFICIAL_MONITOR_UNAVAILABLE')
+}
+
 async function refresh({force=false}={}){
   if(!force&&state.status==='loading')return summary();
   if(!force&&state.lastFetched&&Date.now()-state.lastFetched<REFRESH_MS)return summary();
   state={...state,status:'loading',error:''};dispatch();
   try{
-    const res=await fetch('./api/official-monitor'+(force?'?t='+Date.now():''),{cache:force?'no-store':'default'});
-    if(!res.ok)throw new Error('HTTP_'+res.status);
-    const snapshot=await res.json();
-    if(!validSnapshot(snapshot))throw new Error('INVALID_OFFICIAL_MONITOR_SNAPSHOT');
+    const {snapshot,transport}=await fetchNetworkSnapshot(force);
     const m=read();
     const unseen=unseenFor(snapshot,m);
     if(!m.initialized){
       const oldIds=snapshot.items.filter(i=>!eligibleFirstRun(i)).map(i=>i.id);
       write({...m,initialized:true,initializedAt:Date.now(),seenIds:[...new Set([...(m.seenIds||[]),...oldIds])].slice(-500)});
     }
-    state={status:'ready',snapshot,unseen,lastFetched:Date.now(),error:'',notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
+    const persisted=read();
+    write({...persisted,lastSnapshot:snapshot,lastSnapshotAt:Date.now(),lastTransport:transport});
+    state={status:'ready',snapshot,unseen,lastFetched:Date.now(),error:'',transport,notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
     dispatch();
     await notifyUnseen();
     return summary();
   }catch(err){
-    state={...state,status:'error',lastFetched:Date.now(),error:String(err?.message||err).slice(0,120)};
+    const m=read(),cached=m.lastSnapshot;
+    if(validSnapshot(cached)){
+      state={status:'stale',snapshot:cached,unseen:unseenFor(cached,m),lastFetched:Date.now(),error:String(err?.message||err).slice(0,120),transport:'cached-snapshot',notificationPermission:typeof Notification==='undefined'?'unsupported':Notification.permission};
+      dispatch();
+      return summary();
+    }
+    state={...state,status:'error',lastFetched:Date.now(),error:String(err?.message||err).slice(0,120),transport:''};
     dispatch();
     return summary();
   }
@@ -161,7 +189,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();

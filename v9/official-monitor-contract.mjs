@@ -16,6 +16,7 @@ assert(rows.length===3,'relevant official recruitment rows are selected while un
 assert(rows.some(x=>x.kind==='change_notice'&&x.reviewRequired),'change notice is high-impact and review-required');
 assert(rows.every(x=>isOfficialUrl(x.url)),'parsed notice URLs remain on official allowlisted hosts');
 assert(classifyNotice('2027년 응급처치학개론 출제범위 변경공고')==='change_notice','scope change notice keeps change priority');
+assert(classifyNotice('2027년 소방공무원 채용 체력시험 개편 안내')==='exam_policy','fitness/policy changes are monitored as exam policy');
 assert(isRelevantTitle('2027년 공통교재 소방전술3(구급) 게시'),'official EMS textbook title is relevant');
 assert(!isRelevantTitle('2027년 중앙소방학교 환경미화 공무직 채용'),'unrelated school employment notice is ignored');
 assert(SOURCES.some(x=>x.id==='nfa-recruit')&&SOURCES.some(x=>x.id==='nfsa-notice')&&SOURCES.some(x=>x.id==='nfsa-materials'),'monitor covers NFA recruitment, NFSA notices and official materials');
@@ -23,6 +24,7 @@ assert(SOURCES.some(x=>x.id==='nfa-recruit')&&SOURCES.some(x=>x.id==='nfsa-notic
 const workflow=fs.readFileSync(new URL('../.github/workflows/official-monitor.yml',import.meta.url),'utf8');
 const vercel=fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8');
 const api=fs.readFileSync(new URL('./api/official-monitor.js',import.meta.url),'utf8');
+const rootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.url),'utf8');
 const client=fs.readFileSync(new URL('./official-monitor.js',import.meta.url),'utf8');
 const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 
@@ -31,6 +33,8 @@ assert(workflow.includes('chore/official-monitor-snapshot'),'scheduled monitor w
 assert(!workflow.includes('git push origin HEAD:main'),'scheduled monitor never pushes main');
 assert(vercel.includes('"chore/**": false'),'snapshot branch is excluded from Vercel deployments');
 assert(api.includes('chore/official-monitor-snapshot')&&api.includes('OFFICIAL_MONITOR_UNAVAILABLE'),'app API reads isolated snapshot with safe unavailable fallback');
+assert(rootApi.includes("require('../v9/api/official-monitor.js')"),'project-root Vercel API route delegates to the Study monitor implementation');
 assert(client.includes('noAutomaticCurriculumMutation:true')&&client.includes('data-monitor-refresh'),'client keeps official notice monitoring separate from curriculum mutation and exposes controls');
+assert(client.includes("'/api/official-monitor'")&&client.includes('SNAPSHOT_URL')&&client.includes('cachedSnapshotFallback:true'),'client uses root app API first, then static/cached snapshot fallbacks');
 assert(sw.includes('/api/official-monitor')&&sw.includes('notificationclick'),'service worker uses network-first monitor data and notification click handling');
 console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
