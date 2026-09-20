@@ -51,6 +51,7 @@ function createClient(url,key){
     in(col,vals){this.filters.push([col,'in',Array.isArray(vals)?vals:[]]);return this}
     delete(){this.op='delete';return this}
     update(values){this.op='update';this.body=values||{};return this}
+    insert(rows){this.op='insert';this.body=rows;return this.exec()}
     upsert(rows,options={}){this.op='upsert';this.body=rows;this.options=options||{};return this.exec()}
     maybeSingle(){this.single=true;return this.exec()}
     then(a,b){return this.exec().then(a,b)}
@@ -60,6 +61,7 @@ function createClient(url,key){
       if(this.options.onConflict)qs.set('on_conflict',this.options.onConflict);
       const q=qs.toString(),path='/rest/v1/'+encodeURIComponent(this.table)+(q?'?'+q:'');
       let method='GET',body,extra={};
+      if(this.op==='insert'){method='POST';body=JSON.stringify(this.body);extra.Prefer='return=minimal'}
       if(this.op==='upsert'){method='POST';body=JSON.stringify(this.body);extra.Prefer='resolution=merge-duplicates,return=minimal'}
       if(this.op==='update'){method='PATCH';body=JSON.stringify(this.body);extra.Prefer='return=minimal'}
       if(this.op==='delete'){method='DELETE';extra.Prefer='return=minimal'}
