@@ -561,13 +561,13 @@ try{
   await m.locator('.mobile-nav [data-more]').click();
   await m.waitForSelector('.menu-modal');
   const menuLabels=(await m.locator('.menu-modal .menu-list button').allInnerTexts()).join(' ');
-  assert(!menuLabels.includes('AI AI')&&menuLabels.includes('AI 질문'),'more menu removes duplicated AI label');
+  assert(!menuLabels.includes('AI 질문'),'more menu removes the duplicate standalone AI route because AI now lives inside the study tabs');
   const menuBoxes=await m.locator('.menu-modal .menu-list button').evaluateAll(nodes=>nodes.slice(0,2).map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,width:b.width}}));
   assert(menuBoxes.length===2&&Math.abs(menuBoxes[0].y-menuBoxes[1].y)<3&&menuBoxes[0].x!==menuBoxes[1].x,'more menu uses compact two-column layout');
   await m.locator('[data-close-more]').click();
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
-  for(const tab of ['core','detail','quiz','source']){
+  for(const tab of ['core','detail','quiz','source','ai']){
     await m.evaluate(tab=>{window.AITUTOR_V9.Store.state.studyTab=tab;window.AITUTOR_V9.Store.save();window.AITUTOR_V9.App.render?.()},tab).catch(()=>{});
     if((await m.evaluate(()=>window.AITUTOR_V9.Store.state.page))!=='study')await go(m,'study');
     await m.evaluate(tab=>{window.AITUTOR_V9.Store.state.studyTab=tab;window.AITUTOR_V9.Store.save();window.AITUTOR_V9.App.runtime.more=false;},tab);
