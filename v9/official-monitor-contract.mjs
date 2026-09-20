@@ -48,3 +48,4 @@ const sync=fs.readFileSync(new URL('./official-monitor-sync.mjs',import.meta.url
 assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated'")&&sync.includes('updatedIds'),'scheduled snapshot marks same-notice revisions without mutating curriculum');
 assert(sw.includes('/api/official-monitor')&&sw.includes('notificationclick'),'service worker uses network-first monitor data and notification click handling');
 console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
+// Exact-head revision-monitor regression trigger.
