@@ -1194,3 +1194,31 @@ small{font-size:max(11px,.78em)}
     padding-bottom:4px!important;
   }
 }
+
+@media(max-width:720px){
+  .page-study .concept-visual{
+    border:0!important;
+    background:transparent!important;
+    border-radius:0!important;
+    padding:0!important;
+    margin:16px 0!important;
+  }
+  .page-study .visual-title{
+    font-size:14px!important;
+    margin:0 0 10px!important;
+  }
+  .page-study .quiz-view .question-card{
+    max-width:none!important;
+    border:0!important;
+    background:transparent!important;
+    border-radius:0!important;
+    padding:0!important;
+  }
+  .page-study .quiz-overview{
+    border:0!important;
+    border-bottom:1px solid var(--line)!important;
+    border-radius:0!important;
+    background:transparent!important;
+    padding:0 0 10px!important;
+  }
+}
