@@ -17,7 +17,8 @@ try{
       delete(){this.op='delete';return this}
       update(values){this.op='update';this.patch=values||{};return this}
       maybeSingle(){this.single=true;return this.exec()}
-      upsert(incoming){for(const row of incoming){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows[i]={...rows[i],...row};else rows.push({...row})}return Promise.resolve({data:null,error:null})}
+      insert(incoming){for(const row of incoming)rows.push({...row});return Promise.resolve({data:null,error:null})}
+      upsert(){throw new Error('SUGGESTION_CREATE_MUST_NOT_UPSERT')}
       then(a,b){return this.exec().then(a,b)}
       async exec(){
         if(this.table==='study_admins')return{data:admin?{user_id:'qa-user'}:null,error:null};
