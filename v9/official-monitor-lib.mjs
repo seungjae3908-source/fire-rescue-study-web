@@ -36,6 +36,7 @@ export const SOURCES = [
     id: 'nfsa-materials',
     label: '중앙소방학교 공식교재',
     strategy: 'first-ok',
+    detail: false,
     accept: /공통교재|소방전술[123]|구급.*(지침|기준|표준)|응급처치.*(지침|기준|표준)|공식교재/i,
     urls: [
       'https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/'
