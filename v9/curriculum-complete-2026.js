@@ -40,6 +40,8 @@ const EXTRA=[
 
 const existing=new Set(V.curriculum.fire.map(x=>x.id));
 for(const sc of EXTRA)if(!existing.has(sc.id))V.curriculum.fire.push(sc);
+const f01=V.curriculum.fire.find(x=>x.id==='F01');
+for(const title of ['소방의 발전과정','소방조직관리 기초이론'])if(f01&&!f01.concepts.includes(title))f01.concepts.push(title);
 V.curriculum.scopes=[...V.curriculum.fire,...V.curriculum.ems];
 V.curriculum.scopeById=Object.fromEntries(V.curriculum.scopes.map(x=>[x.id,x]));
 V.curriculum.concepts=V.curriculum.scopes.flatMap(scope=>scope.concepts.map((title,index)=>{
