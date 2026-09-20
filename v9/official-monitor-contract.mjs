@@ -36,15 +36,16 @@ assert(classifyNotice('2027년 응급처치학개론 출제범위 변경공고')
 assert(classifyNotice('2027년 소방공무원 채용 체력시험 개편 안내')==='exam_policy','fitness/policy changes are monitored as exam policy');
 assert(isRelevantTitle('2027년 공통교재 소방전술3(구급) 게시'),'official EMS textbook title is relevant');
 assert(!isRelevantTitle('2027년 중앙소방학교 환경미화 공무직 채용'),'unrelated school employment notice is ignored');
-assert(SOURCES.some(x=>x.id==='nfa-recruit')&&SOURCES.some(x=>x.id==='nfa-notice')&&SOURCES.some(x=>x.id==='nfsa-notice')&&SOURCES.some(x=>x.id==='nfsa-materials'),'monitor covers NFA recruitment, NFA general notices, NFSA notices and official materials');
+assert(SOURCES.some(x=>x.id==='gosi-fire')&&SOURCES.some(x=>x.id==='nfsa-notice')&&SOURCES.some(x=>x.id==='nfsa-materials')&&SOURCES.length===3,'monitor covers the official fire recruitment system plus NFSA notices and official materials');
 const libSource=fs.readFileSync(new URL('./official-monitor-lib.mjs',import.meta.url),'utf8');
-assert(libSource.includes('noRelevantNoticeIsHealthy: true')&&libSource.includes('healthy: nfaRecruitOk && nfaNoticeOk && successCount === sourceStatus.length'),'monitor health requires every declared official source, including NFA general notices, to be reachable');
+assert(libSource.includes('noRelevantNoticeIsHealthy: true')&&libSource.includes('healthy: sourceStatus.length === SOURCES.length && successCount === SOURCES.length'),'monitor health requires every declared V2 official source to be reachable');
 assert(libSource.includes('sequentialSourceFetch:true')&&libSource.includes('maxConcurrentSourceGroups:1')&&MONITOR_FETCH_POLICY.detailConcurrency===2&&MONITOR_FETCH_POLICY.requestTimeoutMs===9000,'monitor avoids burst traffic with sequential source groups, low detail concurrency and bounded request timeouts');
-assert(libSource.includes('wafChallengeDetection:true')&&libSource.includes('officialHostFailover:true')&&MONITOR_FETCH_POLICY.attempts===2,'monitor detects visitor/WAF challenge pages and uses bounded official-host failover retries');
-const nfaNotice=SOURCES.find(x=>x.id==='nfa-notice'),nfsaNotice=SOURCES.find(x=>x.id==='nfsa-notice'),nfsaMaterials=SOURCES.find(x=>x.id==='nfsa-materials');
-assert(nfaNotice.urls.some(x=>x.includes('/nfa/news/notice/')),'NFA general notice monitoring covers the official notice board where annual recruitment plans are published');
-assert(nfsaNotice.urls.includes('https://www.nfa.go.kr/nfsa/'),'NFSA notice monitoring has an NFA-hosted school-home fallback');
-assert(nfsaMaterials.urls.some(x=>x.startsWith('https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/'))&&nfsaMaterials.urls.includes('https://www.nfa.go.kr/nfsa/'),'official textbook monitoring prefers NFA-hosted materials and falls back to the official school home');
+assert(libSource.includes('wafChallengeDetection:true')&&libSource.includes('wafBypassForbidden:true')&&libSource.includes("machineFriendlyRecruitmentSource:'https://gongmuwon.gosi.kr/spcsv/indexMain3.do'")&&MONITOR_FETCH_POLICY.attempts===2,'monitor detects WAF challenges, forbids bypass and routes recruitment through an official machine-friendly source');
+const gosiFire=SOURCES.find(x=>x.id==='gosi-fire'),nfsaNotice=SOURCES.find(x=>x.id==='nfsa-notice'),nfsaMaterials=SOURCES.find(x=>x.id==='nfsa-materials');
+assert(gosiFire?.urls?.[0]==='https://gongmuwon.gosi.kr/spcsv/indexMain3.do'&&gosiFire.detail===false,'fire recruitment monitoring uses the official National Civil Service Recruitment System landing and avoids unsafe aggregate-page detail promotion');
+assert(nfsaNotice?.urls?.[0]?.startsWith('https://cherish.nfsa.go.kr/')&&nfsaNotice?.fallbackUrls?.[0]?.startsWith('https://www.nfsa.go.kr/'),'NFSA notice monitoring prefers the official cherish host and falls back only to the certificate-valid www host');
+assert(nfsaMaterials?.urls?.[0]?.startsWith('https://cherish.nfsa.go.kr/')&&nfsaMaterials?.fallbackUrls?.[0]?.startsWith('https://www.nfsa.go.kr/'),'official textbook monitoring uses only certificate-valid NFSA official hosts');
+assert(!JSON.stringify(SOURCES).includes('"https://nfsa.go.kr/')&&!JSON.stringify(SOURCES).includes('"https://www.nfa.go.kr/nfsa/'),'V2 removes the known TLS-bad non-www NFSA path and WAF-blocked NFA-hosted school path from automatic collection');
 assert(nfsaMaterials.accept.test('2027년 공통교재 [소방전술3]')&&!nfsaMaterials.accept.test('2027년 소방공무원 채용시험 시행계획 공고'),'materials source accepts textbook/standard changes without relabeling recruitment notices as textbooks');
 
 
@@ -57,17 +58,21 @@ const fakeFetch=async(url)=>{
   return new Response(fakeList,{status:200,headers:{'content-type':'text/html'}});
 };
 const sequentialSnapshot=await collectOfficialNotices(fakeFetch,new Date('2026-12-20T00:00:00Z'),{attempts:1,retryDelaysMs:[0],sourceGapMs:0,detailConcurrency:1});
-assert(sequentialSnapshot.healthy===true&&sequentialSnapshot.sourceStatus.length===SOURCES.length,'sequential collector preserves four-source fail-closed health semantics');
+assert(sequentialSnapshot.healthy===true&&sequentialSnapshot.sourceStatus.length===SOURCES.length,'sequential collector preserves three-source V2 fail-closed health semantics');
 assert(maxActiveFetches===1,'collector avoids source burst traffic and keeps the deterministic contract test single-flight');
 
-const wafFailoverFetch=async(url)=>{
+let gosiCalls=0;
+const noBypassFetch=async(url)=>{
   const host=new URL(String(url)).hostname;
-  if(host==='www.nfa.go.kr')return new Response('<html><title>방문자 확인</title><body>JavaScript 활성 후 다시 접속</body></html>',{status:200});
+  if(host==='gongmuwon.gosi.kr'){
+    gosiCalls++;
+    return new Response('<html><title>방문자 확인</title><body>JavaScript 활성 후 다시 접속</body></html>',{status:200});
+  }
   return new Response(fakeList,{status:200,headers:{'content-type':'text/html'}});
 };
-const wafFailoverSnapshot=await collectOfficialNotices(wafFailoverFetch,new Date('2026-12-20T00:00:00Z'),{attempts:1,retryDelaysMs:[0],sourceGapMs:0,detailConcurrency:1});
-assert(wafFailoverSnapshot.healthy===true,'official non-www/NFSA fallback keeps the monitor healthy when the primary NFA host returns a visitor challenge');
-assert(wafFailoverSnapshot.sourceStatus.find(x=>x.id==='nfa-recruit')?.fallbackUsed===true&&wafFailoverSnapshot.sourceStatus.find(x=>x.id==='nfa-notice')?.fallbackUsed===true,'NFA recruitment and notice sources record official-host failover use');
+const blockedSnapshot=await collectOfficialNotices(noBypassFetch,new Date('2026-12-20T00:00:00Z'),{attempts:2,retryDelaysMs:[0,1],sourceGapMs:0,detailConcurrency:1});
+assert(blockedSnapshot.healthy===false&&blockedSnapshot.sourceStatus.find(x=>x.id==='gosi-fire')?.errorCode==='WAF_CHALLENGE','WAF challenge on the official recruitment source fails closed instead of being treated as content');
+assert(gosiCalls===1,'WAF challenge is not retried or bypassed on the same official endpoint');
 
 const workflow=fs.readFileSync(new URL('../.github/workflows/official-monitor.yml',import.meta.url),'utf8');
 const vercel=fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8');
@@ -88,9 +93,9 @@ assert(client.includes('noAutomaticCurriculumMutation:true')&&client.includes('d
 assert(client.includes("'/api/official-monitor'")&&client.includes('SNAPSHOT_URL')&&client.includes('cachedSnapshotFallback:true'),'client uses root app API first, then static/cached snapshot fallbacks');
 assert(client.includes('MAX_SNAPSHOT_AGE_MS=90*60*1000')&&client.includes('staleSnapshotNeverClaimsNoChange:true')&&client.includes('notificationSuppressed'),'client never converts an old/degraded snapshot into a no-change claim or a new-notice push');
 assert(client.includes('data-monitor-key')&&client.includes('old.dataset.monitorKey!==key'),'monitor DOM decoration is idempotent and cannot loop on its own MutationObserver');
-assert(client.includes('backgroundServerMonitor:true')&&client.includes('devicePushWhenClosed:false')&&client.includes('setAppBadge')&&client.includes('매시간'),'monitor copy/contracts distinguish hourly server monitoring from closed-app push and support installed-app badges');
+assert(client.includes('backgroundServerMonitor:true')&&client.includes('wafBypassForbidden:true')&&client.includes('machineFriendlyOfficialSources:true')&&client.includes('devicePushWhenClosed:false')&&client.includes('setAppBadge')&&client.includes('매시간'),'monitor copy/contracts distinguish hourly server monitoring, forbid WAF bypass and expose machine-friendly official-source policy');
 assert(client.includes('seenRevisionKeys')&&client.includes("changeState==='updated'")&&client.includes('공고 내용 변경'),'monitor re-alerts a previously seen notice only when its official revision fingerprint changes');
-assert(client.includes('completeSources=fresh&&sourceTotal>=4&&sourceOk===sourceTotal')&&client.includes("sourceOk+'/'+(sourceTotal||4)")&&client.includes('일부 공식소스 확인 필요')&&client.includes('결과 확정 보류'),'monitor reports fresh dynamic official-source coverage and never claims no change while any declared official source is unavailable');
+assert(client.includes('requiredSourceCount=Number(m.snapshot?.policy?.requiredSourceCount||sourceTotal||0)')&&client.includes('completeSources=fresh&&requiredSourceCount>0')&&client.includes("sourceOk+'/'+(requiredSourceCount||sourceTotal||0)")&&client.includes('일부 공식소스 확인 필요')&&client.includes('결과 확정 보류'),'monitor reports dynamic required-source coverage and never claims no change while any declared official source is unavailable');
 assert(client.includes('eligibleNotice')&&client.includes('targetItems'),'client alerts and foregrounds target-year eligible official notices instead of old-year history');
 assert(libSource.includes('verifyTargetYearFromOfficialDetail: true')&&libSource.includes('extractOfficialScheduleDates: true')&&libSource.includes('neverGuessMissingDates: true'),'monitor verifies yearless target notices and extracts only labeled official schedule dates');
 assert(client.includes('official-monitor-schedule')&&client.includes('detailScheduleDisplay:true')&&client.includes('neverGuessMissingDates:true'),'student monitor displays structured official schedule dates without invented values');
