@@ -74,3 +74,4 @@ console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
 }finally{
   await browser.close();
 }
+// Deep-link regression trigger.
