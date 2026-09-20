@@ -45,3 +45,4 @@ const result={
 console.log('PERFORMANCE_BUDGET_119',JSON.stringify(result,null,2));
 if(blockers.length)throw new Error('PERFORMANCE_BUDGET_FAILED '+JSON.stringify(blockers));
 console.log('PERFORMANCE_BUDGET_COMPLETE');
+// Exact-head performance-budget regression trigger.
