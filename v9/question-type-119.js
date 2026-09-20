@@ -51,3 +51,4 @@ function audit(){
 }
 V.QuestionType119={version:'119-question-skill-family-v1',families:FAMILIES,classify,audit,policy:{learningAnalyticsOnly:true,notOfficialExamWeight:true,noInventedQuota:true}};
 })();
+// Canonical families are for learning analytics, not official exam weights.
