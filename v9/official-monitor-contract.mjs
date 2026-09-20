@@ -15,6 +15,7 @@ const rows=parseNoticeList(fixture,{sourceId:'nfa-recruit',sourceLabel:'소방�
 assert(rows.length===3,'relevant official recruitment rows are selected while unrelated employment is ignored');
 assert(rows.some(x=>x.kind==='change_notice'&&x.reviewRequired),'change notice is high-impact and review-required');
 assert(rows.every(x=>isOfficialUrl(x.url)),'parsed notice URLs remain on official allowlisted hosts');
+assert(rows.every(x=>/^[a-f0-9]{20}$/.test(x.fingerprint||'')),'each official notice carries a stable row-local revision fingerprint');
 assert(classifyNotice('2027년 응급처치학개론 출제범위 변경공고')==='change_notice','scope change notice keeps change priority');
 assert(classifyNotice('2027년 소방공무원 채용 체력시험 개편 안내')==='exam_policy','fitness/policy changes are monitored as exam policy');
 assert(isRelevantTitle('2027년 공통교재 소방전술3(구급) 게시'),'official EMS textbook title is relevant');
@@ -42,5 +43,8 @@ assert(client.includes('noAutomaticCurriculumMutation:true')&&client.includes('d
 assert(client.includes("'/api/official-monitor'")&&client.includes('SNAPSHOT_URL')&&client.includes('cachedSnapshotFallback:true'),'client uses root app API first, then static/cached snapshot fallbacks');
 assert(client.includes('data-monitor-key')&&client.includes('old.dataset.monitorKey!==key'),'monitor DOM decoration is idempotent and cannot loop on its own MutationObserver');
 assert(client.includes('backgroundServerMonitor:true')&&client.includes('devicePushWhenClosed:false')&&client.includes('setAppBadge'),'monitor copy/contracts distinguish scheduled server monitoring from closed-app push and support installed-app badges');
+assert(client.includes('seenRevisionKeys')&&client.includes("changeState==='updated'")&&client.includes('공고 내용 변경'),'monitor re-alerts a previously seen notice only when its official revision fingerprint changes');
+const sync=fs.readFileSync(new URL('./official-monitor-sync.mjs',import.meta.url),'utf8');
+assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated'")&&sync.includes('updatedIds'),'scheduled snapshot marks same-notice revisions without mutating curriculum');
 assert(sw.includes('/api/official-monitor')&&sw.includes('notificationclick'),'service worker uses network-first monitor data and notification click handling');
 console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');

@@ -25,7 +25,10 @@ const snapshot={
     reviewRequired:true,
     targetYearMatch:true,
     baselineYearMatch:false,
-    noticeYear:2027
+    noticeYear:2027,
+    fingerprint:'1234567890abcdef1234',
+    changeState:'updated',
+    previousFingerprint:'abcdef1234567890abcd'
   }]
 };
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
@@ -58,7 +61,8 @@ try{
   await page.evaluate(()=>window.AITUTOR_V9.App.go('resources'));
   await page.waitForSelector('.official-monitor-card');
   const text=await page.locator('.official-monitor-card').innerText();
-  assert(text.includes('최근 저장본 표시')&&text.includes('새 공고 1건'),'monitor UI clearly marks stale cached data without hiding the official notice');
+  assert(text.includes('최근 저장본 표시')&&text.includes('새 공고·변경 1건'),'monitor UI clearly marks stale cached data without hiding the official notice');
+  assert(text.includes('공고 내용 변경'),'same-notice revision is visibly distinguished from a brand-new notice');
   assert(errors.length===0,'monitor offline fallback produces no browser runtime errors');
   console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
   await ctx.close();

@@ -78,6 +78,22 @@ function dateNear(value) {
   return m ? [m[1], String(Number(m[2])).padStart(2, '0'), String(Number(m[3])).padStart(2, '0')].join('-') : '';
 }
 
+function rowContext(src, index, anchorLength) {
+  for (const tag of ['tr', 'li']) {
+    const open = src.lastIndexOf('<' + tag, index);
+    const close = src.indexOf('</' + tag + '>', index + anchorLength);
+    if (open >= 0 && close >= 0 && close - open <= 4000) return textOnly(src.slice(open, close + tag.length + 3));
+  }
+  return textOnly(src.slice(Math.max(0, index - 350), Math.min(src.length, index + anchorLength + 450)));
+}
+
+function fingerprintFor(row, context) {
+  return createHash('sha256')
+    .update([row.sourceId, row.title, row.publishedAt, row.url, context].join('\n'))
+    .digest('hex')
+    .slice(0, 20);
+}
+
 function yearFrom(title, publishedAt) {
   const t = String(title || '').match(/20\d{2}/);
   if (t) return Number(t[0]);
@@ -134,9 +150,8 @@ export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
     if (!isRelevantTitle(title)) continue;
 
     const href = (m[1].match(/\bhref\s*=\s*["']([^"']+)["']/i) || [])[1] || '';
-    const start = Math.max(0, (m.index || 0) - 550);
-    const end = Math.min(src.length, (m.index || 0) + m[0].length + 650);
-    const publishedAt = dateNear(textOnly(src.slice(start, end)));
+    const context = rowContext(src, m.index || 0, m[0].length);
+    const publishedAt = dateNear(context);
     const url = resolveNoticeUrl(href, baseUrl);
     const kind = classifyNotice(title);
     const noticeYear = yearFrom(title, publishedAt);
@@ -155,6 +170,7 @@ export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
       noticeYear
     };
     row.id = idFor(row);
+    row.fingerprint = fingerprintFor(row, context);
     out.push(row);
   }
 
@@ -242,6 +258,7 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       noThirdParty: true,
       noAutomaticCurriculumMutation: true,
       notifyOnlyRelevantOfficialNotices: true,
+      detectSameNoticeMetadataRevision: true,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
     healthy: nfaRecruitOk && successCount >= 2 && sorted.length > 0,
