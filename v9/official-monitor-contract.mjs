@@ -70,3 +70,4 @@ console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
 // Exact-head revision-monitor regression trigger.
 // Exact-head 2027-target monitor proof.
 // Partial-source fail-closed regression trigger.
+// Exact-head official detail schedule regression trigger.
