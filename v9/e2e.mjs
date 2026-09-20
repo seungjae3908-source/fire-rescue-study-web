@@ -106,6 +106,10 @@ try{
   await p.locator('[data-training-start="fire50"]').click();await p.waitForSelector('.exam-run-workspace');
   const fire50=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,label:e.blueprint?.label}});
   assert(fire50.mode==='training'&&fire50.total===50&&fire50.fire===50&&fire50.ems===0&&/소방학 집중 50/.test(fire50.label||''),'fire 50 training builds fifty unique fire questions outside real mock mode');
+  const pcExamLayout=await p.locator('.exam-layout').evaluate(root=>{const q=root.querySelector('.exam-question-pane')?.getBoundingClientRect(),s=root.querySelector('.exam-side')?.getBoundingClientRect(),nav=root.querySelectorAll('.exam-navigator button');return{q:q&&q.width,s:s&&s.width,nav:nav.length,sideVisible:!!s&&s.width>200}});
+  assert(pcExamLayout.sideVisible&&pcExamLayout.q>pcExamLayout.s*2&&pcExamLayout.nav===50,'desktop active exam uses a wide question pane plus a narrower progress navigator');
+  await p.locator('.exam-navigator [data-exam-jump="4"]').click();
+  assert((await p.evaluate(()=>window.AITUTOR_V9.App.runtime.exam.i))===4,'desktop exam navigator jumps directly to the chosen question');
   await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('.exam-start');
   await p.locator('[data-training-start="all200"]').click();await p.waitForSelector('.exam-run-workspace');
   const all200=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,unique:new Set(e.qs.map(q=>q.id)).size}});
