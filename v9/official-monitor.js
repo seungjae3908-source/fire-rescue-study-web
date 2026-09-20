@@ -15,7 +15,10 @@ const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{ret
 const write=x=>{try{localStorage.setItem(KEY,JSON.stringify(x))}catch{}};
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const official=url=>{try{const u=new URL(String(url||''));return u.protocol==='https:'&&ALLOWED.has(u.hostname.toLowerCase())}catch{return false}};
-const validSnapshot=x=>!!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&x.items.every(i=>i&&i.id&&i.title&&official(i.url));
+const validSnapshot=x=>{
+  const required=Number(x?.policy?.requiredSourceCount||x?.sourceStatus?.length||0);
+  return !!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&required>0&&x.sourceStatus.length===required&&x.items.every(i=>i&&i.id&&i.title&&official(i.url));
+};
 const eligibleNotice=i=>!!i.meaningful&&i.notificationEligible!==false;
 const eligibleFirstRun=i=>eligibleNotice(i)&&String(i.publishedAt||'')>=START_AT;
 
@@ -31,6 +34,7 @@ function summary(){
     unseenCount:(state.unseen||[]).length,
     targetExamYear:state.snapshot?.targetExamYear||2027,
     baselineYear:state.snapshot?.baselineYear||2026,
+    requiredSourceCount:Number(state.snapshot?.policy?.requiredSourceCount||state.snapshot?.sourceStatus?.length||0),
     degraded:state.snapshot?.degraded===true||state.snapshot?.healthy!==true,
     lastSuccessfulAt:state.snapshot?.lastSuccessfulAt||state.snapshot?.generatedAt||'',
     lastFetched:state.lastFetched,
@@ -133,7 +137,7 @@ function cardHtml(){
   const sourceTotal=(m.sources||[]).length;
   const generatedMs=Date.parse(String(m.generatedAt||''));
   const fresh=m.healthy===true&&Number.isFinite(generatedMs)&&Date.now()-generatedMs<=MAX_SNAPSHOT_AGE_MS&&!m.degraded;
-  const requiredSourceCount=Number(m.snapshot?.policy?.requiredSourceCount||sourceTotal||0);
+  const requiredSourceCount=Number(m.requiredSourceCount||sourceTotal||0);
   const completeSources=fresh&&requiredSourceCount>0&&sourceTotal===requiredSourceCount&&sourceOk===sourceTotal;
   const lastGood=m.lastSuccessfulAt?' · 마지막 정상 '+new Date(m.lastSuccessfulAt).toLocaleString('ko-KR'):'';
   const status=loading?'공식 사이트 확인 중':stale||!fresh?'최근 저장본 표시 · 연결 확인 필요'+lastGood:error?'공식 감시 연결 확인 필요':!completeSources?'일부 공식소스 확인 실패 · 결과 확정 보류':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
