@@ -84,8 +84,9 @@ function evidenceLines(items,viewport,p,queries=[]){
 
   const candidates=[];
   const maxWindow=8;
-  for(const q of rawQueries){
-    const qn=norm(q),qt=queryTokens([q]);if(qn.length<8||!qt.length)continue;
+  for(let qi=0;qi<rawQueries.length;qi++){
+    const q=rawQueries[qi],qn=norm(q),qt=queryTokens([q]);if(qn.length<8||!qt.length)continue;
+    const priorityBonus=Math.max(0,72-qi*16);
     for(let i=0;i<lines.length;i++){
       let joined='';
       for(let j=i;j<Math.min(lines.length,i+maxWindow);j++){
@@ -94,7 +95,7 @@ function evidenceLines(items,viewport,p,queries=[]){
         const exact=joined.includes(qn)||qn.includes(joined)&&joined.length>=Math.min(28,Math.floor(qn.length*.65));
         const density=matched.reduce((n,t)=>n+Math.min(14,t.length),0);
         const coverage=matched.length/Math.max(1,qt.length);
-        const score=(exact?180:0)+density+(matched.length>=2?matched.length*10:0)+Math.round(coverage*40)-Math.max(0,(j-i)-4)*3;
+        const score=(exact?180:0)+density+(matched.length>=2?matched.length*10:0)+Math.round(coverage*40)+priorityBonus-Math.max(0,(j-i)-4)*3;
         const strong=exact||coverage>=.55&&matched.length>=2||matched.some(t=>t.length>=7)&&coverage>=.35;
         if(strong)candidates.push({start:i,end:j,score,query:q});
         if(joined.length>Math.max(qn.length*1.8,260))break;
