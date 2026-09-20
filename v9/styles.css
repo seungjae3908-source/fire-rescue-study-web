@@ -1014,3 +1014,183 @@ small{font-size:max(11px,.78em)}
   .tutor-compare-table tr{display:grid;grid-template-columns:minmax(92px,32%) minmax(0,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .tutor-compare-table td{display:block;border:0!important;padding:9px;font-size:13px}
 }
+
+
+/* V13 mobile study UX — screenshot-driven final cleanup */
+@media(max-width:720px){
+  .page-study .workspace{
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    overflow:hidden!important;
+  }
+  .page-study .study-mainpane{
+    grid-template-rows:auto minmax(0,1fr)!important;
+    background:transparent!important;
+  }
+  .page-study .concept-nav{
+    display:none!important;
+  }
+  .page-study .outline{
+    bottom:0!important;
+  }
+  .page-study .concept-head{
+    padding:10px 4px 8px!important;
+    border-bottom:0!important;
+    background:transparent!important;
+  }
+  .page-study .concept-head h2{
+    font-size:24px!important;
+    line-height:1.22!important;
+    margin:3px 0 2px!important;
+  }
+  .page-study .study-body-mobile{
+    padding:0 4px 14px!important;
+  }
+
+  .page-study .book-jumpbar{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:0!important;
+    margin:0!important;
+    padding:0!important;
+    border:1px solid var(--line)!important;
+    border-radius:13px!important;
+    overflow:hidden!important;
+    background:#0a1728!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.14)!important;
+  }
+  .page-study .book-jumpbar button{
+    min-width:0!important;
+    width:100%!important;
+    min-height:46px!important;
+    padding:8px 2px!important;
+    border:0!important;
+    border-right:1px solid rgba(255,255,255,.06)!important;
+    border-radius:0!important;
+    background:transparent!important;
+    color:var(--muted)!important;
+    font-size:13px!important;
+    font-weight:850!important;
+  }
+  .page-study .book-jumpbar button:last-child{
+    border-right:0!important;
+  }
+  .page-study .book-jumpbar button.on{
+    background:#173151!important;
+    color:#fff!important;
+    box-shadow:inset 0 -3px 0 var(--blue)!important;
+  }
+  .page-study .book-section{
+    padding:16px 0 22px!important;
+  }
+
+  .detail-toc{
+    position:static!important;
+    top:auto!important;
+    margin:0 0 12px!important;
+    border-radius:12px!important;
+  }
+
+  .detail-compare{
+    margin-top:18px!important;
+  }
+  .detail-compare h3{
+    margin-bottom:10px!important;
+  }
+  .compare-wrap{
+    overflow:visible!important;
+  }
+  .compare{
+    display:block!important;
+    width:100%!important;
+    border:0!important;
+    background:transparent!important;
+    table-layout:auto!important;
+  }
+  .compare thead{
+    display:none!important;
+  }
+  .compare tbody{
+    display:grid!important;
+    gap:10px!important;
+  }
+  .compare tr{
+    display:block!important;
+    width:100%!important;
+    border:1px solid var(--line)!important;
+    border-radius:13px!important;
+    overflow:hidden!important;
+    background:#0a1728!important;
+  }
+  .compare td{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    padding:11px 13px!important;
+    border:0!important;
+    word-break:keep-all!important;
+    overflow-wrap:break-word!important;
+    white-space:normal!important;
+  }
+  .compare td:first-child{
+    background:#10223a!important;
+    border-bottom:1px solid var(--line)!important;
+    color:#fff!important;
+  }
+  .compare td:first-child b{
+    display:block!important;
+    width:100%!important;
+    white-space:normal!important;
+    word-break:keep-all!important;
+    writing-mode:horizontal-tb!important;
+  }
+
+  .vertical-org{
+    display:flex!important;
+    flex-direction:column!important;
+    gap:7px!important;
+    width:100%!important;
+    max-width:none!important;
+  }
+  .vertical-org .org-node{
+    display:flex!important;
+    grid-template-columns:none!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:54px!important;
+    padding:13px 16px!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+  }
+  .vertical-org .org-node b{
+    display:block!important;
+    width:auto!important;
+    max-width:100%!important;
+    font-size:16px!important;
+    line-height:1.45!important;
+    white-space:normal!important;
+    word-break:keep-all!important;
+    overflow-wrap:break-word!important;
+    writing-mode:horizontal-tb!important;
+  }
+  .vertical-org .org-arrow{
+    display:grid!important;
+    place-items:center!important;
+    height:22px!important;
+    margin:0!important;
+    font-size:20px!important;
+  }
+
+  .study-quiz-pager{
+    position:static!important;
+    bottom:auto!important;
+    margin-top:14px!important;
+    padding:0!important;
+    background:none!important;
+  }
+  .quiz-view{
+    padding-bottom:4px!important;
+  }
+}
