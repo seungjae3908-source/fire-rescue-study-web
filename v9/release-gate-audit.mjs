@@ -26,6 +26,7 @@ const textbookVerifiedQuestions=verifiedQuestions.filter(q=>/소방전술|예방
 const exactPage=/\d+(?:\s*[~\-–]\s*\d+)?\s*쪽|page\s*\d+/i;
 const verifiedQuestionPageEvidence=textbookVerifiedQuestions.length>0&&textbookVerifiedQuestions.every(q=>exactPage.test(String(q.source||'')));
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
+const mastery=fs.readFileSync(new URL('./mastery.js',import.meta.url),'utf8');
 const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const lite=fs.readFileSync(new URL('./supabase-lite.js',import.meta.url),'utf8');
 const e2e=fs.readFileSync(new URL('./e2e.mjs',import.meta.url),'utf8');
@@ -53,6 +54,7 @@ const checks={
   privacyAcceptanceContractPresent:workflow.includes('deployed_private_session_acceptance:'),
   exactPreviewAcceptanceContractPresent:workflow.includes('preview_exact_sha_acceptance:'),
   examVersionTruth:V.ExamVersion119?.audit?.().ready===true,
+  adaptiveMasteryV2Contract:mastery.includes("version:'119-mastery-v2'")&&workflow.includes('Adaptive mastery v2 deterministic gate'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
