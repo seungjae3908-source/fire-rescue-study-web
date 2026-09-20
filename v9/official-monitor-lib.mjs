@@ -26,7 +26,10 @@ export const SOURCES = [
     detail: false,
     accept: /소방공무원|채용시험|시험일정|채용일정|필기시험|시험과목|출제범위|문항수|시험시간|시험방법|체력시험|가점|응시자격|원서접수|신체검사|면접시험|응급처치학|소방학|시행계획|변경공고|정정공고/i,
     urls: [
-      'https://www.nfsa.go.kr/nfsa/'
+      'https://cherish.nfsa.go.kr/nfsa/news/0011/job/?pageIdx=1'
+    ],
+    fallbackUrls: [
+      'https://cherish.nfsa.go.kr/nfsa/news/notice/?pageIdx=1'
     ]
   },
   {
@@ -35,10 +38,10 @@ export const SOURCES = [
     strategy: 'first-ok',
     accept: /공통교재|소방전술[123]|구급.*(지침|기준|표준)|응급처치.*(지침|기준|표준)|공식교재/i,
     urls: [
-      'https://www.nfsa.go.kr/nfsa/releaseinformation/archive/materials/'
+      'https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/'
     ],
     fallbackUrls: [
-      'https://www.nfsa.go.kr/nfsa/'
+      'https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/?pageIdx=1'
     ]
   }
 ]
