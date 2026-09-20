@@ -42,6 +42,7 @@ const officialMonitorClient=fs.readFileSync(new URL('./official-monitor.js',impo
 const officialMonitorApi=fs.readFileSync(new URL('./api/official-monitor.js',import.meta.url),'utf8');
 const officialMonitorApiTest=fs.readFileSync(new URL('./official-monitor-api-test.mjs',import.meta.url),'utf8');
 const officialMonitorBrowserTest=fs.readFileSync(new URL('./official-monitor-browser-e2e.mjs',import.meta.url),'utf8');
+const accessibilitySmoke=fs.readFileSync(new URL('./accessibility-smoke.mjs',import.meta.url),'utf8');
 const officialMonitorRootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.url),'utf8');
 const authE2E=fs.readFileSync(new URL('./auth-session-e2e.mjs',import.meta.url),'utf8');
 const sql=fs.readFileSync(new URL('../supabase/tests/v9-live-closed-loop.sql',import.meta.url),'utf8');
@@ -71,6 +72,7 @@ const checks={
   quality4HighYield:quality4HighYieldAudit?.missing===0&&quality4HighYieldAudit?.ready===quality4HighYieldAudit?.total&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_COMPLETE')&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_FAILED'),
   officialNoticeMonitorContract:officialMonitorWorkflow.includes("cron: '17 */6 * * *'")&&officialMonitorWorkflow.includes('chore/official-monitor-snapshot')&&!officialMonitorWorkflow.includes('git push origin HEAD:main')&&officialMonitorClient.includes('noAutomaticCurriculumMutation:true')&&officialMonitorClient.includes('cachedSnapshotFallback:true')&&officialMonitorApi.includes('chore/official-monitor-snapshot')&&officialMonitorRootApi.includes("require('../v9/api/official-monitor.js')")&&workflow.includes('Official notice monitor contract gate')&&workflow.includes('official_monitor_live_probe (non-release diagnostic)'),
   officialNoticeMonitorRuntimeTests:workflow.includes('Official monitor root API handler gate')&&workflow.includes('Official monitor offline/cache fallback QA')&&officialMonitorApiTest.includes('OFFICIAL_MONITOR_API_TEST_COMPLETE')&&officialMonitorBrowserTest.includes('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE'),
+  accessibilitySmokeContract:workflow.includes('Keyboard and accessibility semantic smoke QA')&&accessibilitySmoke.includes('ACCESSIBILITY_SMOKE_COMPLETE')&&app.includes('aria-current="page"')&&app.includes('aria-live="polite"'),
   activeExamRecoveryContract:examSession.includes("version:'119-active-exam-v1'")&&examSession.includes('questionIdsOnly:true')&&app.includes('persistActiveExam()')&&app.includes('data-exam-timer')&&app.includes('data-exam-abandon')&&workflow.includes('Active exam reload recovery and timer QA')&&examSessionE2E.includes('EXAM_SESSION_RECOVERY_E2E_COMPLETE'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };

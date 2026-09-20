@@ -156,6 +156,8 @@ jobs:
         run: node v9/e2e.mjs
       - name: Official monitor offline/cache fallback QA
         run: node v9/official-monitor-browser-e2e.mjs
+      - name: Keyboard and accessibility semantic smoke QA
+        run: node v9/accessibility-smoke.mjs
       - name: Active exam reload recovery and timer QA
         run: node v9/exam-session-e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
