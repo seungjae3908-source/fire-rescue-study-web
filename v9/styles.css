@@ -910,3 +910,47 @@ small{font-size:max(11px,.78em)}
   .official-monitor-item b{font-size:14px}
   .official-monitor-item small{font-size:11px}
 }
+
+
+/* V12 study UX consolidation — one workspace, five true content tabs */
+.page-study .study-workspace-single{grid-template-columns:minmax(0,1fr)!important}
+.page-study .study-rail{display:none!important}
+.page-study .tabbar,
+.page-study .book-jumpbar{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+.page-study .tabbar button,
+.page-study .book-jumpbar button{min-width:0!important;width:100%!important}
+.page-study .study-mainpane{grid-template-rows:auto minmax(0,1fr) 54px}
+.page-study .concept-nav{min-height:54px;padding:5px 8px}
+.page-study .concept-nav .btn{min-height:42px}
+.study-core-essentials{margin:0;padding:13px 14px;border:1px solid rgba(111,182,255,.24);border-radius:13px;background:#0a1a2c}
+.study-core-title{font-size:12px;font-weight:950;color:var(--blue);margin-bottom:8px}
+.study-core-essentials ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.study-core-essentials li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;font-size:14px;line-height:1.62}
+.study-key-text,
+.study-important,
+.study-must .study-key-text,
+.detail-key .study-key-text,
+.study-numbers .study-key-text{text-decoration:none!important}
+.study-key-text,.study-important{font-weight:680}
+.detail-key .study-key-text{font-weight:600}
+.study-ai{display:grid;grid-template-rows:auto minmax(160px,1fr) auto auto;gap:9px;min-height:100%;max-width:1000px;margin:0 auto}
+.study-ai-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.study-ai-head>div{display:grid;gap:4px}
+.study-ai-chat{min-height:160px;overflow:auto;border:1px solid var(--line);border-radius:13px;background:#071421;padding:10px}
+.study-ai .tutor-empty.compact{min-height:160px;height:auto;padding:16px}
+.study-ai .tutor-compose{position:sticky;bottom:0;background:#081524;padding-top:3px}
+.ai-load-inline{justify-self:start}
+.tutor-standalone{height:100%;min-height:0}
+.suggestion-form-error{border:1px solid rgba(255,133,128,.34);background:rgba(255,133,128,.08);color:#ffd0cd;border-radius:10px;padding:9px 11px;font-size:12px}
+.account-chip b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:720px){
+  .page-study .study-mainpane{grid-template-rows:auto minmax(0,1fr) 50px!important}
+  .page-study .concept-nav{min-height:50px;padding:4px 6px}
+  .page-study .concept-nav .btn{min-height:40px!important;padding:6px 4px!important}
+  .page-study .book-jumpbar{gap:4px!important;padding:5px 0 7px!important}
+  .page-study .book-jumpbar button{font-size:12px!important;padding:7px 2px!important}
+  .study-core-essentials{padding:11px 12px}
+  .study-core-essentials li{font-size:15px;line-height:1.6}
+  .study-ai{grid-template-rows:auto minmax(180px,1fr) auto auto}
+  .study-ai-chat{min-height:180px}
+}

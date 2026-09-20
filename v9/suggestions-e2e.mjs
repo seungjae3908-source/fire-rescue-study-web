@@ -9,7 +9,7 @@ try{
   await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');await page.waitForFunction(()=>!!window.AITUTOR_V9?.Suggestions);
   const setup=await page.evaluate(()=>{
     const V=window.AITUTOR_V9,rows=[];
-    let admin=false;
+    let admin=false,delayFirstList=true,releaseFirstList=null;
     class Q{
       constructor(table){this.table=table;this.filters=[];this.op='select'}
       select(){this.op='select';return this}
@@ -17,11 +17,13 @@ try{
       delete(){this.op='delete';return this}
       update(values){this.op='update';this.patch=values||{};return this}
       maybeSingle(){this.single=true;return this.exec()}
-      upsert(incoming){for(const row of incoming){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows[i]={...rows[i],...row};else rows.push({...row})}return Promise.resolve({data:null,error:null})}
+      insert(incoming){for(const row of incoming)rows.push({...row});return Promise.resolve({data:null,error:null})}
+      upsert(){throw new Error('SUGGESTION_CREATE_MUST_NOT_UPSERT')}
       then(a,b){return this.exec().then(a,b)}
       async exec(){
         if(this.table==='study_admins')return{data:admin?{user_id:'qa-user'}:null,error:null};
         if(this.table==='study_suggestions'){
+          if(this.op==='select'&&!this.single&&delayFirstList){await new Promise(r=>{releaseFirstList=r});delayFirstList=false}
           let data=rows.slice();for(const [k,v] of this.filters)data=data.filter(x=>x[k]===v);
           if(this.op==='delete'){for(const row of data){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows.splice(i,1)}return{data:null,error:null}}
           if(this.op==='update'){for(const row of data){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows[i]={...rows[i],...(this.patch||{})}}return{data:null,error:null}}
@@ -32,7 +34,7 @@ try{
     }
     const client={from:t=>new Q(t)};
     V.Auth={init:async()=>({client,user:{id:'qa-user',email:'qa@example.test'}}),get client(){return client},get user(){return{id:'qa-user',email:'qa@example.test'}},get isGuest(){return false},label(){return'qa@example.test'}};
-    window.__suggestQa={rows,setAdmin:v=>admin=!!v};
+    window.__suggestQa={rows,setAdmin:v=>admin=!!v,releaseFirstList:()=>releaseFirstList?.()};
     V.App.runtime.suggestionsOwner='';V.App.go('suggestions');
     return true;
   });
@@ -41,10 +43,14 @@ try{
   assert(await page.locator('[data-suggest-submit]').count()===1,'member sees private suggestion form');
   await page.locator('#suggestTitle').fill('모바일 글자 정렬 개선');
   await page.locator('#suggestBody').fill('시험 화면의 긴 문장과 버튼 정렬을 더 확인해주세요.');
+  await page.evaluate(()=>window.__suggestQa.releaseFirstList());
+  await page.waitForTimeout(80);
+  assert((await page.locator('#suggestTitle').inputValue())==='모바일 글자 정렬 개선'&&(await page.locator('#suggestBody').inputValue()).includes('긴 문장'),'async suggestion-list refresh never wipes a draft being typed');
   await page.locator('[data-suggest-submit]').click();
   await page.waitForFunction(()=>window.__suggestQa.rows.length===1);
   assert((await page.locator('.suggestion-list').innerText()).includes('모바일 글자 정렬 개선'),'member sees own submitted suggestion');
   assert((await page.locator('.suggestion-list').innerText()).includes('접수'),'new suggestion starts in 접수 state');
+  assert((await page.locator('#suggestTitle').inputValue())===''&&(await page.locator('#suggestBody').inputValue())==='','successful submission clears the draft only after persistence succeeds');
 
   await page.evaluate(async()=>{window.__suggestQa.setAdmin(true);window.AITUTOR_V9.App.runtime.suggestionsOwner='';await window.AITUTOR_V9.Suggestions.list();window.AITUTOR_V9.App.go('suggestions')});
   await page.waitForTimeout(50);await page.evaluate(()=>{window.AITUTOR_V9.App.runtime.suggestionsOwner='';window.AITUTOR_V9.App.render()});

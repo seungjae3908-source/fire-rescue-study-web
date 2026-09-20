@@ -23,8 +23,9 @@ try{
 
   await go(p,'study');await p.waitForSelector('.workspace');
   await cleanPage(p,'desktop study');
-  assert(await p.locator('.tabbar button').count()===4,'desktop study has exactly four learning tabs');
-  assert((await p.locator('.tabbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문','desktop tabs are 핵심/상세/문제/원문');
+  assert(await p.locator('.tabbar button').count()===5,'desktop study has exactly five learning tabs');
+  assert((await p.locator('.tabbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문 AI','desktop tabs are 핵심/상세/문제/원문/AI');
+  assert(await p.locator('.study-rail').count()===0,'desktop study removes the duplicate right AI/problem/source rail');
   assert(!(await p.locator('.concept-head').innerText()).includes('숙련도'),'study header hides mastery/internal id status');
 
   await p.locator('[data-outline]').first().click();await p.waitForSelector('.outline.open');
@@ -40,8 +41,15 @@ try{
   await p.waitForSelector('.detail-view');
   const flashDetail=await p.locator('.study-body-desktop').innerText();
   assert(flashDetail.includes('백드래프트'),'detail view includes confusing-concept comparison');
+  assert(!flashDetail.includes('30초 핵심')&&!flashDetail.includes('시험 직전 핵심'),'detail view does not repeat the core summary or core essentials');
   assert(await p.locator('.detail-num').count()===0,'decorative numbered detail badges are removed');
   assert(!flashDetail.includes('개념 구조와 읽는 순서'),'meta learning heading is removed/simplified');
+  const aiRoute=await p.evaluate(()=>{const V=window.AITUTOR_V9;V.App.chooseConcept('F07-C08');const target=V.App.tutorConceptFor('플래시오버에 대해 알려줘');return{id:target.id,title:target.title,current:V.Store.state.conceptId}});
+  assert(aiRoute.current==='F07-C08'&&/플래시오버/.test(aiRoute.title)&&aiRoute.id!==aiRoute.current,'AI routes an explicit flashover question away from the currently open sprinkler concept');
+  await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
+  await p.locator('.tabbar [data-study-tab="ai"]').click();
+  await p.waitForSelector('.study-body-desktop .study-ai [data-tutor-input]');
+  assert(await p.locator('.study-body-desktop .study-ai').count()===1&&await p.locator('.study-rail').count()===0,'AI question is a first-class visible study tab instead of a duplicate right-side panel');
   const quality2Content=await p.evaluate(()=>{const V=window.AITUTOR_V9,flash=V.contentPacks.get('F03-C09'),foam=V.contentPacks.get('F07-C08'),baseQs=V.questions.filter(q=>/^119-q2-(foamprop|flash)-/.test(q.id||'')),gapQs=V.questions.filter(q=>/^119-q2-(haz-special|sprinkler-base)-/.test(q.id||''));return{flashText:[flash.summary,...(flash.detail||[]),...(flash.must||[])].join(' '),flashCompare:flash.compare?.length||0,flashDeep:flash.deepSections?.length||0,foamText:[foam.summary,...(foam.detail||[]),...(foam.must||[])].join(' '),foamCompare:foam.compare?.length||0,foamDeep:foam.deepSections?.length||0,foamQs:V.questions.filter(q=>q.conceptId==='F07-C08'&&/^119-q2-foamprop-/.test(q.id||'')).length,flashQs:V.questions.filter(q=>q.conceptId==='F03-C09'&&/^119-q2-flash-/.test(q.id||'')).length,baseQuality2:baseQs.length,gapQuality2:gapQs.length,allB:[...baseQs,...gapQs].every(q=>q.grade==='B'&&q.choices?.length===4&&q.choiceExplanations?.length===4)}}); 
   assert(/483~649℃/.test(quality2Content.flashText)&&/20 kW\/㎡/.test(quality2Content.flashText)&&quality2Content.flashCompare>=4&&quality2Content.flashDeep>=5,'flashover quality2 content includes official phase, radiation, temperature range, before/after and four-way comparison');
   assert(/라인 프로포셔너/.test(quality2Content.foamText)&&/펌프 프로포셔너/.test(quality2Content.foamText)&&/프레셔 프로포셔너/.test(quality2Content.foamText)&&/프레셔사이드 프로포셔너/.test(quality2Content.foamText)&&quality2Content.foamCompare>=4&&quality2Content.foamDeep>=6,'foam quality2 content covers all four proportioners with operating principles and comparison');
@@ -61,7 +69,7 @@ try{
   const before=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
   await p.locator('[data-study-next]').click();
   const after=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
-  assert(before.id!==after.id&&after.tab==='detail','next concept keeps current learning tab without reopening TOC');
+  assert(before.id!==after.id&&after.tab===before.tab,'next concept keeps whichever learning tab is currently selected without reopening TOC');
 
   await go(p,'exam');await cleanPage(p,'desktop exam');
   const examText=await p.locator('.page').innerText();
@@ -100,9 +108,12 @@ try{
   await go(p,'settings');await cleanPage(p,'desktop settings');
   assert((await p.locator('.page').innerText()).includes('개인 자료'),'settings keeps only user-relevant privacy information');
 
-  await go(p,'tutor');await cleanPage(p,'desktop AI question');
-  const tutorText=await p.locator('.page').innerText();
-  assert(!/F\d\d-C\d\d/.test(tutorText)&&!tutorText.includes('WebGPU'),'AI question screen hides internal concept ids and engine jargon');
+  await p.evaluate(()=>window.AITUTOR_V9.App.go('tutor'));
+  await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.studyTab==='ai');
+  await cleanPage(p,'desktop legacy AI route migration');
+  const tutorText=await p.locator('.study-body-desktop .study-ai').innerText();
+  assert(!/F\d\d-C\d\d/.test(tutorText)&&!tutorText.includes('WebGPU'),'legacy AI route migrates into the study AI tab without internal ids or engine jargon');
+  assert(await p.locator('.tutor-standalone').count()===0,'legacy standalone AI screen is no longer rendered');
 
   assert(derr.length===0,'desktop runtime errors = 0 '+derr.join(' | '));
   await desktop.close();
@@ -121,8 +132,15 @@ try{
   await cleanPage(m,'mobile study');
   assert(await m.locator('.page-study .top').isHidden(),'mobile study removes duplicate global header');
   assert(await m.locator('.page-study .actionbar').isVisible(),'mobile study keeps previous/TOC/next navigation');
-  assert(await m.locator('.book-jumpbar button').count()===4,'mobile study has four true content tabs');
-  assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문','mobile tabs are 핵심/상세/문제/원문');
+  assert(await m.locator('.book-jumpbar button').count()===5,'mobile study has five true content tabs');
+  assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문 AI','mobile tabs are 핵심/상세/문제/원문/AI');
+  await m.locator('.book-jumpbar [data-study-tab="ai"]').click();
+  const mobileAiInput=m.locator('.study-body-mobile [data-tutor-input]');
+  await mobileAiInput.fill('플래시오버에 대해 알려줘');
+  await m.locator('.study-body-mobile [data-tutor-send]').click();
+  await m.waitForFunction(()=>{const chat=window.AITUTOR_V9.Store.state.chat||[],last=chat[chat.length-1];return last?.role==='assistant'&&/플래시오버/.test(last.text||'')},{timeout:30000});
+  const mobileAiTruth=await m.evaluate(()=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1],target=V.curriculum.byId[last?.targetConceptId||''];return{text:last?.text||'',targetId:last?.targetConceptId||'',targetTitle:target?.title||'',current:V.Store.state.conceptId}});
+  assert(/플래시오버/.test(mobileAiTruth.text)&&/플래시오버/.test(mobileAiTruth.targetTitle)&&mobileAiTruth.targetId!==mobileAiTruth.current,'mobile AI tab uses the visible question and answers a flashover-specific concept instead of the open concept');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
@@ -143,21 +161,21 @@ try{
     assert(secondPracticeQuestion!==firstPracticeQuestion,'concept practice next button advances to a different question');
   }
   await m.locator('.book-jumpbar [data-study-tab="core"]').click();
-  await m.waitForSelector('.book-section .study-must');
-  assert((await m.locator('.book-section .study-must-title').innerText()).includes('★ 시험필수'),'core learning exposes a compact exam-essential block');
-  assert(await m.locator('.book-section .study-must li').count()>=1,'core learning underlines only curated must-remember points');
+  await m.waitForSelector('.book-section .study-core-essentials');
+  assert(await m.locator('.book-section .study-quick').count()===1,'core keeps one 30-second summary only');
+  assert(await m.locator('.book-section .study-core-essentials li').count()>=1&&await m.locator('.book-section .study-core-essentials li').count()<=5,'core limits exam essentials to five concise points');
+  assert(await m.locator('.book-section .study-must,.book-section .study-schema,.book-section .detail-section').count()===0,'core excludes detailed/exam-full duplicate sections');
   const starBefore=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
   await m.locator('.book-section .study-star-btn').first().click();
   const starAfter=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
-  assert(starAfter===starBefore+1,'core star saves the exact exam-essential point into pass notes');
+  assert(starAfter===starBefore+1,'core star saves the exact concise point into pass notes');
   assert(await m.locator('.book-section .study-star-btn.on').count()>=1,'saved core point visibly keeps its filled star state');
-  assert((await m.locator('.book-section .study-must-title').innerText()).includes('전부 보기'),'core learning no longer truncates must-remember items to the first three');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
-  await m.locator('.book-jumpbar [data-study-tab="core"]').click();
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.book-section .hazmat-class-grid');
-  assert(await m.locator('.book-section .hazmat-class-card').count()===6,'hazardous-material core summary always shows all six classes');
-  assert((await m.locator('.book-section .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material summary visibly reaches class 6');
+  assert(await m.locator('.book-section .hazmat-class-card').count()===6,'hazardous-material full six-class reference lives in detail instead of core');
+  assert((await m.locator('.book-section .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material detail visibly reaches class 6');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
@@ -167,9 +185,9 @@ try{
   assert(!detailText.includes('개념 구조와 읽는 순서')&&!detailText.includes('개념 이해'),'mobile detail simplifies meta headings to 개념');
   assert(await m.locator('.book-section .detail-num').count()===0,'mobile detail has no detached numeric badges');
   assert(await m.locator('.book-section .detail-view>.lead').count()===0,'detail tab does not repeat the core summary above structured detail');
-  assert(await m.locator('.book-section .detail-view .study-must').count()===1,'detail view repeats curated exam essentials before deep explanation');
-  const keyLineStyle=await m.locator('.book-section .detail-view .study-key-text').first().evaluate(el=>getComputedStyle(el).textDecorationLine);
-  assert(keyLineStyle.includes('underline'),'detail important points are visibly underlined');
+  assert(await m.locator('.book-section .detail-view .study-must,.book-section .detail-view .study-quick,.book-section .detail-view .study-core-essentials').count()===0,'detail contains detail content only, without core blocks');
+  const keyLine= m.locator('.book-section .detail-view .study-key-text').first();
+  if(await keyLine.count()){const keyLineStyle=await keyLine.evaluate(el=>getComputedStyle(el).textDecorationLine);assert(!keyLineStyle.includes('underline'),'detail emphasis no longer makes normal study text look like links')}
   const dup=await m.locator('.book-section .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
@@ -218,6 +236,16 @@ try{
   assert(cache.same&&(/local-cache/.test(cache.origin)||cache.origin==='official-static-range')&&(local.local||local.mirror),'official PDF uses local cache or stable static mirror and is reused after first load');
   const closeBox=await m.locator('#pdfEvidence [data-pdf-close]').boundingBox();
   assert(closeBox&&closeBox.height<60,'PDF close button stays compact instead of stretching with the header');
+  await m.locator('[data-pdf-close]').click();
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
+  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
+  await m.locator('.study-body-mobile .source-only [data-source-concept]').click();
+  await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
+  const flashSource=await m.locator('#pdfEvidence').evaluate(root=>{const V=window.AITUTOR_V9,page=Number(root.dataset.page)||0;return{page,bookPage:V.SourcePDF.bookPage('fire1',page),verified:root.dataset.anchorVerified,label:root.querySelector('[data-pdf-page-label]')?.textContent||'',lines:[...root.querySelectorAll('.pdf-evidence-line')].map(x=>x.title||'')}}); 
+  assert(flashSource.bookPage===40||(flashSource.bookPage>=23&&flashSource.bookPage<=34),'fire phenomena source stays inside the declared official fire1 phenomenon evidence ranges');
+  assert(flashSource.verified==='true'&&flashSource.lines.some(x=>/플래시오버|백드래프트|롤오버|플레임오버/.test(x)),'fire phenomena PDF is accepted only when the underlined evidence contains a phenomenon-specific concept term');
   await m.locator('[data-pdf-close]').click();
 
   await m.locator('.mobile-nav [data-go="exam"]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='exam');
@@ -490,7 +518,7 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.book-section .detail-view');
   const triageText=await m.locator('.page-study').innerText();
-  assert(triageText.includes('기록지·중증도 분류')&&triageText.includes('START')&&triageText.includes('호흡 · 맥박 · 의식'),'START triage is a visible learner-facing section instead of a hidden audit gap');
+  assert(triageText.includes('기록지·중증도 분류')&&triageText.includes('START')&&/호흡\s*·\s*맥박\s*·\s*의식/.test(triageText),'START triage remains visible in detailed learner content without relying on the removed duplicate must block');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E20-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E20-C03');
@@ -543,13 +571,13 @@ try{
   await m.locator('.mobile-nav [data-more]').click();
   await m.waitForSelector('.menu-modal');
   const menuLabels=(await m.locator('.menu-modal .menu-list button').allInnerTexts()).join(' ');
-  assert(!menuLabels.includes('AI AI')&&menuLabels.includes('AI 질문'),'more menu removes duplicated AI label');
+  assert(!menuLabels.includes('AI 질문'),'more menu removes the duplicate standalone AI route because AI now lives inside the study tabs');
   const menuBoxes=await m.locator('.menu-modal .menu-list button').evaluateAll(nodes=>nodes.slice(0,2).map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,width:b.width}}));
   assert(menuBoxes.length===2&&Math.abs(menuBoxes[0].y-menuBoxes[1].y)<3&&menuBoxes[0].x!==menuBoxes[1].x,'more menu uses compact two-column layout');
   await m.locator('[data-close-more]').click();
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
-  for(const tab of ['core','detail','quiz','source']){
+  for(const tab of ['core','detail','quiz','source','ai']){
     await m.evaluate(tab=>{window.AITUTOR_V9.Store.state.studyTab=tab;window.AITUTOR_V9.Store.save();window.AITUTOR_V9.App.render?.()},tab).catch(()=>{});
     if((await m.evaluate(()=>window.AITUTOR_V9.Store.state.page))!=='study')await go(m,'study');
     await m.evaluate(tab=>{window.AITUTOR_V9.Store.state.studyTab=tab;window.AITUTOR_V9.Store.save();window.AITUTOR_V9.App.runtime.more=false;},tab);
@@ -562,7 +590,11 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="quiz"]').click();
   assert(await m.locator('.book-section .lesson>h3').count()===0,'quiz tab avoids repeating the selected tab title as a body heading');
 
-  for(const route of ['home','study','tutor','notes','bank','exam','wrong','stats','resources','settings']){
+  await m.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='tutor';V.Store.state.studyTab='core';V.Store.save();V.App.render()});
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.studyTab==='ai');
+  assert(await m.locator('.study-body-mobile .study-ai').count()===1,'persisted legacy tutor page auto-migrates into the mobile study AI tab');
+
+  for(const route of ['home','study','notes','bank','exam','wrong','stats','resources','settings']){
     await go(m,route);
     await m.waitForSelector('.page');
     await noX(m,'mobile route '+route);
@@ -578,7 +610,7 @@ try{
     await noX(t,'tablet 768 home');
     await go(t,'study');await t.waitForSelector('.workspace');
     await noX(t,'tablet 768 study');
-    assert(await t.locator('.tabbar button').count()===4||await t.locator('.book-jumpbar button').count()===4,'tablet 768 keeps four learning tabs');
+    assert(await t.locator('.tabbar button').count()===5||await t.locator('.book-jumpbar button').count()===5,'tablet 768 keeps five learning tabs');
     await go(t,'exam');await noX(t,'tablet 768 exam');
     await go(t,'resources');await noX(t,'tablet 768 resources');
     assert(terrs.length===0,'tablet 768 runtime errors = 0 '+terrs.join(' | '));
@@ -592,7 +624,7 @@ try{
     await noX(page,`mobile ${width} home`);
     await go(page,'study');await page.waitForSelector('.book-mobile');
     await noX(page,`mobile ${width} study`);
-    assert(await page.locator('.book-jumpbar button').count()===4,`mobile ${width} keeps four study tabs`);
+    assert(await page.locator('.book-jumpbar button').count()===5,`mobile ${width} keeps five study tabs`);
     const action=await page.locator('.page-study .actionbar').boundingBox(),nav=await page.locator('.mobile-nav').boundingBox();
     assert(action&&nav&&action.y+action.height<=nav.y+2,`mobile ${width} study controls stay above bottom navigation`);
     await go(page,'exam');await noX(page,`mobile ${width} exam`);
