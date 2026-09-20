@@ -203,6 +203,17 @@ function idFor(row) {
     .digest('hex')
     .slice(0, 24);
 }
+function enrichedFingerprint(row,detail){
+  const stableDetail={
+    targetYearMention:detail?.targetYearMention===true,
+    schedule:detail?.schedule||{},
+    attachments:(detail?.attachments||[]).map(x=>({label:String(x.label||''),url:String(x.url||'')}))
+  };
+  return createHash('sha256')
+    .update([String(row?.fingerprint||''),JSON.stringify(stableDetail)].join('\n'))
+    .digest('hex')
+    .slice(0,20)
+}
 
 export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
   const src = String(html || '');
@@ -281,6 +292,7 @@ export async function enrichOfficialRow(row, fetchImpl = fetch) {
     return{
       ...row,
       detailChecked:true,
+      fingerprint:enrichedFingerprint(row,detail),
       targetYearMatch,
       baselineYearMatch:targetYearMatch?false:row.baselineYearMatch,
       noticeYear:targetYearMatch?TARGET_YEAR:row.noticeYear,

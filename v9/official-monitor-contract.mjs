@@ -26,6 +26,8 @@ assert(detail.attachmentCount===1&&detail.attachments[0]?.url==='https://www.nfa
 const yearless=parseNoticeList('<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=yearless">소방공무원 채용시험 시행계획 공고</a></td><td>2026-12-20</td></tr></table>',{sourceId:'nfa-recruit',sourceLabel:'소방청 채용·시험',baseUrl:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1'})[0];
 const enriched=await enrichOfficialRow(yearless,async()=>new Response('<div>2027년 소방공무원 채용시험 시행계획 접수일 2026-12-28 마감일 2027-01-03</div>',{status:200}));
 assert(enriched.targetYearMatch===true&&enriched.notificationEligible===true&&enriched.schedule?.applicationStart==='2026-12-28','yearless list title is promoted to 2027 only after official detail text confirms the target year');
+const enrichedRevision=await enrichOfficialRow(yearless,async()=>new Response('<div>2027년 소방공무원 채용시험 시행계획 접수일 2026-12-29 마감일 2027-01-04 <a href="/nfa/file/plan-v2.pdf">변경 공고문 PDF</a></div>',{status:200}));
+assert(enriched.id===enrichedRevision.id&&enriched.fingerprint!==enrichedRevision.fingerprint,'same official post changes revision fingerprint when official detail schedule or attachment metadata changes');
 const originalRevision=parseNoticeList('<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=same-post">2027년 소방공무원 채용시험 일정 공고</a></td><td>2026-12-20</td></tr></table>',{sourceId:'nfa-recruit',sourceLabel:'소방청 채용·시험',baseUrl:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1'})[0];
 const correctedRevision=parseNoticeList('<table><tr><td><a href="/nfa/news/job/nfajob/?mode=view&cntId=same-post">2027년 소방공무원 채용시험 일정 정정공고</a></td><td>2026-12-21</td></tr></table>',{sourceId:'nfa-recruit',sourceLabel:'소방청 채용·시험',baseUrl:'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1'})[0];
 assert(originalRevision.id===correctedRevision.id,'same official post keeps a stable identity when its title/date are corrected');
@@ -69,7 +71,7 @@ assert(client.includes('function dday')&&client.includes('scheduleDday:true'),'s
 assert(client.includes('downloadScheduleCalendar')&&client.includes('text/calendar')&&client.includes('scheduleCalendarExport:true'),'student monitor can export official labeled schedule dates as an ICS calendar');
 assert(client.includes('official-monitor-attachment')&&client.includes('officialAttachmentHint:true'),'student monitor tells the user to inspect the official attached notice when labeled dates are not present in HTML');
 const sync=fs.readFileSync(new URL('./official-monitor-sync.mjs',import.meta.url),'utf8');
-assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated'")&&sync.includes('updatedIds'),'scheduled snapshot marks same-notice revisions without mutating curriculum');
+assert(sync.includes('previousFingerprint')&&sync.includes("changeState='updated'")&&sync.includes('updatedIds'),'scheduled snapshot marks same-notice revisions, including enriched detail revisions, without mutating curriculum');
 assert(sw.includes('/api/official-monitor')&&sw.includes('notificationclick'),'service worker uses network-first monitor data and notification click handling');
 console.log('OFFICIAL_MONITOR_CONTRACT_COMPLETE');
 // Exact-head revision-monitor regression trigger.
