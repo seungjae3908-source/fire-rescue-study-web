@@ -9,6 +9,7 @@ const snapshot={
   baselineYear:2026,
   officialOnly:true,
   healthy:true,
+  coverageComplete:true,
   policy:{requiredSourceCount:1,totalSourceCount:3,wafBypassForbidden:true},
   sourceStatus:[
     {id:'gosi-fire',label:'국가공무원 채용시스템 · 소방청',ok:true,pagesOk:1,status:'ok',error:''},
