@@ -427,9 +427,12 @@ async function renderPdfEvidence(id,pageOverride=null){
     if(pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
       const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key);
       const located=await V.SourcePDF.locate(key,anchorQueries,{bookRanges:mapped}).catch(()=>null);
-      if(located?.score>0&&located.page&&located.page!==result.page){
-        result=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:90000,onProgress:progress});
-        root.dataset.autoLocated='true'
+      if(located?.score>0&&located.page){
+        const anchorResult=await V.SourcePDF.render(key,located.page,host,anchorQueries,{timeoutMs:90000,onProgress:progress});
+        if(hasAnchorEvidence(anchorResult,anchorQueries)){
+          result=anchorResult;
+          root.dataset.autoLocated='true'
+        }
       }
     }
     const anchorVerified=hasAnchorEvidence(result,anchorQueries);
