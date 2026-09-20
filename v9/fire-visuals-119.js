@@ -15,5 +15,5 @@ const D={
 'sprinkler-deluge':['감지기 작동','일제개방밸브','배관 급수','개방형 헤드 동시방수'],
 'sprinkler-head':['화재열','감열부 작동','오리피스 개방','디플렉터','분산방수']
 };
-V.Visual119={data:D,render:id=>{const a=D[id]||[];return a.length?`<div class="concept-visual"><div class="visual-title">원리 도식</div><div class="visual-flow">${a.map((x,i)=>`<div class="visual-node"><span>${i+1}</span><b>${x}</b></div>${i<a.length-1?'<i>→</i>':''}`).join('')}</div></div>`:''}};
+V.Visual119={data:D,layouts:{},render:id=>{const a=D[id]||[],layout=V.Visual119?.layouts?.[id]||'flow';if(!a.length)return'';if(layout==='vertical-org')return `<div class="concept-visual visual-org"><div class="visual-title">조직 관계</div><div class="visual-flow vertical-org">${a.map((x,i)=>`<div class="visual-node org-node"><b>${x}</b></div>${i<a.length-1?'<i class="org-arrow">↓</i>':''}`).join('')}</div></div>`;return `<div class="concept-visual"><div class="visual-title">원리 도식</div><div class="visual-flow">${a.map((x,i)=>`<div class="visual-node"><span>${i+1}</span><b>${x}</b></div>${i<a.length-1?'<i>→</i>':''}`).join('')}</div></div>`}};
 })();
