@@ -1,5 +1,7 @@
 'use strict';
-const SNAPSHOT='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json';
+const SNAPSHOT_ROOT='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data';
+const SNAPSHOT=SNAPSHOT_ROOT+'/official-monitor.json';
+const HEALTH=SNAPSHOT_ROOT+'/official-monitor-health.json';
 const HOSTS=new Set(['www.nfa.go.kr','nfa.go.kr','www.nfsa.go.kr','nfsa.go.kr','cherish.nfsa.go.kr']);
 const MAX_STALE_MS=90*60*1000;
 
@@ -9,36 +11,59 @@ function official(url){
 function valid(x){
   return !!x&&x.version==='119-official-monitor-snapshot-v1'&&x.officialOnly===true&&Array.isArray(x.items)&&Array.isArray(x.sourceStatus)&&x.items.every(i=>i?.id&&i?.title&&official(i.url));
 }
-async function fetchSnapshot(){
-  const r=await fetch(SNAPSHOT,{headers:{'user-agent':'119-study-official-monitor-api/1.0','cache-control':'no-cache'}});
-  if(!r.ok)throw new Error('SNAPSHOT_HTTP_'+r.status);
+function validHealth(x){
+  return !!x&&x.version==='119-official-monitor-health-v1'&&Array.isArray(x.sourceStatus)&&typeof x.healthy==='boolean';
+}
+function ageMs(value){
+  const n=Date.parse(String(value||''));
+  return Number.isFinite(n)?Math.max(0,Date.now()-n):Number.POSITIVE_INFINITY;
+}
+async function fetchJson(url,validator){
+  const r=await fetch(url,{headers:{'user-agent':'119-study-official-monitor-api/2.0','cache-control':'no-cache'}});
+  if(!r.ok)throw new Error('HTTP_'+r.status);
   const x=await r.json();
-  if(!valid(x))throw new Error('INVALID_SNAPSHOT');
+  if(!validator(x))throw new Error('INVALID_MONITOR_PAYLOAD');
   return x;
 }
+async function fetchSnapshot(){return await fetchJson(SNAPSHOT,valid)}
+async function fetchHealth(){return await fetchJson(HEALTH,validHealth)}
 async function fetchLive(){
   const mod=await import('../official-monitor-lib.mjs');
   const x=await mod.collectOfficialNotices(fetch,new Date());
   if(!valid(x))throw new Error('INVALID_LIVE');
   return x;
 }
+function send(res,snapshot,transport,health,stale=false){
+  res.setHeader('Cache-Control',stale?'public, s-maxage=60, stale-while-revalidate=300':'public, s-maxage=900, stale-while-revalidate=21600');
+  return res.status(200).json({...snapshot,transport,health:health||null,stale});
+}
 
 module.exports=async function handler(req,res){
   if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'METHOD_NOT_ALLOWED'})}
   res.setHeader('Content-Type','application/json; charset=utf-8');
-  res.setHeader('Cache-Control','public, s-maxage=900, stale-while-revalidate=21600');
 
-  let snapshot=null;
-  let transport='snapshot';
+  let snapshot=null,health=null;
   try{snapshot=await fetchSnapshot()}catch{}
+  try{health=await fetchHealth()}catch{}
 
-  const stale=!snapshot||!snapshot.generatedAt||Date.now()-Date.parse(snapshot.generatedAt)>MAX_STALE_MS;
-  if(stale){
-    try{snapshot=await fetchLive();transport='live-fallback'}
-    catch{
-      if(!snapshot)return res.status(503).json({error:'OFFICIAL_MONITOR_UNAVAILABLE'});
-      transport='stale-snapshot';
+  const snapshotStale=!snapshot||snapshot.healthy!==true||snapshot.degraded===true||ageMs(snapshot.generatedAt)>MAX_STALE_MS;
+  const recentKnownOutage=!!snapshot&&snapshot.degraded===true&&health?.healthy===false&&ageMs(health.generatedAt)<=MAX_STALE_MS;
+
+  if(recentKnownOutage){
+    return send(res,snapshot,'degraded-snapshot',health,true);
+  }
+
+  if(snapshotStale){
+    try{
+      const live=await fetchLive();
+      if(live.healthy===true)return send(res,{...live,degraded:false,notificationSuppressed:false},'live-fallback',health,false);
+      if(snapshot)return send(res,snapshot,'stale-snapshot',health,true);
+      return res.status(503).json({error:'OFFICIAL_MONITOR_UNAVAILABLE',health});
+    }catch{
+      if(snapshot)return send(res,snapshot,'stale-snapshot',health,true);
+      return res.status(503).json({error:'OFFICIAL_MONITOR_UNAVAILABLE',health});
     }
   }
-  return res.status(200).json({...snapshot,transport});
+
+  return send(res,snapshot,'snapshot',health,false);
 };

@@ -82,7 +82,7 @@ try{
 assert(sw.includes("119-official-monitor-open")&&sw.includes("?page=resources#official-monitor"),'notification click deep-links to official monitor page and existing windows receive an open message');
 const client=await fs.promises.readFile(new URL('./official-monitor.js',import.meta.url),'utf8');
 assert(client.includes("navigator.serviceWorker?.addEventListener?.('message'")&&client.includes("openMonitorPage"),'official monitor client handles service-worker deep-link messages');
-assert(client.includes('completeSources=sourceTotal>=4&&sourceOk===sourceTotal')&&client.includes('일부 공식소스 확인 필요'),'monitor UI fails closed when official-source coverage is incomplete');
+assert(client.includes('completeSources=fresh&&sourceTotal>=4&&sourceOk===sourceTotal')&&client.includes('일부 공식소스 확인 필요'),'monitor UI fails closed when official-source coverage is incomplete or stale');
 console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
   await ctx.close();
 }finally{

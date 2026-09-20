@@ -16,6 +16,11 @@ export const SOURCES = [
       'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1',
       'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=2',
       'https://www.nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=3'
+    ],
+    fallbackUrls: [
+      'https://nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=1',
+      'https://nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=2',
+      'https://nfa.go.kr/nfa/news/job/nfajob/?mode=list&pageIdx=3'
     ]
   },
   {
@@ -27,6 +32,11 @@ export const SOURCES = [
       'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=1',
       'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=2',
       'https://www.nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=3'
+    ],
+    fallbackUrls: [
+      'https://nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=1',
+      'https://nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=2',
+      'https://nfa.go.kr/nfa/news/notice/?mode=list&pageIdx=3'
     ]
   },
   {
@@ -260,35 +270,88 @@ export function parseNoticeList(html, { sourceId, sourceLabel, baseUrl }) {
   return [...dedupe.values()];
 }
 
-const FETCH_TIMEOUT_MS=15000;
-const DETAIL_CONCURRENCY=6;
+export const MONITOR_FETCH_POLICY=Object.freeze({
+  requestTimeoutMs:9000,
+  attempts:2,
+  retryDelaysMs:[0,700],
+  sourceGapMs:350,
+  detailConcurrency:2
+});
 
-async function fetchText(url, fetchImpl) {
-  if (!isOfficialUrl(url)) throw new Error('NON_OFFICIAL_SOURCE');
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetchImpl(url, {
-      redirect: 'follow',
-      signal: ctrl.signal,
-      headers: {
-        'user-agent': 'Mozilla/5.0 119-study-official-monitor/1.0',
-        accept: 'text/html,application/xhtml+xml'
-      }
-    });
-    if (!res.ok) throw new Error('HTTP_' + res.status);
-    return await res.text();
-  } finally {
-    clearTimeout(timer);
-  }
+const sleep=ms=>ms>0?new Promise(resolve=>setTimeout(resolve,ms)):Promise.resolve();
+function monitorError(code,message,cause){
+  const err=new Error(message||code);
+  err.code=code;
+  if(cause)err.cause=cause;
+  return err;
+}
+function fetchErrorCode(err){
+  return String(err?.code||err?.cause?.code||err?.name||'FETCH_ERROR').slice(0,80);
+}
+function fetchErrorDetail(err){
+  const parts=[fetchErrorCode(err),err?.message,err?.cause?.message].filter(Boolean);
+  return [...new Set(parts.map(String))].join(': ').slice(0,180);
+}
+function retryableFetchError(err){
+  const value=(fetchErrorCode(err)+' '+String(err?.message||'')).toUpperCase();
+  return /FETCH|ABORT|TIMEOUT|ECONN|EAI_|ENET|EHOST|UND_|WAF_CHALLENGE|HTTP_(403|408|425|429|500|502|503|504)/.test(value);
+}
+function looksLikeWafChallenge(text){
+  return /방문자\s*확인|자바스크립트.*활성|javascript.*(?:enable|required)|checking your browser|verify you are human|captcha|challenge-platform|cf-chl/i.test(String(text||''));
+}
+function normalizedFetchPolicy(options={}){
+  return {
+    requestTimeoutMs:Number(options.requestTimeoutMs)||MONITOR_FETCH_POLICY.requestTimeoutMs,
+    attempts:Math.max(1,Number(options.attempts)||MONITOR_FETCH_POLICY.attempts),
+    retryDelaysMs:Array.isArray(options.retryDelaysMs)?options.retryDelaysMs:MONITOR_FETCH_POLICY.retryDelaysMs,
+    sourceGapMs:Number.isFinite(Number(options.sourceGapMs))?Math.max(0,Number(options.sourceGapMs)):MONITOR_FETCH_POLICY.sourceGapMs,
+    detailConcurrency:Math.max(1,Number(options.detailConcurrency)||MONITOR_FETCH_POLICY.detailConcurrency)
+  };
 }
 
-export async function enrichOfficialRow(row, fetchImpl = fetch) {
+async function fetchText(url, fetchImpl, options={}) {
+  if (!isOfficialUrl(url)) throw monitorError('NON_OFFICIAL_SOURCE');
+  const policy=normalizedFetchPolicy(options);
+  let lastError=null;
+  for(let attempt=1;attempt<=policy.attempts;attempt++){
+    const delay=Number(policy.retryDelaysMs[Math.min(attempt-1,policy.retryDelaysMs.length-1)]||0);
+    if(delay>0)await sleep(delay);
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),policy.requestTimeoutMs);
+    try{
+      const res=await fetchImpl(url,{
+        redirect:'follow',
+        signal:ctrl.signal,
+        headers:{
+          'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153 Safari/537.36 119-study-monitor/2.0',
+          accept:'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'accept-language':'ko-KR,ko;q=0.9,en;q=0.7',
+          'cache-control':'no-cache',
+          pragma:'no-cache'
+        }
+      });
+      const body=await res.text();
+      if(looksLikeWafChallenge(body))throw monitorError('WAF_CHALLENGE','OFFICIAL_SITE_WAF_CHALLENGE');
+      if(!res.ok)throw monitorError('HTTP_'+res.status,'HTTP_'+res.status);
+      return body;
+    }catch(err){
+      lastError=err?.code?err:monitorError(fetchErrorCode(err),fetchErrorDetail(err),err);
+      lastError.attempt=attempt;
+      lastError.url=url;
+      if(attempt>=policy.attempts||!retryableFetchError(lastError))break;
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+  throw lastError||monitorError('FETCH_ERROR','OFFICIAL_SOURCE_FETCH_FAILED');
+}
+
+export async function enrichOfficialRow(row, fetchImpl = fetch, options={}) {
   if(!row?.reviewRequired||!isOfficialUrl(row.url))return row;
   const shouldCheck=row.targetYearMatch===true||row.explicitYear==null;
   if(!shouldCheck)return row;
   try{
-    const html=await fetchText(row.url,fetchImpl);
+    const html=await fetchText(row.url,fetchImpl,options);
     const detail=extractOfficialDetail(html,row.url);
     const targetYearMatch=row.targetYearMatch===true||detail.targetYearMention===true;
     return{
@@ -309,27 +372,48 @@ export async function enrichOfficialRow(row, fetchImpl = fetch) {
   }
 }
 
-async function collectSource(source,fetchImpl){
+async function collectSource(source,fetchImpl,options={}){
+  const policy=normalizedFetchPolicy(options);
   const items=[];
-  let okCount=0,lastError='';
-  for(const url of source.urls){
-    try{
-      const html=await fetchText(url,fetchImpl);
-      const parsed=parseNoticeList(html,{sourceId:source.id,sourceLabel:source.label,baseUrl:url});
-      const accepted=source.accept?parsed.filter(row=>source.accept.test(row.title)):parsed;
-      items.push(...accepted);
-      okCount++;
-      if(source.strategy==='first-ok')break
-    }catch(err){
-      lastError=String(err?.message||err).slice(0,120)
+  let okCount=0,lastError='',lastErrorCode='',lastErrorUrl='',fallbackUsed=false;
+  const groups=[
+    {urls:source.urls||[],fallback:false},
+    {urls:source.fallbackUrls||[],fallback:true}
+  ];
+  for(const group of groups){
+    if(group.fallback&&okCount>0)break;
+    const blockedOrigins=new Set();
+    for(const url of group.urls){
+      let origin='';
+      try{origin=new URL(url).origin}catch{}
+      if(origin&&blockedOrigins.has(origin))continue;
+      try{
+        const html=await fetchText(url,fetchImpl,policy);
+        const parsed=parseNoticeList(html,{sourceId:source.id,sourceLabel:source.label,baseUrl:url});
+        const accepted=source.accept?parsed.filter(row=>source.accept.test(row.title)):parsed;
+        items.push(...accepted);
+        okCount++;
+        if(group.fallback)fallbackUsed=true;
+        if(source.strategy==='first-ok')break;
+      }catch(err){
+        lastError=fetchErrorDetail(err);
+        lastErrorCode=fetchErrorCode(err);
+        lastErrorUrl=url;
+        if(origin&&retryableFetchError(err))blockedOrigins.add(origin);
+      }
+      if(policy.sourceGapMs>0)await sleep(policy.sourceGapMs);
     }
+    if(source.strategy==='first-ok'&&okCount>0)break;
   }
   return{
     items,
     status:{
       id:source.id,label:source.label,ok:okCount>0,pagesOk:okCount,
       status:okCount>0?'ok':'error',
-      error:okCount>0?'':lastError||'SOURCE_UNAVAILABLE'
+      error:okCount>0?'':lastError||'SOURCE_UNAVAILABLE',
+      errorCode:okCount>0?'':lastErrorCode||'SOURCE_UNAVAILABLE',
+      errorUrl:okCount>0?'':lastErrorUrl,
+      fallbackUsed
     }
   }
 }
@@ -348,8 +432,13 @@ async function mapLimit(rows,limit,fn){
   return out
 }
 
-export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()) {
-  const sourceResults=await Promise.all(SOURCES.map(source=>collectSource(source,fetchImpl)));
+export async function collectOfficialNotices(fetchImpl = fetch, now = new Date(), options={}) {
+  const policy=normalizedFetchPolicy(options);
+  const sourceResults=[];
+  for(const source of SOURCES){
+    sourceResults.push(await collectSource(source,fetchImpl,policy));
+    if(policy.sourceGapMs>0)await sleep(policy.sourceGapMs);
+  }
   const items=sourceResults.flatMap(x=>x.items);
   const sourceStatus=sourceResults.map(x=>x.status);
 
@@ -361,7 +450,7 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
   }
 
   const uniqueRows=[...unique.values()];
-  const enriched=await mapLimit(uniqueRows,DETAIL_CONCURRENCY,row=>enrichOfficialRow(row,fetchImpl));
+  const enriched=await mapLimit(uniqueRows,policy.detailConcurrency,row=>enrichOfficialRow(row,fetchImpl,policy));
 
   const sorted = enriched
     .filter(x => x.meaningful)
@@ -389,10 +478,14 @@ export async function collectOfficialNotices(fetchImpl = fetch, now = new Date()
       extractOfficialScheduleDates: true,
       neverGuessMissingDates: true,
       detectOfficialAttachments: true,
-      parallelSourceFetch:true,
-      maxConcurrentSourceGroups:SOURCES.length,
-      detailConcurrency:DETAIL_CONCURRENCY,
-      requestTimeoutMs:FETCH_TIMEOUT_MS,
+      sequentialSourceFetch:true,
+      maxConcurrentSourceGroups:1,
+      detailConcurrency:policy.detailConcurrency,
+      requestTimeoutMs:policy.requestTimeoutMs,
+      requestAttempts:policy.attempts,
+      deterministicBackoffMs:policy.retryDelaysMs,
+      officialHostFailover:true,
+      wafChallengeDetection:true,
       snapshotBranch: 'chore/official-monitor-snapshot'
     },
     healthy: nfaRecruitOk && nfaNoticeOk && successCount === sourceStatus.length,
