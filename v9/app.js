@@ -89,7 +89,6 @@ function detailToc(rows=[]){
   return items.length>2?`<nav class="detail-toc" aria-label="상세 목차"><label><b>상세 목차</b><select class="select detail-toc-select" data-detail-jump-select aria-label="상세 목차에서 이동"><option value="">이동할 항목 선택</option>${items.map(x=>`<option value="${x.i}">${esc(x.title)}</option>`).join('')}</select></label></nav>`:''
 }
 function visualBlocks(pack){return (pack?.visuals||[]).map(id=>V.Visual119?.render?.(id)||'').join('')}
-function studyTools(){return `<div class="study-tools"><span>학습도구</span><button class="btn small ghost" data-study-tab="exam">시험포인트</button><button class="btn small ghost" data-study-tab="compare">비교·구분</button><button class="btn small ghost" data-study-tab="memory">암기</button></div>`}
 function hazmatBlock(c){
   if(c.scopeId!=='F05'||!V.Hazmat2026)return'';
   const idx=Number(c.id.split('-C')[1]),classNo=idx>=2&&idx<=7?idx-1:null;
@@ -125,14 +124,6 @@ function studySchemaBlock(c,pack){
     schemaRows('발생 전 · 후',s.beforeAfter,'before-after')
   ].filter(Boolean);
   return items.length?`<section class="study-schema phenomenon-schema"><div class="study-schema-title">화재현상 완전정리</div><div class="study-schema-grid">${items.join('')}</div></section>`:''
-}
-function featureBlock(c,pack){
-  const rows=V.StudyEmphasis119?.featureRows?.(pack)||[];if(!rows.length)return'';
-  return `<section class="study-features"><div class="study-features-title">★ 특징 · 핵심 정리</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'feature',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text study-important">${esc(x)}</span></li>`}).join('')}</ul></section>`;
-}
-function mustBlock(c,pack){
-  const rows=V.StudyEmphasis119?.mustRows?.(pack)||[];if(!rows.length)return'';
-  return `<section class="study-must"><div class="study-must-title">★★★ 시험필수 · 전부 보기</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'must',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text">${esc(x)}</span></li>`}).join('')}</ul></section>`;
 }
 function coreEssentialBlock(c,pack){
   const candidates=[
