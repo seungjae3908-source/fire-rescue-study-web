@@ -107,6 +107,8 @@ jobs:
         run: node v9/official-monitor-api-test.mjs
       - name: Production runtime identity API gate
         run: node v9/runtime-head-api-test.mjs
+      - name: Production runtime dependency probe gate
+        run: node v9/runtime-deps-production-contract.mjs
       - name: High-yield semantic depth profile report
         run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
