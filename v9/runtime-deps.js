@@ -2,6 +2,11 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 let pdfPromise=null,tesseractPromise=null,webllmPromise=null;
+function localRuntime(){
+  const h=String(window.location?.hostname||'').toLowerCase();
+  return h==='localhost'||h==='::1'||h==='[::1]'||/^127\./.test(h)
+}
+function dependencyCandidates(local,remotes){return localRuntime()?[local,...remotes]:remotes}
 async function firstImport(candidates,label){
   const errors=[];
   for(const url of candidates){
@@ -12,11 +17,13 @@ async function firstImport(candidates,label){
 async function loadPdfJs(){
   if(pdfPromise)return pdfPromise;
   pdfPromise=(async()=>{
-    const {module:p,url}=await firstImport([
+    const {module:p,url}=await firstImport(dependencyCandidates(
       '../node_modules/pdfjs-dist/build/pdf.min.mjs',
-      'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs',
-      'https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.min.mjs'
-    ],'PDFJS');
+      [
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs',
+        'https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.min.mjs'
+      ]
+    ),'PDFJS');
     const worker=url.includes('/build/pdf.min.mjs')?url.replace('/build/pdf.min.mjs','/build/pdf.worker.min.mjs'):'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';
     p.GlobalWorkerOptions.workerSrc=worker;
     return p
@@ -26,11 +33,13 @@ async function loadPdfJs(){
 async function loadTesseract(){
   if(tesseractPromise)return tesseractPromise;
   tesseractPromise=(async()=>{
-    const {module:T}=await firstImport([
+    const {module:T}=await firstImport(dependencyCandidates(
       '../node_modules/tesseract.js/dist/tesseract.esm.min.js',
-      'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js',
-      'https://esm.sh/tesseract.js@7.0.0'
-    ],'TESSERACT');
+      [
+        'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js',
+        'https://esm.sh/tesseract.js@7.0.0'
+      ]
+    ),'TESSERACT');
     return T
   })().catch(err=>{tesseractPromise=null;throw err});
   return tesseractPromise
@@ -46,5 +55,5 @@ async function loadWebLLM(){
   })().catch(err=>{webllmPromise=null;throw err});
   return webllmPromise
 }
-V.RuntimeDeps={loadPdfJs,loadTesseract,loadWebLLM};
+V.RuntimeDeps={loadPdfJs,loadTesseract,loadWebLLM,localRuntime,dependencyCandidates};
 })();
