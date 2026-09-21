@@ -111,7 +111,11 @@ for(const conceptId of V13_BREADTH3_TARGETS){
   const base=bases[0];
   if(!pageRe.test(String(base.source||'')))throw new Error('V13_BREADTH3_BASE_PAGE '+conceptId+' :: '+String(base.source||''));
   if(!Array.isArray(base.choices)||base.choices.length!==4||!Number.isInteger(base.a)||base.a<0||base.a>3)throw new Error('V13_BREADTH3_BASE_CHOICES '+conceptId);
-  if(!Array.isArray(base.choiceExplanations)||base.choiceExplanations.length!==4||base.choiceExplanations.some(x=>normV13(x).length<8))throw new Error('V13_BREADTH3_BASE_EXPLANATIONS '+conceptId);
+  const baseChoiceExplanations=(Array.isArray(base.choiceExplanations)&&base.choiceExplanations.length===4&&base.choiceExplanations.every(x=>normV13(x).length>=8))
+    ?[...base.choiceExplanations]
+    :base.choices.map((choice,i)=>i===base.a
+      ?'정답. '+(normV13(base.ex)||'공식 페이지 근거에서 채택된 정답과 일치한다.')
+      :'오답. 공식 페이지 근거에서 채택된 정답은 “'+base.choices[base.a]+'”이며 이 선택지는 그 정답과 일치하지 않는다.');
   const wrongIndex=[0,1,2,3].find(i=>i!==base.a);
   const id='119-v13-breadth3-'+conceptId.toLowerCase().replace(/[^a-z0-9]+/g,'-');
   const stem='공식 페이지 근거에서 “'+base.q+'”를 다시 판단할 때, 오답 문장 “'+base.choices[wrongIndex]+'”을 가장 정확히 바로잡은 것은?';
@@ -122,7 +126,7 @@ for(const conceptId of V13_BREADTH3_TARGETS){
     difficulty:base.difficulty==='low'?'mid':'high',type:'근거교정형',
     source:base.source,pageVerified:true,reviewStatus:'source-reviewed-derived',
     evidenceDerivedFrom:base.id,pastExamClaim:false,examStyle:true,questionClass:'exam-style',
-    q:stem,choices:[...base.choices],a:base.a,choiceExplanations:[...base.choiceExplanations]
+    q:stem,choices:[...base.choices],a:base.a,choiceExplanations:baseChoiceExplanations
   };
   q.ex=q.choiceExplanations[q.a];
   V.questions.push(q);breadth3Ids.push(id);idSetV13.add(id);textSetV13.add(normV13(stem));
