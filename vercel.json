@@ -34,6 +34,16 @@
       ]
     }
   ],
+  "functions": {
+    "api/official-monitor.js": {
+      "regions": ["icn1"],
+      "maxDuration": 60
+    },
+    "api/official-pdf.js": {
+      "regions": ["icn1"],
+      "maxDuration": 30
+    }
+  },
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
