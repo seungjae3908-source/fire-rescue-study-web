@@ -528,6 +528,7 @@ try{
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   const arrestDrugText=await m.locator('.book-section').innerText();
   assert(arrestDrugText.includes('1mg')&&arrestDrugText.includes('3~5분')&&arrestDrugText.includes('300mg')&&arrestDrugText.includes('150mg'),'adult arrest lesson includes 2020-guideline epinephrine and amiodarone anchors');
+  assert(!arrestDrugText.includes('30초 핵심')&&!arrestDrugText.includes('시험 직전 핵심')&&!arrestDrugText.includes('★★ 숫자 · 단위 · 기준')&&!arrestDrugText.includes('⚠ 헷갈림 주의'),'detail tab excludes core-only summary blocks');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E11-C05'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E11-C05');
