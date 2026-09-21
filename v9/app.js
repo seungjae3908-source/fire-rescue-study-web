@@ -161,7 +161,7 @@ function specialCombustibleBlock(pack){
 }
 function sourceBlock(c,pack){
   const links=(pack?.officialLinks||[]).filter(x=>x?.url),evidence=V.StudyEmphasis119?.evidence?.(c.id,pack),source=evidence?.source||pack?.source||'공식 근거',hasPdf=(c?.sourceRanges||[]).some(x=>x?.doc);
-  const pdfActions=hasPdf?`<div class="source-primary-actions"><button class="btn primary" data-source-concept="${c.id}">PDF 바로보기</button><button class="btn" data-source-download="${c.id}">PDF 다운로드</button></div>`:'<div class="source-connect"><b>공식 웹 근거</b><p>이 개념은 연결된 공식 웹 문서·출제범위로 검증합니다. PDF 근거가 없는 경우 빈 PDF 버튼을 표시하지 않습니다.</p></div>';
+  const pdfActions=hasPdf?`<div class="source-primary-actions"><button class="btn primary" data-source-concept="${c.id}">PDF 바로보기</button><button class="btn" data-source-download="${c.id}">PDF 다운로드</button></div>`:'<div class="source-connect"><b>공식 웹 근거</b><p>이 개념은 연결된 공식 웹 문서와 출제범위에서 근거를 확인할 수 있습니다.</p></div>';
   return `<div class="lesson source-only"><p class="lead">${esc(source)}</p>${pdfActions}${links.length?`<div class="source-law-links"><b>공식 근거</b>${links.map(x=>`<a class="source-law-link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)} <span aria-hidden="true">↗</span></a>`).join('')}</div>`:''}</div>`
 }
 function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.id)||[],detail=pack.detail||[],sections=uniqueSections(pack.deepSections||[]);
@@ -566,7 +566,7 @@ async function renderPdfEvidence(id,pageOverride=null){
     const anchorVerified=hasAnchorEvidence(result,anchorQueries);
     root.dataset.anchorVerified=anchorVerified?'true':'false';
     root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);root.dataset.renderState='ready';
-    const truthLabel=anchorVerified?(root.dataset.autoLocated==='true'?'근거 자동교정':'공식 근거'):'근거 위치 확인 필요';
+    const truthLabel=anchorVerified?'공식 근거':'근거 위치 확인 필요';
     badge.textContent=result.bookPage?`교재 ${result.bookPage}쪽 · ${truthLabel}`:`PDF ${result.page}/${result.pages}쪽 · ${truthLabel}`;
     const prev=root.querySelector('[data-pdf-page="-1"]'),next=root.querySelector('[data-pdf-page="1"]');if(prev)prev.disabled=result.page<=1;if(next)next.disabled=result.page>=result.pages;
     root.querySelector('.pdf-pager')?.classList.remove('hidden')
