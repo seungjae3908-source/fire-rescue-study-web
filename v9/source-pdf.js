@@ -81,7 +81,6 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     const left=Math.min(...its.map(x=>x.x)),right=Math.max(...its.map(x=>x.x+x.w)),top=Math.min(...its.map(x=>x.top)),bottom=Math.max(...its.map(x=>x.top+x.h));
     return{text,n,left,right,top,bottom};
   }).filter(x=>x.n.length>=4).sort((a,b)=>a.top-b.top);
-
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
   if(anchorTokens.length){
     const exactAnchorLines=lines.map((line,i)=>{const m=anchorTokens.filter(t=>line.n.includes(t)),score=m.reduce((n,t)=>n+t.length,0)+m.length*10;return{line,i,m,score}}).filter(x=>x.m.length>=2||x.m.some(t=>t.length>=5)).sort((a,b)=>b.score-a.score||a.i-b.i);
@@ -120,7 +119,6 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     }
     if(picked.length)return picked
   }
-
   const candidates=[];
   const maxWindow=8;
   for(let qi=0;qi<rawQueries.length;qi++){
