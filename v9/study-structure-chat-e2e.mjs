@@ -148,6 +148,7 @@ try{
   assert(source.verified==='true'&&source.scope==='document'&&source.hits>=2&&source.lines>=2,'source viewer expands from mapped range to strong full-document evidence and draws visible underline markers');
   assert(source.renders>=3,'source evidence recovery tries the mapped candidate before a stronger whole-document match');
   await page.evaluate(()=>{const V=window.AITUTOR_V9,o=window.__v17SourceOriginal;Object.assign(V.SourcePDF,o);document.querySelector('#pdfEvidence')?.remove()});
+  assert(pageErrors.length===0,'structured study, source evidence, and AI chat journey completes with zero browser runtime exceptions');
 
   console.log('STUDY_STRUCTURE_CHAT_E2E_COMPLETE');
   await ctx.close();
