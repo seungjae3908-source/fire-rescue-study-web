@@ -112,6 +112,8 @@ async function auditStudyRole(page,{id,tab},coreCache){
       essentialTexts:rows('.study-core-essentials li span'),
       coreTexts:[...rows('.study-quick p'),...rows('.study-core-essentials li span')],
       detailTexts:[...rows('.detail-section h3'),...rows('.detail-section p'),...rows('.detail-section li')],
+      detailHeadings:[...root.querySelectorAll('.detail-section h3,.detail-compare h3')].filter(visible).map(x=>(x.textContent||'').trim()).filter(Boolean),
+      underlineCount:root.querySelectorAll('.study-key-underline').length,
       detailFull:root.querySelector('.detail-view')?.textContent||'',
       tab
     }
@@ -125,6 +127,8 @@ async function auditStudyRole(page,{id,tab},coreCache){
     const nums=new Set(x.numbers),dupe=(x.essentialTexts||[]).some(t=>nums.has(t)&&t.length>=18);
     if(dupe&&x.numbers.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-number-duplicate'});
   }else{
+    if((x.detailHeadings||[]).some(h=>/^상세\s*설명$/.test(h)))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'generic-detail-heading'});
+    if(new Set(x.detailHeadings||[]).size<2)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-structure-too-flat',headings:x.detailHeadings});
     if(x.quick||x.essentials||x.numbers.length||x.traps.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-core-leak',quick:x.quick,essentials:x.essentials,numbers:x.numbers.length,traps:x.traps.length});
     if(/개념\s*구조와\s*읽는\s*순서|학습\s*순서|검증문제·범위/.test(x.detailFull))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-meta-copy'});
     const core=coreCache.get(id)||[];
