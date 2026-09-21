@@ -92,7 +92,7 @@ function detailOnlyText(v,seeds=[]){
   if(sentences.length<2)return text;
   return sentences.filter(x=>!isCoreStudyText(x,seeds)).join(' ').trim()
 }
-function detailSemanticTitle(v){const t=String(v||'');if(/종류|분류|구분|나뉜|형태/.test(t))return'종류 · 구분';if(/원리|작용|차단|억제|낮춘|높인|제거|공급|반응|발생|전파|흡수|냉각|질식/.test(t))return'작용 원리';if(/순서|단계|절차|시행|평가|확인|처치|대응/.test(t))return'진행 · 절차';if(/특징|성질|증상|징후|소견|기준|주의|위험/.test(t))return'특징 · 판단기준';return'상세 해설'}
+function detailSemanticTitle(v){const t=String(v||'');if(/종류|분류|구분|나뉜|형태/.test(t))return'종류 · 구분';if(/구성|요소|장치|기관|조직/.test(t))return'구성 · 역할';if(/목적|기능|의의|효과/.test(t))return'목적 · 기능';if(/원인|조건|요인/.test(t))return'원인 · 조건';if(/원리|작용|차단|억제|낮춘|높인|제거|공급|반응|발생|전파|흡수|냉각|질식/.test(t))return'작용 원리';if(/순서|단계|절차|시행|평가|확인|처치|대응|이송/.test(t))return'진행 · 절차';if(/수치|시간|거리|농도|온도|압력|비율|이상|이하/.test(t))return'수치 · 기준';if(/예외|금지|주의|오류|함정/.test(t))return'예외 · 주의';if(/특징|성질|증상|징후|소견|기준|위험/.test(t))return'특징 · 판단기준';return'핵심 해설'}
 function detailSectionTitle(v,body=''){const raw=sectionTitle(v).replace(/핵심\s*정리/g,'상세 정리').replace(/핵심\s*포인트/g,'상세 포인트').replace(/핵심/g,'').replace(/\s{2,}/g,' ').trim();return !raw||/^(상세 설명|정의 · 상세)$/.test(raw)?detailSemanticTitle(body):raw}
 function detailGroups(rows=[],seeds=[]){const g=new Map;for(const x of uniqueTextRows(rows)){const body=detailOnlyText(x,seeds);if(!body)continue;const k=detailSemanticTitle(body),a=g.get(k)||[];a.push(body);g.set(k,a)}return[...g].map(([title,bullets])=>({title,body:'',bullets}))}
 function schemaDetailRows(c,pack){if(V.ConceptArchitecture119?.get?.(c.id)?.genericSchema!==true)return[];const x=pack?.studySchema||{},rows=[['발생 조건',x.conditions],['작용 원리',x.mechanisms],['시기 · 단계',x.timingStages],['전조 · 위험신호',x.warningSigns],['발생 전 · 후',x.beforeAfter]];return rows.filter(([,v])=>v?.length).map(([title,bullets])=>({title,body:'',bullets}))}
@@ -495,17 +495,17 @@ function settings(){
   <section class="card"><b>백업 · 복원</b><div class="settings-actions" style="margin-top:9px"><button class="btn" data-export>내 기록 백업</button></div><label class="backup-file-label">백업 파일 선택<input id="importBackup" class="input" type="file" accept="application/json"></label></section><section class="card"><b>개인정보</b><p class="muted">내 학습 기록과 직접 작성한 메모는 다른 회원에게 공개되지 않습니다.</p></section></div>`,'설정')
 }
 function view(){if(state().page==='tutor'){state().page='study';state().studyTab='ai';S.save()}return({home,study,notes,bank,exam,wrong,stats,resources,suggestions,settings}[state().page]||home)()}
-function scrollTutorToBottom(){requestAnimationFrame(()=>{const a=[...document.querySelectorAll('.study-ai-chat')],x=a.find(e=>e.offsetParent!==null)||a.at(-1);if(x)x.scrollTop=x.scrollHeight})}
+function scrollTutorToBottom(){requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const x of document.querySelectorAll('.study-ai-chat'))if(x.offsetParent!==null)x.scrollTop=x.scrollHeight}))}
 function render(){document.querySelector('#app').innerHTML=view();if(state().page==='study'&&state().studyTab==='ai')scrollTutorToBottom()}
 function sourceAnchorQueries(c,p=V.contentPacks.get(c?.id)){
-  const stop=new Set(['개념','기초','종류','이론','구조','원리','정리','및','방법','특징']),title=String(c?.title||'').trim();
+  const stop=new Set(['개념','기초','종류','이론','구조','원리','정리','및','방법','특징','설명']),title=String(c?.title||'').trim(),arch=V.ConceptArchitecture119?.termsFor?.(c?.id)||[];
   const stem=title.replace(/\s*(?:개론|원리|이론|기초|종류|구조|방법|개요)\s*$/,'').trim();
   const titleTerms=title.split(/[·,/()\s-]+/).map(x=>x.trim()).filter(x=>x.length>=2&&!stop.has(x));
-  const linked=[...(p?.compare||[]).flatMap(x=>Array.isArray(x)?x.slice(0,2):[]),...(p?.must||[]).flatMap(x=>String(x||'').split(/\s*(?:→|:|=|·|\/|,)\s*/))]
+  const linked=[...arch,...(p?.compare||[]).flatMap(x=>Array.isArray(x)?x.slice(0,2):[]),...(p?.must||[]).flatMap(x=>String(x||'').split(/\s*(?:→|:|=|·|\/|,)\s*/))]
     .map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).filter(x=>x.length>=2&&x.length<=28&&!stop.has(x));
-  return [...new Set([title,stem,...titleTerms,...linked].filter(Boolean))].slice(0,14)
+  return [...new Set([title,stem,...titleTerms,...linked].filter(Boolean))].sort((a,b)=>b.length-a.length).slice(0,18)
 }
-function evidenceQueries(c,p){return [...sourceAnchorQueries(c,p),p?.summary,...(p?.must||[]),...(p?.detail||[])].filter(Boolean).slice(0,24)}
+function evidenceQueries(c,p){const q=p?.studySchema||{};return [...sourceAnchorQueries(c,p),p?.summary,q.definition,...(q.conditions||[]),...(q.mechanisms||[]),...(p?.must||[]),...(p?.detail||[]),...(p?.compare||[]).flat()].filter(Boolean).slice(0,30)}
 function hasAnchorEvidence(result,anchors){const lines=(result?.evidenceLines||[]).map(studyNorm),terms=(anchors||[]).map(studyNorm).filter(x=>x.length>=2);return terms.some(t=>lines.some(line=>line.includes(t)))}
 function sourceModal(id){return openPdfEvidence(id)}
 async function downloadOfficialPdf(key){if(!key||!V.SourcePDF?.download)return toast('다운로드할 PDF가 없습니다.');try{const r=await V.SourcePDF.download(key,{timeoutMs:120000});toast(`PDF 다운로드 시작 · ${r?.name||key}`)}catch(err){toast('PDF 다운로드 실패 · '+String(err?.message||err).slice(0,46))}}
@@ -553,16 +553,13 @@ async function renderPdfEvidence(id,pageOverride=null){
     let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:90000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
     if(pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
       const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key);
-      const located=await V.SourcePDF.locate(key,anchorQueries,{bookRanges:mapped}).catch(()=>null);
+      const located=await V.SourcePDF.locate(key,queries,{bookRanges:mapped}).catch(()=>null);
       if(located?.score>0&&located.page){
-        const anchorResult=await V.SourcePDF.render(key,located.page,host,anchorQueries,{timeoutMs:90000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
-        if(hasAnchorEvidence(anchorResult,anchorQueries)){
-          result=anchorResult;
-          root.dataset.autoLocated='true'
-        }
+        const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:90000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
+        if(hasAnchorEvidence(anchorResult,anchorQueries)||anchorResult.hits>=2){result=anchorResult;root.dataset.autoLocated='true'}
       }
     }
-    const anchorVerified=hasAnchorEvidence(result,anchorQueries);
+    const anchorVerified=hasAnchorEvidence(result,anchorQueries)||result.hits>=2;root.dataset.highlightCount=String(result.hits||0);
     root.dataset.anchorVerified=anchorVerified?'true':'false';
     root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);root.dataset.renderState='ready';const zl=root.querySelector('[data-pdf-zoom-label]');if(zl)zl.textContent=Math.round((result.zoom||1)*100)+'%';
     const truthLabel=anchorVerified?'공식 근거':'근거 위치 확인 필요';
