@@ -402,7 +402,7 @@ try{
   const reportText=await m.locator('.exam-report').innerText();
   assert(reportText.includes('64/65')&&reportText.includes('오답·미응답 분석')&&reportText.includes('1문항'),'finished mock opens a 65-question score + wrong-answer analysis');
   assert(reportText.includes('내 답')&&reportText.includes('정답')&&reportText.includes('정답 근거'),'exam analysis shows selected answer, correct answer and explanation');
-  assert(reportText.includes('문제 유형 분석')&&reportText.includes('공식 시험의 출제비율을 의미하지 않습니다.'),'exam analysis exposes normalized learning-skill performance without claiming an official exam weight');
+  assert(reportText.includes('문제 유형 분석')&&reportText.includes('실제 시험의 출제비율과는 다를 수 있습니다.'),'exam analysis exposes student-facing problem-type performance without claiming an official exam weight');
   assert(await m.locator('[data-skill-train]').count()>=1,'exam analysis exposes one-tap remediation for observed learning-skill families');
   const reportIdBeforeSkill=await m.evaluate(()=>window.AITUTOR_V9.App.runtime.examReportId);
   const skillKey=await m.locator('[data-skill-train]').first().getAttribute('data-skill-train');
