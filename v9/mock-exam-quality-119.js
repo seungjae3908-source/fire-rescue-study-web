@@ -20,7 +20,7 @@ function pick(arr,n,level,scopeIds,history=[]){
 }
 function sequence(qs){
  const src=shuffle(qs),out=[];
- while(src.length){const last=out.at(-1),prev=out.at(-2);let i=src.findIndex(q=>(!last||q.scopeId!==last.scopeId)&&!(last&&prev&&family(q)===family(last)&&family(q)===family(prev)));if(i<0)i=0;out.push(src.splice(i,1)[0])}
+ while(src.length){const last=out.at(-1),prev=out.at(-2),ok=q=>!(last&&prev&&family(q)===family(last)&&family(q)===family(prev));let i=src.findIndex(q=>(!last||q.scopeId!==last.scopeId)&&ok(q));if(i<0)i=src.findIndex(ok);if(i<0)i=0;out.push(src.splice(i,1)[0])}
  return out
 }
 function build({mode='real',level='mid',history=[]}={}){
@@ -31,7 +31,7 @@ function build({mode='real',level='mid',history=[]}={}){
 function metrics(qs){
  const fam=qs.map(family),run=fam.reduce((m,x,i)=>Math.max(m,x===fam[i-1]?(x===fam[i-2]?3:2):1),0),scopes={},diffs={low:0,mid:0,high:0},answers=[0,0,0,0];
  for(const q of qs){scopes[q.scopeId]=(scopes[q.scopeId]||0)+1;diffs[diff(q)]++;answers[q.a]++}
- return{n:qs.length,uniqueIds:new Set(qs.map(q=>q.id)).size,uniqueConcepts:new Set(qs.map(q=>q.conceptId)).size,fire:qs.filter(q=>q.subject==='fire').length,ems:qs.filter(q=>q.subject==='ems').length,maxFamilyRun:run,activeFamilies:new Set(fam).size,maxScope:Math.max(0,...Object.values(scopes)),scopes,difficulties:diffs,answers}
+ return{n:qs.length,uniqueIds:new Set(qs.map(q=>q.id)).size,uniqueConcepts:new Set(qs.map(q=>q.conceptId)).size,fire:qs.filter(q=>q.subject==='fire').length,ems:qs.filter(q=>q.subject==='ems').length,maxFamilyRun:run,activeFamilies:new Set(fam).size,scopes,difficulties:diffs,answers}
 }
 V.MockExam119={version:'119-v14-mock-engine-v1',build,metrics,family,target,policy:{recentWindow:4,uniqueConceptPerExam:true,maxFamilyRun:2,notOfficialExamWeight:true}};
 })();
