@@ -742,9 +742,9 @@ small{font-size:max(11px,.78em)}
 @media(max-width:720px){
   .note-search{grid-template-columns:minmax(0,1fr) auto}
   .note-search [data-note-search-clear]{grid-column:2}
-  .note-filter-wrap{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .note-filter-wrap{display:flex;overflow:visible;flex-wrap:wrap;gap:6px;max-width:100%}
   .note-filter-wrap::-webkit-scrollbar{display:none}
-  .note-filter-chip{flex:0 0 auto;min-height:36px}
+  .note-filter-chip{flex:1 1 calc(33.333% - 6px);min-width:88px;max-width:100%;min-height:38px;text-align:center}
 }
 
 
