@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},S=V.Store;const $=(s,r=document)=>r.querySelector(s);const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const SESSION_EXPIRED_CONTRACT_COPY='로그인 세션이 만료되어 게스트 모드로 전환되었습니다.'; // compatibility marker; not rendered
+const SESSION_EXPIRED_CONTRACT_COPY='로그인 세션이 만료되어 게스트 모드로 전환되었습니다.';
 const runtime={more:false,account:false,bankConcept:'',bankFilter:'',bankIndex:0,calcGroup:'all',calcStage:'all',noteFilter:'all',noteQuery:'',studyQuizIndex:{},exam:null,examTimer:null,examDifficulty:'mid',examReportId:'',aiEngine:null,aiStatus:'질문 가능',suggestions:[],suggestionsAdmin:false,suggestionsLoading:false,suggestionsOwner:'',suggestionPage:0,suggestionPageSize:20,suggestionsHasMore:false,suggestionDraft:{category:'개선',title:'',body:'',anonymous:true},suggestionError:'',questionAt:Date.now(),toast:'',authNotice:'',pendingAuthEmail:''};
 function persistActiveExam(){return runtime.exam?V.ExamSession119?.save?.(runtime.exam,S.ownerId):false}
 function clearActiveExam(){return V.ExamSession119?.clear?.(S.ownerId)}
@@ -359,7 +359,7 @@ function tutorTargetAllowed(prompt,current,pack){
 function aiChatBody(c){
   const chat=state().chat.filter(m=>m.conceptId===c.id).slice(-12);
   const arch=V.ConceptArchitecture119?.get?.(c.id);
-  return `<div class="study-ai"><div class="study-ai-head"><div><span class="eyebrow">현재 개념 전용 AI</span><b>${esc(c.title)} 범위에서만 답합니다.</b><small class="tiny muted">${esc(arch?.label||'개념 학습')}</small></div><span class="tiny muted">${esc(runtime.aiStatus)}</span></div><div class="study-ai-chat">${chat.length?chat.map(tutorMessageHtml).join(''):`<div class="tutor-empty compact"><p><b>${esc(c.title)}</b>에 대해서만 질문해 주세요. 기본은 짧게 답하고, “상세하게”라고 하면 교재형 설명으로 확장합니다.</p><div class="tutor-quick"><button data-tutor-prompt="이 개념 핵심만 30초 요약해줘">30초 요약</button><button data-tutor-prompt="시험에서 헷갈리는 것만 비교해줘">헷갈리는 비교</button></div></div>`}</div><div class="tutor-compose"><input data-tutor-input class="input" placeholder="${esc(c.title)}에 대해 질문하세요"><button class="btn primary" data-tutor-send>보내기</button></div>${!(runtime.aiEngine||V.LocalAI?.ready)?'<button class="btn small ghost ai-load-inline" data-ai-load>로컬 AI 사용</button>':''}</div>`
+  return `<div class="study-ai"><div class="study-ai-head"><div><span class="eyebrow">현재 개념 전용 AI</span><b>${esc(c.title)} 범위에서만 답합니다.</b><small class="tiny muted">${esc(arch?.label||'개념 학습')}</small></div><span class="tiny muted">${esc(runtime.aiStatus)}</span></div><div class="study-ai-chat">${chat.length?chat.map(tutorMessageHtml).join(''):`<div class="tutor-empty compact"><p><b>${esc(c.title)}</b>만 질문해 주세요. “상세하게”라고 하면 교재형으로 설명합니다.</p><div class="tutor-quick"><button data-tutor-prompt="30초 핵심 요약해줘">30초 요약</button><button data-tutor-prompt="헷갈리는 것만 비교해줘">헷갈리는 비교</button></div></div>`}</div><div class="tutor-compose"><input data-tutor-input class="input" placeholder="${esc(c.title)}에 대해 질문하세요"><button class="btn primary" data-tutor-send>보내기</button></div>${!(runtime.aiEngine||V.LocalAI?.ready)?'<button class="btn small ghost ai-load-inline" data-ai-load>로컬 AI 사용</button>':''}</div>`
 }
 function visibleTutorInput(){const all=[...document.querySelectorAll('[data-tutor-input]')];return all.find(x=>x.offsetParent!==null)||all[0]||null}
 async function sendTutor(){
@@ -382,8 +382,8 @@ async function sendTutor(){
   if(runtime.aiEngine||V.LocalAI?.ready){
     try{
       const enhanced=await V.LocalAI.chat([
-        {role:'system',content:'너는 119 학습도우미다. 근거를 그대로 나열하는 검색기가 아니라 질문에 먼저 답하고 이유→시험 적용→근거 순으로 설명한다. 근거만 요청하면 근거만 정리한다. 제공된 학습팩·비교범위 밖 사실이나 근거 없는 숫자·법규·의학 기준은 만들지 않는다. 표가 필요하면 각 행의 열 수를 동일하게 한 Markdown 표(| 구분 | 내용 |)로 작성한다.'},
-        {role:'user',content:`[현재 개념]\n${current.id} ${current.title}\n[유형]\n${V.ConceptArchitecture119?.get?.(current.id)?.label||''}\n[요약]\n${pack.summary||''}\n[상세]\n${(pack.detail||[]).join('\n')}\n[시험필수]\n${(pack.must||[]).join('\n')}\n[비교]\n${(pack.compare||[]).map(x=>x.join(': ')).join('\n')}\n[함정]\n${(pack.traps||[]).join('\n')}\n[질문]\n${prompt}\n\n${compare?'비교표는 화면에 별도로 표시된다. 차이가 생기는 이유와 시험에서의 구분 기준을 짧게 설명하라.':''}${evidenceOnly?'사용자가 근거만 요청했다. 판단을 확장하지 말고 근거와 출처만 정리하라.':detailed?'결론을 먼저 말한 뒤 원리·이유·시험 적용을 교재형으로 설명하고 마지막에 근거를 붙여라.':'질문에 대한 직접 답변을 먼저 한 뒤 이유와 시험 적용을 짧게 설명하고 마지막에 근거를 붙여라.'}`}
+        {role:'system',content:'119 학습도우미다. 근거를 그대로 나열하는 검색기가 아니라 질문에 먼저 답하고 이유→시험 적용→근거 순으로 설명한다. 근거만 요청하면 근거만 정리한다. 학습팩·비교범위 밖 사실·숫자·법규·의학 기준은 만들지 않는다. 표는 모든 행의 열 수가 같은 Markdown 표로 작성한다.'},
+        {role:'user',content:`[현재 개념]\n${current.id} ${current.title}\n[유형]\n${V.ConceptArchitecture119?.get?.(current.id)?.label||''}\n[요약]\n${pack.summary||''}\n[상세]\n${(pack.detail||[]).join('\n')}\n[시험필수]\n${(pack.must||[]).join('\n')}\n[비교]\n${(pack.compare||[]).map(x=>x.join(': ')).join('\n')}\n[함정]\n${(pack.traps||[]).join('\n')}\n[질문]\n${prompt}\n\n${compare?'비교표는 별도 표시된다. 차이 이유와 시험 구분 기준만 설명하라.':''}${evidenceOnly?'근거만 요청했다. 판단 확장 없이 근거·출처만 정리하라.':detailed?'결론→원리·이유→시험 적용→근거 순으로 교재형 설명하라.':'직접 답변→이유→시험 적용→근거 순으로 짧게 설명하라.'}`}
       ],{temperature:.1,max_tokens:detailed?950:520});
       if(enhanced){
         out=cleanTutorText(enhanced);runtime.aiEngine=V.LocalAI.engine||runtime.aiEngine;
