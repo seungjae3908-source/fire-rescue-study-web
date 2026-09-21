@@ -116,6 +116,10 @@ try{
   assert(all200.mode==='training'&&all200.total===200&&all200.fire===77&&all200.ems===123&&all200.unique===200,'full-range 200 training preserves exam-like subject ratio with unique questions');
   await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('.exam-start');
 
+  await go(p,'stats');await cleanPage(p,'desktop stats');
+  const desktopStatsLayout=await p.locator('.stats-page').evaluate(root=>{const main=root.querySelector('.home-main'),rr=root.getBoundingClientRect(),mr=main?.getBoundingClientRect();return{gridWidth:rr.width,mainWidth:mr?.width||0,columns:getComputedStyle(root).gridTemplateColumns}});
+  assert(Math.abs(desktopStatsLayout.gridWidth-desktopStatsLayout.mainWidth)<2&&desktopStatsLayout.columns.trim().split(/\\s+/).length===1,'desktop stats uses one full-width content column instead of reserving an empty home sidebar');
+
   await go(p,'resources');await cleanPage(p,'desktop resources');
   assert((await p.locator('.page').innerText()).includes('공식 자료'),'resources page is student-facing');
   await p.waitForFunction(()=>window.AITUTOR_V9.OfficialMonitor119?.summary?.().status==='ready');
