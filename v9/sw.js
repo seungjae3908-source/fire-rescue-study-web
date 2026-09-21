@@ -12,8 +12,8 @@ self.addEventListener('fetch',event=>{
   if(url.origin!==scope.origin)return;
   if(url.pathname.endsWith('/api/official-monitor')){
     event.respondWith(fetch(event.request).then(async r=>{
-      if(r&&r.ok){const copy=r.clone();try{const c=await caches.open(CACHE);await c.put(event.request,copy)}catch{}}
-      return r
+      if(r&&r.ok){const copy=r.clone();try{const c=await caches.open(CACHE);await c.put(event.request,copy)}catch{};return r}
+      return await caches.match(event.request)||r
     }).catch(async error=>{
       const cached=await caches.match(event.request);
       if(cached)return cached;
