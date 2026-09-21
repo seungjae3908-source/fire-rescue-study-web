@@ -1,22 +1,22 @@
 {
   "version": "119-official-monitor-health-v1",
-  "generatedAt": "2026-09-20T23:16:21.763Z",
-  "healthy": false,
+  "generatedAt": "2026-09-21T01:14:38.632Z",
+  "healthy": true,
   "coverageComplete": false,
   "degraded": true,
   "preservedLastGood": false,
-  "lastSuccessfulAt": "",
+  "lastSuccessfulAt": "2026-09-21T01:14:38.632Z",
   "sourceStatus": [
     {
       "id": "gosi-fire",
       "label": "국가공무원 채용시스템 · 소방청",
       "required": true,
-      "ok": false,
-      "pagesOk": 0,
-      "status": "error",
-      "error": "UND_ERR_CONNECT_TIMEOUT: UND_ERR_CONNECT_TIMEOUT: fetch failed: Connect Timeout Error (attempted address: gongmuwon.gosi.kr:443, timeout: 10000ms): fetch failed",
-      "errorCode": "UND_ERR_CONNECT_TIMEOUT",
-      "errorUrl": "https://gongmuwon.gosi.kr/spcsv/indexMain3.do",
+      "ok": true,
+      "pagesOk": 1,
+      "status": "ok",
+      "error": "",
+      "errorCode": "",
+      "errorUrl": "",
       "fallbackUsed": false
     },
     {
@@ -44,7 +44,7 @@
       "fallbackUsed": false
     }
   ],
-  "liveItems": 0,
+  "liveItems": 9,
   "targetYear": 0,
-  "reviewRequired": 0
+  "reviewRequired": 8
 }
