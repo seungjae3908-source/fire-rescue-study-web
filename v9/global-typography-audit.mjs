@@ -133,7 +133,17 @@ try{
       }
       if(issues.length>=maxIssues)break;
     }
-    if(vp.mobile)await auditExam(page,{width:vp.width,id:'ACTIVE-EXAM'});
+    if(issues.length<maxIssues){
+      for(const route of ['home','notes','bank','exam','wrong','stats','resources','suggestions','settings']){
+        await page.evaluate(route=>window.AITUTOR_V9.App.go(route),route);
+        await page.waitForFunction(route=>window.AITUTOR_V9.Store.state.page===route,route);
+        await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+        await auditVisible(page,{width:vp.width,id:'ROUTE-'+route,tab:'route'});
+        states++;
+        if(issues.length>=maxIssues)break;
+      }
+    }
+    if(vp.mobile&&issues.length<maxIssues)await auditExam(page,{width:vp.width,id:'ACTIVE-EXAM'});
     await ctx.close();
     if(issues.length>=maxIssues)break;
   }
@@ -143,5 +153,5 @@ try{
     if(issues.length)console.error('GLOBAL_TYPOGRAPHY_AUDIT_ISSUES',JSON.stringify(issues,null,2));
     throw new Error('GLOBAL_TYPOGRAPHY_AUDIT_FAILED '+JSON.stringify({issues:issues.length,smallTextGroups:warnings.length}));
   }
-  assert(true,'all concept tabs and active exam pass global typography/layout audit with no clipping, nested mobile study scroll, excessive study padding, nested panels or sub-11px student controls');
+  assert(true,'all concept tabs, primary app routes and active exam pass global typography/layout audit with no clipping, nested mobile study scroll, excessive study padding, nested panels or sub-11px student controls');
 }finally{await browser.close()}
