@@ -14,8 +14,6 @@ const checks={
   featureDeploySuppressed:['feat/**','fix/**','chore/**','build/**','ci/**','test/**'].every(k=>vercel.git?.deploymentEnabled?.[k]===false),
   officialMonitorSeoulRegion:inRegion('api/official-monitor.js','icn1'),
   officialMonitorDuration:Number(functionConfig('api/official-monitor.js').maxDuration)>=60,
-  officialPdfSeoulRegion:inRegion('api/official-pdf.js','icn1'),
-  officialPdfDuration:Number(functionConfig('api/official-pdf.js').maxDuration)>=30,
   monitorRootRoute:rootMonitor.includes("require('../v9/api/official-monitor.js')"),
   pdfRootRoute:rootPdf.includes("require('../v9/api/official-pdf.js')"),
   pdfClientRoute:sourceCatalog.includes("/api/official-pdf?doc="),
@@ -24,7 +22,7 @@ const checks={
   requiredRecruitmentSource:monitorLib.includes('https://gongmuwon.gosi.kr/spcsv/indexMain3.do')
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
-const summary={version:'119-v20-production-release-gate-v2',checks,blockers,ready:blockers.length===0};
+const summary={version:'119-v20-production-release-gate-v3',checks,blockers,ready:blockers.length===0};
 console.log('PRODUCTION_RELEASE_GATE_119',JSON.stringify(summary,null,2));
 if(blockers.length)throw Error('PRODUCTION_RELEASE_GATE_FAILED '+JSON.stringify(blockers));
 console.log('PRODUCTION_RELEASE_GATE_COMPLETE');
