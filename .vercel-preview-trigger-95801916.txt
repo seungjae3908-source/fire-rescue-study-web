@@ -1,0 +1,3 @@
+source_sha=95801916ee9fc4a4bf7d73693ae4b47e074fe544
+purpose=preview-only verified core-detail separation
+runtime_change=false
