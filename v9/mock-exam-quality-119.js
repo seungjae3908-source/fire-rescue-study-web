@@ -9,7 +9,7 @@ function recent(history,limit=4){const s=new Set;for(const h of (history||[]).sl
 function pick(arr,n,level,scopeIds,history=[]){
  const r=recent(history),want=target(level,n),out=[],usedId=new Set,usedConcept=new Set,countScope={},countDiff={low:0,mid:0,high:0},countFam={};
  const add=q=>{out.push(q);usedId.add(q.id);usedConcept.add(q.conceptId);countScope[q.scopeId]=(countScope[q.scopeId]||0)+1;countDiff[diff(q)]++;countFam[family(q)]=(countFam[family(q)]||0)+1};
- for(const scope of shuffle(scopeIds)){const p=shuffle(arr.filter(q=>q.scopeId===scope&&!r.has(q.id))).concat(shuffle(arr.filter(q=>q.scopeId===scope&&r.has(q.id))));const q=p.find(x=>!usedConcept.has(x.conceptId));if(!q)return[];add(q)}
+ for(const scope of shuffle(scopeIds)){const p=shuffle(arr.filter(q=>q.scopeId===scope&&!usedConcept.has(q.conceptId))).sort((a,b)=>(r.has(a.id)-r.has(b.id))+(countDiff[diff(a)]>=(want[diff(a)]||0))-(countDiff[diff(b)]>=(want[diff(b)]||0)));const q=p[0];if(!q)return[];add(q)}
  const cap=Math.max(1,Math.ceil(n/Math.max(1,scopeIds.length))+1);
  while(out.length<n){
   const pool=arr.filter(q=>!usedId.has(q.id)&&!usedConcept.has(q.conceptId)&&(countScope[q.scopeId]||0)<cap);if(!pool.length)break;
