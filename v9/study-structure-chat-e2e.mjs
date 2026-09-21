@@ -36,6 +36,27 @@ try{
   assert(['제거소화','질식소화','냉각소화','부촉매소화','가연물','연쇄반응'].every(k=>detail.text.includes(k)),'extinguishment detail preserves complete type and mechanism explanations');
   assert(detail.examPoints.includes('시험 포인트')&&/질식|부촉매/.test(detail.examPoints),'detail closes with an explicit exam-point section instead of generic filler');
 
+  const sweep=await page.evaluate(()=>{
+    const V=window.AITUTOR_V9,s=V.Store.state,out={concepts:0,noUnderline:[],noDefinition:[],genericHeading:[],thinDetail:[]};
+    for(const c of V.curriculum.concepts){
+      out.concepts++;
+      s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=c.id;s.outline=false;s.studyTab='core';V.App.render();
+      const core=document.querySelector('.study-body-mobile .core-view');
+      if(!core?.querySelector('.study-key-underline'))out.noUnderline.push(c.id);
+      s.studyTab='detail';V.App.render();
+      const root=document.querySelector('.study-body-mobile .detail-view'),heads=[...(root?.querySelectorAll('.detail-section h3,.detail-compare h3,.detail-exam-points h3')||[])].map(x=>(x.textContent||'').trim());
+      if(!root?.querySelector('.detail-definition'))out.noDefinition.push(c.id);
+      if(heads.some(x=>/^상세\s*설명$/.test(x)))out.genericHeading.push(c.id);
+      if((root?.innerText||'').trim().length<180)out.thinDetail.push(c.id);
+    }
+    return out
+  });
+  assert(sweep.concepts===183,'structured learner sweep covers all 183 fire and EMS concepts');
+  assert(sweep.noDefinition.length===0,'all 183 detail views render an explicit definition block');
+  assert(sweep.genericHeading.length===0,'all 183 detail views avoid repeated generic 상세 설명 headings');
+  assert(sweep.thinDetail.length===0,'all 183 detail views retain substantive explanation after semantic restructuring');
+  assert(sweep.noUnderline.length===0,'all 183 core views expose at least one visible exam-key underline');
+
   await page.evaluate(()=>{
     const V=window.AITUTOR_V9,s=V.Store.state,c=V.curriculum.byId['F04-C01'];
     s.page='study';s.subject='fire';s.scopeId=c.scopeId;s.conceptId=c.id;s.studyTab='ai';
