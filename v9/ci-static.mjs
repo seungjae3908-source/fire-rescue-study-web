@@ -544,6 +544,8 @@ ok(sw.includes("'./sync-merge.js'")&&sw.includes("'./sync-ui.js'"),'v9 sync hard
 ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'")&&sw.includes("'./content-rich-2026.js'")&&sw.includes("'./ems-rich-2026.js'"),'v9 depth enrichments are offline-cached');
 ok(sw.includes("'./curriculum-complete-2026.js'"),'complete curriculum expansion is offline-cached');
 ok(sw.includes("'./coverage-map-119.js'"),'full exam Coverage Map is offline-cached');
+ok(sw.includes("'./mock-exam-quality-119.js'"),'v14 mock exam engine is offline-cached');
+ok(!sw.includes("'./selftest.js'"),'developer selftest is not cached in the learner runtime');
 ok(sw.includes("'./questions-ems-restored-verified-119.js'"),'restored EMS verified questions are offline-cached');
 ok(sw.includes("'./questions-final-gap-119.js'"),'final source-backed gap practice bank is offline-cached');
 ok(sw.includes("'./questions-pals-advanced-119.js'"),'official pediatric ALS practice bank is offline-cached');
@@ -566,6 +568,8 @@ ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sy
 ok(v9index.indexOf('./source-catalog-119.js')>v9index.indexOf('./pdf.js')&&v9index.indexOf('./source-catalog-119.js')<v9index.indexOf('./source-pdf.js'),'official source catalog loads before PDF engine');
 ok(v9index.indexOf('./source-pdf.js')>v9index.indexOf('./source-catalog-119.js')&&v9index.indexOf('./source-pdf.js')<v9index.indexOf('./app.js'),'official PDF highlight engine loads before app UI');
 ok(v9index.indexOf('./coverage-map-119.js')>v9index.indexOf('./calculation-contract-119.js')&&v9index.indexOf('./coverage-map-119.js')<v9index.indexOf('./store.js'),'full exam Coverage Map loads after content/question contracts and before runtime state');
+ok(v9index.includes('./mock-exam-quality-119.js')&&v9index.indexOf('./mock-exam-quality-119.js')<v9index.indexOf('./app.js'),'v14 mock exam engine loads before app UI');
+ok(!v9index.includes('./selftest.js'),'developer selftest is not shipped in the learner runtime');
 ok(v9index.indexOf('./study-emphasis-119.js')>v9index.indexOf('./quality2-comparison-families-119.js')&&v9index.indexOf('./study-emphasis-119.js')<v9index.indexOf('./quality2-study-schema-119.js'),'study emphasis SSOT loads before study schema');
 
 
@@ -697,7 +701,10 @@ ok(sourcePdf.includes('opts.zoom')&&sourcePdf.includes('fitScale')&&sourcePdf.in
 const appSource=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 ok(appSource.includes('근거를 그대로 나열하는 검색기가 아니라')&&appSource.includes('wantsTutorEvidence'),'study AI is answer-first by default and preserves an explicit evidence-only mode');
 ok(appSource.includes("navigator.gpu&&V.LocalAI?.ensure"),'first eligible AI question may initialize the local reasoning engine instead of staying on static evidence fallback');
-ok(appSource.includes('cap=Math.max(1,Math.ceil(n/Math.max(1,scopeIds.length))+1)'),'exam sampler caps per-scope concentration after guaranteeing scope coverage');
+const mockEngine=fs.readFileSync(new URL('./mock-exam-quality-119.js',import.meta.url),'utf8');
+ok(mockEngine.includes('uniqueConceptPerExam:true')&&mockEngine.includes('maxFamilyRun:2')&&mockEngine.includes("recentWindow:4"),'v14 mock engine locks unique concepts recent-history preference and max two same-family run');
+ok(appSource.includes('V.MockExam119?.build')&&appSource.includes("fresh=pool.filter(q=>!wrongIds.has(q.id)"),'app delegates mock composition to v14 and wrong-answer retraining prefers alternate same-concept questions');
+ok(appSource.includes('data-exam-confidence')&&appSource.includes('확신오답'),'exam UX records confidence and reports confident mistakes');
 ok(!v9index.includes('./source-ui.js'),'legacy source uploader/compiler UI is not loaded in the learner runtime');
 ok(!v9index.includes('./source-compiler.js'),'legacy browser PDF compiler is not loaded; official source viewing requires no user upload');
 ok(!sw.includes("'./source-ui.js'"),'service worker no longer caches the legacy source uploader/compiler UI');
