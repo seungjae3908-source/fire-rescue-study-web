@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import handler from '../api/runtime-head.js';
 
 function call({method='GET',env={}}={}){
-  const old={...process.env};
+  const keys=['VERCEL_GIT_COMMIT_SHA','VERCEL_GIT_COMMIT_REF','VERCEL_ENV'];
+  const old=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
+  for(const k of keys)delete process.env[k];
   Object.assign(process.env,env);
   const headers={};
   let body='',statusCode=200;
@@ -13,7 +15,10 @@ function call({method='GET',env={}}={}){
     end:v=>{body=String(v||'');return{statusCode,headers,body}}
   };
   const out=handler({method},res);
-  process.env=old;
+  for(const k of keys){
+    if(old[k]===undefined)delete process.env[k];
+    else process.env[k]=old[k];
+  }
   return out;
 }
 
