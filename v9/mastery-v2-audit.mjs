@@ -7,7 +7,7 @@ Date.now=()=>now;
 globalThis.window={AITUTOR_V9:{}};
 if(!globalThis.crypto)globalThis.crypto={randomUUID:()=>('uuid-'+now)};
 const V=window.AITUTOR_V9;
-const state={answers:{},confidence:{},answerEvents:[],wrongs:[],reviewSchedule:{},progress:{}};
+const state={answers:{},confidence:{},answerEvents:[],wrongs:[],reviewSchedule:{},progress:{},profile:{examYear:'2027'}};
 const concepts=[
   {id:'A',subject:'fire',scopeId:'F',title:'반복오답 개념'},
   {id:'B',subject:'ems',scopeId:'E',title:'장기지연 개념'}
@@ -24,6 +24,15 @@ V.examReadiness=()=>({ready:true});
 vm.runInThisContext(fs.readFileSync(new URL('./mastery.js',import.meta.url),'utf8'),{filename:'mastery.js'});
 
 const M=V.Mastery,q=questions[0],assert=(ok,msg)=>{if(!ok)throw new Error(msg)};
+const day=86400000;
+const dateAfter=days=>{
+  const d=new Date(now);d.setUTCHours(0,0,0,0);d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)
+};
+const setExamDays=days=>{
+  const writtenExam=dateAfter(days);
+  V.OfficialMonitor119={summary:()=>({targetExamYear:'2027',items:[{kind:'exam_schedule',publishedAt:'2026-09-01',schedule:{writtenExam}}]})};
+  return writtenExam
+};
 assert(M.version==='119-mastery-v2','version');
 assert(M.intervalFor(90)===30,'legacy interval contract');
 
@@ -55,12 +64,27 @@ assert(state.progress.B.lapses===lapsesBefore+1,'again increments lapse');
 assert(state.progress.B.nextReview===now,'again due immediately');
 assert(M.readiness().overdue>=1,'readiness reports due reviews');
 
+setExamDays(30);
+assert(M.examPhase().phase==='D30','D-30 phase');
+setExamDays(7);
+assert(M.examPhase().phase==='D7','D-7 phase');
+setExamDays(1);
+const urgent=M.examPhase(),urgentPlan=M.todayPlan(2);
+assert(urgent.phase==='D1'&&urgent.daysLeft===1,'D-1 phase');
+assert(urgentPlan.every(x=>x.examPhase==='D1'&&x.examDaysLeft===1),'plan carries countdown phase');
+assert(urgentPlan.some(x=>x.phaseBoost>0),'countdown adds review priority');
+assert(M.readiness().exam.phase==='D1','readiness carries countdown phase');
+setExamDays(31);
+assert(M.examPhase().phase==='normal','outside D-30 remains normal');
+
 console.log('MASTERY_V2_AUDIT',JSON.stringify({
   version:M.version,
   dangerousRecoveryRequired:2,
   staleRetention:stale.retentionEstimate,
   topPriority:M.todayPlan(2)[0].concept.id,
-  recoveryPending:M.readiness().recoveryPending
+  recoveryPending:M.readiness().recoveryPending,
+  countdownPhases:['D30','D7','D1'],
+  d1PriorityBoosted:true
 },null,2));
 console.log('MASTERY_V2_AUDIT_COMPLETE');
 Date.now=originalNow;
