@@ -9,7 +9,7 @@ vm.runInThisContext(fs.readFileSync(new URL('./question-type-119.js',import.meta
 const verified=V.questions.filter(q=>q.grade==='A'||q.grade==='B');
 const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]+/g,' ').trim().replace(/\s+/g,' ');
 const pageRe=/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/;
-const officialRe=/(?:https:\/\/[^\s]*(?:go\.kr|law\.go\.kr)|법률|시행령|시행규칙|고시|훈령)/i;
+const officialRe=/(?:https:\/\/[^\s]*(?:go\.kr|law\.go\.kr)|법률|시행령|시행규칙|고시|훈령|소방공무원\s*임용령|채용시험\s*시행계획|소방청\s*공식|출제범위)/i;
 const sillyRe=/(머리카락|신발\s*(?:색|브랜드)|손톱\s*(?:색|길이)|이름\s*글자|보험정보|퇴원계획|구급차\s*연료|날씨만|정상\s*시력만|키만\s*측정|체중만\s*측정|머리카락\s*성장)/i;
 const generic=new Set(['다음','중','가장','적절한','옳은','것은','대한','설명','경우','공식','페이지','근거','적용할','때','어떤','무엇','인가']);
 const tokenSet=s=>new Set(norm(s).split(' ').filter(x=>x.length>=2&&!generic.has(x)));
@@ -31,7 +31,8 @@ for(let i=0;i<verified.length;i++)for(let j=i+1;j<verified.length;j++){
 }
 const shares=answerPos.map(n=>Number((n/Math.max(1,verified.length)).toFixed(3)));
 const diffShares=Object.fromEntries(Object.entries(byDifficulty).map(([k,n])=>[k,Number((n/Math.max(1,verified.length)).toFixed(3))]));
-const family=V.QuestionType119.audit();
+const byFamily={};for(const q of verified){const k=V.QuestionType119.classify(q)?.key||'recall';byFamily[k]=(byFamily[k]||0)+1}
+const family={byFamily,activeFamilies:Object.values(byFamily).filter(n=>n>0).length};
 const derived=verified.filter(q=>q.evidenceDerivedFrom),byId=Object.fromEntries(verified.map(q=>[q.id,q]));
 const brokenDerived=derived.filter(q=>{const b=byId[q.evidenceDerivedFrom];return !b||b.conceptId!==q.conceptId||String(b.source||'')!==String(q.source||'')});
 const summary={
