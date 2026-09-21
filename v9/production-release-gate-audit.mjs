@@ -8,6 +8,7 @@ const rootPdf=read('api/official-pdf.js');
 const runtimeHead=read('api/runtime-head.js');
 const productionAcceptance=read('.github/workflows/production-current-main-acceptance.yml');
 const liveStudentSmoke=read('v9/live-student-ux-smoke.mjs');
+const runtimeDeps=read('v9/runtime-deps.js');
 const sourceCatalog=read('v9/source-catalog-119.js');
 const monitorLib=read('v9/official-monitor-lib.mjs');
 const productionCiGate=read('v9/production-ci-gate.mjs');
@@ -38,11 +39,12 @@ const checks={
   runtimeHeadRoute:runtimeHead.includes('VERCEL_GIT_COMMIT_SHA')&&runtimeHead.includes('RUNTIME_GIT_SHA_UNAVAILABLE')&&runtimeHead.includes("Cache-Control','no-store, max-age=0"),
   postDeployProductionAcceptance:productionAcceptance.includes('workflow_run:')&&productionAcceptance.includes('V9 Development CI')&&productionAcceptance.includes('PRODUCTION_EXACT_HEAD_READY')&&productionAcceptance.includes('live-student-ux-smoke.mjs'),
   postDeployAcceptanceExactHead:productionAcceptance.includes('github.event.workflow_run.head_sha')&&liveStudentSmoke.includes("fetch('/api/runtime-head'")&&liveStudentSmoke.includes('runtime.sha===expected'),
+  productionRuntimeDepsNoLocalProbe:runtimeDeps.includes("const local=()=>")&&runtimeDeps.includes("deps('../node_modules/pdfjs-dist/build/pdf.min.mjs'")&&runtimeDeps.includes("deps('../node_modules/tesseract.js/dist/tesseract.esm.min.js'"),
   canonicalSupplementalMonitor:monitorLib.includes('https://www.nfa.go.kr/nfsa/news/0011/job/?pageIdx=1')&&monitorLib.includes('https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/')&&!monitorLib.includes('https://cherish.nfsa.go.kr/'),
   requiredRecruitmentSource:monitorLib.includes('https://gongmuwon.gosi.kr/spcsv/indexMain3.do')
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
-const summary={version:'119-v23-production-release-gate-v11',checks,blockers,ready:blockers.length===0};
+const summary={version:'119-v24-production-release-gate-v12',checks,blockers,ready:blockers.length===0};
 console.log('PRODUCTION_RELEASE_GATE_119',JSON.stringify(summary,null,2));
 if(blockers.length)throw Error('PRODUCTION_RELEASE_GATE_FAILED '+JSON.stringify(blockers));
 console.log('PRODUCTION_RELEASE_GATE_COMPLETE');
