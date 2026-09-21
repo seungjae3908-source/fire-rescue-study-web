@@ -14,6 +14,10 @@ const checks={
   securityHeaders:Array.isArray(vercel.headers)&&vercel.headers.some(x=>x.source==='/(.*)'&&['Cross-Origin-Opener-Policy','Cross-Origin-Embedder-Policy','X-Content-Type-Options','Referrer-Policy'].every(k=>(x.headers||[]).some(h=>h.key===k))),
   featureDeploySuppressed:['feat/**','fix/**','chore/**','build/**','ci/**','test/**'].every(k=>vercel.git?.deploymentEnabled?.[k]===false),
   productionInstallWaitsForExactMainCi:vercel.installCommand==='node v9/production-ci-gate.mjs'&&!vercel.buildCommand,
+  productionGateUsesVercelGitIdentity:productionCiGate.includes("process.env.VERCEL||''")&&productionCiGate.includes('VERCEL_GIT_COMMIT_REF'),
+  productionGateMissingRefFailsClosed:productionCiGate.includes("reason:'MISSING_GIT_REF'")&&productionCiGate.includes('if(!ref)'),
+  productionGatePreviewOnlyByNonMainRef:productionCiGate.includes("if(ref!=='main')")&&productionCiGate.includes("reason:'NON_MAIN'"),
+  productionGateNoEnvironmentBypass:!productionCiGate.includes("env!=='production'")&&!productionCiGate.includes('VERCEL_TARGET_ENV'),
   productionGateExactSha:productionCiGate.includes('VERCEL_GIT_COMMIT_SHA')&&productionCiGate.includes("head_sha=${encodeURIComponent(sha)}"),
   productionGatePushMainOnly:productionCiGate.includes("x?.head_branch==='main'")&&productionCiGate.includes("x?.event==='push'"),
   productionGateWorkflow:productionCiGate.includes("const WORKFLOW='V9 Development CI'")&&productionCiGate.includes("run.conclusion==='success'"),
@@ -28,7 +32,7 @@ const checks={
   requiredRecruitmentSource:monitorLib.includes('https://gongmuwon.gosi.kr/spcsv/indexMain3.do')
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
-const summary={version:'119-v20-production-release-gate-v5',checks,blockers,ready:blockers.length===0};
+const summary={version:'119-v20-production-release-gate-v6',checks,blockers,ready:blockers.length===0};
 console.log('PRODUCTION_RELEASE_GATE_119',JSON.stringify(summary,null,2));
 if(blockers.length)throw Error('PRODUCTION_RELEASE_GATE_FAILED '+JSON.stringify(blockers));
 console.log('PRODUCTION_RELEASE_GATE_COMPLETE');
