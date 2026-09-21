@@ -5,7 +5,7 @@ const assert=(v,m)=>{if(!v)throw Error(m);console.log('PASS',m)};
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,deviceScaleFactor:2,serviceWorkers:'block'});
-  const page=await ctx.newPage();
+  const page=await ctx.newPage(),pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
   await page.goto(base,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.curriculum);
 
@@ -37,7 +37,7 @@ try{
   assert(detail.examPoints.includes('시험 포인트')&&/질식|부촉매/.test(detail.examPoints),'detail closes with an explicit exam-point section instead of generic filler');
 
   const sweep=await page.evaluate(()=>{
-    const V=window.AITUTOR_V9,s=V.Store.state,out={concepts:0,noUnderline:[],noDefinition:[],genericHeading:[],thinDetail:[]};
+    const V=window.AITUTOR_V9,s=V.Store.state,out={concepts:0,noUnderline:[],noDefinition:[],genericHeading:[],thinDetail:[],underStructured:[]};
     for(const c of V.curriculum.concepts){
       out.concepts++;
       s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=c.id;s.outline=false;s.studyTab='core';V.App.render();
@@ -48,6 +48,7 @@ try{
       if(!root?.querySelector('.detail-definition'))out.noDefinition.push(c.id);
       if(heads.some(x=>/^상세\s*설명$/.test(x)))out.genericHeading.push(c.id);
       if((root?.innerText||'').trim().length<180)out.thinDetail.push(c.id);
+      if(heads.length<2)out.underStructured.push(c.id);
     }
     return out
   });
@@ -55,6 +56,7 @@ try{
   assert(sweep.noDefinition.length===0,'all 183 detail views render an explicit definition block');
   assert(sweep.genericHeading.length===0,'all 183 detail views avoid repeated generic 상세 설명 headings');
   assert(sweep.thinDetail.length===0,'all 183 detail views retain substantive explanation after semantic restructuring');
+  assert(sweep.underStructured.length===0,'all 183 detail views contain at least two meaningful explanation sections');
   assert(sweep.noUnderline.length===0,'all 183 core views expose at least one visible exam-key underline');
 
   await page.evaluate(()=>{
@@ -79,10 +81,12 @@ try{
     rows:el.querySelectorAll('tbody tr').length,
     cols:[...el.querySelectorAll('tbody tr')].map(r=>r.children.length),
     wrapper:el.parentElement?.classList.contains('tutor-ai-table-wrap'),
-    width:el.getBoundingClientRect().width
+    width:el.getBoundingClientRect().width,
+    wrapperWidth:el.parentElement?.getBoundingClientRect().width||0,
+    scrollable:(el.parentElement?.scrollWidth||0)>=(el.parentElement?.clientWidth||0)
   }));
   assert(table.rows===3&&table.cols.every(x=>x===3),'AI markdown table is converted into a consistent three-column table');
-  assert(table.wrapper&&table.width>0,'AI table stays inside a dedicated responsive scroll wrapper on mobile');
+  assert(table.wrapper&&table.width>0&&table.wrapperWidth<=390&&table.scrollable,'AI table stays aligned inside a bounded horizontal-scroll wrapper on mobile');
   const tableScroll=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body'),bottom=x=>!x||x.scrollHeight<=x.clientHeight+3||Math.abs(x.scrollHeight-x.clientHeight-x.scrollTop)<=3;return bottom(el)&&bottom(b)});
   assert(tableScroll,'AI table render also keeps the latest conversation visible');
 
@@ -98,6 +102,19 @@ try{
   });
   assert(loose.rows===3&&loose.cols.every(x=>x===2),'AI pipe table without a Markdown divider is normalized into aligned columns');
   assert(loose.contained&&loose.scrollSafe,'wide AI table stays contained in the mobile chat and scrolls horizontally instead of breaking layout');
+
+  const sourceHighlight=await page.evaluate(()=>{
+    const V=window.AITUTOR_V9,p={Util:{transform:(_a,b)=>b}},viewport={transform:[1,0,0,1,0,0],scale:1};
+    const items=[
+      {str:'산소는 연소에 필요하다.',transform:[1,0,0,12,20,140],width:120},
+      {str:'질식소화는 산소와의 접촉을 차단하거나 산소농도를 낮추는 방법이다.',transform:[1,0,0,12,20,110],width:310},
+      {str:'부촉매소화는 연쇄반응을 억제하여 연소를 중단시킨다.',transform:[1,0,0,12,20,80],width:290}
+    ];
+    const rows=V.SourcePDF.evidenceLinesForQA(items,viewport,p,['질식소화 산소 차단','부촉매소화 연쇄반응 억제'],{anchorTerms:['산소','질식소화','부촉매소화','연쇄반응']});
+    return rows.map(x=>x.text)
+  });
+  assert(sourceHighlight.some(x=>x.includes('질식소화')&&x.includes('산소'))&&sourceHighlight.some(x=>x.includes('부촉매소화')&&x.includes('연쇄반응')),'official-source underline matcher keeps strong multi-keyword evidence lines');
+  assert(!sourceHighlight.some(x=>x==='산소는 연소에 필요하다.'),'official-source underline matcher does not promote a weak short-token-only line');
 
   const input=page.locator('.study-body-mobile [data-tutor-input]');
   await input.fill('질식소화 핵심만 설명해줘');
