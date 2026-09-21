@@ -2,7 +2,7 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored;if(!P)return;
 const sec=(title,body,bullets=[])=>({title,body,bullets});
-const enrich=(id,x)=>{const p=P[id];if(!p)return;p.deepSections=[...(p.deepSections||[]),...(x.deepSections||[])];p.must=[...new Set([...(p.must||[]),...(x.must||[])])];p.traps=[...new Set([...(p.traps||[]),...(x.traps||[])])];p.compare=[...(p.compare||[]),...(x.compare||[])];p.visuals=[...new Set([...(p.visuals||[]),...(x.visuals||[])])];if(x.officialLinks){const all=[...(p.officialLinks||[]),...x.officialLinks];p.officialLinks=[...new Map(all.filter(v=>v?.url).map(v=>[v.url,v])).values()]}p.governanceDepth119=true};
+const enrich=(id,x)=>{const p=P[id];if(!p)return;p.deepSections=[...(p.deepSections||[]),...(x.deepSections||[])];p.must=[...new Set([...(p.must||[]),...(x.must||[])])];p.traps=[...new Set([...(p.traps||[]),...(x.traps||[])])];p.compare=[...(p.compare||[]),...(x.compare||[])];p.flow=[...new Set([...(p.flow||[]),...(x.flow||[])])];p.visuals=[...new Set([...(p.visuals||[]),...(x.visuals||[])])];if(x.officialLinks){const all=[...(p.officialLinks||[]),...x.officialLinks];p.officialLinks=[...new Map(all.filter(v=>v?.url).map(v=>[v.url,v])).values()]}p.governanceDepth119=true};
 
 enrich('F01-C01',{visuals:['fire-org-chain'],must:['시·도지사 직속→소방본부','소방서장 소속→119안전센터·구조대·구급대 등','설치주체·지휘관계를 분리해서 기억'],traps:['소방본부와 119안전센터를 같은 지휘단계로 묶지 않는다.','소방서장 소속기관을 시·도지사 직속기관으로 바꾼 선지를 주의한다.'],deepSections:[
 sec('조직도를 먼저 본다','소방조직 문제는 기관 명칭을 따로 외우기보다 시·도 → 소방본부 → 소방서 → 119안전센터·구조대·구급대 등의 지휘·소속 흐름으로 보면 안정적으로 풀 수 있다.'),
@@ -67,7 +67,7 @@ sec('자원과 통신','물품·재산·인력 등 재난관리자원을 체계�
 sec('매뉴얼과 훈련','위기관리 매뉴얼을 실제 조직이 이해하고 반복훈련해야 재난 발생 시 계획이 작동한다. 관계기관 합동훈련은 기관간 역할·통신·지휘를 점검한다.'),
 sec('시험 포인트','연 1회 이상 합동훈련과 자원·통신·매뉴얼을 “대비” 키워드로 묶는다.')]});
 
-enrich('F02-C06',{visuals:['emergency-rescue-command'],must:['중앙긴급구조통제단→소방청','중앙통제단장→소방청장','현장지휘→원칙적으로 시·군·구 긴급구조통제단장'],traps:['중앙긴급구조통제단을 행정안전부 소속 중앙대책본부와 혼동하지 않는다.','긴급구조와 재난대책본부의 기능을 동일시하지 않는다.'],compare:[['중앙긴급구조통제단','긴급구조 총괄·조정·지휘통제'],['중앙재난안전대책본부','대규모 재난 대응·복구 총괄·조정']],deepSections:[
+enrich('F02-C06',{visuals:['emergency-rescue-command'],flow:['재난상황 인지·신고','긴급구조통제단 가동','현장지휘·기관/자원 조정','인명구조·응급처치·긴급조치','의료기관 인계·현장 수습'],must:['중앙긴급구조통제단→소방청','중앙통제단장→소방청장','현장지휘→원칙적으로 시·군·구 긴급구조통제단장'],traps:['중앙긴급구조통제단을 행정안전부 소속 중앙대책본부와 혼동하지 않는다.','긴급구조와 재난대책본부의 기능을 동일시하지 않는다.'],compare:[['중앙긴급구조통제단','긴급구조 총괄·조정·지휘통제'],['중앙재난안전대책본부','대규모 재난 대응·복구 총괄·조정']],deepSections:[
 sec('긴급구조의 의미','재난 발생 또는 우려 상황에서 인명구조·응급처치와 필요한 긴급조치를 통해 생명·신체·재산을 보호하는 현장 중심 활동이다.'),
 sec('통제단 체계','긴급구조 활동의 역할분담과 지휘통제를 위해 소방청에 중앙긴급구조통제단을 두고 중앙통제단장은 소방청장이 맡는다.'),
 sec('현장지휘','현장에서는 원칙적으로 시·군·구 긴급구조통제단장이 긴급구조활동을 지휘하는 체계와 연결한다.'),
