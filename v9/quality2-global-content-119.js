@@ -600,6 +600,18 @@ secondPass('F03-C13',{
   ]
 });
 
+
+secondPass('F05-C03',{
+  sections:[
+    {title:'지정수량을 묶어서 기억',body:'제2류에서 황화린·적린·유황은 100kg, 철분·금속분·마그네슘은 500kg, 인화성고체는 1,000kg으로 묶어 비교한다. 숫자만 외우지 말고 같은 묶음의 품명까지 함께 기억해야 품명과 지정수량을 바꿔 낸 선지를 걸러낼 수 있다.',bullets:[]}
+  ]
+});
+secondPass('F05-C08',{
+  sections:[
+    {title:'주수 가능 여부를 한 문장으로 외우지 않는다',body:'위험물은 류별 성질과 개별 물질 특성이 달라 물 사용 판단도 달라진다. 문제에서 먼저 금수성·비산·유출확대 위험을 확인하고, 필요한 냉각·질식·억제 효과를 연결한다. “위험물이면 모두 물 금지” 같은 절대표현은 경계한다.',bullets:[]}
+  ]
+});
+
 V.Quality2GlobalContent119={
   version:'119-quality2-global-content-v1',
   concepts:C.concepts.length,
