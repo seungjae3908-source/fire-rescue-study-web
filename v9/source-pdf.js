@@ -83,18 +83,8 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   }).filter(x=>x.n.length>=4).sort((a,b)=>a.top-b.top);
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
   if(anchorTokens.length){
-    const exactAnchorLines=lines.map((line,i)=>{const m=anchorTokens.filter(t=>line.n.includes(t)),score=m.reduce((n,t)=>n+t.length,0)+m.length*10;return{line,i,m,score}}).filter(x=>x.m.length>=2||x.m.some(t=>t.length>=5)).sort((a,b)=>b.score-a.score||a.i-b.i);
-    if(exactAnchorLines.length){
-      const picked=[];
-      for(const hit of exactAnchorLines.slice(0,4)){
-        if(!picked.some(x=>x.line===hit.line))picked.push(hit);
-        for(let j=hit.i+1;j<Math.min(lines.length,hit.i+5)&&picked.length<8;j++){
-          const m=tokens.filter(t=>lines[j].n.includes(t));
-          if((m.length>=2||m.some(t=>t.length>=6))&&!picked.some(x=>x.line===lines[j]))picked.push({line:{...lines[j],evidenceTitle:hit.line.text+' · '+lines[j].text},i:j})
-        }
-      }
-      return picked.sort((a,b)=>a.i-b.i).slice(0,8).map(x=>x.line)
-    }
+    const e=lines.map((l,i)=>{const m=anchorTokens.filter(t=>l.n.includes(t));return{l,i,m,s:m.reduce((n,t)=>n+t.length,0)+m.length*10}}).filter(x=>x.m.length>1||x.m.some(t=>t.length>4)).sort((a,b)=>b.s-a.s||a.i-b.i);
+    if(e.length){const p=[];for(const h of e.slice(0,4)){if(!p.some(x=>x.l===h.l))p.push(h);for(let j=h.i+1;j<Math.min(lines.length,h.i+5)&&p.length<8;j++){const m=tokens.filter(t=>lines[j].n.includes(t));if((m.length>1||m.some(t=>t.length>5))&&!p.some(x=>x.l===lines[j]))p.push({l:{...lines[j],evidenceTitle:h.l.text+' · '+lines[j].text},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,8).map(x=>x.l)}
     const anchorBlocks=[];
     for(let i=0;i<lines.length;i++){
       let joinedN='',joinedText='';
