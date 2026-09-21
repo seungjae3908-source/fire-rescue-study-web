@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 const base='http://127.0.0.1:4173/v9/index.html';
 const fixture=fs.readFileSync(new URL('./fixtures/private-sample.pdf',import.meta.url));
-const forbidden=['fail-closed','page-verified','Release Gate','검증문제·범위 검증 진행 중','DRM 우회','서버 원본 업로드','RLS','Supabase'];
+const forbidden=['fail-closed','page-verified','Release Gate','검증문제·범위 검증 진행 중','DRM 우회','서버 원본 업로드','RLS','Supabase','공식 PDF 원문 컴파일러','Concept ID','학습팩 초안 일괄 생성','빈 PDF 버튼','근거 자동교정'];
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
 function collectErrors(page){const out=[];page.on('pageerror',e=>out.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon|404.*official-pdf/i.test(m.text()))out.push('console:'+m.text())});page.on('requestfailed',r=>{const u=r.url();if(/cdn\.jsdelivr\.net|tesseract|pdf\.worker|pdf\.min\.mjs/i.test(u))out.push('requestfailed:'+u+' '+(r.failure()?.errorText||''))});return out}
