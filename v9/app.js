@@ -61,10 +61,33 @@ function studyNorm(v){return String(v||'').toLowerCase().replace(/[^0-9a-z가-�
 function sameStudyText(a,b){const x=studyNorm(a),y=studyNorm(b);if(!x||!y)return false;if(x===y)return true;const min=Math.min(x.length,y.length),max=Math.max(x.length,y.length);return min>=24&&min/max>=.82&&(x.includes(y)||y.includes(x))}
 function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(!row||sameStudyText(row,seed)||out.some(x=>sameStudyText(x,row)))continue;out.push(row)}return out}
 function uniqueSections(rows=[]){const out=[];for(const row of rows){if(!row?.body)continue;if(out.some(x=>sameStudyText(x.body,row.body)))continue;out.push(row)}return out}
-function detailSection(x,index=0){if(!x)return'';const rawTitle=String(x.title||'').trim();if(/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/.test(rawTitle))return'';const body=studentStudyText(x.body),bullets=uniqueTextRows((x.bullets||[]).filter(Boolean),x.body).map(studentStudyText).filter(Boolean);return `<section class="detail-section" data-detail-section="${index}"><div class="detail-copy"><h3>${esc(sectionTitle(rawTitle||'개념'))}</h3>${body?`<p>${esc(body)}</p>`:''}${bullets.length?`<ul class="detail-key-list">${bullets.map(v=>`<li class="detail-key"><span class="study-star">★</span><span class="study-key-text">${esc(v)}</span></li>`).join('')}</ul>`:''}</div></section>`}
+function coreStudySeeds(pack){
+  return uniqueTextRows([
+    pack?.studySchema?.quick30||pack?.summary||'',
+    ...(V.StudyEmphasis119?.mustRows?.(pack)||[]),
+    ...(V.StudyEmphasis119?.featureRows?.(pack)||[]),
+    ...(V.StudyEmphasis119?.numberRows?.(pack,12)||[]),
+    ...(V.StudyEmphasis119?.trapRows?.(pack)||[])
+  ]).map(studentStudyText).filter(Boolean)
+}
+function isCoreStudyText(v,seeds=[]){
+  const text=studentStudyText(v),x=studyNorm(text);if(!x)return false;
+  return seeds.some(seed=>{const y=studyNorm(seed);if(!y)return false;if(sameStudyText(text,seed))return true;const min=Math.min(x.length,y.length),max=Math.max(x.length,y.length);return min>=28&&min/max>=.74&&(x.includes(y)||y.includes(x))})
+}
+function detailOnlyText(v,seeds=[]){const text=studentStudyText(v);return !text||isCoreStudyText(text,seeds)?'':text}
+function detailSectionTitle(v){
+  const title=sectionTitle(v).replace(/핵심\s*정리/g,'상세 정리').replace(/핵심\s*포인트/g,'상세 포인트').replace(/핵심/g,'').replace(/\s{2,}/g,' ').trim();
+  return title||'상세 설명'
+}
+function detailHasUniqueContent(x,seeds=[]){
+  if(!x)return false;
+  if(detailOnlyText(x.body,seeds))return true;
+  return (x.bullets||[]).some(v=>detailOnlyText(v,seeds))
+}
+function detailSection(x,index=0,coreSeeds=[]){if(!x)return'';const rawTitle=String(x.title||'').trim();if(/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/.test(rawTitle))return'';const body=detailOnlyText(x.body,coreSeeds),bullets=uniqueTextRows((x.bullets||[]).filter(Boolean),x.body).map(studentStudyText).filter(v=>v&&!isCoreStudyText(v,coreSeeds));if(!body&&!bullets.length)return'';return `<section class="detail-section" data-detail-section="${index}"><div class="detail-copy"><h3>${esc(detailSectionTitle(rawTitle||'상세 설명'))}</h3>${body?`<p>${esc(body)}</p>`:''}${bullets.length?`<ul class="detail-key-list">${bullets.map(v=>`<li class="detail-key"><span class="study-star">★</span><span class="study-key-text">${esc(v)}</span></li>`).join('')}</ul>`:''}</div></section>`}
 function detailToc(rows=[]){
   const meta=/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/;
-  const items=rows.map((x,i)=>{const raw=String(x?.title||'').trim();return{i,raw,title:sectionTitle(raw)}}).filter(x=>x.raw&&!meta.test(x.raw)&&x.title).slice(0,12);
+  const items=rows.map((x,i)=>{const raw=String(x?.title||'').trim();return{i,raw,title:detailSectionTitle(raw)}}).filter(x=>x.raw&&!meta.test(x.raw)&&x.title).slice(0,12);
   return items.length>2?`<nav class="detail-toc" aria-label="상세 목차"><label><b>상세 목차</b><select class="select detail-toc-select" data-detail-jump-select aria-label="상세 목차에서 이동"><option value="">이동할 항목 선택</option>${items.map(x=>`<option value="${x.i}">${esc(x.title)}</option>`).join('')}</select></label></nav>`:''
 }
 function visualBlocks(pack){return (pack?.visuals||[]).map(id=>V.Visual119?.render?.(id)||'').join('')}
@@ -134,10 +157,10 @@ function trapBlock(pack){
   const rows=V.StudyEmphasis119?.trapRows?.(pack)||[];if(!rows.length)return'';
   return `<section class="study-traps"><div class="study-traps-title">⚠ 헷갈림 주의</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
 }
-function comparisonBlock(pack){const title=pack.compareFamily?.title||'비슷한 개념 비교';return pack.compare?.length?`<section class="detail-compare"><h3>${esc(title)}</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>핵심</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`:''}
+function comparisonBlock(pack){const title=pack.compareFamily?.title||'비슷한 개념 비교';return pack.compare?.length?`<section class="detail-compare"><h3>${esc(title)}</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>차이 · 설명</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`:''}
 function specialCombustibleBlock(pack){
   const rows=pack?.specialCombustibles||[],rules=pack?.specialCombustibleStorage||[];if(!rows.length)return'';
-  return `<section class="hazmat-reference special-combustible-reference"><div class="lesson-heading"><div><span class="eyebrow">2026 현행 법령</span><h3>특수가연물 품명별 기준수량</h3></div></div><div class="table-scroll"><table class="hazmat-table"><thead><tr><th>품명</th><th>기준수량</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x[0])}</td><td><b>${esc(x[1])}</b></td></tr>`).join('')}</tbody></table></div>${rules.length?`<div class="lesson-box"><b>저장·취급 핵심</b><ul>${rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}</section>`;
+  return `<section class="hazmat-reference special-combustible-reference"><div class="lesson-heading"><div><span class="eyebrow">2026 현행 법령</span><h3>특수가연물 품명별 기준수량</h3></div></div><div class="table-scroll"><table class="hazmat-table"><thead><tr><th>품명</th><th>기준수량</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x[0])}</td><td><b>${esc(x[1])}</b></td></tr>`).join('')}</tbody></table></div>${rules.length?`<div class="lesson-box"><b>저장·취급 상세</b><ul>${rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}</section>`;
 }
 function sourceBlock(c,pack){
   const links=(pack?.officialLinks||[]).filter(x=>x?.url),evidence=V.StudyEmphasis119?.evidence?.(c.id,pack),source=evidence?.source||pack?.source||'공식 근거',hasPdf=(c?.sourceRanges||[]).some(x=>x?.doc);
@@ -145,7 +168,7 @@ function sourceBlock(c,pack){
   return `<div class="lesson source-only"><p class="lead">${esc(source)}</p>${pdfActions}${links.length?`<div class="source-law-links"><b>공식 근거</b>${links.map(x=>`<a class="source-law-link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)} <span aria-hidden="true">↗</span></a>`).join('')}</div>`:''}</div>`
 }
 function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.id)||[],detail=pack.detail||[],sections=uniqueSections(pack.deepSections||[]);
-  if(tab==='detail'){const detailRows=sections.length?sections:uniqueTextRows(detail,pack.summary).map((body,i)=>({title:i===0?'정의 · 상세':'상세 정리',body,bullets:[]}));return `<div class="lesson detail-view">${studySchemaBlock(c,pack)}${detailToc(detailRows)}${detailRows.map((x,i)=>detailSection(x,i)).join('')}${numberBlock(c,pack)}${visualBlocks(pack)}${hazmatBlock(c)}${specialCombustibleBlock(pack)}${calculationBlocks(c,pack)}${comparisonBlock(pack)}${trapBlock(pack)}</div>`}
+  if(tab==='detail'){const coreSeeds=coreStudySeeds(pack),rawRows=sections.length?sections:uniqueTextRows(detail,pack.summary).map((body,i)=>({title:i===0?'정의 · 상세':'상세 정리',body,bullets:[]})),detailRows=rawRows.filter(x=>detailHasUniqueContent(x,coreSeeds));return `<div class="lesson detail-view">${studySchemaBlock(c,pack)}${detailToc(detailRows)}${detailRows.map((x,i)=>detailSection(x,i,coreSeeds)).join('')}${visualBlocks(pack)}${hazmatBlock(c)}${specialCombustibleBlock(pack)}${calculationBlocks(c,pack)}${comparisonBlock(pack)}</div>`}
   if(tab==='quiz'){
     if(!qs.length)return '<div class="lesson quiz-view"><div class="empty book-empty">아직 준비된 문제가 없습니다.</div></div>';
     const raw=Number(runtime.studyQuizIndex[c.id]||0),idx=Math.max(0,Math.min(raw,qs.length-1));runtime.studyQuizIndex[c.id]=idx;
@@ -154,7 +177,7 @@ function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.i
   }
   if(tab==='source')return sourceBlock(c,pack);
   if(tab==='ai')return aiChatBody(c);
-  return `<div class="lesson core-view">${quickCoreBlock(pack)}${coreEssentialBlock(c,pack)}${c.id==='F05-C01'?hazmatBlock(c):''}</div>`;
+  return `<div class="lesson core-view">${quickCoreBlock(pack)}${coreEssentialBlock(c,pack)}${numberBlock(c,pack)}${trapBlock(pack)}${c.id==='F05-C01'?hazmatBlock(c):''}</div>`;
 }
 function lessonBook(c,pack){const tab=STUDY_TABS.some(([k])=>k===state().studyTab)?state().studyTab:'core';return `<article class="book-mobile"><nav class="book-jumpbar">${STUDY_TABS.map(([k,l])=>`<button class="${tab===k?'on':''}" data-study-tab="${k}">${l}</button>`).join('')}</nav><section class="book-section">${lessonContent(c,pack,tab)}</section></article>`}
 function conceptNeighbors(c){const list=V.curriculum.concepts.filter(x=>x.subject===c.subject),i=list.findIndex(x=>x.id===c.id);return{prev:i>0?list[i-1]:null,next:i>=0&&i<list.length-1?list[i+1]:null}}
