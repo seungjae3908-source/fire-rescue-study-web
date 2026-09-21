@@ -217,7 +217,7 @@ function sampleDistinct(arr,n){return [...arr].sort(()=>Math.random()-.5).slice(
 function sampleByDifficulty(arr,n,level){const desired=level==='low'?{low:.65,mid:.30,high:.05}:level==='high'?{low:.10,mid:.35,high:.55}:{low:.25,mid:.55,high:.20},groups={low:[],mid:[],high:[]};for(const q of arr){const d=q.difficulty||V.QuestionDifficulty?.infer(q)||'mid';(groups[d]||groups.mid).push(q)}const out=[];for(const k of ['low','mid','high']){const want=Math.min(groups[k].length,Math.round(n*desired[k]));out.push(...sampleDistinct(groups[k],want))}const used=new Set(out.map(q=>q.id)),rest=arr.filter(q=>!used.has(q.id));return[...out,...sampleDistinct(rest,Math.max(0,n-out.length))].slice(0,n)}
 function recentExamQuestionIds(limit=4){const ids=new Set();for(const h of state().examHistory.slice(-limit))for(const id of h.questionIds||[])ids.add(id);return ids}
 function preferFreshPool(arr,n,scopeIds){const recent=recentExamQuestionIds(),fresh=arr.filter(q=>!recent.has(q.id)),covers=scopeIds.every(id=>fresh.some(q=>q.scopeId===id));return fresh.length>=n&&covers?fresh:arr}
-function sampleAcrossScopes(arr,n,level,scopeIds){const pool=preferFreshPool(arr,n,scopeIds),seed=[];for(const scope of scopeIds){const scoped=pool.filter(q=>q.scopeId===scope);if(!scoped.length)return[];const one=sampleByDifficulty(scoped,1,level)[0];if(one)seed.push(one)}const used=new Set(seed.map(q=>q.id)),rest=pool.filter(q=>!used.has(q.id)),fill=sampleByDifficulty(rest,Math.max(0,n-seed.length),level),all=[...seed,...fill];return sampleDistinct(all,Math.min(n,all.length))}
+function sampleAcrossScopes(arr,n,level,scopeIds){const pool=preferFreshPool(arr,n,scopeIds),out=[],count={},cap=Math.max(1,Math.ceil(n/Math.max(1,scopeIds.length))+1);for(const scope of scopeIds){const q=sampleByDifficulty(pool.filter(x=>x.scopeId===scope),1,level)[0];if(!q)return[];out.push(q);count[scope]=1}const used=new Set(out.map(q=>q.id));while(out.length<n){const eligible=pool.filter(q=>!used.has(q.id)&&(count[q.scopeId]||0)<cap),q=sampleByDifficulty(eligible,1,level)[0];if(!q)break;out.push(q);used.add(q.id);count[q.scopeId]=(count[q.scopeId]||0)+1}return sampleDistinct(out,Math.min(n,out.length))}
 function buildMock(mode,level){const real=mode==='real',allowed=q=>real?(q.grade==='A'||q.grade==='B'):V.QuestionQuality119?.isExamStyle?.(q)!==false,fire=(V.questions||[]).filter(q=>q.subject==='fire'&&allowed(q)),ems=(V.questions||[]).filter(q=>q.subject==='ems'&&allowed(q)),fireScopes=V.curriculum.fire.map(x=>x.id),emsScopes=V.curriculum.ems.map(x=>x.id),f=sampleAcrossScopes(fire,25,level,fireScopes),e=sampleAcrossScopes(ems,40,level,emsScopes),qs=[...f,...e];if(f.length!==25||e.length!==40||new Set(qs.map(q=>q.id)).size!==65)return[];return sampleDistinct(qs,65)}
 function trainingPool(subject='all'){const arr=(V.questions||[]).filter(q=>V.QuestionQuality119?.isExamStyle?.(q)!==false);return subject==='all'?arr:arr.filter(q=>q.subject===subject)}
 function sampleTrainingSubject(subject,count,level){
@@ -356,21 +356,19 @@ function tutorMessageHtml(m){
 }
 function wantsTutorDetail(prompt){return /상세|자세히|깊게|전부|원리부터|교재처럼/.test(String(prompt||''))}
 function wantsTutorCompare(prompt){return /비교|차이|뭐가\s*달|vs|구분/.test(String(prompt||'').toLowerCase())}
+function wantsTutorEvidence(prompt){return /근거만|출처만|원문만|공식\s*근거만|근거\s*위주/.test(String(prompt||''))}
 function fallbackTutor(prompt,c,pack){
-  const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),rows=[];
-  rows.push(c.title,pack.summary||'');
-  if(compare&&(pack.compare||[]).length){
-    rows.push('', '핵심 답변', pack.summary||'비교표에서 차이를 확인하세요.')
-  }else{
-    rows.push('',detail?'상세 설명':'시험 핵심');
-    const source=detail?[...(pack.detail||[]),...(pack.deepSections||[]).map(x=>x?.body).filter(Boolean)]:((pack.must||[]).length?pack.must:(pack.detail||[]));
-    for(const x of source.slice(0,detail?8:4))rows.push('• '+x)
+  const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),rows=[];
+  if(evidenceOnly)rows.push('근거','• '+(pack.source||'공식 학습팩'),...(pack.must||[]).slice(0,4).map(x=>'• '+x));
+  else{
+    rows.push('답변',pack.summary||((pack.must||[])[0])||c.title);
+    const why=uniqueTextRows([...(pack.detail||[]),...(pack.deepSections||[]).map(x=>x?.body).filter(Boolean)]).slice(0,detail?6:3);
+    if(why.length)rows.push('','왜 그런가',...why.map(x=>'• '+x));
+    if(compare&&(pack.compare||[]).length)rows.push('','비교 판단',...(pack.compare||[]).slice(0,4).map(x=>'• '+x.join(' → ')));
+    if((pack.traps||[]).length)rows.push('','시험 적용',...(pack.traps||[]).slice(0,detail?3:2).map(x=>'• '+x));
+    rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));
   }
-  if((pack.traps||[]).length){
-    rows.push('', '시험 함정');
-    for(const x of pack.traps.slice(0,3))rows.push('• '+x)
-  }
-  return cleanTutorText(rows.filter(x=>x!==undefined).join('\n'))
+  return cleanTutorText(rows.join('\n'))
 }
 function tutorConceptFor(prompt){
   const q=studyNorm(prompt),current=currentConcept();if(!q)return current;
@@ -409,14 +407,17 @@ async function sendTutor(){
     const out=`현재 학습 항목은 「${current.title}」입니다.\n이 AI는 현재 항목과 직접 등록된 비교 내용만 설명합니다.\n「${target.detected?.title||'다른 개념'}」은 해당 개념 페이지로 이동해서 질문해 주세요.`;
     state().chat[state().chat.length-1]={...assistant,text:out,outOfScope:true,suggestedConceptId:target.detected?.id||''};S.save();render();return
   }
-  const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),compareRows=compare?(pack.compare||[]).slice(0,6):[];
+  const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),compareRows=compare?(pack.compare||[]).slice(0,6):[];
   let out=fallbackTutor(prompt,current,pack),idx=state().chat.findIndex(x=>x.id===assistant.id);
   if(idx>=0)state().chat[idx]={...assistant,text:out,targetConceptId:current.id,compareRows};S.save();render();
+  if(!(runtime.aiEngine||V.LocalAI?.ready)&&navigator.gpu&&V.LocalAI?.ensure){
+    try{runtime.aiStatus='AI가 답변을 구성하는 중';runtime.aiEngine=await V.LocalAI.ensure({onProgress:t=>{runtime.aiStatus=t}})}catch{runtime.aiStatus='근거 기반 기본 답변'}
+  }
   if(runtime.aiEngine||V.LocalAI?.ready){
     try{
       const enhanced=await V.LocalAI.chat([
-        {role:'system',content:'너는 119 수험 학습도우미다. 현재 개념 밖의 내용을 새로 설명하지 않는다. 현재 개념의 공식 학습팩과 명시된 비교 항목만 사용한다. 기본 답변은 짧고 직접적으로 답한다. 사용자가 상세·자세히를 요구했을 때만 길게 설명한다. Markdown 기호(###, **, 표 파이프)를 쓰지 말고 일반 문장과 짧은 항목으로 답한다. 숫자·법규·의학 기준은 제공된 근거에 없으면 추측하지 않는다.'},
-        {role:'user',content:`[현재 개념]\n${current.id} ${current.title}\n[유형]\n${V.ConceptArchitecture119?.get?.(current.id)?.label||''}\n[요약]\n${pack.summary||''}\n[상세]\n${(pack.detail||[]).join('\n')}\n[시험필수]\n${(pack.must||[]).join('\n')}\n[비교]\n${(pack.compare||[]).map(x=>x.join(': ')).join('\n')}\n[함정]\n${(pack.traps||[]).join('\n')}\n[질문]\n${prompt}\n\n${compare?'비교표는 화면에 별도로 표시된다. 표 내용을 장황하게 반복하지 말고 차이를 한두 문장으로 요약한 뒤 시험 함정을 덧붙여라.':''}${detailed?'교재형 상세 설명으로 확장하되 현재 개념 경계를 넘지 마라.':'결론부터 2~6개 핵심 항목으로 짧게 답하라.'}`}
+        {role:'system',content:'너는 119 수험 학습도우미다. 근거를 그대로 나열하는 검색기가 아니라, 제공된 공식 학습팩을 바탕으로 질문에 먼저 직접 답하고 핵심 관계와 이유를 설명한다. 답변은 결론→왜 그런가→시험 적용→근거 순서로 구성하되 사용자가 근거만 요청하면 근거만 정리한다. 현재 개념과 등록된 비교 범위를 넘는 새 사실은 만들지 말고, 근거에 없는 숫자·법규·의학 기준은 모른다고 표시한다. Markdown 표나 과도한 기호는 쓰지 않는다.'},
+        {role:'user',content:`[현재 개념]\n${current.id} ${current.title}\n[유형]\n${V.ConceptArchitecture119?.get?.(current.id)?.label||''}\n[요약]\n${pack.summary||''}\n[상세]\n${(pack.detail||[]).join('\n')}\n[시험필수]\n${(pack.must||[]).join('\n')}\n[비교]\n${(pack.compare||[]).map(x=>x.join(': ')).join('\n')}\n[함정]\n${(pack.traps||[]).join('\n')}\n[질문]\n${prompt}\n\n${compare?'비교표는 화면에 별도로 표시된다. 차이가 생기는 이유와 시험에서의 구분 기준을 짧게 설명하라.':''}${evidenceOnly?'사용자가 근거만 요청했다. 판단을 확장하지 말고 근거와 출처만 정리하라.':detailed?'결론을 먼저 말한 뒤 원리·이유·시험 적용을 교재형으로 설명하고 마지막에 근거를 붙여라.':'질문에 대한 직접 답변을 먼저 한 뒤 이유와 시험 적용을 짧게 설명하고 마지막에 근거를 붙여라.'}`}
       ],{temperature:.1,max_tokens:detailed?950:520});
       if(enhanced){
         out=cleanTutorText(enhanced);runtime.aiEngine=V.LocalAI.engine||runtime.aiEngine;
@@ -630,5 +631,5 @@ window.addEventListener('aitutor-auth-change',e=>{
   render()
 });
 const restoredActiveExam=restoreActiveExam();
-V.App={render,go,chooseConcept,runtime,tutorConceptFor};render();if(restoredActiveExam)startExamTicker();
+V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes};render();if(restoredActiveExam)startExamTicker();
 })();
