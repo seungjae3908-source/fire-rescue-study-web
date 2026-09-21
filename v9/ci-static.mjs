@@ -540,7 +540,7 @@ ok(manifest.name==='119'&&manifest.short_name==='119','PWA install name is unifi
 const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 ok(sw.includes("const PREFIX='ai-tutor-v9-'"),'v9 service worker uses a dedicated cache prefix');
 ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names');
-ok(sw.includes("'./sync-merge.js'")&&sw.includes("'./sync-ui.js'"),'v9 sync hardening files are offline-cached');
+ok(sw.includes("'./sync-merge.js'")&&!sw.includes("'./sync-ui.js'"),'conflict-safe sync remains cached while redundant profile-only sync UI is removed');
 ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'")&&sw.includes("'./content-rich-2026.js'")&&sw.includes("'./ems-rich-2026.js'"),'v9 depth enrichments are offline-cached');
 ok(sw.includes("'./curriculum-complete-2026.js'"),'complete curriculum expansion is offline-cached');
 ok(sw.includes("'./coverage-map-119.js'"),'full exam Coverage Map is offline-cached');
@@ -699,6 +699,7 @@ ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialR
 ok(sourcePdf.includes('SOURCE_REMOTE_UNRESOLVED'),'unresolved direct PDFs fail closed to official-page fallback');
 ok(sourcePdf.includes('opts.zoom')&&sourcePdf.includes('fitScale')&&sourcePdf.includes('Math.min(3'),'official PDF renderer supports fit-width user zoom while preserving up to 3x device-pixel sharpness');
 const appSource=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ok(appSource.includes("updatedAt:Date.now()"),'profile save stamps its conflict clock directly without a second sync UI listener');
 ok(appSource.includes('근거를 그대로 나열하는 검색기가 아니라')&&appSource.includes('wantsTutorEvidence'),'study AI is answer-first by default and preserves an explicit evidence-only mode');
 ok(appSource.includes("navigator.gpu&&V.LocalAI?.ensure"),'first eligible AI question may initialize the local reasoning engine instead of staying on static evidence fallback');
 const mockEngine=fs.readFileSync(new URL('./mock-exam-quality-119.js',import.meta.url),'utf8');
