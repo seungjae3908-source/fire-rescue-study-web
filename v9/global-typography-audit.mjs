@@ -5,7 +5,8 @@ const viewports=[
   {width:360,height:800,mobile:true},
   {width:390,height:844,mobile:true},
   {width:412,height:915,mobile:true},
-  {width:768,height:1024,mobile:false}
+  {width:768,height:1024,mobile:false},
+  {width:1440,height:900,mobile:false}
 ];
 const tabs=['core','detail','quiz','source','ai'];
 const maxIssues=120;

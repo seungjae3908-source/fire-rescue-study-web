@@ -103,6 +103,8 @@ jobs:
         run: node v9/question-contract-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
+      - name: Final 183-concept learner content audit
+        run: node v9/final-user-content-qa.mjs
       - name: 390-run real mock exam composition quality audit
         run: node v9/mock-exam-quality-audit.mjs
       - name: A/B verified question coverage gap report
@@ -168,6 +170,8 @@ jobs:
         run: node v9/accessibility-smoke.mjs
       - name: Active exam reload recovery and timer QA
         run: node v9/exam-session-e2e.mjs
+      - name: Final learner journey backup wrong-answer exam source AI QA
+        run: node v9/final-user-journey-e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
         run: node v9/sync-e2e.mjs
       - name: Invalid/expired member session fail-closed QA
@@ -198,7 +202,7 @@ jobs:
           done
           cat /tmp/study119-typography-http.log
           exit 1
-      - name: Audit every concept tab at 360/390/412/768 plus active exam
+      - name: Audit every concept tab at 360/390/412/768/1440 plus active exam
         run: node v9/global-typography-audit.mjs
 
 
