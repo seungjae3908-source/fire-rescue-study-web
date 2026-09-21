@@ -119,7 +119,7 @@ function coreEssentialBlock(c,pack){const rows=coreEssentialRows(pack);if(!rows.
 function numberBlock(c,pack){const rows=V.StudyEmphasis119?.numberRows?.(pack,12)||[];if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title">★★ 숫자 · 단위 · 기준</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'number',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text">${studyHighlight(x,pack)}</span></li>`}).join('')}</ul></section>`}
 function trapBlock(pack){
   const rows=V.StudyEmphasis119?.trapRows?.(pack)||[];if(!rows.length)return'';
-  return `<section class="study-traps"><div class="study-traps-title">⚠ 헷갈림 주의</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
+  return `<section class="study-traps"><div class="study-traps-title">⚠ 헷갈림 주의</div><ul>${rows.map(x=>`<li>${studyHighlight(x,pack)}</li>`).join('')}</ul></section>`;
 }
 function comparisonBlock(c,pack){if(!pack.compare?.length)return'';const typeLike=pack.compare.length>=2&&/원리|종류|분류|구분/.test(String(c?.title||'')+' '+String(pack.summary||'')),title=c?.id==='F04-C01'?'소화의 종류':typeLike?'종류 · 구분':pack.compareFamily?.title||'비슷한 개념 비교';return `<section class="detail-compare"><h3>${esc(title)}</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>내용 · 핵심 차이</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`}
 function specialCombustibleBlock(pack){
