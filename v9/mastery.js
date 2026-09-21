@@ -119,8 +119,33 @@ function riskFor(id){
   if(p.ageDays!=null&&p.ageDays>30){score+=Math.min(30,Math.round((p.ageDays-30)/3));reasons.push('장기 미학습')}
   return{score,reason:reasons.slice(0,2).join(' + ')||'신규 학습',wrong:wrongs.length,danger,progress:p}
 }
+function examPhase(){
+  const m=V.OfficialMonitor119?.summary?.()||{},year=String(m.targetExamYear||V.Store.state.profile?.examYear||'');
+  const items=[...(m.items||[])].filter(x=>x?.schedule&&(!x.title||!year||String(x.title).includes(year)||x.kind==='exam_schedule'));
+  items.sort((a,b)=>String(b.publishedAt||'').localeCompare(String(a.publishedAt||'')));
+  const item=items.find(x=>x.schedule?.writtenExam)||items.find(x=>Object.values(x.schedule||{}).some(Boolean))||null;
+  const written=item?.schedule?.writtenExam||'';
+  const target=written?Date.parse(written+'T00:00:00'):NaN,today=new Date(Date.now());today.setHours(0,0,0,0);
+  const daysLeft=Number.isFinite(target)?Math.ceil((target-today.getTime())/day):null;
+  const phase=daysLeft===null||daysLeft<0?'normal':daysLeft<=1?'D1':daysLeft<=7?'D7':daysLeft<=30?'D30':'normal';
+  return{phase,daysLeft,written,official:!!item}
+}
+function phaseAdjustment(entry,phase){
+  const p=entry.progress;
+  if(phase==='D1'){
+    if(!p.attempts)return-30;
+    return(entry.danger?120:0)+(entry.wrong?80:0)+(p.overdue?70:0)+Math.max(0,80-p.retentionEstimate)*2
+  }
+  if(phase==='D7')return(entry.danger?80:0)+(entry.wrong?55:0)+(p.overdue?45:0)+(p.attempts?Math.max(0,75-p.retentionEstimate):15);
+  if(phase==='D30')return(entry.wrong?30:0)+(p.overdue?25:0)+(p.attempts?Math.max(0,65-p.retentionEstimate):25);
+  return 0
+}
 function todayPlan(limit=8){
-  return V.curriculum.concepts.map(concept=>({concept,...riskFor(concept.id)}))
+  const exam=examPhase();
+  return V.curriculum.concepts.map(concept=>{
+    const risk=riskFor(concept.id),boost=phaseAdjustment(risk,exam.phase);
+    return{concept,...risk,score:risk.score+boost,baseScore:risk.score,phaseBoost:boost,examPhase:exam.phase,examDaysLeft:exam.daysLeft}
+  })
     .sort((a,b)=>b.score-a.score||(a.progress.lastStudy||0)-(b.progress.lastStudy||0)||a.concept.id.localeCompare(b.concept.id))
     .slice(0,limit)
 }
@@ -130,9 +155,9 @@ function readiness(){
   const retention=studied.length?Math.round(studied.reduce((a,c)=>a+statsFor(c.id).retentionEstimate,0)/studied.length):0;
   const dangerous=s.wrongs.filter(w=>!w.resolved&&w.confidence==='sure').length;
   const recoveryPending=s.wrongs.filter(w=>!w.resolved&&(w.recoveryCorrect||0)<requiredRecoveries(w)).length;
-  const overdue=Object.values(s.reviewSchedule).filter(r=>r.due<=Date.now()).length,mock=V.examReadiness();
-  return{scopeCoverage:Math.round(covered/cs.length*100),covered,total:cs.length,verifiedQuestionCoverage:Math.round(questionConcepts.size/cs.length*100),questionConcepts:questionConcepts.size,retention,dangerous,recoveryPending,overdue,mock}
+  const overdue=Object.values(s.reviewSchedule).filter(r=>r.due<=Date.now()).length,mock=V.examReadiness(),exam=examPhase();
+  return{scopeCoverage:Math.round(covered/cs.length*100),covered,total:cs.length,verifiedQuestionCoverage:Math.round(questionConcepts.size/cs.length*100),questionConcepts:questionConcepts.size,retention,dangerous,recoveryPending,overdue,mock,exam}
 }
 function conceptPriority(id){return todayPlan(V.curriculum.concepts.length).findIndex(x=>x.concept.id===id)}
-V.Mastery={version:'119-mastery-v2',ensure,recordAnswer,markReviewed,statsFor,todayPlan,readiness,conceptPriority,intervalFor,riskFor,requiredRecoveries};
+V.Mastery={version:'119-mastery-v2',ensure,recordAnswer,markReviewed,statsFor,todayPlan,readiness,conceptPriority,intervalFor,riskFor,requiredRecoveries,examPhase};
 })();
