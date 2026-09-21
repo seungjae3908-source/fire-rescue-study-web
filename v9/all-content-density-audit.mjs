@@ -76,6 +76,8 @@ const hard=rows.filter(x=>x.hard.length);
 const semantic=rows.filter(x=>x.semantic.length).sort((a,b)=>b.semantic.length-a.semantic.length||a.verified-b.verified||a.chars-b.chars);
 const density=rows.filter(x=>x.density.length).sort((a,b)=>a.verified-b.verified||a.chars-b.chars||a.id.localeCompare(b.id));
 const oneVerified=rows.filter(x=>x.verified===1);
+const depthUnder1000=rows.filter(x=>x.chars<1000);
+const structuralOnlyDensity=rows.filter(x=>x.sections<5&&x.chars>=1000&&x.verified>=2);
 const summary={
   version:'119-all-content-density-v1',
   total:rows.length,
@@ -85,6 +87,8 @@ const summary={
   semanticReview:semantic.length,
   densityReview:density.length,
   oneVerified:oneVerified.length,
+  depthUnder1000:depthUnder1000.length,
+  structuralOnlyDensity:structuralOnlyDensity.length,
   subjects:{
     fire:{semantic:semantic.filter(x=>x.subject==='fire').length,density:density.filter(x=>x.subject==='fire').length,oneVerified:oneVerified.filter(x=>x.subject==='fire').length},
     ems:{semantic:semantic.filter(x=>x.subject==='ems').length,density:density.filter(x=>x.subject==='ems').length,oneVerified:oneVerified.filter(x=>x.subject==='ems').length}
@@ -99,7 +103,13 @@ console.log('ALL_CONTENT_DENSITY_FIRE_DENSITY_TOP40');console.table(density.filt
 console.log('ALL_CONTENT_DENSITY_EMS_DENSITY_TOP40');console.table(density.filter(x=>x.subject==='ems').slice(0,40));
 console.log('ALL_CONTENT_DENSITY_DENSITY_REVIEW_TOP80');console.table(density.slice(0,80));
 console.log('ALL_CONTENT_DENSITY_ONE_VERIFIED');console.table(oneVerified);
+console.log('ALL_CONTENT_DENSITY_DEPTH_UNDER_1000');console.table(depthUnder1000);
+console.log('ALL_CONTENT_DENSITY_STRUCTURAL_ONLY');console.table(structuralOnlyDensity);
 if(rows.length!==183)throw new Error('ALL_CONTENT_DENSITY_CURRICULUM_COUNT '+rows.length+' expected 183');
 if(hard.length)throw new Error('ALL_CONTENT_DENSITY_HARD_MISSING '+JSON.stringify(hard.map(x=>({id:x.id,hard:x.hard}))));
 if(semantic.length)throw new Error('ALL_CONTENT_DENSITY_SEMANTIC_GAPS '+JSON.stringify(semantic.map(x=>({id:x.id,semantic:x.semantic}))));
+if(V.DensityUpgradeV13119?.targets?.length!==41||V.DensityUpgradeV13119?.applied?.length!==41)throw new Error('V13_DENSITY_UPGRADE_TARGET_COUNT '+JSON.stringify(V.DensityUpgradeV13119||null));
+if(depthUnder1000.length)throw new Error('ALL_CONTENT_DENSITY_UNDER_1000_REMAINS '+JSON.stringify(depthUnder1000.map(x=>({id:x.id,chars:x.chars}))));
+if(oneVerified.length)throw new Error('ALL_CONTENT_DENSITY_ONE_VERIFIED_REMAINS '+JSON.stringify(oneVerified.map(x=>({id:x.id,verified:x.verified}))));
+
 console.log('ALL_CONTENT_DENSITY_AUDIT_COMPLETE');
