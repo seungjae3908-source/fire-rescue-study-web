@@ -525,7 +525,7 @@ async function renderPdfEvidence(id,pageOverride=null){
       if(mappedHit?.page&&mappedHit.score>0)candidates.push({...mappedHit,scope:'mapped'});
       const broadHit=await V.SourcePDF.locate(key,queries).catch(()=>null);
       if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'});
-      for(const located of candidates.sort((a,b)=>b.score-a.score)){
+      for(const located of candidates){
         const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:90000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
         if(hasAnchorEvidence(anchorResult,anchorQueries)||anchorResult.hits>=2){result=anchorResult;root.dataset.autoLocated='true';root.dataset.searchScope=located.scope;break}
       }
