@@ -65,9 +65,7 @@ function coreStudySeeds(pack){
   return uniqueTextRows([
     pack?.studySchema?.quick30||pack?.summary||'',
     ...(V.StudyEmphasis119?.mustRows?.(pack)||[]),
-    ...(V.StudyEmphasis119?.featureRows?.(pack)||[]),
-    ...(V.StudyEmphasis119?.numberRows?.(pack,12)||[]),
-    ...(V.StudyEmphasis119?.trapRows?.(pack)||[])
+    ...(V.StudyEmphasis119?.featureRows?.(pack)||[])
   ]).map(studentStudyText).filter(Boolean)
 }
 function isCoreStudyText(v,seeds=[]){
