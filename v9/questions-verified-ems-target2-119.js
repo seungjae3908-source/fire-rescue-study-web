@@ -109,4 +109,9 @@ for(const c of targetsV13){
 V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);
 V.VerifiedBreadth3V13119={added:addedV13.length,ids:addedV13};
 
+const vh=s=>{let h=2166136261;for(const c of String(s||'')){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+const vb=(V.questions||[]).filter(q=>(q.grade==='A'||q.grade==='B')&&q.choices?.length===4&&q.choiceExplanations?.length===4);
+for(const q of vb){const rows=q.choices.map((x,i)=>({x,e:q.choiceExplanations[i],ok:i===q.a})),n=(vh(q.id)>>>8)%4,r=n?[...rows.slice(n),...rows.slice(0,n)]:rows;q.choices=r.map(x=>x.x);q.choiceExplanations=r.map(x=>x.e);q.a=r.findIndex(x=>x.ok);q.ex=q.choiceExplanations[q.a]}
+V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.VerifiedChoiceBalance119={count:vb.length,version:'119-v13-verified-choice-balance-v1'};
+
 })();
