@@ -8,7 +8,6 @@ for(const file of ['concept-architecture-119.js','source-catalog-119.js'])vm.run
 
 const concepts=V.curriculum.concepts,verified=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B');
 const byConcept=new Map;for(const q of verified){const a=byConcept.get(q.conceptId)||[];a.push(q);byConcept.set(q.conceptId,a)}
-const forbidden=[/검증문제\s*범위\s*검증\s*진행\s*중/i,/개념\s*구조와\s*읽는\s*순서/i,/structuralOnlyDensity/i,/semanticReview/i,/FIRST_ZERO/i];
 const issues=[];
 const packText=p=>JSON.stringify({summary:p?.summary,detail:p?.detail,must:p?.must,traps:p?.traps,compare:p?.compare,deepSections:p?.deepSections,numbers:p?.numbers,features:p?.features});
 for(const c of concepts){
@@ -17,16 +16,15 @@ for(const c of concepts){
   if(!String(p?.summary||'').trim()||!(p?.must||[]).length)issues.push({id:c.id,type:'CORE_EMPTY'});
   const detailLen=(p?.detail||[]).length+(p?.deepSections||[]).length;if(detailLen<2)issues.push({id:c.id,type:'DETAIL_THIN',detailLen});
   if(!qs.length)issues.push({id:c.id,type:'VERIFIED_QUIZ_MISSING'});
-  if(!ranges.length)issues.push({id:c.id,type:'SOURCE_RANGE_MISSING'});
+  const webLinks=(p?.officialLinks||[]).filter(x=>x?.url);if(!ranges.length&&!webLinks.length)issues.push({id:c.id,type:'OFFICIAL_SOURCE_MISSING'});
   for(const r of ranges)if(r?.doc&&!V.SourceCatalog119?.get?.(r.doc))issues.push({id:c.id,type:'UNKNOWN_SOURCE_DOC',doc:r.doc});
   if(!V.ConceptArchitecture119?.get?.(c.id))issues.push({id:c.id,type:'AI_ARCHITECTURE_MISSING'});
-  const txt=packText(p);for(const re of forbidden)if(re.test(txt))issues.push({id:c.id,type:'INTERNAL_COPY',pattern:String(re)});
 }
 const fire=concepts.filter(c=>c.subject==='fire').length,ems=concepts.filter(c=>c.subject==='ems').length;
 if(concepts.length!==183||fire!==71||ems!==112)issues.push({type:'CURRICULUM_COUNT',total:concepts.length,fire,ems});
 const text=id=>packText(V.contentPacks.get(id));
+const haz=V.Hazmat2026?.classes||{};for(let n=1;n<=6;n++)if(haz[n]?.name!==`제${n}류`)issues.push({id:'F05-C01',type:'HAZMAT_CLASS_MISSING',class:n});
 const required={
- 'F05-C01':['제1류','제2류','제3류','제4류','제5류','제6류'],
  'F02-C02':['재난관리책임기관','재난관리주관기관','중앙행정기관','지방자치단체','시행령 제3조의2','별표 1의3'],
  'F02-C03':['중앙안전관리위원회','중앙재난안전대책본부','행정안전부장관'],
  'F02-C06':['중앙긴급구조통제단','소방청장','시·군·구'],
@@ -41,9 +39,9 @@ const summary={
  coreReady:concepts.length-issues.filter(x=>['PACK_MISSING','CORE_EMPTY'].includes(x.type)).length,
  detailReady:concepts.length-issues.filter(x=>x.type==='DETAIL_THIN').length,
  verifiedQuizReady:concepts.length-issues.filter(x=>x.type==='VERIFIED_QUIZ_MISSING').length,
- sourceReady:concepts.length-issues.filter(x=>['SOURCE_RANGE_MISSING','UNKNOWN_SOURCE_DOC'].includes(x.type)).length,
+ sourceReady:concepts.length-issues.filter(x=>['OFFICIAL_SOURCE_MISSING','UNKNOWN_SOURCE_DOC'].includes(x.type)).length,
  aiReady:concepts.length-issues.filter(x=>x.type==='AI_ARCHITECTURE_MISSING').length,
- highRiskChecks:Object.values(required).reduce((a,x)=>a+x.length,0),issues:issues.length
+ highRiskChecks:6+Object.values(required).reduce((a,x)=>a+x.length,0),studentCopyGuard:'rendered-browser-audits',issues:issues.length
 };
 console.log('FINAL_USER_CONTENT_QA_SUMMARY',JSON.stringify(summary,null,2));
 if(issues.length){console.error('FINAL_USER_CONTENT_QA_ISSUES',JSON.stringify(issues.slice(0,120),null,2));throw Error('FINAL_USER_CONTENT_QA_FAILED '+JSON.stringify({issues:issues.length,first:issues[0]}))}
