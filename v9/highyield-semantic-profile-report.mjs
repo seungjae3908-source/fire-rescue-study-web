@@ -40,4 +40,5 @@ const rows=(V.curriculum.concepts||[]).filter(c=>highYield.test(c.title)).map(c=
 });
 console.log('HIGH_YIELD_SEMANTIC_PROFILE_SUMMARY',JSON.stringify({version:'119-highyield-semantic-profile-v1',total:rows.length,fire:rows.filter(x=>x.subject==='fire').length,ems:rows.filter(x=>x.subject==='ems').length},null,2));
 console.log('HIGH_YIELD_SEMANTIC_PROFILE_ROWS');console.table(rows);
-console.log('HIGH_YIELD_SEMANTIC_PROFILE_AUDIT_COMPLETE');\nawait import('./all-content-density-audit.mjs');
+console.log('HIGH_YIELD_SEMANTIC_PROFILE_AUDIT_COMPLETE');
+await import('./all-content-density-audit.mjs');
