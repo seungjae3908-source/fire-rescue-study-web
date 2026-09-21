@@ -322,7 +322,7 @@ try{
   await m.locator('#pdfEvidence [data-pdf-zoom="0.25"]').click();
   await m.waitForFunction(()=>document.querySelector('#pdfEvidence [data-pdf-zoom-label]')?.textContent==='125%',null,{timeout:30000});
   const mobileZoomVisual=await m.locator('#pdfEvidence canvas').evaluate(c=>({css:c.getBoundingClientRect().width,pixel:c.width}));
-  assert(mobileZoomVisual.css>pdfVisual.cssWidth*1.15&&mobileZoomVisual.pixelWidth===undefined?true:true,'mobile PDF zoom makes the printed page materially larger for reading');
+  assert(mobileZoomVisual.css>pdfVisual.cssWidth*1.15,'mobile PDF zoom makes the printed page materially larger for reading');
   assert(mobileZoomVisual.pixel>=mobileZoomVisual.css*1.8,'zoomed mobile PDF stays high-DPI instead of becoming blurry');
   await m.locator('#pdfEvidence [data-pdf-fit]').click();
   await m.waitForFunction(()=>document.querySelector('#pdfEvidence [data-pdf-zoom-label]')?.textContent==='100%',null,{timeout:30000});
