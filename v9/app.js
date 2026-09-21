@@ -315,37 +315,10 @@ function cleanTutorText(v){
     .replace(/^\s*[-*]\s+/gm,'• ')
     .trim()
 }
-function tutorTableCells(line){return String(line||'').trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(x=>x.trim())}
-function tutorTableDivider(line){const cells=tutorTableCells(line);return cells.length>=2&&cells.every(x=>/^:?-{3,}:?$/.test(x))}
-function tutorRichAnswer(v){
-  const lines=cleanTutorText(v).split('\n'),out=[];let i=0;
-  while(i<lines.length){
-    if(!lines[i].trim()){i++;continue}
-    if(lines[i].includes('|')){
-      const block=[];let j=i;
-      while(j<lines.length&&lines[j].includes('|')&&lines[j].trim()){block.push(lines[j]);j++}
-      const parsed=block.map(tutorTableCells),cols=Math.max(0,...parsed.map(x=>x.length)),same=cols>=2&&parsed.filter(x=>!tutorTableDivider(x.join('|'))).every(x=>x.length===cols);
-      if(same&&parsed.length>=2){
-        const header=tutorTableDivider(block[1])?parsed[0]:null,body=header?parsed.slice(2):parsed;
-        if(body.length){
-          out.push(`<div class="tutor-ai-table-wrap"><table class="tutor-ai-table">${header?`<thead><tr>${header.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead>`:''}<tbody>${body.map(row=>`<tr>${row.map((x,k)=>`<td>${k===0?'<b>'+esc(x)+'</b>':esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);i=j;continue
-        }
-      }
-    }
-    const group=[];while(i<lines.length&&lines[i].trim()&&!lines[i].includes('|')){group.push(lines[i].trim());i++}
-    if(!group.length){i++;continue}
-    const title=/^(답변|왜 그런가|비교 판단|시험 적용|근거|정의|종류|원리|주의)$/.test(group[0])?group.shift():'';
-    if(title)out.push(`<h4 class="tutor-answer-heading">${esc(title)}</h4>`);
-    if(group.length)out.push(`<p class="tutor-answer-text">${group.map(esc).join('<br>')}</p>`)
-  }
-  return out.join('')
-}
-function tutorMessageHtml(m){
-  const text=cleanTutorText(m?.text||''),compareRows=Array.isArray(m?.compareRows)?m.compareRows.filter(x=>Array.isArray(x)&&x.length>=2):[];
-  const compare=compareRows.length?`<div class="tutor-compare-wrap"><table class="tutor-compare-table"><thead><tr><th>구분</th><th>핵심 차이</th></tr></thead><tbody>${compareRows.map(x=>`<tr><td><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td></tr>`).join('')}</tbody></table></div>`:'';
-  const answer=m.role==='assistant'?tutorRichAnswer(text):`<p class="tutor-answer-text">${esc(text)}</p>`;
-  return `<div class="row tutor-message ${m.role==='user'?'me':'assistant'}"><b>${m.role==='user'?'나':'119'}</b>${compare}${answer}</div>`
-}
+function tutorTableCells(x){return String(x||'').trim().replace(/^\||\|$/g,'').split('|').map(x=>x.trim())}
+function tutorTableDivider(x){const a=tutorTableCells(x);return a.length>1&&a.every(x=>/^:?-{3,}:?$/.test(x))}
+function tutorRichAnswer(v){const l=cleanTutorText(v).split('\n'),o=[];let p=[];const f=()=>{if(p.some(x=>x.trim()))o.push(`<p class="tutor-answer-text">${p.map(esc).join('<br>')}</p>`);p=[]};for(let i=0;i<l.length;i++){if(l[i].includes('|')&&tutorTableDivider(l[i+1]||'')){f();const h=tutorTableCells(l[i]),r=[];for(i+=2;i<l.length&&l[i].includes('|');i++){const x=tutorTableCells(l[i]);while(x.length<h.length)x.push('');r.push(x.slice(0,h.length))}i--;if(h.length>1&&r.length){o.push(`<div class="tutor-ai-table-wrap"><table class="tutor-ai-table"><thead><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${r.map(x=>`<tr>${x.map((v,k)=>`<td>${k?esc(v):'<b>'+esc(v)+'</b>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);continue}}p.push(l[i])}f();return o.join('')}
+function tutorMessageHtml(m){const t=cleanTutorText(m?.text||''),r=Array.isArray(m?.compareRows)?m.compareRows.filter(x=>Array.isArray(x)&&x.length>1):[],c=r.length?`<div class="tutor-compare-wrap"><table class="tutor-compare-table"><thead><tr><th>구분</th><th>핵심 차이</th></tr></thead><tbody>${r.map(x=>`<tr><td><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td></tr>`).join('')}</tbody></table></div>`:'';return`<div class="row tutor-message ${m.role==='user'?'me':'assistant'}"><b>${m.role==='user'?'나':'119'}</b>${c}${m.role==='assistant'?tutorRichAnswer(t):`<p class="tutor-answer-text">${esc(t)}</p>`}</div>`}
 function wantsTutorDetail(prompt){return /상세|자세히|깊게|전부|원리부터|교재처럼/.test(String(prompt||''))}
 function wantsTutorCompare(prompt){return /비교|차이|뭐가\s*달|vs|구분/.test(String(prompt||'').toLowerCase())}
 function wantsTutorEvidence(prompt){return /근거만|출처만|원문만|공식\s*근거만|근거\s*위주/.test(String(prompt||''))}
@@ -497,16 +470,9 @@ function settings(){
 function view(){if(state().page==='tutor'){state().page='study';state().studyTab='ai';S.save()}return({home,study,notes,bank,exam,wrong,stats,resources,suggestions,settings}[state().page]||home)()}
 function scrollTutorToBottom(){requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const x of document.querySelectorAll('.study-ai-chat'))if(x.offsetParent!==null)x.scrollTop=x.scrollHeight}))}
 function render(){document.querySelector('#app').innerHTML=view();if(state().page==='study'&&state().studyTab==='ai')scrollTutorToBottom()}
-function sourceAnchorQueries(c,p=V.contentPacks.get(c?.id)){
-  const stop=new Set(['개념','기초','종류','이론','구조','원리','정리','및','방법','특징','설명']),title=String(c?.title||'').trim(),arch=V.ConceptArchitecture119?.termsFor?.(c?.id)||[];
-  const stem=title.replace(/\s*(?:개론|원리|이론|기초|종류|구조|방법|개요)\s*$/,'').trim();
-  const titleTerms=title.split(/[·,/()\s-]+/).map(x=>x.trim()).filter(x=>x.length>=2&&!stop.has(x));
-  const linked=[...arch,...(p?.compare||[]).flatMap(x=>Array.isArray(x)?x.slice(0,2):[]),...(p?.must||[]).flatMap(x=>String(x||'').split(/\s*(?:→|:|=|·|\/|,)\s*/))]
-    .map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).filter(x=>x.length>=2&&x.length<=28&&!stop.has(x));
-  return [...new Set([title,stem,...titleTerms,...linked].filter(Boolean))].sort((a,b)=>b.length-a.length).slice(0,18)
-}
-function evidenceQueries(c,p){const q=p?.studySchema||{};return [...sourceAnchorQueries(c,p),p?.summary,q.definition,...(q.conditions||[]),...(q.mechanisms||[]),...(p?.must||[]),...(p?.detail||[]),...(p?.compare||[]).flat()].filter(Boolean).slice(0,30)}
-function hasAnchorEvidence(result,anchors){const lines=(result?.evidenceLines||[]).map(studyNorm),terms=(anchors||[]).map(studyNorm).filter(x=>x.length>=2);return terms.some(t=>lines.some(line=>line.includes(t)))}
+function sourceAnchorQueries(c,p=V.contentPacks.get(c?.id)){const t=String(c?.title||'').trim(),a=[t,t.replace(/\s*(?:개론|원리|이론|기초|종류|구조|방법|개요)\s*$/,''),...t.split(/[·,/()\s-]+/),...(V.ConceptArchitecture119?.termsFor?.(c?.id)||[]),...(p?.compare||[]).flatMap(x=>x||[]),...(p?.must||[]).flatMap(x=>String(x||'').split(/\s*(?:→|:|=|·|\/|,)\s*/))],stop=/^(개념|기초|종류|이론|구조|원리|정리|방법|특징|설명|및)$/;return[...new Set(a.map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).filter(x=>x.length>=2&&x.length<=28&&!stop.test(x)))].sort((a,b)=>b.length-a.length).slice(0,18)}
+function evidenceQueries(c,p){const q=p?.studySchema||{};return[...sourceAnchorQueries(c,p),p?.summary,q.definition,...(q.conditions||[]),...(q.mechanisms||[]),...(p?.must||[]),...(p?.detail||[]),...(p?.compare||[]).flat()].filter(Boolean).slice(0,30)}
+function hasAnchorEvidence(r,a){const l=(r?.evidenceLines||[]).map(studyNorm),t=(a||[]).map(studyNorm).filter(x=>x.length>=2);return t.some(x=>l.some(y=>y.includes(x)))}
 function sourceModal(id){return openPdfEvidence(id)}
 async function downloadOfficialPdf(key){if(!key||!V.SourcePDF?.download)return toast('다운로드할 PDF가 없습니다.');try{const r=await V.SourcePDF.download(key,{timeoutMs:120000});toast(`PDF 다운로드 시작 · ${r?.name||key}`)}catch(err){toast('PDF 다운로드 실패 · '+String(err?.message||err).slice(0,46))}}
 async function renderResourcePdf(key,pageOverride=1){
