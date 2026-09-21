@@ -1,5 +1,6 @@
 {
   "cleanUrls": true,
+  "installCommand": "node v9/production-ci-gate.mjs",
   "redirects": [
     {
       "source": "/",
@@ -34,6 +35,12 @@
       ]
     }
   ],
+  "functions": {
+    "api/official-monitor.js": {
+      "regions": ["icn1"],
+      "maxDuration": 60
+    }
+  },
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
