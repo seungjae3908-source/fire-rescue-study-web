@@ -21,7 +21,7 @@ for(const q of verified){
   if(norm(q.ex)!==norm(q.choiceExplanations?.[q.a]))exDrift.push({id:q.id,conceptId:q.conceptId,a:q.a});
   (q.choices||[]).forEach((x,i)=>{if(i!==q.a&&sillyRe.test(String(x)))silly.push({id:q.id,conceptId:q.conceptId,choice:i,text:x})});
   const lens=(q.choices||[]).map(x=>norm(x).length),correct=lens[q.a]||0,wrong=lens.filter((_,i)=>i!==q.a),avg=wrong.reduce((a,b)=>a+b,0)/Math.max(1,wrong.length);
-  if(correct>=45&&avg&&correct/avg>2.6)answerCue.push({id:q.id,conceptId:q.conceptId,ratio:Number((correct/avg).toFixed(2))});
+  if(correct>=45&&avg&&correct/avg>2.6)answerCue.push({id:q.id,conceptId:q.conceptId,ratio:Number((correct/avg).toFixed(2)),stem:q.q,choices:q.choices});
 }
 const near=[];
 for(let i=0;i<verified.length;i++)for(let j=i+1;j<verified.length;j++){
