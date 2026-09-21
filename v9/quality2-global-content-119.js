@@ -645,7 +645,7 @@ secondPass('E05-C03',{must:['무선통신은 상대방·채널을 확인하고 �
 secondPass('E20-C02',{must:['분만 임박 징후가 보이면 불필요한 이동보다 현장분만 준비와 산모·신생아 안전을 우선한다.']});
 
 
-const densityTargets='E15-C03 E19-C01 E07-C05 E06-C05 E06-C02 E22-C02 E03-C01 E21-C05 E21-C02 E04-C01 E20-C02 E04-C02 E20-C05 E03-C03 E16-C02 E17-C01 E01-C02 F04-C07 F03-C16 F04-C03 F03-C10 F03-C14 F05-C05 F02-C07 E12-C01 F02-C06 F06-C03 F05-C02 F05-C04 F06-C04 E20-C04 E16-C01 F02-C04 E23-C02 F04-C06 E22-C03 F07-C19 F07-C06 E17-C04 E13-C02 E10-C04'.split(' ');
+const densityTargets='E15-C03 E19-C01 E07-C05 E06-C05 E06-C02 E22-C02 E03-C01 E21-C05 E21-C02 E04-C01 E20-C02 E04-C02 E20-C05 E03-C03 E16-C02 E17-C01 E01-C02 F04-C07 F03-C16 F04-C03 F03-C10 F03-C14 F05-C05 F02-C07 E12-C01 F02-C06 F06-C03 F05-C02 F05-C04 F06-C04 E20-C04 E16-C01 F02-C04 E23-C02 F04-C06 E22-C03 F07-C19 F07-C06 E17-C04 E13-C02 E10-C04 F01-C06 F01-C07 F03-C06 E07-C02 E09-C05 E10-C01 E10-C02 E24-C02 E24-C04'.split(' ');
 for(const id of densityTargets){
   const c=C.concepts.find(x=>x.id===id),p=P[id];if(!c||!p)throw new Error('V13_DENSITY_TARGET '+id);
   const a=uniq(p.must||[])[0]||norm(p.summary)||c.title,t=uniq(p.traps||[])[0]||'조건·대상·시점·순서 혼동';
