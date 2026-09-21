@@ -789,6 +789,7 @@ try{
     await offlinePage.reload({waitUntil:'domcontentloaded'});
     await offlinePage.waitForSelector('.app');
     await offlinePage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:30000});
+    await offlinePage.waitForFunction(async()=>!!(await caches.match('/api/official-monitor')),null,{timeout:15000});
     await offlineCtx.setOffline(true);
     await offlinePage.reload({waitUntil:'domcontentloaded',timeout:30000});
     await offlinePage.waitForSelector('.app');
