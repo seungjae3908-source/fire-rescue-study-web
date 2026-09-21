@@ -81,6 +81,18 @@ try{
   assert(/라인 프로포셔너/.test(quality2Content.foamText)&&/펌프 프로포셔너/.test(quality2Content.foamText)&&/프레셔 프로포셔너/.test(quality2Content.foamText)&&/프레셔사이드 프로포셔너/.test(quality2Content.foamText)&&quality2Content.foamCompare>=4&&quality2Content.foamDeep>=6,'foam quality2 content covers all four proportioners with operating principles and comparison');
   assert(quality2Content.foamQs===12&&quality2Content.flashQs===10&&quality2Content.baseQuality2===22&&quality2Content.gapQuality2>=3&&quality2Content.allB,'quality2 keeps 22 base source-backed questions and adds explicit source-backed gap questions with full option explanations');
 
+  const officialFacilityPolish=await p.evaluate(()=>{
+    const V=window.AITUTOR_V9;
+    const txt=id=>{const x=V.contentPacks.get(id)||{};return [x.summary,...(x.detail||[]),...(x.must||[]),...(x.traps||[]),...(x.deepSections||[]).flatMap(r=>[r.title,r.body,...(r.bullets||[])])].join(' ')};
+    return{simple:txt('F07-C06'),detect:txt('F07-C11'),wet:txt('F07-C17'),dry:txt('F07-C18'),pre:txt('F07-C19'),deluge:txt('F07-C20')};
+  });
+  assert(/간이헤드.*폐쇄형 스프링클러헤드의 일종/.test(officialFacilityPolish.simple),'simple sprinkler content locks the official closed-head definition');
+  assert(/감지기.*자동/.test(officialFacilityPolish.detect)&&/발신기.*수동/.test(officialFacilityPolish.detect)&&/중계기.*수신기/.test(officialFacilityPolish.detect)&&/수신기.*표시.*경보/.test(officialFacilityPolish.detect),'automatic fire detection content separates detector, manual station, repeater and receiver roles');
+  assert(/습식유수검지장치.*화재신호.*음향경보/.test(officialFacilityPolish.wet),'wet sprinkler content preserves head-open to waterflow-signal alarm order');
+  assert(/압축공기나 질소/.test(officialFacilityPolish.dry)&&/건식유수검지장치.*화재신호.*음향경보/.test(officialFacilityPolish.dry),'dry sprinkler content preserves gas-filled secondary piping and waterflow-signal alarm order');
+  assert(/평상시 2차측 소화수 미체류/.test(officialFacilityPolish.pre)&&/화재감지기/.test(officialFacilityPolish.pre)&&/폐쇄형 헤드/.test(officialFacilityPolish.pre),'preaction content separates detection, valve preparation and closed-head discharge');
+  assert(/평상시 2차측 소화수 미체류/.test(officialFacilityPolish.deluge)&&/개방형 헤드/.test(officialFacilityPolish.deluge)&&/동시방수/.test(officialFacilityPolish.deluge),'deluge content locks open-head simultaneous-discharge distinction');
+
   const globalQuality=await p.evaluate(()=>{const V=window.AITUTOR_V9,rows=V.curriculum.concepts.map(c=>({id:c.id,features:(V.contentPacks.get(c.id)?.features||[]).length,compare:(V.contentPacks.get(c.id)?.compare||[]).length,family:V.contentPacks.get(c.id)?.compareFamily?.key||'',derived:V.contentPacks.get(c.id)?.compareDerived||'',questions:(V.QuestionQuality119.forConcept(c.id)||[]).length,title:c.title})),familyIds=new Set(V.Quality2ComparisonFamilies119?.memberIds||[]);return{total:rows.length,featureReady:rows.filter(x=>x.features>=3).length,familyTotal:familyIds.size,familyReady:rows.filter(x=>familyIds.has(x.id)&&x.compare>=2&&x.family).length,arbitrary:rows.filter(x=>x.derived==='same-scope-neighbor-summary').map(x=>x.id),highYieldNot20:rows.filter(x=>/플래시오버|백드래프트|위험물|스프링클러|포소화|심정지|소생술|쇼크|환자 평가|기도|호흡|뇌졸중|화상|출혈/.test(x.title)&&x.questions<20).map(x=>x.id)}}); 
   assert(globalQuality.featureReady===globalQuality.total,'all current verified concepts expose at least three feature/key-point lines');
   assert(globalQuality.familyReady===globalQuality.familyTotal&&globalQuality.arbitrary.length===0,'all curated comparison-family concepts use meaningful semantic comparison groups with no arbitrary neighbor fallback');
