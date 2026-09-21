@@ -108,6 +108,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
       schemas:root.querySelectorAll('.study-schema').length,
       numbers:rows('.study-numbers li'),
       traps:rows('.study-traps li'),
+      essentialTexts:rows('.study-core-essentials li span'),
       coreTexts:[...rows('.study-quick p'),...rows('.study-core-essentials li span'),...rows('.study-numbers li .study-key-text'),...rows('.study-traps li')],
       detailTexts:[...rows('.detail-section h3'),...rows('.detail-section p'),...rows('.detail-section li')],
       detailFull:root.querySelector('.detail-view')?.textContent||'',
@@ -120,7 +121,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
     if(x.quick!==1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-summary-count',count:x.quick});
     if(x.essentials<1||x.essentials>5)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-essential-count',count:x.essentials});
     if(x.details||x.schemas)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-detail-leak',details:x.details,schemas:x.schemas});
-    const nums=new Set(x.numbers),dupe=x.coreTexts.some(t=>nums.has(t)&&t.length>=18&&x.numbers.includes(t));
+    const nums=new Set(x.numbers),dupe=(x.essentialTexts||[]).some(t=>nums.has(t)&&t.length>=18);
     if(dupe&&x.numbers.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-number-duplicate'});
   }else{
     if(x.quick||x.essentials||x.numbers.length||x.traps.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-core-leak',quick:x.quick,essentials:x.essentials,numbers:x.numbers.length,traps:x.traps.length});
