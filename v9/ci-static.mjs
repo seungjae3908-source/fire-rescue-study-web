@@ -699,7 +699,9 @@ ok(appSource.includes('근거를 그대로 나열하는 검색기가 아니라')
 ok(appSource.includes("navigator.gpu&&V.LocalAI?.ensure"),'first eligible AI question may initialize the local reasoning engine instead of staying on static evidence fallback');
 ok(appSource.includes('cap=Math.max(1,Math.ceil(n/Math.max(1,scopeIds.length))+1)'),'exam sampler caps per-scope concentration after guaranteeing scope coverage');
 ok(!v9index.includes('./source-ui.js'),'legacy source uploader/compiler UI is not loaded in the learner runtime');
+ok(!v9index.includes('./source-compiler.js'),'legacy browser PDF compiler is not loaded; official source viewing requires no user upload');
 ok(!sw.includes("'./source-ui.js'"),'service worker no longer caches the legacy source uploader/compiler UI');
+ok(!sw.includes("'./source-compiler.js'"),'service worker no longer caches the legacy browser PDF compiler');
 
 const pdf=fs.readFileSync(new URL('./pdf.js',import.meta.url),'utf8');
 ok(pdf.includes('exportForSync')&&pdf.includes('importFromSync'),'private extracted text supports owner-scoped member sync');
