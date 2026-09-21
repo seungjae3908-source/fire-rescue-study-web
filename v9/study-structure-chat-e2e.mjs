@@ -66,8 +66,8 @@ try{
   });
   await page.waitForSelector('.study-body-mobile .study-ai-chat');
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-  const firstScroll=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>({top:el.scrollTop,h:el.scrollHeight,c:el.clientHeight,bottom:Math.abs(el.scrollHeight-el.clientHeight-el.scrollTop)<=3}));
-  assert(firstScroll.h>firstScroll.c&&firstScroll.bottom,'opening AI on mobile lands on the latest visible conversation instead of the first message');
+  const firstScroll=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body'),bottom=x=>!x||x.scrollHeight<=x.clientHeight+3||Math.abs(x.scrollHeight-x.clientHeight-x.scrollTop)<=3;return{chat:bottom(el),body:bottom(b),bodyTop:b?.scrollTop||0}});
+  assert(firstScroll.chat&&firstScroll.body,'opening AI on mobile lands on the latest visible conversation instead of the first message');
 
   await page.evaluate(()=>{
     const V=window.AITUTOR_V9,c=V.curriculum.byId['F04-C01'],s=V.Store.state;
@@ -83,7 +83,7 @@ try{
   }));
   assert(table.rows===3&&table.cols.every(x=>x===3),'AI markdown table is converted into a consistent three-column table');
   assert(table.wrapper&&table.width>0,'AI table stays inside a dedicated responsive scroll wrapper on mobile');
-  const tableScroll=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>Math.abs(el.scrollHeight-el.clientHeight-el.scrollTop)<=3);
+  const tableScroll=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body'),bottom=x=>!x||x.scrollHeight<=x.clientHeight+3||Math.abs(x.scrollHeight-x.clientHeight-x.scrollTop)<=3;return bottom(el)&&bottom(b)});
   assert(tableScroll,'AI table render also keeps the latest conversation visible');
 
   const input=page.locator('.study-body-mobile [data-tutor-input]');
@@ -91,7 +91,7 @@ try{
   await page.locator('.study-body-mobile [data-tutor-send]').click();
   await page.waitForFunction(()=>{const c=window.AITUTOR_V9.Store.state.chat.filter(x=>x.conceptId==='F04-C01');return c.at(-1)?.role==='assistant'&&c.at(-1)?.text!=='생각 중…'});
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-  const after=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>({bottom:Math.abs(el.scrollHeight-el.clientHeight-el.scrollTop)<=3,last:el.lastElementChild?.textContent||''}));
+  const after=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body'),bottom=x=>!x||x.scrollHeight<=x.clientHeight+3||Math.abs(x.scrollHeight-x.clientHeight-x.scrollTop)<=3;return{bottom:bottom(el)&&bottom(b),last:el.lastElementChild?.textContent||''}});
   assert(after.bottom,'new AI answer keeps the visible mobile chat pinned to the latest conversation');
   assert(after.last.includes('119'),'latest assistant message remains visible after the answer render');
 
