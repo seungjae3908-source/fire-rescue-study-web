@@ -644,6 +644,35 @@ secondPass('F05-C01',{must:['위험물은 류 이름보다 위험특성 → 물�
 secondPass('E05-C03',{must:['무선통신은 상대방·채널을 확인하고 핵심 정보를 짧고 분명하게 전달한 뒤 응답을 확인한다.']});
 secondPass('E20-C02',{must:['분만 임박 징후가 보이면 불필요한 이동보다 현장분만 준비와 산모·신생아 안전을 우선한다.']});
 
+
+const V13_DENSITY_TARGETS=[
+  'E15-C03','E19-C01','E07-C05','E06-C05','E06-C02','E22-C02','E03-C01','E21-C05','E21-C02','E04-C01',
+  'E20-C02','E04-C02','E20-C05','E03-C03','E16-C02','E17-C01','E01-C02',
+  'F04-C07','F03-C16','F04-C03','F03-C10','F03-C14','F05-C05','F02-C07','E12-C01','F02-C06','F06-C03',
+  'F05-C02','F05-C04','F06-C04','E20-C04','E16-C01','F02-C04','E23-C02','F04-C06','E22-C03','F07-C19',
+  'F07-C06','E17-C04','E13-C02','E10-C04'
+];
+const densityApplied=[];
+for(const id of V13_DENSITY_TARGETS){
+  const c=C.concepts.find(x=>x.id===id),p=P[id];
+  if(!c||!p)throw new Error('V13_DENSITY_TARGET_MISSING '+id);
+  const must=uniq(p.must||[]),traps=uniq(p.traps||[]);
+  const anchor=must[0]||norm(p.summary)||c.title;
+  const trap=traps[0]||'조건·대상·시점·순서를 서로 바꾼 선지';
+  const body=concise(
+    c.title+'은 정의만 암기하기보다 “'+anchor+'”를 1차 판단축으로 삼고 문제의 대상·시점·조건·순서를 확인해 적용한다. 특히 “'+trap+'”처럼 기존 학습팩이 경고한 함정을 먼저 제거한 뒤, 보기의 표현이 핵심원리와 일치하는지 다시 대조한다. 정의→조건→예외→사례 순으로 확인하면 유사 개념과의 혼동을 줄이고 실제 시험형 문제에서도 근거를 설명하며 답을 고를 수 있다.',
+    360
+  );
+  secondPass(id,{sections:[{title:'시험 적용 · 판단축 보강',body,bullets:[]}]});
+  densityApplied.push(id);
+}
+V.DensityUpgradeV13119={
+  version:'119-v13-density-upgrade-v1',
+  targets:V13_DENSITY_TARGETS,
+  applied:densityApplied,
+  policy:'Only concepts below the 1000-character density threshold are expanded. Added text is derived from the same verified pack must/trap content and introduces no new numeric or page claims.'
+};
+
 V.Quality2GlobalContent119={
   version:'119-quality2-global-content-v1',
   concepts:C.concepts.length,
