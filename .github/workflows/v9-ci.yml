@@ -179,6 +179,8 @@ jobs:
         run: node v9/final-user-journey-e2e.mjs
       - name: Structured detail core underline and latest AI chat QA
         run: node v9/study-structure-chat-e2e.mjs
+      - name: AI intentional history scroll preservation QA
+        run: node v9/chat-scroll-intent-e2e.mjs
       - name: Member merge and extracted-text sync isolation QA
         run: node v9/sync-e2e.mjs
       - name: Invalid/expired member session fail-closed QA
