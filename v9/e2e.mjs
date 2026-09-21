@@ -133,6 +133,7 @@ try{
   assert(resourceTruthText.includes('목표 2027년')&&resourceTruthText.includes('2026 공식 기준'),'resources page separates 2027 target exam from the current 2026 official content baseline');
   assert(!resourceTruthText.includes('공식 변경사항'),'resources page does not announce an official change when the meaningful-change list is empty');
   assert(!(await p.locator('.page').innerText()).includes('Gate'),'resources page hides release/content gates');
+  assert(!resourceTruthText.includes('공식 PDF 원문 컴파일러')&&!resourceTruthText.includes('Concept ID')&&!resourceTruthText.includes('학습팩 초안 일괄 생성'),'resources page keeps legacy developer compiler controls out of the learner UI');
   assert(await p.locator('[data-resource-doc]').count()===10,'resources page exposes all ten official textbooks as in-app PDF actions');
   assert(await p.locator('.resources-119 a[target="_blank"]:not(.official-monitor-item)').count()===0,'normal textbook study flow stays in-app while official-monitor notices may open their official source');
   assert(await p.locator('.official-monitor-item[target="_blank"]').count()===1,'official monitor links directly to the allowlisted official source');
