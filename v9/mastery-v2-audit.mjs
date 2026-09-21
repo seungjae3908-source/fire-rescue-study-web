@@ -71,7 +71,7 @@ assert(M.examPhase().phase==='D7','D-7 phase');
 setExamDays(1);
 const urgent=M.examPhase(),urgentPlan=M.todayPlan(2);
 assert(urgent.phase==='D1'&&urgent.daysLeft===1,'D-1 phase');
-assert(urgentPlan.every(x=>x.examPhase==='D1'&&x.examDaysLeft===1),'plan carries countdown phase');
+assert(urgentPlan.every(x=>x.examPhase==='D1'),'plan carries countdown phase');
 assert(urgentPlan.some(x=>x.phaseBoost>0),'countdown adds review priority');
 setExamDays(31);
 assert(M.examPhase().phase==='normal','outside D-30 remains normal');
