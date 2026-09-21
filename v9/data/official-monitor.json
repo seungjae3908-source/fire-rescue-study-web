@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-09-21T06:30:17.498Z",
+  "generatedAt": "2026-09-21T13:17:17.425Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -45,7 +45,7 @@
     "suppressSameOriginFallbackAfterTransportFailure": true,
     "snapshotBranch": "chore/official-monitor-snapshot"
   },
-  "healthy": true,
+  "healthy": false,
   "coverageComplete": false,
   "hasRelevantItems": true,
   "sourceStatus": [
@@ -53,12 +53,12 @@
       "id": "gosi-fire",
       "label": "국가공무원 채용시스템 · 소방청",
       "required": true,
-      "ok": true,
-      "pagesOk": 1,
-      "status": "ok",
-      "error": "",
-      "errorCode": "",
-      "errorUrl": "",
+      "ok": false,
+      "pagesOk": 0,
+      "status": "error",
+      "error": "UND_ERR_CONNECT_TIMEOUT: UND_ERR_CONNECT_TIMEOUT: fetch failed: Connect Timeout Error (attempted address: gongmuwon.gosi.kr:443, timeout: 10000ms): fetch failed",
+      "errorCode": "UND_ERR_CONNECT_TIMEOUT",
+      "errorUrl": "https://gongmuwon.gosi.kr/spcsv/indexMain3.do",
       "fallbackUsed": false
     },
     {
@@ -70,7 +70,7 @@
       "status": "error",
       "error": "20: This operation was aborted",
       "errorCode": "20",
-      "errorUrl": "https://cherish.nfsa.go.kr/nfsa/news/0011/job/?pageIdx=1",
+      "errorUrl": "https://www.nfa.go.kr/nfsa/news/0011/job/?pageIdx=1",
       "fallbackUsed": false
     },
     {
@@ -82,7 +82,7 @@
       "status": "error",
       "error": "20: This operation was aborted",
       "errorCode": "20",
-      "errorUrl": "https://cherish.nfsa.go.kr/nfsa/releaseinformation/archive/materials/",
+      "errorUrl": "https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/",
       "fallbackUsed": false
     }
   ],
@@ -278,14 +278,15 @@
     }
   ],
   "degraded": true,
-  "preservedLastGood": false,
-  "notificationSuppressed": false,
-  "lastAttemptAt": "2026-09-21T06:30:17.498Z",
+  "preservedLastGood": true,
+  "notificationSuppressed": true,
+  "lastAttemptAt": "2026-09-21T13:17:17.425Z",
   "lastSuccessfulAt": "2026-09-21T06:30:17.498Z",
   "delta": {
     "newIds": [],
     "updatedIds": [],
     "newCount": 0,
     "updatedCount": 0
-  }
+  },
+  "liveItemCount": 0
 }
