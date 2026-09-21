@@ -93,6 +93,10 @@ const summary={
 console.log('ALL_CONTENT_DENSITY_SUMMARY',JSON.stringify(summary,null,2));
 console.log('ALL_CONTENT_DENSITY_HARD_MISSING');console.table(hard);
 console.log('ALL_CONTENT_DENSITY_SEMANTIC_REVIEW');console.table(semantic);
+console.log('ALL_CONTENT_DENSITY_FIRE_SEMANTIC_REVIEW');console.table(semantic.filter(x=>x.subject==='fire'));
+console.log('ALL_CONTENT_DENSITY_EMS_SEMANTIC_REVIEW');console.table(semantic.filter(x=>x.subject==='ems'));
+console.log('ALL_CONTENT_DENSITY_FIRE_DENSITY_TOP40');console.table(density.filter(x=>x.subject==='fire').slice(0,40));
+console.log('ALL_CONTENT_DENSITY_EMS_DENSITY_TOP40');console.table(density.filter(x=>x.subject==='ems').slice(0,40));
 console.log('ALL_CONTENT_DENSITY_DENSITY_REVIEW_TOP80');console.table(density.slice(0,80));
 console.log('ALL_CONTENT_DENSITY_ONE_VERIFIED');console.table(oneVerified);
 if(rows.length!==183)throw new Error('ALL_CONTENT_DENSITY_CURRICULUM_COUNT '+rows.length+' expected 183');
