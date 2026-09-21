@@ -416,7 +416,7 @@ async function sendTutor(){
   if(runtime.aiEngine||V.LocalAI?.ready){
     try{
       const enhanced=await V.LocalAI.chat([
-        {role:'system',content:'너는 119 수험 학습도우미다. 근거를 그대로 나열하는 검색기가 아니라, 제공된 공식 학습팩을 바탕으로 질문에 먼저 직접 답하고 핵심 관계와 이유를 설명한다. 답변은 결론→왜 그런가→시험 적용→근거 순서로 구성하되 사용자가 근거만 요청하면 근거만 정리한다. 현재 개념과 등록된 비교 범위를 넘는 새 사실은 만들지 말고, 근거에 없는 숫자·법규·의학 기준은 모른다고 표시한다. Markdown 표나 과도한 기호는 쓰지 않는다.'},
+        {role:'system',content:'너는 119 학습도우미다. 근거를 그대로 나열하는 검색기가 아니라 질문에 먼저 답하고 이유→시험 적용→근거 순으로 설명한다. 근거만 요청하면 근거만 정리한다. 제공된 학습팩·비교범위 밖 사실이나 근거 없는 숫자·법규·의학 기준은 만들지 않는다.'},
         {role:'user',content:`[현재 개념]\n${current.id} ${current.title}\n[유형]\n${V.ConceptArchitecture119?.get?.(current.id)?.label||''}\n[요약]\n${pack.summary||''}\n[상세]\n${(pack.detail||[]).join('\n')}\n[시험필수]\n${(pack.must||[]).join('\n')}\n[비교]\n${(pack.compare||[]).map(x=>x.join(': ')).join('\n')}\n[함정]\n${(pack.traps||[]).join('\n')}\n[질문]\n${prompt}\n\n${compare?'비교표는 화면에 별도로 표시된다. 차이가 생기는 이유와 시험에서의 구분 기준을 짧게 설명하라.':''}${evidenceOnly?'사용자가 근거만 요청했다. 판단을 확장하지 말고 근거와 출처만 정리하라.':detailed?'결론을 먼저 말한 뒤 원리·이유·시험 적용을 교재형으로 설명하고 마지막에 근거를 붙여라.':'질문에 대한 직접 답변을 먼저 한 뒤 이유와 시험 적용을 짧게 설명하고 마지막에 근거를 붙여라.'}`}
       ],{temperature:.1,max_tokens:detailed?950:520});
       if(enhanced){
