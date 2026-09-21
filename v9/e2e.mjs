@@ -795,7 +795,8 @@ try{
     await offlinePage.waitForSelector('.app');
     await offlinePage.waitForFunction(()=>!!window.AITUTOR_V9?.App);
     assert((await offlinePage.locator('body').innerText()).includes('홈'),'v9 PWA shell reloads while offline');
-    assert(offlineErrors.filter(x=>!/ERR_INTERNET_DISCONNECTED|Failed to fetch|favicon/i.test(x)).length===0,'offline shell has no unexpected runtime errors');
+    const unexpectedOfflineErrors=offlineErrors.filter(x=>!/ERR_INTERNET_DISCONNECTED|Failed to fetch|favicon/i.test(x));
+    assert(unexpectedOfflineErrors.length===0,'offline shell has no unexpected runtime errors '+unexpectedOfflineErrors.join(' | '));
     await offlineCtx.setOffline(false);
     await offlineCtx.close();
   }
