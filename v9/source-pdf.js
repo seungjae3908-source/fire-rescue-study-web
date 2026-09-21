@@ -86,9 +86,6 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   if(anchorTokens.length){
     const exactAnchorLines=lines.filter(line=>anchorTokens.some(t=>line.n.includes(t)));
     if(exactAnchorLines.length)return exactAnchorLines.slice(0,8);
-    // Some official PDFs split one Korean concept term across adjacent text rows.
-    // Match a short contiguous block so the underline still lands on the real source text,
-    // and retain the combined evidence text for deterministic concept verification.
     const anchorBlocks=[];
     for(let i=0;i<lines.length;i++){
       let joinedN='',joinedText='';
