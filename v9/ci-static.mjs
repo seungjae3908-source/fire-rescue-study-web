@@ -693,6 +693,7 @@ const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8
 ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
 ok(sourcePdf.includes('qn.length<3'),'official PDF evidence accepts short Korean concept anchors such as 롤오버·플래시오버 instead of dropping all queries under eight characters');
 ok(sourcePdf.includes('anchorTokens')&&sourcePdf.includes('exactAnchorLines')&&sourcePdf.includes('anchorTerms:opts.anchorTerms'),'official PDF evidence deterministically prioritizes exact concept-anchor lines before scored surrounding text');
+ok(sourcePdf.includes("filter(x=>x.length>=2)")&&sourcePdf.includes("i+6"),'official PDF evidence accepts curated two-character Korean anchors and split terms across a wider adjacent-line window');
 ok(sourcePdf.includes('devicePixelRatio')&&sourcePdf.includes('outputScale'),'official PDF canvas uses device-pixel scaling for crisp mobile rendering');
 ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs are never server-uploaded and remain unmodified');
 ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialRemotePreferred:true'),'PDF evidence prefers official remote sources and never requires user upload');
@@ -702,6 +703,10 @@ const appSource=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 ok(appSource.includes("updatedAt:Date.now()"),'profile save stamps its conflict clock directly without a second sync UI listener');
 ok(appSource.includes('근거를 그대로 나열하는 검색기가 아니라')&&appSource.includes('wantsTutorEvidence'),'study AI is answer-first by default and preserves an explicit evidence-only mode');
 ok(appSource.includes("navigator.gpu&&V.LocalAI?.ensure"),'first eligible AI question may initialize the local reasoning engine instead of staying on static evidence fallback');
+ok(appSource.includes('scrollTutorToBottom')&&appSource.includes("document.querySelectorAll('.study-ai-chat')"),'AI study chat always scrolls the visible desktop/mobile conversation to the newest answer');
+ok(appSource.includes('tutorRichAnswer')&&appSource.includes('tutor-ai-table-wrap'),'AI markdown tables are normalized into responsive semantic tables instead of raw pipe text');
+ok(appSource.includes('study-key-underline')&&appSource.includes('detailDefinitionBlock')&&appSource.includes('detailExamPointBlock'),'core underlines and structured definition/exam-point detail rendering are locked');
+ok(appSource.includes('sourceAnchorQueries(c,p)')&&appSource.includes('...(p?.compare||[])')&&appSource.includes('...(p?.must||[])'),'official PDF underline anchors include semantic compare and must-know terms, not only the concept title');
 const mockEngine=fs.readFileSync(new URL('./mock-exam-quality-119.js',import.meta.url),'utf8');
 ok(mockEngine.includes('uniqueConceptPerExam:true')&&mockEngine.includes('maxFamilyRun:2')&&mockEngine.includes("recentWindow:4"),'v14 mock engine locks unique concepts recent-history preference and max two same-family run');
 ok(appSource.includes('V.MockExam119?.build')&&appSource.includes("fresh=pool.filter(q=>!wrongIds.has(q.id)"),'app delegates mock composition to v14 and wrong-answer retraining prefers alternate same-concept questions');
