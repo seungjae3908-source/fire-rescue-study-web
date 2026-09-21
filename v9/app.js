@@ -61,18 +61,35 @@ function studyNorm(v){return String(v||'').toLowerCase().replace(/[^0-9a-z가-�
 function sameStudyText(a,b){const x=studyNorm(a),y=studyNorm(b);if(!x||!y)return false;if(x===y)return true;const min=Math.min(x.length,y.length),max=Math.max(x.length,y.length);return min>=24&&min/max>=.82&&(x.includes(y)||y.includes(x))}
 function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(!row||sameStudyText(row,seed)||out.some(x=>sameStudyText(x,row)))continue;out.push(row)}return out}
 function uniqueSections(rows=[]){const out=[];for(const row of rows){if(!row?.body)continue;if(out.some(x=>sameStudyText(x.body,row.body)))continue;out.push(row)}return out}
+function coreEssentialRows(pack){
+  const quick=pack?.studySchema?.quick30||pack?.summary||'',numbers=V.StudyEmphasis119?.numberRows?.(pack,12)||[];
+  const candidates=[
+    ...(V.StudyEmphasis119?.mustRows?.(pack)||[]).map((text,index)=>({text,bucket:'must',index})),
+    ...(V.StudyEmphasis119?.featureRows?.(pack)||[]).map((text,index)=>({text,bucket:'feature',index}))
+  ],rows=[];
+  for(const row of candidates){
+    const text=studentStudyText(row.text);
+    if(!text||sameStudyText(text,quick)||numbers.some(n=>sameStudyText(text,n))||rows.some(x=>sameStudyText(x.text,text)))continue;
+    rows.push({...row,text});if(rows.length>=5)break
+  }
+  return rows
+}
 function coreStudySeeds(pack){
   return uniqueTextRows([
     pack?.studySchema?.quick30||pack?.summary||'',
-    ...(V.StudyEmphasis119?.mustRows?.(pack)||[]),
-    ...(V.StudyEmphasis119?.featureRows?.(pack)||[])
+    ...coreEssentialRows(pack).map(x=>x.text)
   ]).map(studentStudyText).filter(Boolean)
 }
 function isCoreStudyText(v,seeds=[]){
   const text=studentStudyText(v),x=studyNorm(text);if(!x)return false;
   return seeds.some(seed=>{const y=studyNorm(seed);if(!y)return false;if(sameStudyText(text,seed))return true;const min=Math.min(x.length,y.length),max=Math.max(x.length,y.length);return min>=28&&min/max>=.74&&(x.includes(y)||y.includes(x))})
 }
-function detailOnlyText(v,seeds=[]){const text=studentStudyText(v);return !text||isCoreStudyText(text,seeds)?'':text}
+function detailOnlyText(v,seeds=[]){
+  const text=studentStudyText(v);if(!text||isCoreStudyText(text,seeds))return'';
+  const sentences=text.split(/(?<=[.!?。])\s+/).map(studentStudyText).filter(Boolean);
+  if(sentences.length<2)return text;
+  return sentences.filter(x=>!isCoreStudyText(x,seeds)).join(' ').trim()
+}
 function detailSectionTitle(v){
   const title=sectionTitle(v).replace(/핵심\s*정리/g,'상세 정리').replace(/핵심\s*포인트/g,'상세 포인트').replace(/핵심/g,'').replace(/\s{2,}/g,' ').trim();
   return title||'상세 설명'
@@ -126,14 +143,7 @@ function studySchemaBlock(c,pack){
   return items.length?`<section class="study-schema phenomenon-schema"><div class="study-schema-title">화재현상 완전정리</div><div class="study-schema-grid">${items.join('')}</div></section>`:''
 }
 function coreEssentialBlock(c,pack){
-  const candidates=[
-    ...(V.StudyEmphasis119?.mustRows?.(pack)||[]).map((text,index)=>({text,bucket:'must',index})),
-    ...(V.StudyEmphasis119?.featureRows?.(pack)||[]).map((text,index)=>({text,bucket:'feature',index}))
-  ],rows=[];
-  for(const row of candidates){
-    const text=studentStudyText(row.text);if(!text||sameStudyText(text,pack?.summary||'')||rows.some(x=>sameStudyText(x.text,text)))continue;
-    rows.push({...row,text});if(rows.length>=5)break
-  }
+  const rows=coreEssentialRows(pack);
   if(!rows.length)return'';
   return `<section class="study-core-essentials"><div class="study-core-title">시험 직전 핵심</div><ul>${rows.map(x=>{const key=V.PassNote?.conceptKey?.(c.id,x.bucket,x.index)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span>${esc(x.text)}</span></li>`}).join('')}</ul></section>`;
 }
