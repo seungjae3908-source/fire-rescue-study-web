@@ -422,6 +422,20 @@ try{
   await cleanPage(m,'mobile notes');
   const notesText=await m.locator('.page').innerText();
   assert(await m.locator('#personalFile').count()===0,'pass-note workspace has no user PDF/photo upload input');
+  const injectedUploadBlocked=await m.evaluate(async()=>{
+    let calls=0;
+    const pd=window.AITUTOR_V9.PrivateDocs,old=pd?.ingest;
+    if(!pd||typeof old!=='function')return true;
+    pd.ingest=async()=>{calls++;return{reviewPages:[]}};
+    const input=document.createElement('input');input.id='personalFile';input.type='file';
+    Object.defineProperty(input,'files',{value:[new File(['legacy'],'legacy.txt',{type:'text/plain'})]});
+    document.body.appendChild(input);
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(r=>setTimeout(r,60));
+    input.remove();pd.ingest=old;
+    return calls===0
+  });
+  assert(injectedUploadBlocked,'learner app has no executable personal-file upload event path');
   assert(!notesText.includes('PDF / 사진')&&!notesText.includes('내 자료')&&!notesText.includes('업로드'),'pass-note workspace does not expose user document upload flows');
   assert(notesText.includes('직접 메모 추가')&&notesText.includes('저장된 합격노트'),'pass-note workspace stays focused on saved study notes and direct memos');
   assert(!notesText.includes('DRM')&&!notesText.includes('브라우저에서 텍스트/OCR 처리'),'notes page removes technical/copyright implementation prose');
