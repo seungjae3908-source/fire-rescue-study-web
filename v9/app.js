@@ -92,21 +92,14 @@ function detailOnlyText(v,seeds=[]){
   if(sentences.length<2)return text;
   return sentences.filter(x=>!isCoreStudyText(x,seeds)).join(' ').trim()
 }
-function detailSectionTitle(v){
-  const title=sectionTitle(v).replace(/핵심\s*정리/g,'상세 정리').replace(/핵심\s*포인트/g,'상세 포인트').replace(/핵심/g,'').replace(/\s{2,}/g,' ').trim();
-  return title||'상세 설명'
-}
-function detailHasUniqueContent(x,seeds=[]){
-  if(!x)return false;
-  if(detailOnlyText(x.body,seeds))return true;
-  return (x.bullets||[]).some(v=>detailOnlyText(v,seeds))
-}
-function detailSection(x,index=0,coreSeeds=[]){if(!x)return'';const rawTitle=String(x.title||'').trim();if(/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/.test(rawTitle))return'';const body=detailOnlyText(x.body,coreSeeds),bullets=uniqueTextRows((x.bullets||[]).filter(Boolean),x.body).map(studentStudyText).filter(v=>v&&!isCoreStudyText(v,coreSeeds));if(!body&&!bullets.length)return'';return `<section class="detail-section" data-detail-section="${index}"><div class="detail-copy"><h3>${esc(detailSectionTitle(rawTitle||'상세 설명'))}</h3>${body?`<p>${esc(body)}</p>`:''}${bullets.length?`<ul class="detail-key-list">${bullets.map(v=>`<li class="detail-key"><span class="study-star">★</span><span class="study-key-text">${esc(v)}</span></li>`).join('')}</ul>`:''}</div></section>`}
-function detailToc(rows=[]){
-  const meta=/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/;
-  const items=rows.map((x,i)=>{const raw=String(x?.title||'').trim();return{i,raw,title:detailSectionTitle(raw)}}).filter(x=>x.raw&&!meta.test(x.raw)&&x.title).slice(0,12);
-  return items.length>2?`<nav class="detail-toc" aria-label="상세 목차"><label><b>상세 목차</b><select class="select detail-toc-select" data-detail-jump-select aria-label="상세 목차에서 이동"><option value="">이동할 항목 선택</option>${items.map(x=>`<option value="${x.i}">${esc(x.title)}</option>`).join('')}</select></label></nav>`:''
-}
+function detailSemanticTitle(v){const t=String(v||'');if(/종류|분류|구분|나뉜|형태/.test(t))return'종류 · 구분';if(/원리|작용|차단|억제|낮춘|높인|제거|공급|반응|발생|전파|흡수|냉각|질식/.test(t))return'작용 원리';if(/순서|단계|절차|시행|평가|확인|처치|대응/.test(t))return'진행 · 절차';if(/특징|성질|증상|징후|소견|기준|주의|위험/.test(t))return'특징 · 판단기준';return'상세 해설'}
+function detailSectionTitle(v,body=''){const raw=sectionTitle(v).replace(/핵심\s*정리/g,'상세 정리').replace(/핵심\s*포인트/g,'상세 포인트').replace(/핵심/g,'').replace(/\s{2,}/g,' ').trim();return !raw||/^(상세 설명|정의 · 상세)$/.test(raw)?detailSemanticTitle(body):raw}
+function detailGroups(rows=[],seeds=[]){const g=new Map;for(const x of uniqueTextRows(rows)){const body=detailOnlyText(x,seeds);if(!body)continue;const k=detailSemanticTitle(body),a=g.get(k)||[];a.push(body);g.set(k,a)}return[...g].map(([title,bullets])=>({title,body:'',bullets}))}
+function schemaDetailRows(pack){const x=pack?.studySchema||{},rows=[['발생 조건',x.conditions],['작용 원리',x.mechanisms],['시기 · 단계',x.timingStages],['전조 · 위험신호',x.warningSigns],['발생 전 · 후',x.beforeAfter]];return rows.filter(([,v])=>Array.isArray(v)&&v.length).map(([title,bullets])=>({title,body:'',bullets}))}
+function detailDefinitionBlock(c,pack){const body=studentStudyText(pack?.studySchema?.definition||pack?.summary||'');if(!body)return'';const title=c.id==='F04-C01'?'소화의 정의':'정의 · 개념';return `<section class="detail-section detail-definition" data-detail-section="definition"><div class="detail-copy"><h3>${title}</h3><p>${esc(body)}</p></div></section>`}
+function detailHasUniqueContent(x,seeds=[]){if(!x)return false;if(detailOnlyText(x.body,seeds))return true;return(x.bullets||[]).some(v=>detailOnlyText(v,seeds))}
+function detailSection(x,index=0,coreSeeds=[]){if(!x)return'';const raw=String(x.title||'').trim();if(/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/.test(raw))return'';const body=detailOnlyText(x.body,coreSeeds),bullets=uniqueTextRows((x.bullets||[]).filter(Boolean),x.body).map(studentStudyText).filter(v=>v&&!isCoreStudyText(v,coreSeeds));if(!body&&!bullets.length)return'';const title=detailSectionTitle(raw,body||bullets[0]||'');return `<section class="detail-section" data-detail-section="${index}"><div class="detail-copy"><h3>${esc(title)}</h3>${body?`<p>${esc(body)}</p>`:''}${bullets.length?`<ul class="detail-key-list">${bullets.map(v=>`<li class="detail-key"><span class="study-star">★</span><span class="study-key-text">${esc(v)}</span></li>`).join('')}</ul>`:''}</div></section>`}
+function detailToc(rows=[]){const meta=/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/;const items=rows.map((x,i)=>{const raw=String(x?.title||'').trim(),body=x?.body||(x?.bullets||[])[0]||'';return{i,raw,title:detailSectionTitle(raw,body)}}).filter(x=>!meta.test(x.raw)&&x.title).slice(0,12);return items.length>2?`<nav class="detail-toc" aria-label="상세 목차"><label><b>상세 목차</b><select class="select detail-toc-select" data-detail-jump-select aria-label="상세 목차에서 이동"><option value="">이동할 항목 선택</option>${items.map(x=>`<option value="${x.i}">${esc(x.title)}</option>`).join('')}</select></label></nav>`:''}
 function visualBlocks(pack){return (pack?.visuals||[]).map(id=>V.Visual119?.render?.(id)||'').join('')}
 function hazmatBlock(c){
   if(c.scopeId!=='F05'||!V.Hazmat2026)return'';
