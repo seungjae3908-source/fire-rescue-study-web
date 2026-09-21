@@ -125,7 +125,8 @@ try{
   await p.waitForFunction(()=>window.AITUTOR_V9.OfficialMonitor119?.summary?.().status==='ready');
   const monitorText=await p.locator('.official-monitor-card').innerText();
   assert(monitorText.includes('공식 공고 자동감시')&&monitorText.includes('새 공고·변경 1건'),'resources page shows a new official 2027 notice from the in-app monitor');
-  assert(monitorText.includes('국가공무원 채용시스템의 소방청 채용·시험 정보와 중앙소방학교 공식 공고·교재만 확인')&&monitorText.includes('WAF를 우회하지 않으며'),'official monitor UI states its V2 official-source-only and no-WAF-bypass policy');
+  assert(monitorText.includes('국가공무원 채용시스템의 소방청 채용·시험 정보와 중앙소방학교 공식 공고·교재만 확인')&&monitorText.includes('공식 원문을 확인한 뒤 반영'),'official monitor UI explains the official-source-only learner workflow');
+  assert(!monitorText.includes('WAF')&&!monitorText.includes('앱 인프라'),'official monitor UI hides network and infrastructure jargon from learners');
   assert(monitorText.includes('앱을 열거나 다시 활성화하면 새 공고를 표시'),'monitor UI accurately explains foreground/reactivation notification behavior');
   assert(await p.locator('.official-monitor-item.new').count()===1,'new official notice is highlighted exactly once');
   const resourceTruthText=await p.locator('.page').innerText();
