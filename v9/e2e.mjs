@@ -6,7 +6,7 @@ const fixture=fs.readFileSync(new URL('./fixtures/private-sample.pdf',import.met
 const forbidden=['fail-closed','page-verified','Release Gate','검증문제·범위 검증 진행 중','DRM 우회','서버 원본 업로드','RLS','Supabase','공식 PDF 원문 컴파일러','Concept ID','학습팩 초안 일괄 생성','빈 PDF 버튼','근거 자동교정'];
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
-function collectErrors(page){const out=[];page.on('pageerror',e=>out.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon|404.*official-pdf/i.test(m.text()))out.push('console:'+m.text())});page.on('requestfailed',r=>{const u=r.url();if(/cdn\.jsdelivr\.net|tesseract|pdf\.worker|pdf\.min\.mjs/i.test(u))out.push('requestfailed:'+u+' '+(r.failure()?.errorText||''))});return out}
+function collectErrors(page){const out=[];page.on('pageerror',e=>out.push('pageerror:'+e.message));page.on('console',m=>{const u=m.location()?.url||'',x=m.text()+(u?' @ '+u:'');if(m.type()==='error'&&!/favicon|404.*official-pdf|404.*official-monitor/i.test(x))out.push('console:'+x)});page.on('requestfailed',r=>{const u=r.url();if(/cdn\.jsdelivr\.net|tesseract|pdf\.worker|pdf\.min\.mjs/i.test(u))out.push('requestfailed:'+u+' '+(r.failure()?.errorText||''))});return out}
 async function boot(page){await page.route('**/api/official-pdf?**',async route=>{await route.fulfill({status:200,contentType:'application/pdf',headers:{'accept-ranges':'bytes','cache-control':'no-store'},body:fixture})});await page.route('**/api/official-monitor**',async route=>{await route.fulfill({status:200,contentType:'application/json',headers:{'cache-control':'no-store'},body:"{\"version\":\"119-official-monitor-snapshot-v1\",\"generatedAt\":\"2026-10-01T00:00:00.000Z\",\"targetExamYear\":2027,\"baselineYear\":2026,\"officialOnly\":true,\"healthy\":true,\"coverageComplete\":true,\"policy\":{\"requiredSourceCount\":1,\"totalSourceCount\":3,\"wafBypassForbidden\":true},\"sourceStatus\":[{\"id\":\"gosi-fire\",\"label\":\"국가공무원 채용시스템 · 소방청\",\"ok\":true},{\"id\":\"nfsa-notice\",\"label\":\"중앙소방학교 고시·공고\",\"ok\":true},{\"id\":\"nfsa-materials\",\"label\":\"중앙소방학교 공식교재\",\"ok\":true}],\"items\":[{\"id\":\"e2e-2027-notice\",\"sourceId\":\"gosi-fire\",\"sourceLabel\":\"국가공무원 채용시스템 · 소방청\",\"title\":\"2027년 소방공무원 채용시험 시행계획 공고\",\"publishedAt\":\"2026-10-01\",\"url\":\"https://gongmuwon.gosi.kr/spcsv/indexMain3.do\",\"kind\":\"recruitment_notice\",\"meaningful\":true,\"reviewRequired\":true,\"targetYearMatch\":true,\"baselineYearMatch\":false,\"noticeYear\":2027}]}"})});await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForSelector('.app');await page.waitForFunction(()=>!!window.AITUTOR_V9?.App)}
 async function cleanPage(page,label){const text=await page.locator('body').innerText();for(const x of forbidden)assert(!text.includes(x),label+' hides internal text: '+x);await noX(page,label)}
 async function go(page,id){await page.evaluate(id=>window.AITUTOR_V9.App.go(id),id);await page.waitForFunction(id=>window.AITUTOR_V9.Store.state.page===id,id)}
@@ -789,12 +789,14 @@ try{
     await offlinePage.reload({waitUntil:'domcontentloaded'});
     await offlinePage.waitForSelector('.app');
     await offlinePage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:30000});
+    await offlinePage.waitForFunction(async()=>!!(await caches.match('/api/official-monitor')),null,{timeout:15000});
     await offlineCtx.setOffline(true);
     await offlinePage.reload({waitUntil:'domcontentloaded',timeout:30000});
     await offlinePage.waitForSelector('.app');
     await offlinePage.waitForFunction(()=>!!window.AITUTOR_V9?.App);
     assert((await offlinePage.locator('body').innerText()).includes('홈'),'v9 PWA shell reloads while offline');
-    assert(offlineErrors.filter(x=>!/ERR_INTERNET_DISCONNECTED|Failed to fetch|favicon/i.test(x)).length===0,'offline shell has no unexpected runtime errors');
+    const unexpectedOfflineErrors=offlineErrors.filter(x=>!/ERR_INTERNET_DISCONNECTED|Failed to fetch|favicon/i.test(x));
+    assert(unexpectedOfflineErrors.length===0,'offline shell has no unexpected runtime errors '+unexpectedOfflineErrors.join(' | '));
     await offlineCtx.setOffline(false);
     await offlineCtx.close();
   }

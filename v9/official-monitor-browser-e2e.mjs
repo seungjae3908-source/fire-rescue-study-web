@@ -80,11 +80,15 @@ try{
   assert(calendarFile.suggestedFilename()==='119-2027-official-schedule.ics','calendar export downloads a deterministic 2027 official schedule ICS file');
   assert(errors.length===0,'monitor offline fallback produces no browser runtime errors');
   const sw=await fs.promises.readFile(new URL('./sw.js',import.meta.url),'utf8');
-assert(sw.includes("119-official-monitor-open")&&sw.includes("?page=resources#official-monitor"),'notification click deep-links to official monitor page and existing windows receive an open message');
-const client=await fs.promises.readFile(new URL('./official-monitor.js',import.meta.url),'utf8');
-assert(client.includes("navigator.serviceWorker?.addEventListener?.('message'")&&client.includes("openMonitorPage"),'official monitor client handles service-worker deep-link messages');
-assert(client.includes('requiredSourceCount:Number(state.snapshot?.policy?.requiredSourceCount')&&client.includes('totalSourceCount:Number(state.snapshot?.policy?.totalSourceCount')&&client.includes('completeSources=fresh&&m.coverageComplete===true')&&client.includes('시험 공고 감시 정상 · 교재/학교 보조소스 확인 필요'),'monitor UI separates required exam-source health from full supplemental coverage');
-console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
+  assert(sw.includes("119-official-monitor-open")&&sw.includes("?page=resources#official-monitor"),'notification click deep-links to official monitor page and existing windows receive an open message');
+  const monitorCacheBranch=sw.indexOf("if(url.pathname.endsWith('/api/official-monitor'))");
+  const sameOriginGuard=sw.indexOf("if(url.origin!==scope.origin)return;");
+  const v9ScopeGuard=sw.indexOf("if(!url.pathname.startsWith(scope.pathname))return;");
+  assert(sameOriginGuard>=0&&monitorCacheBranch>sameOriginGuard&&v9ScopeGuard>monitorCacheBranch,'service worker keeps official-monitor API caching same-origin and evaluates it before the /v9 scope guard');
+  const client=await fs.promises.readFile(new URL('./official-monitor.js',import.meta.url),'utf8');
+  assert(client.includes("navigator.serviceWorker?.addEventListener?.('message'")&&client.includes("openMonitorPage"),'official monitor client handles service-worker deep-link messages');
+  assert(client.includes('requiredSourceCount:Number(state.snapshot?.policy?.requiredSourceCount')&&client.includes('totalSourceCount:Number(state.snapshot?.policy?.totalSourceCount')&&client.includes('completeSources=fresh&&m.coverageComplete===true')&&client.includes('시험 공고 감시 정상 · 교재/학교 보조소스 확인 필요'),'monitor UI separates required exam-source health from full supplemental coverage');
+  console.log('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE');
   await ctx.close();
 }finally{
   await browser.close();
