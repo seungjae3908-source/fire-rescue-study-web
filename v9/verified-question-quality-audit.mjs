@@ -57,10 +57,10 @@ console.log('VERIFIED_QUESTION_DERIVED_BINDING_BROKEN');console.table(brokenDeri
 
 const answerBalance=shares.every(x=>x>=.18&&x<=.32);
 const difficultyBalance=['low','mid','high'].every(k=>(diffShares[k]||0)>=.05);
-if(verified.length<600||badSource.length||exDrift.length||silly.length||near.length||brokenDerived.length||!answerBalance||!difficultyBalance||family.activeFamilies<6){
+if(verified.length<600||badSource.length||exDrift.length||silly.length||near.length||answerCue.length||brokenDerived.length||!answerBalance||!difficultyBalance||family.activeFamilies<6){
   throw new Error('VERIFIED_QUESTION_QUALITY_FAILED '+JSON.stringify({
     verified:verified.length,badSource:badSource.length,explanationDrift:exDrift.length,absurdDistractors:silly.length,
-    nearDuplicatePairs:near.length,brokenDerived:brokenDerived.length,answerBalance,difficultyBalance,activeFamilies:family.activeFamilies,answerShares:shares,difficultyShares:diffShares
+    nearDuplicatePairs:near.length,answerCueReview:answerCue.length,brokenDerived:brokenDerived.length,answerBalance,difficultyBalance,activeFamilies:family.activeFamilies,answerShares:shares,difficultyShares:diffShares
   }));
 }
 console.log('VERIFIED_QUESTION_QUALITY_AUDIT_COMPLETE');
