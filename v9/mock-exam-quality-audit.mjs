@@ -6,6 +6,7 @@ const V=globalThis.window?.AITUTOR_V9;
 if(!V?.questions||!V?.curriculum)throw Error('MOCK_ENGINE_RUNTIME_UNAVAILABLE');
 vm.runInThisContext(fs.readFileSync(new URL('./mock-exam-quality-119.js',import.meta.url),'utf8'),{filename:'mock-exam-quality-119.js'});
 const E=V.MockExam119;if(!E?.build||!E?.metrics)throw Error('MOCK_ENGINE_V14_UNAVAILABLE');
+let seed=0x1192027;Math.random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
 
 const fireScopes=V.curriculum.fire.map(x=>x.id),emsScopes=V.curriculum.ems.map(x=>x.id),allScopes=[...fireScopes,...emsScopes];
 const summary={version:'119-v14-mock-engine-audit-v1',simulations:0,failures:[],levels:{},answerPos:[0,0,0,0],familyRuns:{max:0},recent:{chains:30,maxRepeat:0,totalRepeat:0}};
