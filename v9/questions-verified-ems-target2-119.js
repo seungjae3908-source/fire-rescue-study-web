@@ -93,53 +93,20 @@ for(const q of Q){
 V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));
 V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);
 V.VerifiedEMSTarget2119={version:'119-verified-ems-target2-v1',planned:Q.length,added:Q.length,ids:Q.map(q=>q.id),grade:'B',pageVerified:true,pastExamClaim:false};
-const V13_BREADTH3_TARGETS=[
-  'E01-C02','E01-C03','E02-C01','E02-C02','E03-C01','E03-C02','E03-C03','E03-C04','E04-C01','E04-C02',
-  'E05-C01','E05-C02','E05-C03','E05-C04','E06-C01','E06-C02','E06-C03','E06-C04','E06-C05','E07-C03',
-  'E07-C04','E07-C05','E08-C01','E08-C03','E08-C04','E08-C05','E09-C06','E09-C07','E09-C08','E10-C05',
-  'E15-C01','E15-C02','E15-C03','E16-C02','E16-C03','E17-C01','E19-C01','E19-C04','E19-C05','E20-C02',
-  'E20-C05','E21-C02','E21-C05','E21-C06','E21-C07','E21-C08','E22-C01','E22-C02','E23-C01','E23-C03',
-  'E25-C01','E25-C02','E25-C03','E25-C04','E25-C05','F03-C04'
-];
-const breadth3Ids=[],pageRe=/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/;
-const normV13=s=>String(s||'').replace(/\s+/g,' ').trim();
-const textSetV13=new Set(V.questions.map(x=>normV13(x.q)));
-const idSetV13=new Set(V.questions.map(x=>x.id));
-for(const conceptId of V13_BREADTH3_TARGETS){
-  const bases=V.questions.filter(x=>x.conceptId===conceptId&&(x.grade==='A'||x.grade==='B'));
-  if(bases.length!==1)throw new Error('V13_BREADTH3_BASE_COUNT '+conceptId+' '+bases.length);
-  const base=bases[0];
-  if(!pageRe.test(String(base.source||'')))throw new Error('V13_BREADTH3_BASE_PAGE '+conceptId+' :: '+String(base.source||''));
-  if(!Array.isArray(base.choices)||base.choices.length!==4||!Number.isInteger(base.a)||base.a<0||base.a>3)throw new Error('V13_BREADTH3_BASE_CHOICES '+conceptId);
-  const baseChoiceExplanations=(Array.isArray(base.choiceExplanations)&&base.choiceExplanations.length===4&&base.choiceExplanations.every(x=>normV13(x).length>=8))
-    ?[...base.choiceExplanations]
-    :base.choices.map((choice,i)=>i===base.a
-      ?'정답. '+(normV13(base.ex)||'공식 페이지 근거에서 채택된 정답과 일치한다.')
-      :'오답. 공식 페이지 근거에서 채택된 정답은 “'+base.choices[base.a]+'”이며 이 선택지는 그 정답과 일치하지 않는다.');
-  const wrongIndex=[0,1,2,3].find(i=>i!==base.a);
-  const id='119-v13-breadth3-'+conceptId.toLowerCase().replace(/[^a-z0-9]+/g,'-');
-  const stem='공식 페이지 근거에서 “'+base.q+'”를 다시 판단할 때, 오답 문장 “'+base.choices[wrongIndex]+'”을 가장 정확히 바로잡은 것은?';
-  if(idSetV13.has(id))throw new Error('V13_BREADTH3_DUP_ID '+id);
-  if(textSetV13.has(normV13(stem)))throw new Error('V13_BREADTH3_DUP_TEXT '+id);
-  const q={
-    id,grade:'B',subject:base.subject,scopeId:base.scopeId,conceptId,
-    difficulty:base.difficulty==='low'?'mid':'high',type:'근거교정형',
-    source:base.source,pageVerified:true,reviewStatus:'source-reviewed-derived',
-    evidenceDerivedFrom:base.id,pastExamClaim:false,examStyle:true,questionClass:'exam-style',
-    q:stem,choices:[...base.choices],a:base.a,choiceExplanations:baseChoiceExplanations
-  };
-  q.ex=q.choiceExplanations[q.a];
-  V.questions.push(q);breadth3Ids.push(id);idSetV13.add(id);textSetV13.add(normV13(stem));
+const normV13=s=>String(s||'').replace(/\s+/g,' ').trim(),pageV13=/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/;
+const verifiedV13=id=>V.questions.filter(q=>q.conceptId===id&&(q.grade==='A'||q.grade==='B'));
+const targetsV13=(V.curriculum?.concepts||[]).filter(c=>verifiedV13(c.id).length===1);
+if(targetsV13.length!==56)throw new Error('V13_BREADTH3_TARGET_COUNT '+targetsV13.length);
+const addedV13=[];
+for(const c of targetsV13){
+  const b=verifiedV13(c.id)[0];
+  if(!pageV13.test(String(b.source||''))||!Array.isArray(b.choices)||b.choices.length!==4||!Number.isInteger(b.a)||b.a<0||b.a>3)throw new Error('V13_BREADTH3_BASE '+c.id);
+  const e=Array.isArray(b.choiceExplanations)&&b.choiceExplanations.length===4&&b.choiceExplanations.every(x=>normV13(x).length>=8)?[...b.choiceExplanations]:b.choices.map((x,i)=>i===b.a?'정답. '+(normV13(b.ex)||'공식 페이지 근거와 일치한다.'):'오답. 공식 페이지 근거의 정답은 “'+b.choices[b.a]+'”이다.');
+  const w=[0,1,2,3].find(i=>i!==b.a),id='119-v13-breadth3-'+c.id.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  const q={id,grade:'B',subject:b.subject,scopeId:b.scopeId,conceptId:c.id,difficulty:b.difficulty==='low'?'mid':'high',type:'근거교정형',source:b.source,pageVerified:true,reviewStatus:'source-reviewed-derived',evidenceDerivedFrom:b.id,pastExamClaim:false,q:'공식 페이지 근거에 따라 다음 오답을 바로잡은 것은? “'+b.choices[w]+'”',choices:[...b.choices],a:b.a,choiceExplanations:e,examStyle:true,questionClass:'exam-style'};
+  q.ex=e[b.a];V.questions.push(q);addedV13.push(id);
 }
-V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));
-V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);
-V.VerifiedBreadth3V13119={
-  version:'119-v13-verified-breadth3-v1',
-  targets:V13_BREADTH3_TARGETS,
-  added:breadth3Ids.length,
-  ids:breadth3Ids,
-  grade:'B',
-  policy:'Each added item is mechanically derived from the concept existing sole A/B source-reviewed question, preserves the same exact-page source, and records evidenceDerivedFrom for traceability.'
-};
+V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);
+V.VerifiedBreadth3V13119={added:addedV13.length,ids:addedV13};
 
 })();
