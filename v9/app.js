@@ -113,39 +113,9 @@ function calculationBlocks(c,pack){
   if(!rows.length)return'';
   return rows.map((x,i)=>`<section class="calc-lab" data-calculation-index="${i}"><div class="lesson-heading"><div><span class="eyebrow">계산문제</span><h3>${esc(x.title||'공식 계산')}</h3></div></div><div class="calc-formula">${esc(x.formula)}</div>${x.note?`<div class="calc-example"><b>계산 원칙</b><p>${esc(x.note)}</p>${x.example?`<p><code>${esc(x.example)}</code></p>`:''}</div>`:''}</section>`).join('');
 }
-function quickCoreBlock(pack){
-  const text=pack?.studySchema?.quick30||pack?.summary||'';if(!text)return'';
-  return `<section class="study-quick"><div class="study-quick-title">30초 핵심</div><p class="lead">${studyHighlight(text,pack)}</p></section>`
-}
-function schemaRows(title,rows,cls=''){
-  const vals=uniqueTextRows(rows||[]).map(studentStudyText).filter(Boolean).slice(0,4);if(!vals.length)return'';
-  return `<div class="study-schema-item ${cls}"><b>${esc(title)}</b><ul>${vals.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`
-}
-function studySchemaBlock(c,pack){
-  const arch=V.ConceptArchitecture119?.get?.(c.id),s=pack?.studySchema;
-  if(!s||arch?.genericSchema!==true)return'';
-  const quick=s.quick30||pack?.summary||'';
-  const definition=uniqueTextRows([s.definition]).filter(x=>!sameStudyText(x,quick)),easy=uniqueTextRows([s.easy]).filter(x=>x!==s.definition&&!sameStudyText(x,quick));
-  const items=[
-    schemaRows('정의 · 개념',definition,'definition'),
-    schemaRows('쉽게 이해',easy,'easy'),
-    schemaRows('발생 조건',s.conditions,'conditions'),
-    schemaRows('진행 원리',s.mechanisms,'mechanism'),
-    schemaRows('시기 · 단계',s.timingStages,'timing'),
-    schemaRows('전조 · 위험신호',s.warningSigns,'warning'),
-    schemaRows('발생 전 · 후',s.beforeAfter,'before-after')
-  ].filter(Boolean);
-  return items.length?`<section class="study-schema phenomenon-schema"><div class="study-schema-title">화재현상 완전정리</div><div class="study-schema-grid">${items.join('')}</div></section>`:''
-}
-function coreEssentialBlock(c,pack){
-  const rows=coreEssentialRows(pack);
-  if(!rows.length)return'';
-  return `<section class="study-core-essentials"><div class="study-core-title">시험 직전 핵심</div><ul>${rows.map(x=>{const key=V.PassNote?.conceptKey?.(c.id,x.bucket,x.index)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span>${studyHighlight(x.text,pack)}</span></li>`}).join('')}</ul></section>`;
-}
-function numberBlock(c,pack){
-  const rows=V.StudyEmphasis119?.numberRows?.(pack,12)||[];if(!rows.length)return'';
-  return `<section class="study-numbers"><div class="study-numbers-title">★★ 숫자 · 단위 · 기준</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'number',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text">${studyHighlight(x,pack)}</span></li>`}).join('')}</ul></section>`;
-}
+function quickCoreBlock(pack){const text=pack?.studySchema?.quick30||pack?.summary||'';if(!text)return'';return `<section class="study-quick"><div class="study-quick-title">30초 핵심</div><p class="lead">${studyHighlight(text,pack)}</p></section>`}
+function coreEssentialBlock(c,pack){const rows=coreEssentialRows(pack);if(!rows.length)return'';return `<section class="study-core-essentials"><div class="study-core-title">시험 직전 핵심</div><ul>${rows.map(x=>{const key=V.PassNote?.conceptKey?.(c.id,x.bucket,x.index)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span>${studyHighlight(x.text,pack)}</span></li>`}).join('')}</ul></section>`}
+function numberBlock(c,pack){const rows=V.StudyEmphasis119?.numberRows?.(pack,12)||[];if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title">★★ 숫자 · 단위 · 기준</div><ul>${rows.map((x,i)=>{const key=V.PassNote?.conceptKey?.(c.id,'number',i)||'',on=key&&V.PassNote?.has?.(key);return `<li><button class="study-star-btn ${on?'on':''}" data-pass-star="${esc(key)}" aria-label="합격노트 ${on?'해제':'저장'}">${on?'★':'☆'}</button><span class="study-key-text">${studyHighlight(x,pack)}</span></li>`}).join('')}</ul></section>`}
 function trapBlock(pack){
   const rows=V.StudyEmphasis119?.trapRows?.(pack)||[];if(!rows.length)return'';
   return `<section class="study-traps"><div class="study-traps-title">⚠ 헷갈림 주의</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
