@@ -103,6 +103,8 @@ jobs:
         run: node v9/question-contract-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
+      - name: 390-run real mock exam composition quality audit
+        run: node v9/mock-exam-quality-audit.mjs
       - name: A/B verified question coverage gap report
         run: node v9/verified-question-coverage-audit.mjs
       - name: B-grade promotion candidate report
