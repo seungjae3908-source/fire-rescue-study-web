@@ -20,7 +20,13 @@ function pick(arr,n,level,scopeIds,history=[]){
 }
 function sequence(qs){
  const src=shuffle(qs),out=[];
- while(src.length){const last=out.at(-1),prev=out.at(-2),ok=q=>!(last&&prev&&family(q)===family(last)&&family(q)===family(prev));let i=src.findIndex(q=>(!last||q.scopeId!==last.scopeId)&&ok(q));if(i<0)i=src.findIndex(ok);if(i<0)i=0;out.push(src.splice(i,1)[0])}
+ while(src.length){
+  const last=out.at(-1),prev=out.at(-2),blocked=last&&prev&&family(last)===family(prev)?family(last):'',count={};
+  for(const q of src){const f=family(q);count[f]=(count[f]||0)+1}
+  const fs=Object.keys(count).filter(f=>f!==blocked).sort((a,b)=>count[b]-count[a]);let i=-1;
+  for(const f of fs){i=src.findIndex(q=>family(q)===f&&(!last||q.scopeId!==last.scopeId));if(i<0)i=src.findIndex(q=>family(q)===f);if(i>=0)break}
+  if(i<0)i=0;out.push(src.splice(i,1)[0])
+ }
  return out
 }
 function build({mode='real',level='mid',history=[]}={}){
