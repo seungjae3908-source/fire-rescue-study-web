@@ -84,8 +84,8 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
 
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
   if(anchorTokens.length){
-    const exactAnchorLines=lines.filter(line=>anchorTokens.some(t=>line.n.includes(t)));
-    if(exactAnchorLines.length)return exactAnchorLines.slice(0,8);
+    const exactAnchorLines=lines.map((line,i)=>{const m=anchorTokens.filter(t=>line.n.includes(t)),score=m.reduce((n,t)=>n+t.length,0)+m.length*10;return{line,i,m,score}}).filter(x=>x.m.length>=2||x.m.some(t=>t.length>=5)).sort((a,b)=>b.score-a.score||a.i-b.i);
+    if(exactAnchorLines.length)return exactAnchorLines.slice(0,8).sort((a,b)=>a.i-b.i).map(x=>x.line);
     const anchorBlocks=[];
     for(let i=0;i<lines.length;i++){
       let joinedN='',joinedText='';
@@ -170,5 +170,5 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
   return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,download,render,pdfPage,bookPage,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v11-expanded-semantic-anchor-lines'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v11-expanded-semantic-anchor-lines'};
 })();
