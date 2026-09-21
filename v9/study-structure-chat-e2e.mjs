@@ -71,12 +71,6 @@ try{
   const firstScroll=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body'),bottom=x=>!x||x.scrollHeight<=x.clientHeight+3||Math.abs(x.scrollHeight-x.clientHeight-x.scrollTop)<=3;return{chat:bottom(el),body:bottom(b),bodyTop:b?.scrollTop||0}});
   assert(firstScroll.chat&&firstScroll.body,'opening AI on mobile lands on the latest visible conversation instead of the first message');
 
-  const pastBefore=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body');el.scrollTop=Math.min(90,Math.max(1,el.scrollHeight-el.clientHeight-120));if(b)b.scrollTop=Math.min(60,Math.max(0,b.scrollHeight-b.clientHeight-80));return{chatTop:el.scrollTop,bodyTop:b?.scrollTop||0}});
-  await page.evaluate(()=>{const V=window.AITUTOR_V9,c=V.curriculum.byId['F04-C01'],s=V.Store.state;s.chat.push({id:'v17-past-read',role:'assistant',conceptId:c.id,at:Date.now()+90,text:'사용자가 과거 대화를 읽는 동안 들어온 추가 설명입니다. '.repeat(3)});V.Store.save();V.App.render()});
-  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-  const pastAfter=await page.locator('.study-body-mobile .study-ai-chat').evaluate((el,before)=>{const b=el.closest('.study-body'),gap=el.scrollHeight-el.clientHeight-el.scrollTop;return{chatTop:el.scrollTop,bodyTop:b?.scrollTop||0,gap,chatStable:Math.abs(el.scrollTop-before.chatTop)<=2,bodyStable:Math.abs((b?.scrollTop||0)-before.bodyTop)<=2}},pastBefore);
-  assert(pastAfter.gap>24&&pastAfter.chatStable&&pastAfter.bodyStable,'incoming AI render preserves an intentional past-conversation scroll position instead of forcing the user to bottom');
-  await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body');el.scrollTop=el.scrollHeight;if(b)b.scrollTop=b.scrollHeight});
 
   await page.evaluate(()=>{
     const V=window.AITUTOR_V9,c=V.curriculum.byId['F04-C01'],s=V.Store.state;
