@@ -143,7 +143,8 @@ try{
 
   await go(p,'settings');await cleanPage(p,'desktop settings');
   const settingsText=await p.locator('.page').innerText();
-  assert(settingsText.includes('개인 자료')&&settingsText.includes('공식 일정'),'settings keeps privacy information and official-only exam schedule truth');
+  assert(settingsText.includes('개인정보')&&settingsText.includes('공식 일정'),'settings keeps privacy information and official-only exam schedule truth');
+  assert(!settingsText.includes('업로드 자료')&&!settingsText.includes('개인 자료'),'settings has no learner personal-document upload copy');
   assert(await p.locator('#profileDate').count()===0,'manual exam-date input is removed; official monitor owns the exam date');
 
   await p.evaluate(()=>window.AITUTOR_V9.App.go('tutor'));
@@ -399,10 +400,10 @@ try{
   await m.locator('[data-report-close]').click();
   assert(await m.locator('[data-exam-report]').count()>=1,'recent exam history keeps an analysis action for locally detailed results');
 
-  await go(m,'notes');await m.locator('#personalFile').waitFor({state:'attached'});
+  await go(m,'notes');
   assert((await m.locator('.top h1').innerText()).includes('합격노트'),'notes area is promoted to pass-note workspace');
   assert(await m.locator('[data-pass-export]').count()===4,'pass-note workspace exposes fire, EMS, personal and rapid-review PDF exports');
-  assert(await m.locator('[data-note-filter]').count()===7,'pass-note workspace exposes subject/source filters');
+  assert(await m.locator('[data-note-filter]').count()===6,'pass-note workspace exposes study filters without a personal-upload source filter');
   assert(await m.locator('#noteSearch').count()===1,'pass-note workspace exposes note search');
   const sourceNoteId=await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.find(n=>n.sourceType==='pass-star')?.id||'');
   if(sourceNoteId){
@@ -419,62 +420,28 @@ try{
     assert(true,'pass-note star filter can be selected');
     await m.locator('[data-note-filter="all"]').click();
   }
-  const fileInputStable=await m.evaluate(async()=>{
-    const first=document.querySelector('#personalFile');
-    for(let i=0;i<80&&window.AITUTOR_V9.App.runtime.docsLoading;i++)await new Promise(r=>setTimeout(r,25));
-    return !!first&&first===document.querySelector('#personalFile')&&!window.AITUTOR_V9.App.runtime.docsLoading;
-  });
-  assert(fileInputStable,'async personal-doc hydration preserves the file input DOM node');
   await cleanPage(m,'mobile notes');
   const notesText=await m.locator('.page').innerText();
-  assert(notesText.includes('PDF / 사진')&&notesText.includes('내 자료'),'notes page prioritizes study actions');
+  assert(await m.locator('#personalFile').count()===0,'pass-note workspace has no user PDF/photo upload input');
+  const injectedUploadBlocked=await m.evaluate(async()=>{
+    let calls=0;
+    const pd=window.AITUTOR_V9.PrivateDocs,old=pd?.ingest;
+    if(!pd||typeof old!=='function')return true;
+    pd.ingest=async()=>{calls++;return{reviewPages:[]}};
+    const input=document.createElement('input');input.id='personalFile';input.type='file';
+    Object.defineProperty(input,'files',{value:[new File(['legacy'],'legacy.txt',{type:'text/plain'})]});
+    document.body.appendChild(input);
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(r=>setTimeout(r,60));
+    input.remove();pd.ingest=old;
+    return calls===0
+  });
+  assert(injectedUploadBlocked,'learner app has no executable personal-file upload event path');
+  assert(!notesText.includes('PDF / 사진')&&!notesText.includes('내 자료')&&!notesText.includes('업로드'),'pass-note workspace does not expose user document upload flows');
+  assert(notesText.includes('직접 메모 추가')&&notesText.includes('저장된 합격노트'),'pass-note workspace stays focused on saved study notes and direct memos');
   assert(!notesText.includes('DRM')&&!notesText.includes('브라우저에서 텍스트/OCR 처리'),'notes page removes technical/copyright implementation prose');
   for(const internalCopy of ['정밀 추출','품질 %','OCR ','텍스트층','로컬 AI 보정'])assert(!notesText.includes(internalCopy),'notes page hides implementation jargon from learner-facing copy: '+internalCopy);
   for(const internalType of ['pass-star','pass-question','pass-doc','manual'])assert(!notesText.includes(internalType),'notes page hides internal note source types from learner-facing copy: '+internalType);
-  await m.locator('#personalFile').setInputFiles({name:'private-sample.pdf',mimeType:'application/pdf',buffer:fixture});
-  try{
-    await m.waitForFunction(()=>/분석 완료|분석 실패/.test(document.querySelector('[data-upload-status]')?.textContent||''),null,{timeout:60000});
-  }catch(err){
-    const diag=await m.evaluate(()=>({
-      uploadStatus:document.querySelector('[data-upload-status]')?.textContent||'',
-      docs:(window.AITUTOR_V9?.App?.runtime?.docs||[]).map(x=>({title:x.title,pageCount:x.pageCount,extractedChars:x.extractedChars})),
-      docsLoading:!!window.AITUTOR_V9?.App?.runtime?.docsLoading
-    }));
-    throw new Error('PERSONAL_PDF_UI_TIMEOUT '+JSON.stringify(diag)+' BROWSER_ERRORS '+merr.join(' | '),{cause:err});
-  }
-  const uploadStatus=(await m.locator('[data-upload-status]').innerText()).trim();
-  assert(uploadStatus.includes('분석 완료'),'personal PDF reports visible analysis completion; status='+uploadStatus+'; errors='+merr.join(' | '));
-  await m.waitForSelector('[data-doc-open]');
-  await m.locator('[data-doc-pass]').first().click();
-  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.notes.some(n=>n.sourceType==='pass-doc'),null,{timeout:15000});
-  assert((await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.some(n=>n.sourceType==='pass-doc'))),'uploaded PDF/photo extraction can create an editable pass-note draft');
-  await m.locator('[data-doc-open]').first().click();await m.waitForSelector('.doc-viewer');
-  const viewer=await m.locator('.doc-viewer-text').innerText();
-  assert(viewer.trim().length>20&&viewer.includes('[1쪽]'),'uploaded PDF extracted text can be opened and checked');
-  await m.locator('[data-doc-viewer-close]').click();
-
-  const ocrReference='소방 구급 산소 119 2468 500mL 30% 100mmHg';
-  const pngBase64=await m.evaluate(async()=>{
-    const canvas=document.createElement('canvas');canvas.width=1800;canvas.height=520;
-    const g=canvas.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,canvas.width,canvas.height);
-    g.fillStyle='#000';g.textBaseline='middle';g.font='bold 104px "Noto Sans CJK KR","Noto Sans KR","Malgun Gothic",Arial,sans-serif';
-    g.fillText('소방 구급 산소',70,155);
-    g.font='bold 94px Arial,"Noto Sans KR",sans-serif';g.fillText('119 2468 500mL 30% 100mmHg',70,360);
-    const blob=await new Promise((res,rej)=>canvas.toBlob(x=>x?res(x):rej(Error('PNG_CREATE_FAILED')),'image/png'));
-    return await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(blob)});
-  });
-  await m.locator('#personalFile').setInputFiles({name:'ocr-benchmark.png',mimeType:'image/png',buffer:Buffer.from(pngBase64,'base64')});
-  await m.waitForFunction(()=>window.AITUTOR_V9.App.runtime.docs.some(d=>d.title==='ocr-benchmark.png'),null,{timeout:180000});
-  const imageRow=m.locator('.doc-row').filter({hasText:'ocr-benchmark.png'});
-  await imageRow.locator('[data-doc-open]').click();await m.waitForSelector('.doc-viewer');
-  const ocrText=await m.locator('.doc-viewer-text').innerText();
-  const ocrMetrics=await m.evaluate(({reference,observed})=>window.AITUTOR_V9.PrivateDocs.ocrBenchmarkMetrics(reference,observed),{reference:ocrReference,observed:ocrText});
-  console.log('OCR_BENCHMARK_119',JSON.stringify({reference:ocrReference,observed:ocrText,metrics:ocrMetrics}));
-  assert(ocrMetrics.koreanRecall>=.67,'OCR benchmark recognizes at least two-thirds of Korean key tokens');
-  assert(ocrMetrics.numericRecall===1,'OCR benchmark preserves every critical numeric token');
-  assert(ocrMetrics.unitRecall>=.67,'OCR benchmark preserves at least two-thirds of critical unit tokens');
-  assert(ocrMetrics.cer<=.35,'OCR benchmark normalized character error rate stays at or below 35%');
-  await m.locator('[data-doc-viewer-close]').click();
   await noX(m,'mobile notes');
 
   await go(m,'stats');await cleanPage(m,'mobile stats');
