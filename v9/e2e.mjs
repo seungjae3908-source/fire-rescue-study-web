@@ -423,6 +423,7 @@ try{
   const notesText=await m.locator('.page').innerText();
   assert(notesText.includes('PDF / 사진')&&notesText.includes('내 자료'),'notes page prioritizes study actions');
   assert(!notesText.includes('DRM')&&!notesText.includes('브라우저에서 텍스트/OCR 처리'),'notes page removes technical/copyright implementation prose');
+  for(const internalCopy of ['정밀 추출','품질 %','OCR ','텍스트층','로컬 AI 보정'])assert(!notesText.includes(internalCopy),'notes page hides implementation jargon from learner-facing copy: '+internalCopy);
   await m.locator('#personalFile').setInputFiles({name:'private-sample.pdf',mimeType:'application/pdf',buffer:fixture});
   try{
     await m.waitForFunction(()=>/분석 완료|분석 실패/.test(document.querySelector('[data-upload-status]')?.textContent||''),null,{timeout:60000});
