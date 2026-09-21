@@ -1251,6 +1251,5 @@ small{font-size:max(11px,.78em)}
 .page-stats .home-grid{grid-template-columns:minmax(0,1fr);width:100%;max-width:1000px;margin:0 auto}
 .page-stats .home-main{width:100%}
 
-.pdf-zoombar{justify-content:center;gap:7px;margin:9px 0 3px}.pdf-zoombar .pill{min-width:58px;text-align:center}.pdf-canvas-wrap canvas{image-rendering:auto}
-@media(min-width:721px) and (max-width:1100px){.pdf-evidence-modal{width:96vw}.pdf-evidence-host{max-height:74vh}}
-@media(max-width:720px){.modal-wrap:has(.pdf-evidence-modal){padding:4px}.pdf-evidence-modal{width:100%;max-height:97dvh;padding:10px;border-radius:12px}.pdf-modal-head{gap:6px;align-items:flex-start}.pdf-modal-head h2{font-size:17px;line-height:1.25}.pdf-zoombar{position:sticky;top:0;z-index:6;background:#091727;padding:5px 0}.pdf-zoombar .btn{min-height:38px;padding:7px 10px}.pdf-evidence-host{min-height:420px;max-height:72dvh;padding:4px;margin:6px 0}.pdf-render-meta{font-size:10px;max-width:calc(100vw - 34px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-pager{gap:6px}.pdf-pager .btn{font-size:12px}}
+.pdf-zoombar{justify-content:center;gap:7px;margin:9px 0 3px}.pdf-zoombar .pill{min-width:58px;text-align:center}
+@media(max-width:720px){.modal-wrap:has(.pdf-evidence-modal){padding:4px}.pdf-zoombar{position:sticky;top:0;z-index:6;background:#091727;padding:5px 0}.pdf-zoombar .btn{min-height:38px;padding:7px 10px}.pdf-evidence-host{padding:4px;margin:6px 0}.pdf-render-meta{font-size:10px;max-width:calc(100vw - 34px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
