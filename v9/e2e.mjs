@@ -486,6 +486,24 @@ try{
   assert(await m.locator('[data-wrong-delete="e2e-wrong-delete"]').count()===0,'wrong-note delete removes the selected item while preserving answer history');
 
   await go(m,'study');
+  const priorityStudyContracts=[
+    ['F04-C01',['냉각','질식','제거','연쇄반응']],
+    ['F06-C02',['현장보존','전체','근접','진압수','분석']],
+    ['F06-C03',['발화부','점화원','최초착화물','환기']],
+    ['E08-C01',['현장안전','환자수','추가지원','위험']],
+    ['E13-C05',['조직관류','혈압','의식','보상']],
+    ['E17-C04',['얼굴','팔','말','마지막','정상']],
+    ['E24-C04',['30:2','2분','5주기','10초']]
+  ];
+  for(const [id,terms] of priorityStudyContracts){
+    await m.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
+    await m.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,id);
+    await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+    const priorityText=(await m.locator('.book-section').innerText()).replace(/\\s+/g,' ');
+    for(const term of terms)assert(priorityText.includes(term),id+' detail keeps high-priority exam distinction: '+term);
+    await noX(m,'mobile priority detail '+id);
+  }
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C06'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C06');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
