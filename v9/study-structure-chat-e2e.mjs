@@ -86,6 +86,19 @@ try{
   const tableScroll=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body'),bottom=x=>!x||x.scrollHeight<=x.clientHeight+3||Math.abs(x.scrollHeight-x.clientHeight-x.scrollTop)<=3;return bottom(el)&&bottom(b)});
   assert(tableScroll,'AI table render also keeps the latest conversation visible');
 
+  await page.evaluate(()=>{
+    const V=window.AITUTOR_V9,c=V.curriculum.byId['F04-C01'],s=V.Store.state;
+    s.chat.push({id:'v17-table-loose',role:'assistant',conceptId:c.id,at:Date.now()+100,text:'구분 | 내용\n제거소화 | 가연물 제거·격리\n질식소화 | 산소 접촉·농도 차단\n부촉매소화 | 연쇄반응 억제'});
+    V.Store.save();V.App.render()
+  });
+  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  const loose=await page.locator('.study-body-mobile .tutor-ai-table').last().evaluate((el)=>{
+    const wrap=el.closest('.tutor-ai-table-wrap'),chat=el.closest('.study-ai-chat'),wr=wrap.getBoundingClientRect(),cr=chat.getBoundingClientRect();
+    return{rows:el.querySelectorAll('tbody tr').length,cols:[...el.querySelectorAll('tbody tr')].map(r=>r.children.length),contained:wr.left>=cr.left-1&&wr.right<=cr.right+1,scrollSafe:wrap.scrollWidth>=wrap.clientWidth}
+  });
+  assert(loose.rows===3&&loose.cols.every(x=>x===2),'AI pipe table without a Markdown divider is normalized into aligned columns');
+  assert(loose.contained&&loose.scrollSafe,'wide AI table stays contained in the mobile chat and scrolls horizontally instead of breaking layout');
+
   const input=page.locator('.study-body-mobile [data-tutor-input]');
   await input.fill('질식소화 핵심만 설명해줘');
   await page.locator('.study-body-mobile [data-tutor-send]').click();
@@ -94,6 +107,23 @@ try{
   const after=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body'),bottom=x=>!x||x.scrollHeight<=x.clientHeight+3||Math.abs(x.scrollHeight-x.clientHeight-x.scrollTop)<=3;return{bottom:bottom(el)&&bottom(b),last:el.lastElementChild?.textContent||''}});
   assert(after.bottom,'new AI answer keeps the visible mobile chat pinned to the latest conversation');
   assert(after.last.includes('119'),'latest assistant message remains visible after the answer render');
+
+  await page.evaluate(()=>{
+    const V=window.AITUTOR_V9,c=V.curriculum.byId['F04-C01'],S=V.SourcePDF,original={availability:S.availability,sourcePage:S.sourcePage,pdfPage:S.pdfPage,render:S.render,locate:S.locate};
+    window.__v17SourceOriginal=original;window.__v17SourceRenders=0;
+    S.availability=async()=>({local:false,direct:true,officialPage:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/'});
+    S.sourcePage=()=> 'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/';
+    S.pdfPage=(_k,p)=>p;
+    S.locate=async(_k,_q,o)=>o?.bookRanges?.length?{page:184,score:4,pages:400}:{page:186,score:18,pages:400};
+    S.render=async(_k,page,host)=>{window.__v17SourceRenders++;host.innerHTML='<div class="pdf-canvas-wrap"><div class="pdf-highlight-layer"></div></div>';const hits=window.__v17SourceRenders>=3?3:0;if(hits){for(let i=0;i<hits;i++){const x=document.createElement('div');x.className='pdf-evidence-line';host.querySelector('.pdf-highlight-layer').appendChild(x)}}return{page,bookPage:page,pages:400,hits,evidenceLines:hits?['소화원리 가연물 제거','질식소화 산소 차단','부촉매 연쇄반응 억제']:[],zoom:1}};
+    const st=V.Store.state;st.page='study';st.subject='fire';st.scopeId=c.scopeId;st.conceptId=c.id;st.studyTab='source';V.Store.save();V.App.render()
+  });
+  await page.locator('.study-body-mobile [data-source-concept]').click();
+  await page.waitForFunction(()=>document.querySelector('#pdfEvidence')?.dataset.renderState==='ready');
+  const source=await page.locator('#pdfEvidence').evaluate(root=>({verified:root.dataset.anchorVerified,scope:root.dataset.searchScope,hits:Number(root.dataset.highlightCount||0),lines:root.querySelectorAll('.pdf-evidence-line').length,renders:window.__v17SourceRenders}));
+  assert(source.verified==='true'&&source.scope==='document'&&source.hits>=2&&source.lines>=2,'source viewer expands from mapped range to strong full-document evidence and draws visible underline markers');
+  assert(source.renders>=3,'source evidence recovery tries the mapped candidate before a stronger whole-document match');
+  await page.evaluate(()=>{const V=window.AITUTOR_V9,o=window.__v17SourceOriginal;Object.assign(V.SourcePDF,o);document.querySelector('#pdfEvidence')?.remove()});
 
   console.log('STUDY_STRUCTURE_CHAT_E2E_COMPLETE');
   await ctx.close();
