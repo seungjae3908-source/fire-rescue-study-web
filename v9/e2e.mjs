@@ -726,9 +726,6 @@ try{
   const examLandingCards=await m.locator('.exam-landing>.card').evaluateAll(nodes=>nodes.map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width}}));
   assert(examLandingCards.length>=2&&examLandingCards[1].y>examLandingCards[0].y+20,'mobile exam landing stacks real mock and training center vertically');
 
-  assert(merr.length===0,'mobile runtime errors = 0 '+merr.join(' | '));
-  await mobile.close();
-
   const samplingTruth=await m.evaluate(()=>{
     const V=window.AITUTOR_V9,A=V.App,real=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B'),check=(subject,n,scopes)=>{
       let worst=0,missing=0,dup=0;const cap=Math.ceil(n/scopes.length)+1;
@@ -745,6 +742,9 @@ try{
   });
   assert(samplingTruth.fire.missing===0&&samplingTruth.fire.dup===0&&samplingTruth.fire.worst<=samplingTruth.fire.cap,'25-question fire sampling covers every scope without duplicates or one-scope domination');
   assert(samplingTruth.ems.missing===0&&samplingTruth.ems.dup===0&&samplingTruth.ems.worst<=samplingTruth.ems.cap,'40-question EMS sampling covers every scope without duplicates or one-scope domination');
+
+  assert(merr.length===0,'mobile runtime errors = 0 '+merr.join(' | '));
+  await mobile.close();
 
   {
     const tablet=await browser.newContext({viewport:{width:768,height:1024},deviceScaleFactor:2});
