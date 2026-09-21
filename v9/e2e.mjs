@@ -402,7 +402,7 @@ try{
   const reportText=await m.locator('.exam-report').innerText();
   assert(reportText.includes('64/65')&&reportText.includes('오답·미응답 분석')&&reportText.includes('1문항'),'finished mock opens a 65-question score + wrong-answer analysis');
   assert(reportText.includes('내 답')&&reportText.includes('정답')&&reportText.includes('정답 근거'),'exam analysis shows selected answer, correct answer and explanation');
-  assert(reportText.includes('문제 유형 분석')&&reportText.includes('공식 시험의 출제비율을 의미하지 않습니다.'),'exam analysis exposes normalized learning-skill performance without claiming an official exam weight');
+  assert(reportText.includes('문제 유형 분석')&&reportText.includes('실제 시험의 출제비율과는 다를 수 있습니다.'),'exam analysis exposes student-facing problem-type performance without claiming an official exam weight');
   assert(await m.locator('[data-skill-train]').count()>=1,'exam analysis exposes one-tap remediation for observed learning-skill families');
   const reportIdBeforeSkill=await m.evaluate(()=>window.AITUTOR_V9.App.runtime.examReportId);
   const skillKey=await m.locator('[data-skill-train]').first().getAttribute('data-skill-train');
@@ -411,6 +411,13 @@ try{
   const skillRun=await m.evaluate(key=>{const V=window.AITUTOR_V9,e=V.App.runtime.exam;return{mode:e?.mode,key:e?.trainingKey,total:e?.qs?.length||0,allFamily:e?.qs?.every(q=>V.QuestionType119.classify(q).key===key),title:e?.title||''}},skillKey);
   assert(skillRun.mode==='training'&&skillRun.key==='skill:'+skillKey&&skillRun.total>0&&skillRun.allFamily,'skill-family remediation starts a focused training run containing only the selected family');
   await m.evaluate(reportId=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.App.runtime.examReportId=reportId;V.Store.state.page='stats';V.Store.save();V.App.render()},reportIdBeforeSkill);
+  await m.waitForSelector('.exam-report');
+  assert(await m.locator('[data-weak-review]').count()>=1,'exam analysis exposes one-tap review for weak sections');
+  const weakTarget=await m.locator('[data-weak-review]').first().getAttribute('data-concept');
+  await m.locator('[data-weak-review]').first().click();
+  await m.waitForFunction(id=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.conceptId===id,weakTarget);
+  assert(await m.locator('.page-study').count()===1,'weak-section remediation jumps directly into the selected section review');
+  await m.evaluate(reportId=>{const V=window.AITUTOR_V9;V.App.runtime.examReportId=reportId;V.Store.state.page='stats';V.Store.save();V.App.render()},reportIdBeforeSkill);
   await m.waitForSelector('.exam-report');
   assert(await m.locator('.exam-report [data-concept]').count()>=1&&await m.locator('.exam-report [data-source-concept]').count()>=1,'exam analysis links wrong questions to concept review and official evidence');
   await noX(m,'mobile exam analysis');
