@@ -42,6 +42,10 @@
     "api/official-pdf.js": {
       "regions": ["icn1"],
       "maxDuration": 30
+    },
+    "api/official-source-probe.js": {
+      "regions": ["icn1"],
+      "maxDuration": 30
     }
   },
   "$schema": "https://openapi.vercel.sh/vercel.json",
