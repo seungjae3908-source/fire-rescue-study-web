@@ -12,7 +12,7 @@ const summary={version:'119-v14-mock-engine-audit-v1',simulations:0,failures:[],
 const fail=(code,detail)=>summary.failures.push({code,detail});
 for(const level of ['low','mid','high']){
  const d={runs:0,activeFamiliesMin:99,difficulty:{low:0,mid:0,high:0}};
- for(let i=0;i<120;i++){
+ for(let i=0;i<130;i++){
   const qs=E.build({mode:'real',level,history:[]}),m=E.metrics(qs);summary.simulations++;d.runs++;
   if(m.n!==65||m.fire!==25||m.ems!==40)fail('SIZE',{level,i,n:m.n,fire:m.fire,ems:m.ems});
   if(m.uniqueIds!==65||m.uniqueConcepts!==65)fail('DUPLICATE',{level,i,ids:m.uniqueIds,concepts:m.uniqueConcepts});
@@ -27,9 +27,10 @@ for(const level of ['low','mid','high']){
  const total=d.runs*65;d.difficultyShares=Object.fromEntries(Object.entries(d.difficulty).map(([k,n])=>[k,Number((n/total).toFixed(3))]));
  summary.levels[level]=d;
 }
-if((summary.levels.low.difficultyShares.low||0)<.45)fail('LOW_MODE_DIFFICULTY',summary.levels.low.difficultyShares);
-if((summary.levels.mid.difficultyShares.mid||0)<.45)fail('MID_MODE_DIFFICULTY',summary.levels.mid.difficultyShares);
-if((summary.levels.high.difficultyShares.high||0)<.38)fail('HIGH_MODE_DIFFICULTY',summary.levels.high.difficultyShares);
+const dl=summary.levels.low.difficultyShares,dm=summary.levels.mid.difficultyShares,dh=summary.levels.high.difficultyShares;
+if((dl.low||0)<.32||dl.low<=dm.low+.08)fail('LOW_MODE_DIFFICULTY',{low:dl,mid:dm});
+if((dm.mid||0)<.50)fail('MID_MODE_DIFFICULTY',dm);
+if((dh.high||0)<.45||dh.high<=dm.high+.18)fail('HIGH_MODE_DIFFICULTY',{high:dh,mid:dm});
 const answerTotal=summary.answerPos.reduce((a,b)=>a+b,0);summary.answerShares=summary.answerPos.map(n=>Number((n/answerTotal).toFixed(3)));
 if(summary.answerShares.some(x=>x<.18||x>.32))fail('ANSWER_POSITION',summary.answerShares);
 
