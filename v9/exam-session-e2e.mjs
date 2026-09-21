@@ -20,21 +20,22 @@ try{
   await page.waitForSelector('.exam-run-workspace');
 
   await page.locator('[data-exam-answer="1"]').click();
+  await page.locator('[data-exam-confidence="sure"]').click();
   await page.locator('[data-exam-next]').click();
   const before=await page.evaluate(()=>{
     const V=window.AITUTOR_V9,e=V.App.runtime.exam;
-    return{id:e.id,i:e.i,startedAt:e.startedAt,answer:{...e.answers},owner:V.Store.ownerId,saved:V.ExamSession119.has(V.Store.ownerId)}
+    return{id:e.id,i:e.i,startedAt:e.startedAt,answer:{...e.answers},confidence:{...e.confidence},owner:V.Store.ownerId,saved:V.ExamSession119.has(V.Store.ownerId)}
   });
-  assert(before.saved&&before.i===1&&Object.keys(before.answer).length===1,'active practice exam persists answer and current position locally');
+  assert(before.saved&&before.i===1&&Object.keys(before.answer).length===1&&Object.values(before.confidence)[0]==='sure','active practice exam persists answer confidence and current position locally');
 
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.App?.runtime?.exam);
   const restored=await page.evaluate(()=>{
     const V=window.AITUTOR_V9,e=V.App.runtime.exam;
-    return{id:e.id,i:e.i,startedAt:e.startedAt,answers:{...e.answers},page:V.Store.state.page,restored:e.restored===true}
+    return{id:e.id,i:e.i,startedAt:e.startedAt,answers:{...e.answers},confidence:{...e.confidence},page:V.Store.state.page,restored:e.restored===true}
   });
   assert(restored.id===before.id&&restored.i===before.i&&restored.startedAt===before.startedAt,'active exam restores same id, position and start time after reload');
-  assert(restored.page==='exam'&&restored.restored&&Object.keys(restored.answers).length===1,'reload returns directly to the saved exam with its answer');
+  assert(restored.page==='exam'&&restored.restored&&Object.keys(restored.answers).length===1&&Object.values(restored.confidence)[0]==='sure','reload returns directly to the saved exam with its answer confidence');
 
   page.once('dialog',d=>d.accept());
   await page.locator('[data-exam-abandon]').click();
