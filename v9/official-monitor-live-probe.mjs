@@ -1,36 +1,5 @@
 import {collectOfficialNotices,SOURCES} from './official-monitor-lib.mjs';
 
-async function probeCandidate(url){
-  const started=Date.now();
-  const ctrl=new AbortController();
-  const timer=setTimeout(()=>ctrl.abort(),8000);
-  try{
-    const res=await fetch(url,{
-      redirect:'follow',signal:ctrl.signal,
-      headers:{
-        'user-agent':'119-study-official-monitor/3.0',
-        accept:'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'accept-language':'ko-KR,ko;q=0.9,en;q=0.7',
-        'cache-control':'no-cache',pragma:'no-cache'
-      }
-    });
-    const text=await res.text();
-    console.log('OFFICIAL_MONITOR_CANDIDATE_PROBE',JSON.stringify({
-      url,status:res.status,ok:res.ok,elapsedMs:Date.now()-started,bytes:Buffer.byteLength(text),
-      recruitmentRelevant:/소방공무원|채용시험|시행계획|변경공고|필기시험/.test(text),
-      waf:/방문자\s*확인|checking your browser|verify you are human|captcha|challenge-platform|cf-chl/i.test(text)
-    }));
-  }catch(err){
-    console.warn('OFFICIAL_MONITOR_CANDIDATE_PROBE',JSON.stringify({
-      url,ok:false,elapsedMs:Date.now()-started,
-      errorCode:String(err?.cause?.code||err?.code||err?.name||'FETCH_ERROR'),
-      error:String(err?.cause?.message||err?.message||err).slice(0,180)
-    }));
-  }finally{clearTimeout(timer)}
-}
-
-await probeCandidate('https://www.nfa.go.kr/nfa/news/job/nfajob/?pageIdx=1');
-
 const started=Date.now();
 const snapshot=await collectOfficialNotices(fetch,new Date());
 const elapsedMs=Date.now()-started;
