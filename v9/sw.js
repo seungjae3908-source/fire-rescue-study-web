@@ -14,7 +14,11 @@ self.addEventListener('fetch',event=>{
     event.respondWith(fetch(event.request).then(r=>{
       if(r&&r.ok){const copy=r.clone();caches.open(CACHE).then(c=>c.put(event.request,copy))}
       return r
-    }).catch(()=>caches.match(event.request)));
+    }).catch(async error=>{
+      const cached=await caches.match(event.request);
+      if(cached)return cached;
+      throw error
+    }));
     return;
   }
   if(!url.pathname.startsWith(scope.pathname))return;
