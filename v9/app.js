@@ -368,7 +368,7 @@ async function sendTutor(){
   const mkid=p=>crypto.randomUUID?crypto.randomUUID():p+Date.now()+Math.random().toString(36).slice(2);
   const userMsg={id:mkid('chat-u-'),role:'user',text:prompt,at:Date.now(),conceptId:current.id};
   const assistant={id:mkid('chat-a-'),role:'assistant',text:'생각 중…',at:Date.now(),conceptId:current.id};
-  state().chat.push(userMsg,assistant);runtime.tutorForceLatest=true;S.save();render();
+  state().chat.push(userMsg,assistant);S.save();render();
   if(!target.allowed){
     const out=`현재 학습 항목은 「${current.title}」입니다.\n이 AI는 현재 항목과 직접 등록된 비교 내용만 설명합니다.\n「${target.detected?.title||'다른 개념'}」은 해당 개념 페이지로 이동해서 질문해 주세요.`;
     state().chat[state().chat.length-1]={...assistant,text:out,outOfScope:true,suggestedConceptId:target.detected?.id||''};S.save();render();return
@@ -469,7 +469,8 @@ function settings(){
   <section class="card"><b>백업 · 복원</b><div class="settings-actions" style="margin-top:9px"><button class="btn" data-export>내 기록 백업</button></div><label class="backup-file-label">백업 파일 선택<input id="importBackup" class="input" type="file" accept="application/json"></label></section><section class="card"><b>개인정보</b><p class="muted">내 학습 기록과 직접 작성한 메모는 다른 회원에게 공개되지 않습니다.</p></section></div>`,'설정')
 }
 function view(){if(state().page==='tutor'){state().page='study';state().studyTab='ai';S.save()}return({home,study,notes,bank,exam,wrong,stats,resources,suggestions,settings}[state().page]||home)()}
-function render(){const a=state().page==='study'&&state().studyTab==='ai',x=a?[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent):null,b=x?.closest('.study-body'),s=x&&[x.scrollTop,b?.scrollTop||0,x.scrollHeight-x.clientHeight-x.scrollTop<25],f=runtime.tutorForceLatest;$('#app').innerHTML=view();if(a)requestAnimationFrame(()=>requestAnimationFrame(()=>{const n=[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent);if(!n)return;const q=n.closest('.study-body');if(f||!s||s[2]){n.scrollTop=n.scrollHeight;if(q)q.scrollTop=q.scrollHeight}else{n.scrollTop=s[0];if(q)q.scrollTop=s[1]}runtime.tutorForceLatest=false}))}
+function scrollTutorToBottom(){requestAnimationFrame(()=>requestAnimationFrame(()=>{const x=[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent!==null);if(!x)return;x.scrollTop=x.scrollHeight;const b=x.closest('.study-body');if(b)b.scrollTop=b.scrollHeight}))}
+function render(){document.querySelector('#app').innerHTML=view();if(state().page==='study'&&state().studyTab==='ai')scrollTutorToBottom()}
 function sourceAnchorQueries(c,p=V.contentPacks.get(c?.id)){const t=String(c?.title||'').trim(),a=[t,t.replace(/\s*(?:개론|원리|이론|기초|종류|구조|방법|개요)\s*$/,''),...t.split(/[·,/()\s-]+/),...(V.ConceptArchitecture119?.termsFor?.(c?.id)||[]),...(p?.compare||[]).flatMap(x=>x||[]),...(p?.must||[]).flatMap(x=>String(x||'').split(/\s*(?:→|:|=|·|\/|,)\s*/))],stop=/^(개념|기초|종류|이론|구조|원리|정리|방법|특징|설명|및)$/;return[...new Set(a.map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).filter(x=>x.length>=2&&x.length<=28&&!stop.test(x)))].sort((a,b)=>b.length-a.length).slice(0,18)}
 function evidenceQueries(c,p){const q=p?.studySchema||{};return[...sourceAnchorQueries(c,p),p?.summary,q.definition,...(q.conditions||[]),...(q.mechanisms||[]),...(p?.must||[]),...(p?.detail||[]),...(p?.compare||[]).flat()].filter(Boolean).slice(0,30)}
 function hasAnchorEvidence(r,a){const l=(r?.evidenceLines||[]).map(studyNorm),t=(a||[]).map(studyNorm).filter(x=>x.length>=2);return t.some(x=>l.some(y=>y.includes(x)))}
