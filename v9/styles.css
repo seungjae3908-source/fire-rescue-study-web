@@ -376,7 +376,7 @@
   min-width:0;
 }
 .concept-head h2,.book-section h2,.book-section h3,.detail-copy h3,.detail-copy p,.detail-copy li,.core-line p,
-.study-key-text,.visual-node b,.hazmat-class-card b,.hazmat-class-card small,.question-card h2,.choice,.answer,
+.study-key-underline{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:var(--blue);font-weight:850}.study-key-text,.visual-node b,.hazmat-class-card b,.hazmat-class-card small,.question-card h2,.choice,.answer,
 .note-row b,.note-row small,.source-law-link,.row b,.row small,.btn{
   word-break:keep-all;
   overflow-wrap:anywhere;
