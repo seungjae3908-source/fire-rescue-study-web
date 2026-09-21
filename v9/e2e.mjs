@@ -663,6 +663,18 @@ try{
     await m.waitForSelector('.page');
     await noX(m,'mobile route '+route);
   }
+  await go(m,'notes');await m.waitForSelector('.pass-export-grid');
+  const noteButtons=await m.locator('.pass-export-grid .btn').evaluateAll(nodes=>nodes.slice(0,2).map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width}}));
+  assert(noteButtons.length===2&&Math.abs(noteButtons[0].y-noteButtons[1].y)<3&&noteButtons[0].x!==noteButtons[1].x,'mobile pass-note export actions use a compact two-column grid');
+  await go(m,'resources');await m.waitForSelector('.resource-row');
+  const resourceActions=await m.locator('.resource-row').first().locator('.resource-actions .btn').evaluateAll(nodes=>nodes.map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width}}));
+  assert(resourceActions.length===2&&Math.abs(resourceActions[0].y-resourceActions[1].y)<3,'mobile official-resource actions stay side by side instead of creating a tall button stack');
+  await go(m,'settings');await m.waitForSelector('#profileDaily');
+  const settingFields=await m.locator('#profileDaily,#profileLevel').evaluateAll(nodes=>nodes.map(n=>{const b=n.closest('label')?.getBoundingClientRect();return b?{x:b.x,y:b.y,w:b.width}:null}).filter(Boolean));
+  assert(settingFields.length===2&&settingFields[1].y>settingFields[0].y+20&&Math.abs(settingFields[0].w-settingFields[1].w)<4,'mobile settings form uses full-width stacked fields');
+  await go(m,'exam');await m.waitForSelector('.exam-landing');
+  const examLandingCards=await m.locator('.exam-landing>.card').evaluateAll(nodes=>nodes.map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width}}));
+  assert(examLandingCards.length>=2&&examLandingCards[1].y>examLandingCards[0].y+20,'mobile exam landing stacks real mock and training center vertically');
 
   assert(merr.length===0,'mobile runtime errors = 0 '+merr.join(' | '));
   await mobile.close();
