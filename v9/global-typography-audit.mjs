@@ -111,7 +111,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
       traps:rows('.study-traps li'),
       essentialTexts:rows('.study-core-essentials li span'),
       coreTexts:[...rows('.study-quick p'),...rows('.study-core-essentials li span')],
-      detailTexts:[...rows('.detail-section h3'),...rows('.detail-section p'),...rows('.detail-section li')],
+      detailTexts:[...rows('.detail-section:not(.detail-definition) h3'),...rows('.detail-section:not(.detail-definition) p'),...rows('.detail-section:not(.detail-definition) li')],
       detailHeadings:[...root.querySelectorAll('.detail-section h3,.detail-compare h3,.detail-exam-points h3')].filter(visible).map(x=>(x.textContent||'').trim()).filter(Boolean),
       underlineCount:root.querySelectorAll('.study-key-underline').length,
       detailFull:root.querySelector('.detail-view')?.textContent||'',
