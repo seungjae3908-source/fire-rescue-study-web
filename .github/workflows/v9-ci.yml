@@ -33,6 +33,7 @@ on:
       - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
       - '.github/workflows/official-monitor.yml'
+      - '.github/workflows/production-current-main-acceptance.yml'
   pull_request:
     paths:
       - 'v9/**'
@@ -47,6 +48,7 @@ on:
       - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
       - '.github/workflows/official-monitor.yml'
+      - '.github/workflows/production-current-main-acceptance.yml'
 
 concurrency:
   group: v9-development-${{ github.event.pull_request.number || github.ref }}
@@ -75,6 +77,7 @@ jobs:
           node --check v9/api/official-monitor.js
           node --check api/official-monitor.js
           node --check api/official-pdf.js
+          node --check api/runtime-head.js
           node --check v9/official-monitor-lib.mjs
           node --check v9/official-monitor-sync.mjs
           node --check v9/official-monitor-live-probe.mjs
@@ -102,6 +105,8 @@ jobs:
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
         run: node v9/official-monitor-api-test.mjs
+      - name: Production runtime identity API gate
+        run: node v9/runtime-head-api-test.mjs
       - name: High-yield semantic depth profile report
         run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
