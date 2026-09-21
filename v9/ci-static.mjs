@@ -680,6 +680,11 @@ ok(officialProxy.includes("req.headers.range")&&officialProxy.includes("'content
 ok(officialProxy.includes('resolveSource(doc')&&officialProxy.includes('extractAttachmentCandidates')&&officialProxy.includes('selectWorkingCandidate')&&officialProxy.includes('pdfProbe')&&officialProxy.includes('jsessionid'),'official PDF proxy resolves and verifies session-bound NFA PDF endpoint candidates server-side');
 ok(officialProxy.includes("const BASE='https://www.nfa.go.kr'")&&officialProxy.includes("/nfsa/releaseinformation/archive/materials/"),'official PDF proxy resolver is pinned to NFA official materials');
 
+const officialMonitorProbe=fs.readFileSync(new URL('./official-monitor-live-probe.mjs',import.meta.url),'utf8');
+ok(officialMonitorProbe.includes('OFFICIAL_MONITOR_EXTERNAL_UNAVAILABLE')&&officialMonitorProbe.includes('OFFICIAL_MONITOR_LIVE_PROBE_COMPLETE_WITH_EXTERNAL_UNAVAILABLE'),'live official-monitor probe reports transport outages without mislabeling them as app defects');
+ok(officialMonitorProbe.includes('OFFICIAL_MONITOR_SOURCE_HARD_FAILURE')&&officialMonitorProbe.includes('OFFICIAL_MONITOR_REQUIRED_SOURCE_PARTIAL'),'live official-monitor probe still fails closed for non-transport source defects');
+ok(officialMonitorProbe.includes('UND_ERR_CONNECT_TIMEOUT')&&officialMonitorProbe.includes('ENOTFOUND')&&officialMonitorProbe.includes('EAI_AGAIN'),'live official-monitor probe explicitly classifies common transport-level outages');
+
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
 ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
 ok(sourcePdf.includes('qn.length<3'),'official PDF evidence accepts short Korean concept anchors such as 롤오버·플래시오버 instead of dropping all queries under eight characters');
