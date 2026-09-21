@@ -331,8 +331,10 @@ try{
   assert(await m.locator('[data-calc-bank]').count()===1,'exam landing exposes a dedicated calculation practice action');
   await m.locator('[data-calc-bank]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='bank');
   await m.waitForSelector('.question-card');
+  const calcFilterLabel=await m.locator('.calc-filter-label').first().innerText();
+  const calcPracticeNote=await m.locator('.calc-practice-note').innerText();
   const calcCopy=await m.locator('.page').innerText();
-  assert(calcCopy.includes('계산 유형')&&calcCopy.includes('계산 연습용 문제이며 실전 모의고사에는 포함되지 않습니다.'),'calculation practice uses student-facing filter and practice copy');
+  assert(calcFilterLabel.trim()==='계산 유형'&&/계산 연습용 문제/.test(calcPracticeNote)&&/실전 모의고사에는 포함되지 않습니다/.test(calcPracticeNote),'calculation practice uses student-facing filter and practice copy');
   assert(!/P등급|실전검증|승격/.test(calcCopy),'calculation practice hides internal QA grading and promotion jargon from learners');
   const calcBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,A=V.App.runtime;const qs=(V.questions||[]).filter(q=>V.QuestionQuality119.isExamStyle(q)&&q.type==='계산형'),audit=V.CalculationTraining119?.audit?.();return{filter:A.bankFilter,count:qs.length,current:qs[A.bankIndex]?.type,ids:qs.map(q=>q.id),audit}}); 
   assert(calcBank.filter==='calc'&&calcBank.count>=87&&calcBank.current==='계산형','calculation practice opens only calculation-type questions with the expanded source-backed drill bank');
