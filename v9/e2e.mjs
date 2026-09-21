@@ -202,6 +202,8 @@ try{
   assert(await m.locator('.book-section .study-quick').count()===1,'core keeps one 30-second summary only');
   assert(await m.locator('.book-section .study-core-essentials li').count()>=1&&await m.locator('.book-section .study-core-essentials li').count()<=5,'core limits exam essentials to five concise points');
   assert(await m.locator('.book-section .study-must,.book-section .study-schema,.book-section .detail-section').count()===0,'core excludes detailed/exam-full duplicate sections');
+  const coreDuplicateNumeric=await m.locator('.book-section .core-view').evaluate(root=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const essentials=[...root.querySelectorAll('.study-core-essentials li span')].map(x=>norm(x.textContent)).filter(Boolean),nums=[...root.querySelectorAll('.study-numbers li .study-key-text')].map(x=>norm(x.textContent)).filter(Boolean);return essentials.some(a=>nums.some(b=>a===b||(Math.min(a.length,b.length)>=18&&(a.includes(b)||b.includes(a)))))}); 
+  assert(!coreDuplicateNumeric,'core keeps numeric facts in one dedicated block instead of repeating them in exam essentials');
   const starBefore=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
   await m.locator('.book-section .study-star-btn').first().click();
   const starAfter=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
