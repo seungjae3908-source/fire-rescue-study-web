@@ -1,6 +1,6 @@
 {
   "cleanUrls": true,
-  "installCommand": "node v9/production-ci-gate.mjs",
+  "ignoreCommand": "node v9/production-ci-ignore-gate.mjs",
   "redirects": [
     {
       "source": "/",
