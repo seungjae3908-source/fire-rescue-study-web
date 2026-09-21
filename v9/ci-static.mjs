@@ -168,11 +168,11 @@ ok(Object.keys(contentAudit.blockers||{}).length===0,'119 content contract has n
 ok(!contentAudit.blockers.questionsEnough&&!contentAudit.blockers.difficultyLow&&!contentAudit.blockers.difficultyMid&&!contentAudit.blockers.difficultyHigh&&!contentAudit.blockers.choiceExplanations,'question-count, difficulty-mix and option-explanation blockers are closed without weakening the contract');
 ok(V.TextbookGrounded119?.targetChars===900&&V.curriculum.concepts.every(x=>V.contentPacks.authored[x.id]?.textbookGrounded119===true),'grounded textbook layer closes whatever depth/section/trap/memory shortfalls remain after source-backed enrichment');
 ok(!contentAudit.blockers.textbookDepth&&!contentAudit.blockers.structuredSections&&!contentAudit.blockers.examTraps&&!contentAudit.blockers.memoryPoints&&!contentAudit.blockers.comparison,'textbook depth, structure, traps, memory and required comparisons are closed');
-ok(V.VisualCompletion119?.targets?.length===28,'visual completion tracks the audited 28 visual concepts');
+ok(V.VisualCompletion119?.targets?.length===30,'visual completion tracks the audited 30 visual concepts');
 ok(V.VisualCompletion119.targets.every(id=>{
   const p=V.contentPacks.authored[id];
   return (p?.visuals||[]).length>0&&(p.visuals||[]).some(v=>!!V.Visual119.render(v));
-}),'all 27 required visual concepts render at least one real Visual119 diagram');
+}),'all 30 audited visual concepts render at least one real Visual119 diagram');
 ok(!contentAudit.blockers.visual,'visual blocker remains closed');
 ok(V.CalculationContract119?.requiredIds?.length===13&&V.CalculationContract119.requiredIds.includes('F03-C02')&&V.CalculationContract119.requiredIds.includes('F03-C03')&&V.CalculationContract119.requiredIds.includes('F04-C04')&&V.CalculationContract119.requiredIds.includes('E07-C03')&&V.CalculationContract119.requiredIds.includes('E09-C07')&&V.CalculationContract119.requiredIds.includes('E14-C03'),'calculation contract tracks fire heat foam hazardous-material combustion-air oxygen-cylinder IV-drip and Parkland source-applicable concepts');
 ok(V.CalculationContract119.requiredIds.every(id=>(V.contentPacks.authored[id]?.calculations||[]).length>0),'all source-applicable calculation concepts expose a real calculation contract');
