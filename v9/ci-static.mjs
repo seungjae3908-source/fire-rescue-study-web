@@ -690,6 +690,7 @@ ok(officialMonitorProbe.includes('OFFICIAL_MONITOR_SOURCE_HARD_FAILURE')&&offici
 ok(officialMonitorProbe.includes('UND_ERR_CONNECT_TIMEOUT')&&officialMonitorProbe.includes('ENOTFOUND')&&officialMonitorProbe.includes('EAI_AGAIN'),'live official-monitor probe explicitly classifies common transport-level outages');
 
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
+ok(sourcePdf.includes("pdfjs-v12-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:hit.line.text'), 'official PDF evidence underlines strong anchor lines plus matching explanatory context');
 ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
 ok(sourcePdf.includes('qn.length<3'),'official PDF evidence accepts short Korean concept anchors such as 롤오버·플래시오버 instead of dropping all queries under eight characters');
 ok(sourcePdf.includes('anchorTokens')&&sourcePdf.includes('exactAnchorLines')&&sourcePdf.includes('anchorTerms:opts.anchorTerms'),'official PDF evidence deterministically prioritizes exact concept-anchor lines before scored surrounding text');
@@ -700,6 +701,11 @@ ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialR
 ok(sourcePdf.includes('SOURCE_REMOTE_UNRESOLVED'),'unresolved direct PDFs fail closed to official-page fallback');
 ok(sourcePdf.includes('opts.zoom')&&sourcePdf.includes('fitScale')&&sourcePdf.includes('Math.min(3'),'official PDF renderer supports fit-width user zoom while preserving up to 3x device-pixel sharpness');
 const appSource=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ok(appSource.includes('scrollTutorToBottom')&&appSource.includes("state().studyTab==='ai'"),'AI study chat always restores the latest conversation after an AI-tab render');
+ok(appSource.includes('tutorPipeRow')&&appSource.includes('tutor-ai-table-wrap')&&appSource.includes('AI 답변 표'),'AI answers normalize both strict and loose pipe tables into a responsive accessible table');
+ok(appSource.includes('detailSemanticTitle')&&appSource.includes('detailDefinitionBlock')&&appSource.includes('detailGroups'),'detail view is semantically structured into definition and meaning-based sections instead of generic repeated headings');
+ok(appSource.includes('study-key-underline')&&appSource.includes('coreHighlightTerms'),'core view underlines high-yield terms and numeric criteria');
+ok(appSource.includes("scope:'document'")&&appSource.includes('broadHit.score>=8'),'source evidence recovery expands beyond mapped pages only for a strong whole-document match');
 ok(appSource.includes("updatedAt:Date.now()"),'profile save stamps its conflict clock directly without a second sync UI listener');
 ok(appSource.includes('근거를 그대로 나열하는 검색기가 아니라')&&appSource.includes('wantsTutorEvidence'),'study AI is answer-first by default and preserves an explicit evidence-only mode');
 ok(appSource.includes("navigator.gpu&&V.LocalAI?.ensure"),'first eligible AI question may initialize the local reasoning engine instead of staying on static evidence fallback');
