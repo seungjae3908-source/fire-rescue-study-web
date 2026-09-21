@@ -4,7 +4,7 @@ const V=window.AITUTOR_V9=window.AITUTOR_V9||{},X=V.Visual119,P=V.contentPacks?.
 if(!X?.data||!X?.render||!P||!C)return;
 
 const targets=[
-'F03-C06','F07-C05',
+'F03-C06','F03-C07','F03-C08','F07-C05',
 'E04-C01','E04-C02','E07-C01','E09-C01','E10-C01','E10-C04',
 'E11-C01','E11-C02','E11-C03','E11-C04','E11-C05','E12-C01','E14-C03',
 'E15-C01','E15-C03','E16-C01','E20-C01','E20-C02','E20-C03','E20-C04',
@@ -12,6 +12,8 @@ const targets=[
 ];
 const preferred={
 'F03-C06':['flashover-flow','backdraft-flow','rollover-flow'],
+'F03-C07':['smoke-flow-path'],
+'F03-C08':['explosion-compare'],
 'F07-C05':['sprinkler-system'],
 'E09-C01':['ems-airway-open'],
 'E11-C02':['ems-ecg-nonarrest-rhythms'],
