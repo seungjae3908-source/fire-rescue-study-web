@@ -614,6 +614,20 @@ try{
   const firePhenomenaText=await m.locator('.book-section').innerText();
   for(const term of ['플레임오버','롤오버','플래시오버','백드래프트'])assert(firePhenomenaText.includes(term),'four-way fire comparison includes '+term);
 
+  const tankPhenomena=[
+    ['F03-C12','보일오버',['원유','중질유','장시간','하부','슬롭오버','프로스오버']],
+    ['F03-C13','슬롭오버',['표면','물','포수용액','보일오버','프로스오버']],
+    ['F03-C14','프로스오버',['화재','고온','점성','보일오버','슬롭오버']]
+  ];
+  for(const [id,title,terms] of tankPhenomena){
+    await m.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
+    await m.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,id);
+    await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+    const tankText=await m.locator('.book-section').innerText();
+    assert((await m.locator('.concept-head h2').innerText()).trim()===title,'tank-fire phenomenon keeps its own lesson title: '+title);
+    for(const term of terms)assert(tankText.includes(term),title+' detail keeps distinguishing clue/comparison: '+term);
+  }
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C10'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C10');
   assert((await m.locator('.concept-head h2').innerText()).trim()==='플레임오버','flameover has its own curriculum lesson title');
