@@ -27,6 +27,7 @@ function save(exam,ownerId){
     i:Math.max(0,Math.min(Number(exam.i)||0,questionIds.length-1)),
     startedAt:Number(exam.startedAt)||Date.now(),
     answers,
+    confidence:Object.fromEntries(Object.entries(exam.confidence||{}).filter(([id,v])=>questionIds.includes(id)&&['sure','maybe','none'].includes(v))),
     blueprint:exam.blueprint&&typeof exam.blueprint==='object'?exam.blueprint:null,
     savedAt:Date.now()
   };
@@ -57,6 +58,7 @@ function restore(ownerId){
     i:Math.max(0,Math.min(Number(row.i)||0,qs.length-1)),
     startedAt:Number(row.startedAt),
     answers,
+    confidence:Object.fromEntries(Object.entries(row.confidence||{}).filter(([id,v])=>row.questionIds.includes(id)&&['sure','maybe','none'].includes(v))),
     blueprint:row.blueprint||null,
     restored:true
   }
