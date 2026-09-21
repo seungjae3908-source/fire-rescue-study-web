@@ -693,6 +693,14 @@ ok(sourcePdf.includes('devicePixelRatio')&&sourcePdf.includes('outputScale'),'of
 ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs are never server-uploaded and remain unmodified');
 ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialRemotePreferred:true'),'PDF evidence prefers official remote sources and never requires user upload');
 ok(sourcePdf.includes('SOURCE_REMOTE_UNRESOLVED'),'unresolved direct PDFs fail closed to official-page fallback');
+ok(sourcePdf.includes('opts.zoom')&&sourcePdf.includes('fitScale')&&sourcePdf.includes('Math.min(3'),'official PDF renderer supports fit-width user zoom while preserving up to 3x device-pixel sharpness');
+const appSource=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ok(appSource.includes('근거를 그대로 나열하는 검색기가 아니라')&&appSource.includes('wantsTutorEvidence'),'study AI is answer-first by default and preserves an explicit evidence-only mode');
+ok(appSource.includes("navigator.gpu&&V.LocalAI?.ensure"),'first eligible AI question may initialize the local reasoning engine instead of staying on static evidence fallback');
+ok(appSource.includes('cap=Math.max(1,Math.ceil(n/Math.max(1,scopeIds.length))+1)'),'exam sampler caps per-scope concentration after guaranteeing scope coverage');
+ok(!v9index.includes('./source-ui.js'),'legacy source uploader/compiler UI is not loaded in the learner runtime');
+ok(!sw.includes("'./source-ui.js'"),'service worker no longer caches the legacy source uploader/compiler UI');
+
 const pdf=fs.readFileSync(new URL('./pdf.js',import.meta.url),'utf8');
 ok(pdf.includes('exportForSync')&&pdf.includes('importFromSync'),'private extracted text supports owner-scoped member sync');
 ok(pdf.includes('deletedDocuments')&&pdf.includes('deletionTombstones:true'),'local private-document deletion uses owner-scoped tombstones');
