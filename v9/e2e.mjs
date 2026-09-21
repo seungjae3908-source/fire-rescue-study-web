@@ -155,6 +155,8 @@ try{
   await boot(m);
   const navLabels=(await m.locator('.mobile-nav button').allInnerTexts()).map(x=>x.trim());
   assert(JSON.stringify(navLabels)===JSON.stringify(['홈','학습','시험','오답','더보기']),'mobile primary navigation is explicit and student-facing');
+  const mobileNavVisual=await m.locator('.mobile-nav').evaluate(root=>{const active=root.querySelector('button.active'),button=root.querySelector('button');return{gap:getComputedStyle(root).gap,activeBg:active?getComputedStyle(active).backgroundColor:'',radius:button?parseFloat(getComputedStyle(button).borderRadius):0}});
+  assert(mobileNavVisual.activeBg!=='rgba(0, 0, 0, 0)'&&mobileNavVisual.radius>=8,'mobile primary navigation has one clear active surface instead of text-only state');
   await cleanPage(m,'mobile home');
   const todayBox=await m.locator('.today-item').first().boundingBox();
   const todayTitleBox=await m.locator('.today-item').first().locator('b').boundingBox();
