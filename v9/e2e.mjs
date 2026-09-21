@@ -143,7 +143,8 @@ try{
 
   await go(p,'settings');await cleanPage(p,'desktop settings');
   const settingsText=await p.locator('.page').innerText();
-  assert(settingsText.includes('개인 자료')&&settingsText.includes('공식 일정'),'settings keeps privacy information and official-only exam schedule truth');
+  assert(settingsText.includes('개인정보')&&settingsText.includes('공식 일정'),'settings keeps privacy information and official-only exam schedule truth');
+  assert(!settingsText.includes('업로드 자료')&&!settingsText.includes('개인 자료'),'settings has no learner personal-document upload copy');
   assert(await p.locator('#profileDate').count()===0,'manual exam-date input is removed; official monitor owns the exam date');
 
   await p.evaluate(()=>window.AITUTOR_V9.App.go('tutor'));
