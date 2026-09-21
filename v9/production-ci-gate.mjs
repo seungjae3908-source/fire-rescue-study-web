@@ -4,7 +4,7 @@ const REPO='seungjae3908-source/fire-rescue-study-web';
 const WORKFLOW='V9 Development CI';
 const POLL_MS=30_000;
 const TIMEOUT_MS=12*60_000;
-const env=String(process.env.VERCEL_ENV||process.env.VERCEL_TARGET_ENV||'').trim();
+const isVercel=String(process.env.VERCEL||'').trim()==='1';
 const ref=String(process.env.VERCEL_GIT_COMMIT_REF||'').trim();
 
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -12,15 +12,27 @@ const gitSha=()=>{
   try{return execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()}catch{return ''}
 };
 
-// Preview/development deployments must never wait on the production post-merge gate.
-if(env!=='production'||(ref&&ref!=='main')){
-  console.log('PRODUCTION_CI_GATE_BYPASS',JSON.stringify({env,ref:ref||null}));
+// Local installs are not deployments and must not contact GitHub.
+if(!isVercel){
+  console.log('PRODUCTION_CI_GATE_BYPASS',JSON.stringify({reason:'NOT_VERCEL'}));
+  process.exit(0);
+}
+
+// A Vercel Git deployment without its branch identity is unsafe to classify.
+if(!ref){
+  console.error('PRODUCTION_CI_GATE_FAILED',JSON.stringify({reason:'MISSING_GIT_REF'}));
+  process.exit(1);
+}
+
+// Preview branches must never wait on the post-merge main gate.
+if(ref!=='main'){
+  console.log('PRODUCTION_CI_GATE_BYPASS',JSON.stringify({reason:'NON_MAIN',ref}));
   process.exit(0);
 }
 
 const sha=String(process.env.VERCEL_GIT_COMMIT_SHA||gitSha()).trim();
 if(!/^[0-9a-f]{40}$/i.test(sha)){
-  console.error('PRODUCTION_CI_GATE_FAILED',JSON.stringify({reason:'MISSING_EXACT_SHA',env,ref:ref||null}));
+  console.error('PRODUCTION_CI_GATE_FAILED',JSON.stringify({reason:'MISSING_EXACT_SHA',ref}));
   process.exit(1);
 }
 
@@ -31,7 +43,7 @@ let transientErrors=0;
 while(Date.now()<deadline){
   let response;
   try{
-    response=await fetch(endpoint,{headers:{'accept':'application/vnd.github+json','user-agent':'119-study-production-ci-gate/1.0','x-github-api-version':'2022-11-28'},cache:'no-store'});
+    response=await fetch(endpoint,{headers:{'accept':'application/vnd.github+json','user-agent':'119-study-production-ci-gate/2.0','x-github-api-version':'2022-11-28'},cache:'no-store'});
   }catch(error){
     transientErrors++;
     console.warn('PRODUCTION_CI_GATE_RETRY',JSON.stringify({reason:'FETCH_ERROR',attempt:transientErrors,error:String(error?.message||error).slice(0,180)}));
