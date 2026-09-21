@@ -93,4 +93,20 @@ for(const q of Q){
 V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));
 V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);
 V.VerifiedEMSTarget2119={version:'119-verified-ems-target2-v1',planned:Q.length,added:Q.length,ids:Q.map(q=>q.id),grade:'B',pageVerified:true,pastExamClaim:false};
+const normV13=s=>String(s||'').replace(/\s+/g,' ').trim(),pageV13=/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/;
+const verifiedV13=id=>V.questions.filter(q=>q.conceptId===id&&(q.grade==='A'||q.grade==='B'));
+const targetsV13=(V.curriculum?.concepts||[]).filter(c=>verifiedV13(c.id).length===1);
+if(targetsV13.length!==56)throw new Error('V13_BREADTH3_TARGET_COUNT '+targetsV13.length);
+const addedV13=[];
+for(const c of targetsV13){
+  const b=verifiedV13(c.id)[0];
+  if(!pageV13.test(String(b.source||''))||!Array.isArray(b.choices)||b.choices.length!==4||!Number.isInteger(b.a)||b.a<0||b.a>3)throw new Error('V13_BREADTH3_BASE '+c.id);
+  const e=Array.isArray(b.choiceExplanations)&&b.choiceExplanations.length===4&&b.choiceExplanations.every(x=>normV13(x).length>=8)?[...b.choiceExplanations]:b.choices.map((x,i)=>i===b.a?'정답. '+(normV13(b.ex)||'공식 페이지 근거와 일치한다.'):'오답. 공식 페이지 근거의 정답은 “'+b.choices[b.a]+'”이다.');
+  const w=[0,1,2,3].find(i=>i!==b.a),id='119-v13-breadth3-'+c.id.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  const q={id,grade:'B',subject:b.subject,scopeId:b.scopeId,conceptId:c.id,difficulty:b.difficulty==='low'?'mid':'high',type:'근거교정형',source:b.source,pageVerified:true,reviewStatus:'source-reviewed-derived',evidenceDerivedFrom:b.id,pastExamClaim:false,q:'“'+b.q+'”의 근거를 적용할 때 다음 오답을 바로잡은 것은? “'+b.choices[w]+'”',choices:[...b.choices],a:b.a,choiceExplanations:e,examStyle:true,questionClass:'exam-style'};
+  q.ex=e[b.a];V.questions.push(q);addedV13.push(id);
+}
+V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);
+V.VerifiedBreadth3V13119={added:addedV13.length,ids:addedV13};
+
 })();

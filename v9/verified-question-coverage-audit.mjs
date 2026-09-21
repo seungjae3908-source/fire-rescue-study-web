@@ -77,4 +77,27 @@ if(highYieldZero.length)throw new Error('HIGH_YIELD_VERIFIED_ZERO '+JSON.stringi
 if(highYieldUnderTwo.length)throw new Error('HIGH_YIELD_VERIFIED_UNDER_TWO '+JSON.stringify(highYieldUnderTwo.map(x=>({id:x.id,title:x.title,verified:x.verified}))));
 if(highYieldUnderThree.length)throw new Error('HIGH_YIELD_VERIFIED_UNDER_THREE '+JSON.stringify(highYieldUnderThree.map(x=>({id:x.id,title:x.title,verified:x.verified}))));
 if(highYieldGaps.length)throw new Error('HIGH_YIELD_VERIFIED_UNDER_FOUR '+JSON.stringify(highYieldGaps.map(x=>({id:x.id,title:x.title,verified:x.verified}))));
+
+const underTwo=concepts.filter(x=>x.verified<2);
+const breadth3=(V.questions||[]).filter(q=>/^119-v13-breadth3-/.test(q.id||''));
+const byId=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
+const pageRe=/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/;
+const brokenBreadth3=breadth3.filter(q=>{
+  const base=byId[q.evidenceDerivedFrom];
+  return q.grade!=='B'
+    ||q.pageVerified!==true
+    ||q.reviewStatus!=='source-reviewed-derived'
+    ||!pageRe.test(String(q.source||''))
+    ||!base
+    ||!(base.grade==='A'||base.grade==='B')
+    ||base.conceptId!==q.conceptId
+    ||String(base.source||'')!==String(q.source||'');
+});
+console.log('VERIFIED_QUESTION_UNDER_TWO');console.table(underTwo);
+console.log('VERIFIED_BREADTH3_SUMMARY',JSON.stringify({added:breadth3.length,broken:brokenBreadth3.length,expected:56},null,2));
+console.log('VERIFIED_BREADTH3_BROKEN_BINDINGS');console.table(brokenBreadth3.map(q=>({id:q.id,conceptId:q.conceptId,source:q.source,evidenceDerivedFrom:q.evidenceDerivedFrom})));
+if(underTwo.length)throw new Error('VERIFIED_CONCEPT_UNDER_TWO '+JSON.stringify(underTwo.map(x=>({id:x.id,title:x.title,verified:x.verified}))));
+if(breadth3.length!==56)throw new Error('VERIFIED_BREADTH3_COUNT '+breadth3.length+' expected 56');
+if(brokenBreadth3.length)throw new Error('VERIFIED_BREADTH3_BINDING '+JSON.stringify(brokenBreadth3.map(q=>q.id)));
+
 console.log('VERIFIED_QUESTION_COVERAGE_AUDIT_COMPLETE');
