@@ -112,7 +112,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
       essentialTexts:rows('.study-core-essentials li span'),
       coreTexts:[...rows('.study-quick p'),...rows('.study-core-essentials li span')],
       detailTexts:[...rows('.detail-section h3'),...rows('.detail-section p'),...rows('.detail-section li')],
-      detailHeadings:[...root.querySelectorAll('.detail-section h3,.detail-compare h3')].filter(visible).map(x=>(x.textContent||'').trim()).filter(Boolean),
+      detailHeadings:[...root.querySelectorAll('.detail-section h3,.detail-compare h3,.detail-exam-points h3')].filter(visible).map(x=>(x.textContent||'').trim()).filter(Boolean),
       underlineCount:root.querySelectorAll('.study-key-underline').length,
       detailFull:root.querySelector('.detail-view')?.textContent||'',
       tab
@@ -123,6 +123,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
     coreCache.set(id,x.coreTexts);
     if(x.quick!==1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-summary-count',count:x.quick});
     if(x.essentials<1||x.essentials>5)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-essential-count',count:x.essentials});
+    if(x.underlineCount<1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-underline-missing'});
     if(x.details||x.schemas)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-detail-leak',details:x.details,schemas:x.schemas});
     const nums=new Set(x.numbers),dupe=(x.essentialTexts||[]).some(t=>nums.has(t)&&t.length>=18);
     if(dupe&&x.numbers.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-number-duplicate'});
