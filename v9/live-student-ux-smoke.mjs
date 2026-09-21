@@ -1,7 +1,8 @@
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_PREVIEW_URL||'https://study-119-preview.vercel.app/';
-const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'9aeaadd12b01b36c2addda29860133d4296b9877';
+const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
+if(!/^[0-9a-f]{40}$/i.test(expected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
 function observe(page){const errors=[];page.on('pageerror',e=>errors.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('console:'+m.text())});page.on('requestfailed',r=>errors.push('requestfailed:'+r.url()+' '+(r.failure()?.errorText||'')));return errors}
@@ -15,8 +16,13 @@ try{
     await page.waitForFunction(()=>!!window.AITUTOR_V9?.App,{timeout:60000});
     await page.waitForSelector('.app',{state:'visible',timeout:60000});
     assert(await page.locator('.boot').count()===0,'boot screen removed '+vp.width);
-    const head=await page.evaluate(()=>window.AITUTOR_V9_CONFIG?.exactHead||'');
-    assert(head===expected,'runtime head matches '+expected);
+    const runtime=await page.evaluate(async()=>{
+      const res=await fetch('/api/runtime-head',{cache:'no-store'});
+      let body={};try{body=await res.json()}catch{}
+      return{status:res.status,...body};
+    });
+    assert(runtime.status===200&&runtime.ok===true,'runtime identity endpoint is healthy '+vp.width);
+    assert(runtime.sha===expected,'runtime head matches '+expected);
     await noX(page,'home '+vp.width);
 
     await page.evaluate(()=>window.AITUTOR_V9.App.go('study'));

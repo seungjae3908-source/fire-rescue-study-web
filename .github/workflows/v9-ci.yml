@@ -33,6 +33,7 @@ on:
       - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
       - '.github/workflows/official-monitor.yml'
+      - '.github/workflows/production-current-main-acceptance.yml'
   pull_request:
     paths:
       - 'v9/**'
@@ -47,6 +48,7 @@ on:
       - 'vercel.json'
       - '.github/workflows/v9-ci.yml'
       - '.github/workflows/official-monitor.yml'
+      - '.github/workflows/production-current-main-acceptance.yml'
 
 concurrency:
   group: v9-development-${{ github.event.pull_request.number || github.ref }}
@@ -75,6 +77,7 @@ jobs:
           node --check v9/api/official-monitor.js
           node --check api/official-monitor.js
           node --check api/official-pdf.js
+          node --check api/runtime-head.js
           node --check v9/official-monitor-lib.mjs
           node --check v9/official-monitor-sync.mjs
           node --check v9/official-monitor-live-probe.mjs
@@ -102,6 +105,8 @@ jobs:
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
         run: node v9/official-monitor-api-test.mjs
+      - name: Production runtime identity API gate
+        run: node v9/runtime-head-api-test.mjs
       - name: High-yield semantic depth profile report
         run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
@@ -562,32 +567,6 @@ jobs:
       - name: Deployed personal PDF extraction/isolation QA
         run: node v9/pdf-e2e.mjs
       - name: Deployed image OCR + owner restore QA
-        run: node v9/image-ocr-e2e.mjs
-
-  production_root_live_acceptance:
-    if: "${{ contains(github.event.head_commit.message, 'production root live acceptance') }}"
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      STUDY_119_PREVIEW_URL: https://fire-rescue-study-web.vercel.app/
-      STUDY_119_EXPECTED_APP_HEAD: 1f38cbd7f57d035ccdf993a8b1eed5d66a75fdb1
-      STUDY_119_PDF_FIXTURE_URL: https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/1f38cbd7f57d035ccdf993a8b1eed5d66a75fdb1/v9/fixtures/private-sample.pdf
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.0.0
-        with:
-          node-version: '22'
-      - name: Install production browser QA
-        run: |
-          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
-          npx playwright install --with-deps chromium
-      - name: Production 119 release-candidate acceptance
-        run: node v9/release-candidate-live-e2e.mjs
-      - name: Production expired-session fail-closed QA
-        run: node v9/auth-session-e2e.mjs
-      - name: Production personal PDF extraction/isolation QA
-        run: node v9/pdf-e2e.mjs
-      - name: Production image OCR + owner restore QA
         run: node v9/image-ocr-e2e.mjs
 
   real_mock_live_acceptance:
