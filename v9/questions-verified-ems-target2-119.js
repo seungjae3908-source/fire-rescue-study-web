@@ -110,8 +110,11 @@ V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.questionsForCo
 V.VerifiedBreadth3V13119={added:addedV13.length,ids:addedV13};
 
 const vh=s=>{let h=2166136261;for(const c of String(s||'')){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
-const vb=(V.questions||[]).filter(q=>(q.grade==='A'||q.grade==='B')&&q.choices?.length===4&&q.choiceExplanations?.length===4);
-for(const q of vb){const rows=q.choices.map((x,i)=>({x,e:q.choiceExplanations[i],ok:i===q.a})),n=(vh(q.id)>>>8)%4,r=n?[...rows.slice(n),...rows.slice(0,n)]:rows;q.choices=r.map(x=>x.x);q.choiceExplanations=r.map(x=>x.e);q.a=r.findIndex(x=>x.ok);q.ex=q.choiceExplanations[q.a]}
-V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.VerifiedChoiceBalance119={count:vb.length,version:'119-v13-verified-choice-balance-v1'};
+const vb=(V.questions||[]).filter(q=>(q.grade==='A'||q.grade==='B')&&q.choices?.length===4);
+for(const q of vb){
+  if(!Array.isArray(q.choiceExplanations)||q.choiceExplanations.length!==4){const a=q.a,correct=q.choices[a],ex=String(q.ex||'정답. 공식 근거와 일치한다.');q.choiceExplanations=q.choices.map((x,i)=>i===a?ex:`오답. “${x}”은 공식 근거의 정답 “${correct}”과 일치하지 않는다.`)}
+  const rows=q.choices.map((x,i)=>({x,e:q.choiceExplanations[i],ok:i===q.a})),n=(vh(q.id)>>>8)%4,r=n?[...rows.slice(n),...rows.slice(0,n)]:rows;q.choices=r.map(x=>x.x);q.choiceExplanations=r.map(x=>x.e);q.a=r.findIndex(x=>x.ok);q.ex=q.choiceExplanations[q.a]
+}
+V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.VerifiedChoiceBalance119={count:vb.length,version:'119-v13-verified-choice-balance-v2'};
 
 })();
