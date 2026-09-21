@@ -49,6 +49,8 @@ function createClient(url,key){
     select(cols='*'){this.op='select';this.cols=cols||'*';return this}
     eq(col,val){this.filters.push([col,'eq',val]);return this}
     in(col,vals){this.filters.push([col,'in',Array.isArray(vals)?vals:[]]);return this}
+    order(col,{ascending=true}={}){this.orderBy=[String(col||''),ascending!==false];return this}
+    range(from,to){this.rangeFrom=Math.max(0,Number(from)||0);this.rangeTo=Math.max(this.rangeFrom,Number(to)||this.rangeFrom);return this}
     delete(){this.op='delete';return this}
     update(values){this.op='update';this.body=values||{};return this}
     insert(rows){this.op='insert';this.body=rows;return this.exec()}
@@ -58,6 +60,8 @@ function createClient(url,key){
     async exec(){
       const qs=new URLSearchParams();if(this.op==='select')qs.set('select',this.cols);
       for(const [c,o,v] of this.filters){if(o==='eq')qs.set(c,'eq.'+String(v));else if(o==='in')qs.set(c,'in.('+v.map(x=>String(x).replace(/"/g,'')).join(',')+')')}
+      if(this.orderBy?.[0])qs.set('order',this.orderBy[0]+'.'+(this.orderBy[1]?'asc':'desc'));
+      if(Number.isFinite(this.rangeFrom)&&Number.isFinite(this.rangeTo)){qs.set('offset',String(this.rangeFrom));qs.set('limit',String(this.rangeTo-this.rangeFrom+1))}
       if(this.options.onConflict)qs.set('on_conflict',this.options.onConflict);
       const q=qs.toString(),path='/rest/v1/'+encodeURIComponent(this.table)+(q?'?'+q:'');
       let method='GET',body,extra={};

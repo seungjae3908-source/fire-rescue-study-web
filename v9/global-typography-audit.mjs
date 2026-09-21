@@ -93,6 +93,45 @@ async function auditVisible(page,meta){
   for(const p of result.density||[])pushIssue({...meta,...p});
   if(result.small.length)warnings.push({...meta,type:'small-font',count:result.small.length,samples:result.small.slice(0,4)});
 }
+async function auditStudyRole(page,{id,tab},coreCache){
+  if(!['core','detail'].includes(tab))return;
+  const x=await page.evaluate(tab=>{
+    const visible=el=>{if(!el)return false;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
+    const root=[...document.querySelectorAll('.study-body-mobile,.study-body-desktop')].find(visible);
+    if(!root)return null;
+    const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');
+    const rows=sel=>[...root.querySelectorAll(sel)].filter(visible).map(x=>norm(x.textContent)).filter(Boolean);
+    return{
+      quick:root.querySelectorAll('.study-quick').length,
+      essentials:root.querySelectorAll('.study-core-essentials li').length,
+      details:root.querySelectorAll('.detail-section').length,
+      schemas:root.querySelectorAll('.study-schema').length,
+      numbers:rows('.study-numbers li'),
+      traps:rows('.study-traps li'),
+      essentialTexts:rows('.study-core-essentials li span'),
+      coreTexts:[...rows('.study-quick p'),...rows('.study-core-essentials li span')],
+      detailTexts:[...rows('.detail-section h3'),...rows('.detail-section p'),...rows('.detail-section li')],
+      detailFull:root.querySelector('.detail-view')?.textContent||'',
+      tab
+    }
+  },tab);
+  if(!x){pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'study-role-root-missing'});return}
+  if(tab==='core'){
+    coreCache.set(id,x.coreTexts);
+    if(x.quick!==1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-summary-count',count:x.quick});
+    if(x.essentials<1||x.essentials>5)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-essential-count',count:x.essentials});
+    if(x.details||x.schemas)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-detail-leak',details:x.details,schemas:x.schemas});
+    const nums=new Set(x.numbers),dupe=(x.essentialTexts||[]).some(t=>nums.has(t)&&t.length>=18);
+    if(dupe&&x.numbers.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-number-duplicate'});
+  }else{
+    if(x.quick||x.essentials||x.numbers.length||x.traps.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-core-leak',quick:x.quick,essentials:x.essentials,numbers:x.numbers.length,traps:x.traps.length});
+    if(/개념\s*구조와\s*읽는\s*순서|학습\s*순서|검증문제·범위/.test(x.detailFull))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-meta-copy'});
+    const core=coreCache.get(id)||[];
+    const repeated=x.detailTexts.filter(d=>core.some(k=>{const min=Math.min(d.length,k.length),max=Math.max(d.length,k.length);return min>=24&&min/max>=.78&&(d===k||d.includes(k)||k.includes(d))})).slice(0,3);
+    if(repeated.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-detail-repeat',samples:repeated});
+  }
+}
+
 async function auditExam(page,meta){
   await page.evaluate(()=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.App.go('exam')});
   await page.waitForSelector('.exam-start');
@@ -124,16 +163,28 @@ try{
     const page=await ctx.newPage();
     await boot(page);
     const ids=await page.evaluate(()=>window.AITUTOR_V9.curriculum.concepts.map(x=>x.id));
+    const coreCache=new Map();
     for(const id of ids){
       for(const tab of tabs){
         await setStudy(page,id,tab);
         await auditVisible(page,{width:vp.width,id,tab});
+        await auditStudyRole(page,{id,tab},coreCache);
         states++;
         if(issues.length>=maxIssues)break;
       }
       if(issues.length>=maxIssues)break;
     }
-    if(vp.mobile)await auditExam(page,{width:vp.width,id:'ACTIVE-EXAM'});
+    if(issues.length<maxIssues){
+      for(const route of ['home','notes','bank','exam','wrong','stats','resources','suggestions','settings']){
+        await page.evaluate(route=>window.AITUTOR_V9.App.go(route),route);
+        await page.waitForFunction(route=>window.AITUTOR_V9.Store.state.page===route,route);
+        await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+        await auditVisible(page,{width:vp.width,id:'ROUTE-'+route,tab:'route'});
+        states++;
+        if(issues.length>=maxIssues)break;
+      }
+    }
+    if(vp.mobile&&issues.length<maxIssues)await auditExam(page,{width:vp.width,id:'ACTIVE-EXAM'});
     await ctx.close();
     if(issues.length>=maxIssues)break;
   }
@@ -143,5 +194,5 @@ try{
     if(issues.length)console.error('GLOBAL_TYPOGRAPHY_AUDIT_ISSUES',JSON.stringify(issues,null,2));
     throw new Error('GLOBAL_TYPOGRAPHY_AUDIT_FAILED '+JSON.stringify({issues:issues.length,smallTextGroups:warnings.length}));
   }
-  assert(true,'all concept tabs and active exam pass global typography/layout audit with no clipping, nested mobile study scroll, excessive study padding, nested panels or sub-11px student controls');
+  assert(true,'all concept tabs, primary app routes and active exam pass global typography/layout audit with no clipping, nested mobile study scroll, excessive study padding, nested panels or sub-11px student controls');
 }finally{await browser.close()}

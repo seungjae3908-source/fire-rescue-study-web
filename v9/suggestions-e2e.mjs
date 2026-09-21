@@ -14,6 +14,8 @@ try{
       constructor(table){this.table=table;this.filters=[];this.op='select'}
       select(){this.op='select';return this}
       eq(k,v){this.filters.push([k,v]);return this}
+      order(){return this}
+      range(from,to){this.pageRange=[Number(from)||0,Number(to)||0];return this}
       delete(){this.op='delete';return this}
       update(values){this.op='update';this.patch=values||{};return this}
       maybeSingle(){this.single=true;return this.exec()}
@@ -25,6 +27,8 @@ try{
         if(this.table==='study_suggestions'){
           if(this.op==='select'&&!this.single&&delayFirstList){await new Promise(r=>{releaseFirstList=r});delayFirstList=false}
           let data=rows.slice();for(const [k,v] of this.filters)data=data.filter(x=>x[k]===v);
+          data.sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0));
+          if(this.op==='select'&&!this.single&&this.pageRange){const[from,to]=this.pageRange;data=data.slice(from,to+1)}
           if(this.op==='delete'){for(const row of data){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows.splice(i,1)}return{data:null,error:null}}
           if(this.op==='update'){for(const row of data){const i=rows.findIndex(x=>x.id===row.id);if(i>=0)rows[i]={...rows[i],...(this.patch||{})}}return{data:null,error:null}}
           return{data:this.single?(data[0]||null):data,error:null}
@@ -51,6 +55,23 @@ try{
   assert((await page.locator('.suggestion-list').innerText()).includes('모바일 글자 정렬 개선'),'member sees own submitted suggestion');
   assert((await page.locator('.suggestion-list').innerText()).includes('접수'),'new suggestion starts in 접수 state');
   assert((await page.locator('#suggestTitle').inputValue())===''&&(await page.locator('#suggestBody').inputValue())==='','successful submission clears the draft only after persistence succeeds');
+
+  await page.evaluate(()=>{
+    const rows=window.__suggestQa.rows,base=Date.now()-1000;
+    for(let i=0;i<25;i++)rows.push({id:'page-'+i,user_id:'qa-user',category:'개선',title:'누적 건의 '+(i+1),body:'페이지네이션 검증 '+(i+1),anonymous:true,status:'접수',admin_reply:'',created_at:new Date(base-i*1000).toISOString(),updated_at:new Date(base-i*1000).toISOString()});
+  });
+  await page.locator('[data-suggest-refresh]').click();
+  await page.waitForFunction(()=>document.querySelectorAll('.suggestion-row').length===20);
+  assert(await page.locator('.suggestion-row').count()===20,'suggestion board renders at most 20 rows per page');
+  assert(!(await page.locator('[data-suggest-next]').isDisabled()),'next-page control is enabled when more rows exist');
+  await page.locator('[data-suggest-next]').click();
+  await page.waitForFunction(()=>window.AITUTOR_V9.App.runtime.suggestionPage===1&&!window.AITUTOR_V9.App.runtime.suggestionsLoading);
+  assert(await page.locator('.suggestion-row').count()===6,'second suggestion page contains only remaining rows');
+  assert(!(await page.locator('[data-suggest-prev]').isDisabled()),'previous-page control is enabled after moving forward');
+  assert(await page.locator('[data-suggest-next]').isDisabled(),'last suggestion page disables next-page control');
+  await page.locator('[data-suggest-prev]').click();
+  await page.waitForFunction(()=>window.AITUTOR_V9.App.runtime.suggestionPage===0&&!window.AITUTOR_V9.App.runtime.suggestionsLoading);
+  assert(await page.locator('.suggestion-row').count()===20,'returning to first suggestion page restores bounded list');
 
   await page.evaluate(async()=>{window.__suggestQa.setAdmin(true);window.AITUTOR_V9.App.runtime.suggestionsOwner='';await window.AITUTOR_V9.Suggestions.list();window.AITUTOR_V9.App.go('suggestions')});
   await page.waitForTimeout(50);await page.evaluate(()=>{window.AITUTOR_V9.App.runtime.suggestionsOwner='';window.AITUTOR_V9.App.render()});

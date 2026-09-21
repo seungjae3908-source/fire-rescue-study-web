@@ -10,8 +10,10 @@ const warning=/전조|징후|증상|주의|위험|금지|피한다|하지 않는
 const beforeAfter=/이전|이후|전에는|후에는|직전|직후|발생 전|발생 후|회복 후|소생 후/;
 const metaHeading=/개념\s*구조와\s*읽는\s*순서|개념\s*이해|학습\s*순서/;
 function allText(p){
+  // 상세 스키마는 교재형 설명 원천만 사용한다.
+  // summary/features/must/traps는 핵심 탭 전용이므로 상세에 다시 주입하지 않는다.
   return uniq([
-    ...(p.detail||[]),...(p.features||[]),...(p.must||[]),...(p.traps||[]),...(p.flow||[]),
+    ...(p.detail||[]),...(p.flow||[]),
     ...(p.deepSections||[]).flatMap(s=>[metaHeading.test(String(s.title||''))?'':s.title,s.body,...(s.bullets||[])])
   ]);
 }
@@ -22,7 +24,7 @@ function build(id){
   const conditions=uniq(pick(rows,cond,5));
   const mechanisms=uniq([...(p.flow||[]),...mechanismSections,...pick(rows,mechanism,5)]).slice(0,6);
   const timingStages=uniq(pick(rows,timing,5));
-  const warnings=uniq([...E.trapRows(p,6),...pick(rows,warning,5)]).slice(0,6);
+  const warnings=uniq(pick(rows,warning,6)).slice(0,6);
   const beforeAfterRows=uniq(pick(rows,beforeAfter,4));
   const numbers=E.numberRows(p,10);
   const definition=norm((p.detail||[])[0]||p.summary||'');

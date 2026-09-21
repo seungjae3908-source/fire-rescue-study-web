@@ -3,7 +3,7 @@
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
 const uniq=arr=>{const out=[],seen=new Set();for(const raw of arr||[]){const x=norm(raw),k=x.toLowerCase();if(x&&!seen.has(k)){seen.add(k);out.push(x)}}return out};
-const NUMERIC_RE=/\d|%|℃|°C|°|cm|mmHg|mm|kg|\bg\b|mg|mL|\bL\b|\bm\b|psi|J\/kg|kW(?:\/㎡)?|초|분|시간|회|배|단계|류|쪽|년|개월/;
+const NUMERIC_RE=/\d|%|℃|°C|°|cm|mmHg|mm|kg|\bg\b|mg|mL|\bL\b|\bm\b|psi|J\/kg|kW(?:\/㎡)?/i;
 function deepRows(p){return (p?.deepSections||[]).flatMap(x=>[x?.title,x?.body,...(x?.bullets||[])]).filter(Boolean)}
 function compareRows(p){return (p?.compare||[]).flatMap(x=>Array.isArray(x)?x:[]).filter(Boolean)}
 function featureRows(p,limit=Infinity){return uniq(p?.features||[]).slice(0,limit)}

@@ -3,18 +3,21 @@ import vm from 'node:vm';
 
 globalThis.window={AITUTOR_V9:{}};
 const files=[
-  'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','master-syllabus-119.js',
-  'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
+  'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','curriculum-ems-quality2-119.js','master-syllabus-119.js',
+  'content-packs.js','fire-admin-split-119.js','questions.js','questions-fire-admin-split-119.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-hazmat-depth-119.js',
   'questions-facilities-depth-119.js','questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-restored-fire-verified-119.js',
   'question-difficulty.js','question-quality-119.js',
   'depth-enrichment.js','depth-enrichment-2.js','content-rich-2026.js',
   'fire-depth-119.js','governance-depth-119.js','investigation-depth-119.js','facilities-depth-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','suppression-depth-119.js','ems-rich-2026.js','ems-depth-119.js',
+  'quality2-ems-medical-content-119.js','quality2-global-content-119.js',
   'question-bank-119.js','textbook-grounded-119.js','content-contract-119.js'
 ];
 for(const file of files)vm.runInThisContext(fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 const V=window.AITUTOR_V9,chars=x=>String(x||'').replace(/\s+/g,'').length;
+const missingPacks=V.curriculum.concepts.filter(c=>!V.contentPacks.authored[c.id]).map(c=>c.id);
+if(missingPacks.length)throw new Error('TEXTBOOK_DEPTH_MISSING_PACKS '+JSON.stringify(missingPacks));
 const rows=V.curriculum.concepts.map(c=>{
   const p=V.contentPacks.authored[c.id];
   const text=[p.summary,...(p.detail||[]),...(p.deepSections||[]).flatMap(x=>[x.title,x.body,...(x.bullets||[])])].join(' ');
@@ -37,4 +40,6 @@ const subject={};for(const r of rows){const s=subject[r.subject]||(subject[r.sub
 console.log('TEXTBOOK_DEPTH_119_SUMMARY',JSON.stringify({target:900,total:rows.length,pass:rows.length-fail.length,fail:fail.length,bins,subject},null,2));
 console.log('TEXTBOOK_DEPTH_119_BY_SCOPE');console.table(groupRows);
 console.log('TEXTBOOK_DEPTH_119_WORST_60');console.table(fail.slice(0,60));
+if(rows.length!==183)throw new Error('TEXTBOOK_DEPTH_CURRICULUM_COUNT '+rows.length+' expected 183');
+if(fail.length)throw new Error('TEXTBOOK_DEPTH_119_FAILED '+JSON.stringify(fail.map(x=>({id:x.id,chars:x.chars}))));
 console.log('TEXTBOOK_DEPTH_119_AUDIT_COMPLETE');

@@ -10,7 +10,15 @@ const norm=x=>String(x||'').replace(/\s+/g,' ').trim().toLowerCase();
 const unique=list=>{const seen=new Set(),out=[];for(const x of list){const k=norm(x);if(!k||seen.has(k))continue;seen.add(k);out.push(x)}return out};
 const textOf=p=>[p.summary,...(p.detail||[]),...(p.deepSections||[]).flatMap(s=>[s.title,s.body,...(s.bullets||[])])].join(' ');
 const numericGrounded=c=>(c.sourceRanges||[]).length>0&&(c.sourceRanges||[]).every(r=>r.doc&&Number.isFinite(Number(r.from))&&Number.isFinite(Number(r.to)));
+const officialWebLinks=p=>(p?.officialLinks||[]).filter(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')));
+const officialWebGrounded=p=>officialWebLinks(p).length>0;
+const grounded=(c,p)=>numericGrounded(c)||officialWebGrounded(p);
 const sourcePages=c=>(c.sourceRanges||[]).map(r=>`${r.label||r.doc} ${Number(r.from)===Number(r.to)?Number(r.from):Number(r.from)+'~'+Number(r.to)}쪽`).join(' · ');
+const sourceAnchor=(c,p)=>{
+  const pages=sourcePages(c);if(pages)return pages;
+  const web=officialWebLinks(p).map(x=>String(x.label||x.url||'').trim()).filter(Boolean).join(' · ');
+  return web||String(p?.source||'공식 근거').trim()
+};
 const section=(title,body,bullets=[])=>({title,body,bullets});
 
 function ensureMemory(c,p,base){
@@ -64,7 +72,7 @@ function candidateSections(c,p,base){
     :'소방학 개념은 정의·원리·작동흐름·적용대상·예외를 분리해 읽고, 서로 다른 설비나 현상의 조건을 섞지 않는 것이 핵심이다.';
   const rows=[];
   rows.push(section('개념 구조와 읽는 순서',
-    `‘${c.title}’의 기준문장은 “${clip(base.summary,210)}”이다. 이 문장을 단독 암기하지 말고 세부 설명과 함께 읽는다. ${subjectFrame} 공식 페이지에서 확인된 설명만을 기준으로 하고, 표현이 비슷하더라도 전제조건이 다른 내용을 같은 규칙으로 일반화하지 않는다.`,
+    `‘${c.title}’의 기준문장은 “${clip(base.summary,210)}”이다. 이 문장을 단독 암기하지 말고 세부 설명과 함께 읽는다. ${subjectFrame} 연결된 공식 원문 근거에서 확인된 설명만을 기준으로 하고, 표현이 비슷하더라도 전제조건이 다른 내용을 같은 규칙으로 일반화하지 않는다.`,
     details.slice(0,3).map((x,i)=>`세부 ${i+1}: ${clip(x,170)}`)));
   rows.push(section('핵심 포인트 연결',
     `이 학습노드의 기억축은 ${must.slice(0,4).map(x=>'‘'+clip(x,90)+'’').join(' / ')}이다. 각 항목은 따로 외우기보다 하나의 답안 구조로 묶는다. 문제에서 일부 핵심만 맞고 나머지 조건이 빠졌다면 정답 여부를 다시 확인하고, 공식 설명의 범위를 벗어난 과도한 확대해석을 피한다.`,
@@ -81,8 +89,8 @@ function candidateSections(c,p,base){
     `이 개념에는 현재 근거가 연결된 시험형 연습문제가 ${qs.length}개 있으며 난이도 분포는 하 ${diff.low}·중 ${diff.mid}·상 ${diff.high}이다. ${typeNames.length?'문항 유형은 '+typeNames.join('·')+' 중심으로 구성되어 있다. ':''}하 난이도에서는 정의와 직접회상을, 중에서는 비교·상황판단을, 상에서는 예외·복합조합을 확인하되 모든 판단의 출발점은 같은 공식 근거다.`,
     qs.slice(0,3).map(q=>`${q.difficulty||'mid'} · ${q.type||'문제'}: ${clip(q.q,150)}`)));
   rows.push(section('공식 원문으로 복귀하는 기준',
-    `${c.title}의 근거는 ${sourcePages(c)}에 연결되어 있다. 암기한 표현이 애매하거나 수치·예외·적용조건이 문제에 등장하면 기억에 의존해 보정하지 말고 연결된 페이지로 되돌아가 확인한다. 이 교재의 요약·문제·함정표시는 원문을 대신하는 새로운 규칙이 아니라 원문의 학습동선을 빠르게 재구성한 것이다.`,
-    [`근거: ${sourcePages(c)}`,`현재 상태: ${p.status}`,`원문 확인 우선: 수치·예외·적용조건`]));
+    `${c.title}의 근거는 ${sourceAnchor(c,p)}에 연결되어 있다. 암기한 표현이 애매하거나 수치·예외·적용조건이 문제에 등장하면 기억에 의존해 보정하지 말고 연결된 공식 원문으로 되돌아가 확인한다. 이 교재의 요약·문제·함정표시는 원문을 대신하는 새로운 규칙이 아니라 원문의 학습동선을 빠르게 재구성한 것이다.`,
+    [`근거: ${sourceAnchor(c,p)}`,`현재 상태: ${p.status}`,`원문 확인 우선: 수치·예외·적용조건`]));
   rows.push(section('회상 루프',
     `복습할 때는 ① 제목을 보고 기준문장을 말한다 ② 반드시 기억할 항목을 최소 세 개 회상한다 ③ 혼동 주의를 두 개 이상 설명한다 ④ 비교표가 있으면 차이를 말한다 ⑤ 마지막으로 원문 페이지를 확인한다. 이 순서를 반복하면 단순 문장 암기보다 개념의 경계와 적용조건을 함께 회상할 수 있다.`,
     [...must.slice(0,3).map(x=>`기억: ${x}`),...traps.slice(0,2).map(x=>`주의: ${x}`)]));
@@ -91,7 +99,7 @@ function candidateSections(c,p,base){
 
 let enriched=0,depthClosed=0,sectionsClosed=0,trapsClosed=0,memoryClosed=0;
 for(const c of V.curriculum.concepts){
-  const p=V.contentPacks.authored[c.id];if(!p||p.status!=='verified'||!numericGrounded(c))throw new Error('TEXTBOOK_GROUNDED_SOURCE_REQUIRED '+c.id);
+  const p=V.contentPacks.authored[c.id];if(!p||p.status!=='verified'||!grounded(c,p))throw new Error('TEXTBOOK_GROUNDED_SOURCE_REQUIRED '+c.id);
   const before={depth:chars(textOf(p))>=TARGET,sections:(p.deepSections||[]).length>=4,traps:(p.traps||[]).length>=2,memory:(p.must||[]).length>=3};
   const base={
     summary:String(p.summary||''),detail:[...(p.detail||[])],
@@ -125,7 +133,7 @@ for(const c of V.curriculum.concepts){
 V.TextbookGrounded119={
   version:'119-grounded-textbook-v1',
   targetChars:TARGET,enriched,depthClosed,sectionsClosed,trapsClosed,memoryClosed,
-  sourcePolicy:'verified content pack + numeric official sourceRanges; no new source claims'
+  sourcePolicy:'verified content pack + numeric official sourceRanges OR verified official go.kr web anchor; no invented page claims'
 };
 V.Quality2StudySchema119?.refreshAll?.();
 })();

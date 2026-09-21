@@ -4,7 +4,7 @@ import vm from 'node:vm';
 globalThis.window={AITUTOR_V9:{}};
 const files=[
   'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','curriculum-ems-quality2-119.js','master-syllabus-119.js',
-  'content-packs.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
+  'content-packs.js','fire-admin-split-119.js','questions.js','questions-fire-admin-split-119.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js',
   'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js','questions-verified-ems-batch1-119.js','questions-verified-fire-batch1-119.js',
   'question-difficulty.js','question-quality-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
@@ -35,7 +35,8 @@ for(const c of V.curriculum.concepts){
   issue(missing,'easy',!!schema?.easy);
   issue(missing,'features>=3',(schema?.features?.length||0)>=3);
   issue(missing,'core>=3',(schema?.core?.length||0)>=3);
-  issue(missing,'source-anchor',(schema?.sourceRanges?.length||0)>=1);
+  const officialWeb=(pack?.officialLinks||[]).some(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')));
+  issue(missing,'source-anchor',(schema?.sourceRanges?.length||0)>=1||officialWeb);
   issue(missing,highYield.test(c.title)?'questions>=20':'questions>=12',questions.length>=(highYield.test(c.title)?20:12));
 
   if(c.id==='F03-C09'){

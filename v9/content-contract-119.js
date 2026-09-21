@@ -16,10 +16,11 @@ function evaluateConcept(id){
   if(!c||!p)return{id,score:0,complete:false,missing:['conceptOrPack']};
   const text=[p.summary,...(p.detail||[]),...(p.deepSections||[]).flatMap(x=>[x.title,x.body,...(x.bullets||[])])].join(' ');
   const qm=questionMeta(id),numericRanges=(c.sourceRanges||[]).filter(r=>Number.isFinite(Number(r.from)));
+  const officialWeb=(p.officialLinks||[]).filter(x=>/^https:\/\/([a-z0-9-]+\.)*go\.kr\//i.test(String(x?.url||'')));
   const needsVisual=visualKeywords.test(c.title),needsCalc=explicitCalcIds.has(c.id)||calcKeywords.test(c.title);
   const checks={
-    officialScope:!!(c.sourceRanges||[]).length,
-    sourcePageAnchor:numericRanges.length>0,
+    officialScope:!!(c.sourceRanges||[]).length||officialWeb.length>0,
+    sourcePageAnchor:numericRanges.length>0||officialWeb.length>0,
     textbookDepth:chars(text)>=900,
     structuredSections:(p.deepSections||[]).length>=4,
     examTraps:(p.traps||[]).length>=2,
@@ -42,5 +43,5 @@ function audit(){
   const blockers={};for(const r of rows)for(const m of r.missing)blockers[m]=(blockers[m]||0)+1;
   return{version:'119-content-contract-v1',total:rows.length,complete:complete.length,incomplete:rows.length-complete.length,averageScore:avg,blockers,rows};
 }
-V.ContentContract119={evaluateConcept,audit,targets:{textbookChars:900,minQuestions:6,difficulty:{low:1,mid:2,high:1},choiceExplanationForEveryOption:true,pdfPageAnchor:true}};
+V.ContentContract119={evaluateConcept,audit,targets:{textbookChars:900,minQuestions:6,difficulty:{low:1,mid:2,high:1},choiceExplanationForEveryOption:true,pdfPageAnchor:true,officialWebAnchorAllowed:true}};
 })();

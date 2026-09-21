@@ -85,7 +85,33 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=3);
   if(anchorTokens.length){
     const exactAnchorLines=lines.filter(line=>anchorTokens.some(t=>line.n.includes(t)));
-    if(exactAnchorLines.length)return exactAnchorLines.slice(0,8)
+    if(exactAnchorLines.length)return exactAnchorLines.slice(0,8);
+    // Some official PDFs split one Korean concept term across adjacent text rows.
+    // Match a short contiguous block so the underline still lands on the real source text,
+    // and retain the combined evidence text for deterministic concept verification.
+    const anchorBlocks=[];
+    for(let i=0;i<lines.length;i++){
+      let joinedN='',joinedText='';
+      for(let j=i;j<Math.min(lines.length,i+4);j++){
+        joinedN+=lines[j].n;
+        joinedText+=(joinedText?' ':'')+lines[j].text;
+        const matched=anchorTokens.filter(t=>joinedN.includes(t));
+        if(matched.length){
+          anchorBlocks.push({start:i,end:j,score:matched.reduce((n,t)=>n+t.length,0),title:joinedText});
+          break
+        }
+      }
+    }
+    anchorBlocks.sort((a,b)=>b.score-a.score||(a.end-a.start)-(b.end-b.start)||a.start-b.start);
+    const picked=[];
+    for(const block of anchorBlocks){
+      if(picked.length>=8)break;
+      for(let i=block.start;i<=block.end&&picked.length<8;i++){
+        if(picked.some(x=>x===lines[i]))continue;
+        picked.push({...lines[i],evidenceTitle:block.title})
+      }
+    }
+    if(picked.length)return picked
   }
 
   const candidates=[];
@@ -142,10 +168,10 @@ async function render(key,pageNum,host,queries=[],opts={}){
   for(const line of evidence){
     const mark=document.createElement('div');mark.className='pdf-evidence-line';
     mark.style.left=Math.max(0,line.left-2)+'px';mark.style.top=Math.min(viewport.height-3,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-line.left+2,line.right-line.left+4))+'px';mark.style.height='2px';
-    mark.title=line.text;overlay.appendChild(mark);
+    mark.title=line.evidenceTitle||line.text;overlay.appendChild(mark);
   }
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
-  return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.text),name,origin,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
+  return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
 V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,download,render,pdfPage,bookPage,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v10-deterministic-concept-anchor-lines'};
 })();
