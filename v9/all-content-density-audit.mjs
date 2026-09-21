@@ -108,7 +108,7 @@ console.log('ALL_CONTENT_DENSITY_STRUCTURAL_ONLY');console.table(structuralOnlyD
 if(rows.length!==183)throw new Error('ALL_CONTENT_DENSITY_CURRICULUM_COUNT '+rows.length+' expected 183');
 if(hard.length)throw new Error('ALL_CONTENT_DENSITY_HARD_MISSING '+JSON.stringify(hard.map(x=>({id:x.id,hard:x.hard}))));
 if(semantic.length)throw new Error('ALL_CONTENT_DENSITY_SEMANTIC_GAPS '+JSON.stringify(semantic.map(x=>({id:x.id,semantic:x.semantic}))));
-if(V.DensityUpgradeV13119?.targets?.length!==41||V.DensityUpgradeV13119?.applied?.length!==41)throw new Error('V13_DENSITY_UPGRADE_TARGET_COUNT '+JSON.stringify(V.DensityUpgradeV13119||null));
+if(V.DensityUpgradeV13119?.targets?.length!==50||V.DensityUpgradeV13119?.applied?.length!==50)throw new Error('V13_DENSITY_UPGRADE_TARGET_COUNT '+JSON.stringify(V.DensityUpgradeV13119||null));
 if(depthUnder1000.length)throw new Error('ALL_CONTENT_DENSITY_UNDER_1000_REMAINS '+JSON.stringify(depthUnder1000.map(x=>({id:x.id,chars:x.chars}))));
 if(oneVerified.length)throw new Error('ALL_CONTENT_DENSITY_ONE_VERIFIED_REMAINS '+JSON.stringify(oneVerified.map(x=>({id:x.id,verified:x.verified}))));
 
