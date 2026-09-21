@@ -109,7 +109,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
       numbers:rows('.study-numbers li'),
       traps:rows('.study-traps li'),
       essentialTexts:rows('.study-core-essentials li span'),
-      coreTexts:[...rows('.study-quick p'),...rows('.study-core-essentials li span'),...rows('.study-numbers li .study-key-text'),...rows('.study-traps li')],
+      coreTexts:[...rows('.study-quick p'),...rows('.study-core-essentials li span')],
       detailTexts:[...rows('.detail-section h3'),...rows('.detail-section p'),...rows('.detail-section li')],
       detailFull:root.querySelector('.detail-view')?.textContent||'',
       tab
