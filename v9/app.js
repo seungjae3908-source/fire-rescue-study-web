@@ -137,8 +137,7 @@ function mustBlock(c,pack){
 function coreEssentialBlock(c,pack){
   const candidates=[
     ...(V.StudyEmphasis119?.mustRows?.(pack)||[]).map((text,index)=>({text,bucket:'must',index})),
-    ...(V.StudyEmphasis119?.featureRows?.(pack)||[]).map((text,index)=>({text,bucket:'feature',index})),
-    ...(V.StudyEmphasis119?.numberRows?.(pack,6)||[]).map((text,index)=>({text,bucket:'number',index}))
+    ...(V.StudyEmphasis119?.featureRows?.(pack)||[]).map((text,index)=>({text,bucket:'feature',index}))
   ],rows=[];
   for(const row of candidates){
     const text=studentStudyText(row.text);if(!text||sameStudyText(text,pack?.summary||'')||rows.some(x=>sameStudyText(x.text,text)))continue;
