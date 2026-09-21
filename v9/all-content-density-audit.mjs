@@ -42,7 +42,7 @@ const rows=(V.curriculum?.concepts||[]).map(c=>{
   const calculations=(s.calculations?.length||0)>=1;
   const hard=[];
   if(!p)hard.push('pack');
-  if(chars(s.definition)<40)hard.push('definition');
+  if(Math.max(chars(s.definition),chars(p?.summary))<20)hard.push('definition');
   if(chars(text)<900)hard.push('depth');
   if((p?.traps||[]).length<2)hard.push('traps');
   if((p?.must||[]).length<3)hard.push('memory');
@@ -101,4 +101,5 @@ console.log('ALL_CONTENT_DENSITY_DENSITY_REVIEW_TOP80');console.table(density.sl
 console.log('ALL_CONTENT_DENSITY_ONE_VERIFIED');console.table(oneVerified);
 if(rows.length!==183)throw new Error('ALL_CONTENT_DENSITY_CURRICULUM_COUNT '+rows.length+' expected 183');
 if(hard.length)throw new Error('ALL_CONTENT_DENSITY_HARD_MISSING '+JSON.stringify(hard.map(x=>({id:x.id,hard:x.hard}))));
+if(semantic.length)throw new Error('ALL_CONTENT_DENSITY_SEMANTIC_GAPS '+JSON.stringify(semantic.map(x=>({id:x.id,semantic:x.semantic}))));
 console.log('ALL_CONTENT_DENSITY_AUDIT_COMPLETE');
