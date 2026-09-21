@@ -17,12 +17,13 @@ console.log('OFFICIAL_MONITOR_LIVE_PROBE',JSON.stringify(summary,null,2));
 
 const transportCodes=new Set([
   'UND_ERR_CONNECT_TIMEOUT','UND_ERR_HEADERS_TIMEOUT','UND_ERR_BODY_TIMEOUT','UND_ERR_SOCKET',
-  'ECONNRESET','ETIMEDOUT','ENOTFOUND','EAI_AGAIN','ABORT_ERR','20'
+  'ECONNRESET','ECONNREFUSED','ETIMEDOUT','ENOTFOUND','EAI_AGAIN','ABORT_ERR','20',
+  'ERR_TLS_CERT_ALTNAME_INVALID','CERT_HAS_EXPIRED','UNABLE_TO_VERIFY_LEAF_SIGNATURE'
 ]);
 function isExternalUnavailable(row){
   const code=String(row?.errorCode||'').trim();
   const error=String(row?.error||'');
-  return transportCodes.has(code)||/connect timeout|headers timeout|body timeout|operation was aborted|fetch failed|socket|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/i.test(error);
+  return transportCodes.has(code)||/connect timeout|headers timeout|body timeout|operation was aborted|socket|ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|certificate|cert(?:ificate)? has expired|hostname\/ip does not match certificate/i.test(error);
 }
 
 if(snapshot.sourceStatus.length!==SOURCES.length)throw new Error('OFFICIAL_MONITOR_SOURCE_COUNT_MISMATCH');
