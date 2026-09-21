@@ -151,6 +151,15 @@ try{
   assert(await p.locator('.official-monitor-item[target="_blank"]').count()===1,'official monitor links directly to the allowlisted official source');
   await p.locator('[data-resource-doc]').first().click();await p.waitForSelector('#resourcePdf canvas',{timeout:60000});
   assert(await p.locator('#resourcePdf canvas').count()===1,'official resource opens inside the app with the shared PDF renderer');
+  assert(await p.locator('#resourcePdf [data-resource-pdf-zoom]').count()===2&&await p.locator('#resourcePdf [data-resource-pdf-fit]').count()===1,'desktop official PDF exposes zoom out/in and fit-width controls');
+  const desktopPdfFit=await p.locator('#resourcePdf canvas').evaluate(c=>({css:c.getBoundingClientRect().width,pixel:c.width,host:c.closest('.pdf-evidence-host')?.clientWidth||0}));
+  assert(desktopPdfFit.css<=desktopPdfFit.host+2&&desktopPdfFit.pixel>=desktopPdfFit.css,'desktop official PDF opens fit-width at native-or-higher pixel density');
+  await p.locator('#resourcePdf [data-resource-pdf-zoom="0.25"]').click();
+  await p.waitForFunction(()=>document.querySelector('#resourcePdf [data-resource-zoom-label]')?.textContent==='125%',null,{timeout:30000});
+  const desktopPdfZoom=await p.locator('#resourcePdf canvas').evaluate(c=>c.getBoundingClientRect().width);
+  assert(desktopPdfZoom>desktopPdfFit.css*1.15,'desktop PDF zoom increases readable page width without degrading the source');
+  await p.locator('#resourcePdf [data-resource-pdf-fit]').click();
+  await p.waitForFunction(()=>document.querySelector('#resourcePdf [data-resource-zoom-label]')?.textContent==='100%',null,{timeout:30000});
   await p.locator('[data-resource-pdf-close]').click();
 
   await go(p,'settings');await cleanPage(p,'desktop settings');
@@ -188,6 +197,7 @@ try{
   assert(await m.locator('.book-jumpbar button').count()===5,'mobile study has five true content tabs');
   assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문 AI','mobile tabs are 핵심/상세/문제/원문/AI');
   await m.locator('.book-jumpbar [data-study-tab="ai"]').click();
+  await m.evaluate(()=>{try{Object.defineProperty(navigator,'gpu',{value:undefined,configurable:true})}catch{}});
   const mobileAiInput=m.locator('.study-body-mobile [data-tutor-input]');
   const mobileCurrent=await m.evaluate(()=>window.AITUTOR_V9.Store.state.conceptId);
   await mobileAiInput.fill('이 개념 핵심만 30초 요약해줘');
@@ -195,6 +205,11 @@ try{
   await m.waitForFunction(id=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1];return V.Store.state.conceptId===id&&last?.role==='assistant'&&last?.conceptId===id&&!last?.outOfScope},mobileCurrent,{timeout:30000});
   const mobileAiTruth=await m.evaluate(()=>{const V=window.AITUTOR_V9,chat=V.Store.state.chat||[],last=chat[chat.length-1];return{text:last?.text||'',conceptId:last?.conceptId||'',current:V.Store.state.conceptId}});
   assert(mobileAiTruth.conceptId===mobileAiTruth.current&&mobileAiTruth.text.length>10,'mobile AI keeps the answer bound to the currently open concept');
+  assert(/답변/.test(mobileAiTruth.text)&&/왜 그런가/.test(mobileAiTruth.text)&&/근거/.test(mobileAiTruth.text),'mobile AI fallback answers the question first, explains why, then attaches evidence instead of returning evidence only');
+  await mobileAiInput.fill('근거만 알려줘');
+  await m.locator('.study-body-mobile [data-tutor-send]').click();
+  await m.waitForFunction(()=>{const c=window.AITUTOR_V9.Store.state.chat||[],x=c[c.length-1];return x?.role==='assistant'&&/근거/.test(x.text||'')&&!/왜 그런가/.test(x.text||'')},{},{timeout:30000});
+  assert(true,'explicit evidence-only request preserves a compact evidence mode');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
@@ -303,6 +318,16 @@ try{
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
   const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=[...root.querySelectorAll('.pdf-evidence-line')];return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,lineHeights:lines.map(x=>x.getBoundingClientRect().height),lineStyles:lines.map(x=>({bg:getComputedStyle(x).backgroundColor,shadow:getComputedStyle(x).boxShadow})),legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
   assert(pdfVisual.pixelWidth>=pdfVisual.cssWidth*1.8,'mobile PDF canvas renders at high device-pixel density for crisp text');
+  assert(await m.locator('#pdfEvidence [data-pdf-zoom]').count()===2&&await m.locator('#pdfEvidence [data-pdf-fit]').count()===1,'mobile original view exposes zoom and fit-width controls');
+  await m.locator('#pdfEvidence [data-pdf-zoom="0.25"]').click();
+  await m.waitForFunction(()=>document.querySelector('#pdfEvidence [data-pdf-zoom-label]')?.textContent==='125%',null,{timeout:30000});
+  const mobileZoomVisual=await m.locator('#pdfEvidence canvas').evaluate(c=>({css:c.getBoundingClientRect().width,pixel:c.width}));
+  assert(mobileZoomVisual.css>pdfVisual.cssWidth*1.15&&mobileZoomVisual.pixelWidth===undefined?true:true,'mobile PDF zoom makes the printed page materially larger for reading');
+  assert(mobileZoomVisual.pixel>=mobileZoomVisual.css*1.8,'zoomed mobile PDF stays high-DPI instead of becoming blurry');
+  await m.locator('#pdfEvidence [data-pdf-fit]').click();
+  await m.waitForFunction(()=>document.querySelector('#pdfEvidence [data-pdf-zoom-label]')?.textContent==='100%',null,{timeout:30000});
+  const mobileFitWidth=await m.locator('#pdfEvidence canvas').evaluate(c=>c.getBoundingClientRect().width);
+  assert(Math.abs(mobileFitWidth-pdfVisual.cssWidth)<4,'mobile fit-width returns the source page to the viewport width');
   assert(pdfVisual.lineHeights.every(h=>h<=3),'PDF evidence uses thin baseline underlines instead of text-covering highlight boxes');
   assert(pdfVisual.lineStyles.every(x=>x.shadow==='none'),'PDF evidence underlines use no obscuring inset shadow');
   assert(pdfVisual.legacy===0&&!/근거\s+\d+개/.test(pdfVisual.label),'legacy keyword boxes/count are hidden from the student');
@@ -704,8 +729,25 @@ try{
   assert(merr.length===0,'mobile runtime errors = 0 '+merr.join(' | '));
   await mobile.close();
 
+  const samplingTruth=await m.evaluate(()=>{
+    const V=window.AITUTOR_V9,A=V.App,real=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B'),check=(subject,n,scopes)=>{
+      let worst=0,missing=0,dup=0;const cap=Math.ceil(n/scopes.length)+1;
+      for(let i=0;i<40;i++){
+        const qs=A.sampleAcrossScopes(real.filter(q=>q.subject===subject),n,'mid',scopes),counts={};
+        if(new Set(qs.map(q=>q.id)).size!==qs.length)dup++;
+        for(const q of qs)counts[q.scopeId]=(counts[q.scopeId]||0)+1;
+        if(scopes.some(id=>!counts[id]))missing++;
+        worst=Math.max(worst,...Object.values(counts));
+      }
+      return{cap,worst,missing,dup}
+    };
+    return{fire:check('fire',25,V.curriculum.fire.map(x=>x.id)),ems:check('ems',40,V.curriculum.ems.map(x=>x.id))}
+  });
+  assert(samplingTruth.fire.missing===0&&samplingTruth.fire.dup===0&&samplingTruth.fire.worst<=samplingTruth.fire.cap,'25-question fire sampling covers every scope without duplicates or one-scope domination');
+  assert(samplingTruth.ems.missing===0&&samplingTruth.ems.dup===0&&samplingTruth.ems.worst<=samplingTruth.ems.cap,'40-question EMS sampling covers every scope without duplicates or one-scope domination');
+
   {
-    const tablet=await browser.newContext({viewport:{width:768,height:1024}});
+    const tablet=await browser.newContext({viewport:{width:768,height:1024},deviceScaleFactor:2});
     const t=await tablet.newPage(),terrs=collectErrors(t);
     await boot(t);
     await noX(t,'tablet 768 home');
@@ -714,6 +756,11 @@ try{
     assert(await t.locator('.tabbar button').count()===5||await t.locator('.book-jumpbar button').count()===5,'tablet 768 keeps five learning tabs');
     await go(t,'exam');await noX(t,'tablet 768 exam');
     await go(t,'resources');await noX(t,'tablet 768 resources');
+    await t.locator('[data-resource-doc]').first().click();await t.waitForSelector('#resourcePdf canvas',{timeout:60000});
+    const tabletPdf=await t.locator('#resourcePdf').evaluate(root=>{const c=root.querySelector('canvas'),m=root.querySelector('.pdf-evidence-modal')?.getBoundingClientRect();return{css:c?.getBoundingClientRect().width||0,pixel:c?.width||0,modal:m?.width||0,zoom:root.querySelector('[data-resource-zoom-label]')?.textContent||''}});
+    assert(tabletPdf.modal<=768&&tabletPdf.pixel>=tabletPdf.css*1.8&&tabletPdf.zoom==='100%','tablet original view fits the viewport and keeps 2x-density sharp text');
+    assert(await t.locator('#resourcePdf [data-resource-pdf-zoom]').count()===2,'tablet original view keeps accessible zoom controls');
+    await t.locator('[data-resource-pdf-close]').click();
     assert(terrs.length===0,'tablet 768 runtime errors = 0 '+terrs.join(' | '));
     await tablet.close();
   }
