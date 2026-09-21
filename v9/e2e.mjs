@@ -412,6 +412,13 @@ try{
   assert(skillRun.mode==='training'&&skillRun.key==='skill:'+skillKey&&skillRun.total>0&&skillRun.allFamily,'skill-family remediation starts a focused training run containing only the selected family');
   await m.evaluate(reportId=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.App.runtime.examReportId=reportId;V.Store.state.page='stats';V.Store.save();V.App.render()},reportIdBeforeSkill);
   await m.waitForSelector('.exam-report');
+  assert(await m.locator('[data-weak-review]').count()>=1,'exam analysis exposes one-tap review for weak sections');
+  const weakTarget=await m.locator('[data-weak-review]').first().getAttribute('data-concept');
+  await m.locator('[data-weak-review]').first().click();
+  await m.waitForFunction(id=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.conceptId===id,weakTarget);
+  assert(await m.locator('.page-study').count()===1,'weak-section remediation jumps directly into the selected section review');
+  await m.evaluate(reportId=>{const V=window.AITUTOR_V9;V.App.runtime.examReportId=reportId;V.Store.state.page='stats';V.Store.save();V.App.render()},reportIdBeforeSkill);
+  await m.waitForSelector('.exam-report');
   assert(await m.locator('.exam-report [data-concept]').count()>=1&&await m.locator('.exam-report [data-source-concept]').count()>=1,'exam analysis links wrong questions to concept review and official evidence');
   await noX(m,'mobile exam analysis');
   await m.locator('[data-report-close]').click();
