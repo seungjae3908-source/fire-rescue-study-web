@@ -88,6 +88,8 @@ jobs:
         run: node v9/coverage3-semantic-audit.mjs
       - name: Quality 4 high-yield semantic and visual gate
         run: node v9/quality4-highyield-audit.mjs
+      - name: High-yield 37-concept semantic matrix v2 gate
+        run: node v9/highyield-semantic-matrix-v2-audit.mjs
       - name: 2027 target / 2026 official baseline truth gate
         run: node v9/exam-version-audit.mjs
       - name: Adaptive mastery v2 deterministic gate
