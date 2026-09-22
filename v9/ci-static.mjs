@@ -642,6 +642,10 @@ ok(membershipSql.includes('revoke all on function public.handle_new_study_v9_use
 ok(membershipSql.includes('create policy study_membership_gate on public.%I as restrictive for all to authenticated'),'every Study table receives a restrictive membership gate');
 ok(membershipSql.includes("bucket_id='study-private-v9'")&&membershipSql.includes('from public.study_memberships m'),'Study Storage policies require both owner folder and Study membership');
 
+const acceptanceBroker=fs.readFileSync(new URL('./study-119-acceptance-broker.mjs',import.meta.url),'utf8');
+ok(acceptanceBroker.includes("user_metadata:{qa:true,app_scope:'study-v9'}")&&!acceptanceBroker.includes("from('study_memberships').insert"),'acceptance broker relies on the existing Study membership trigger instead of a duplicate PostgREST membership insert');
+ok(acceptanceBroker.includes("meta.acceptance_repo===REPOSITORY&&(!runId||")&&acceptanceBroker.includes("const cleaned=await cleanupRun(client);")&&acceptanceBroker.includes("await cleanupRun(client);"),'acceptance broker sweeps stale repo-scoped QA users before provision and during final cleanup');
+ok(acceptanceBroker.includes("addEventListener")===false&&acceptanceBroker.includes('verifyGithubOidc')&&acceptanceBroker.includes('Deno.serve'),'acceptance broker keeps server-side GitHub OIDC verification without browser-only runtime hooks');
 const guard=fs.readFileSync(new URL('./auth-membership-guard.js',import.meta.url),'utf8');
 ok(guard.includes("from('study_memberships')"),'browser session guard checks server-created Study membership');
 ok(guard.includes('STUDY_ACCOUNT_REQUIRED'),'non-Study shared-auth sessions fail closed');

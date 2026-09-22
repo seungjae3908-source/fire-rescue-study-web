@@ -24,6 +24,15 @@ function env(name){
   return value;
 }
 
+function errorStatus(error){
+  const message=String(error?.message||error);
+  if(message.startsWith('CREATE_MEMBER_AUTH:'))return 521;
+  if(message.startsWith('CREATE_ADMIN_AUTH:'))return 523;
+  if(message.startsWith('CREATE_ADMIN_GRANT:'))return 525;
+  if(message.startsWith('CLEANUP_AUTH_USER:'))return 526;
+  return 500;
+}
+
 function randomSecret(length=48){
   const bytes=new Uint8Array(length);
   crypto.getRandomValues(bytes);
@@ -62,7 +71,7 @@ function adminClient(){
   });
 }
 
-async function qaUsersForRun(client,runId){
+async function qaUsersForRun(client,runId=''){
   const found=[];
   for(let page=1;page<=50;page++){
     const {data,error}=await client.auth.admin.listUsers({page,perPage:1000});
@@ -70,7 +79,7 @@ async function qaUsersForRun(client,runId){
     const users=data?.users||[];
     for(const user of users){
       const meta=user.app_metadata||{};
-      if(meta.acceptance_broker===true&&meta.acceptance_repo===REPOSITORY&&String(meta.acceptance_run_id||'')===runId)found.push(user);
+      if(meta.acceptance_broker===true&&meta.acceptance_repo===REPOSITORY&&(!runId||String(meta.acceptance_run_id||'')===runId))found.push(user);
     }
     if(users.length<1000)break;
   }
@@ -92,14 +101,6 @@ async function cleanupRun(client,runId){
   return users.length;
 }
 
-async function ensureStudyMembership(client,id,role){
-  const result=await client.from('study_memberships').insert([{user_id:id,source:'study-v9'}]);
-  if(!result.error)return;
-  const message=String(result.error.message||result.error);
-  if(/duplicate key value violates unique constraint/i.test(message))return;
-  throw new Error(`CREATE_${role.toUpperCase()}_MEMBERSHIP: ${message}`);
-}
-
 async function createQaUser(client,runId,role){
   const password=randomSecret();
   const nonce=randomSecret(10).toLowerCase();
@@ -119,7 +120,6 @@ async function createQaUser(client,runId,role){
   });
   if(error||!data?.user?.id)throw new Error(`CREATE_${role.toUpperCase()}_AUTH: ${error?.message||'missing user'}`);
   const id=data.user.id;
-  await ensureStudyMembership(client,id,role);
   if(role==='admin')await checkedDb(client.from('study_admins').insert([{user_id:id}]),'CREATE_ADMIN_GRANT');
   return{id,email,password};
 }
@@ -137,10 +137,10 @@ Deno.serve(async req=>{
   const client=adminClient();
   try{
     if(action==='cleanup'){
-      const cleaned=await cleanupRun(client,identity.runId);
+      const cleaned=await cleanupRun(client);
       return response(200,{ok:true,action,runId:identity.runId,cleaned});
     }
-    await cleanupRun(client,identity.runId);
+    await cleanupRun(client);
     try{
       const member=await createQaUser(client,identity.runId,'member');
       const admin=await createQaUser(client,identity.runId,'admin');
@@ -156,6 +156,8 @@ Deno.serve(async req=>{
       throw error;
     }
   }catch(error){
-    return response(500,{ok:false,error:String(error?.message||error)});
+    const message=String(error?.message||error);
+    console.error('ACCEPTANCE_BROKER_ERROR',message);
+    return response(errorStatus(error),{ok:false,error:message});
   }
 });
