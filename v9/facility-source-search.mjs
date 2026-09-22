@@ -37,7 +37,7 @@ const officialFallbacks={
   '연결살수설비':{
     sourceType:'official-law-paragraph',
     standard:'연결살수설비의 화재안전기술기준(NFTC 503)',
-    url:'https://law.go.kr/lbook/lbFileDownload.do?flExt=pdf&lbookConflSeq=107697&lbookSeq=107327',
+    url:'https://law.go.kr/lbook/lbFileDownload.do?flExt=pdf&lbookConflSeq=99881&lbookSeq=100443',
     clauses:['1.1.1','1.2.1'],
     required:['연결살수설비','설치 및 관리','소화활동설비','제2024-42호']
   }
