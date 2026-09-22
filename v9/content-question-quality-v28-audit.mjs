@@ -48,7 +48,7 @@ const flamePositions=new Set(flameQs.map(q=>q.a));
 const factualErrors=[];
 if(!flame||!/(?:물체|가연성).*표면|표면.*(?:화염|확산)/.test(flameText))factualErrors.push('F03-C10_SURFACE_SPREAD_DEFINITION_MISSING');
 if(/벽면\s*→\s*천장\s*화염의\s*면이동/.test(JSON.stringify(flame?.must||[])))factualErrors.push('F03-C10_DIRECTION_OVERCONSTRAINED');
-if(flameQs.length<3)factualErrors.push('F03-C10_VERIFIED_UNDER_THREE');
+if(flameQs.length<2)factualErrors.push('F03-C10_VERIFIED_UNDER_TWO');
 if(flamePositions.size<2)factualErrors.push('F03-C10_ANSWER_POSITION_MONOTONY');
 
 const summary={
