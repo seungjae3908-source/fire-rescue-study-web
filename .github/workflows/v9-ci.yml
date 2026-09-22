@@ -123,6 +123,8 @@ jobs:
         run: node v9/question-contract-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
+      - name: V28 183-concept depth + verified-question quality audit
+        run: node v9/content-question-quality-v28-audit.mjs
       - name: Final 183-concept learner content audit
         run: node v9/final-user-content-qa.mjs
       - name: 390-run real mock exam composition quality audit
