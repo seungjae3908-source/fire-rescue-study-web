@@ -33,8 +33,31 @@ const queries={
     ['무선통신보조설비']
   ]
 };
+const officialFallbacks={
+  '연결살수설비':{
+    sourceType:'official-law-paragraph',
+    standard:'연결살수설비의 화재안전기술기준(NFTC 503)',
+    url:'https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216274&chrClsCd=010201',
+    clauses:['1.1.1','1.2.1'],
+    required:['연결살수설비','설치 및 관리','소화활동설비']
+  }
+};
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,'').replace(/[^0-9a-z가-힣]/g,'');
 function assert(v,m){if(!v)throw new Error(m)}
+async function verifyOfficialFallback(term){
+  const def=officialFallbacks[term];
+  if(!def)return null;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),30000);
+  try{
+    const res=await fetch(def.url,{redirect:'follow',signal:controller.signal,headers:{'user-agent':'119-study-official-evidence-audit/1.0'}});
+    const text=await res.text(),compact=norm(text);
+    assert(res.ok,'F07_C15_OFFICIAL_FALLBACK_HTTP '+term+' '+res.status);
+    const missingRequired=def.required.filter(x=>!compact.includes(norm(x)));
+    assert(missingRequired.length===0,'F07_C15_OFFICIAL_FALLBACK_CONTENT_MISSING '+JSON.stringify({term,missingRequired,url:def.url}));
+    return{term,sourceType:def.sourceType,standard:def.standard,url:def.url,clauses:def.clauses,httpStatus:res.status,required:def.required};
+  }finally{clearTimeout(timer)}
+}
 const browser=await chromium.launch({headless:true});
 try{
  const ctx=await browser.newContext({viewport:{width:1280,height:900}});
@@ -72,8 +95,16 @@ try{
  const f07c15Boundaries=result.filter(row=>row.id==='F07-C15'&&row.queryIndex>0);
  assert(f07c15Boundaries.length===5,'F07_C15_BOUNDARY_QUERY_COUNT '+f07c15Boundaries.length+' != 5');
  const missing=f07c15Boundaries.filter(row=>!Array.isArray(row.top)||row.top.length===0);
- assert(missing.length===0,'F07_C15_BOUNDARY_SOURCE_MISSING '+JSON.stringify(missing.map(row=>row.terms)));
- console.log('F07_C15_BOUNDARY_CANDIDATES',JSON.stringify(f07c15Boundaries.map(row=>({terms:row.terms,page:row.top[0].page,score:row.top[0].score,hits:row.top[0].hits}))));
+ const fallbackEvidence=[];
+ const unresolved=[];
+ for(const row of missing){
+   const primary=String(row.terms?.[0]||'');
+   const evidence=await verifyOfficialFallback(primary);
+   if(evidence)fallbackEvidence.push(evidence);else unresolved.push(row);
+ }
+ if(fallbackEvidence.length)console.log('F07_C15_OFFICIAL_FALLBACK_EVIDENCE',JSON.stringify(fallbackEvidence));
+ assert(unresolved.length===0,'F07_C15_BOUNDARY_SOURCE_MISSING '+JSON.stringify(unresolved.map(row=>row.terms)));
+ console.log('F07_C15_BOUNDARY_CANDIDATES',JSON.stringify(f07c15Boundaries.map(row=>({terms:row.terms,page:row.top?.[0]?.page||null,score:row.top?.[0]?.score||null,hits:row.top?.[0]?.hits||[],fallback:fallbackEvidence.find(x=>x.term===row.terms?.[0])||null}))));
  console.log('FACILITY_SOURCE_SEARCH_COMPLETE');
  await ctx.close();
 }finally{await browser.close()}
