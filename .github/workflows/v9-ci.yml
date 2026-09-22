@@ -34,6 +34,7 @@ on:
       - '.github/workflows/v9-ci.yml'
       - '.github/workflows/official-monitor.yml'
       - '.github/workflows/production-current-main-acceptance.yml'
+      - '.github/workflows/production-suggestions-authenticated-acceptance.yml'
   pull_request:
     paths:
       - 'v9/**'
@@ -49,6 +50,7 @@ on:
       - '.github/workflows/v9-ci.yml'
       - '.github/workflows/official-monitor.yml'
       - '.github/workflows/production-current-main-acceptance.yml'
+      - '.github/workflows/production-suggestions-authenticated-acceptance.yml'
 
 concurrency:
   group: v9-development-${{ github.event.pull_request.number || github.ref }}
@@ -109,6 +111,10 @@ jobs:
         run: node v9/runtime-head-api-test.mjs
       - name: Production runtime dependency probe gate
         run: node v9/runtime-deps-production-contract.mjs
+      - name: Production suggestion acceptance script syntax
+        run: |
+          node --check v9/suggestions-production-public-e2e.mjs
+          node --check v9/suggestions-production-authenticated-e2e.mjs
       - name: High-yield semantic depth profile report
         run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
