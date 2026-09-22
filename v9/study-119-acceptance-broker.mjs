@@ -92,6 +92,14 @@ async function cleanupRun(client,runId){
   return users.length;
 }
 
+async function ensureStudyMembership(client,id,role){
+  const result=await client.from('study_memberships').insert([{user_id:id,source:'study-v9'}]);
+  if(!result.error)return;
+  const message=String(result.error.message||result.error);
+  if(/duplicate key value violates unique constraint/i.test(message))return;
+  throw new Error(`CREATE_${role.toUpperCase()}_MEMBERSHIP: ${message}`);
+}
+
 async function createQaUser(client,runId,role){
   const password=randomSecret();
   const nonce=randomSecret(10).toLowerCase();
@@ -107,11 +115,11 @@ async function createQaUser(client,runId,role){
       acceptance_run_id:runId,
       acceptance_role:role
     },
-    user_metadata:{qa:true}
+    user_metadata:{qa:true,app_scope:'study-v9'}
   });
   if(error||!data?.user?.id)throw new Error(`CREATE_${role.toUpperCase()}_AUTH: ${error?.message||'missing user'}`);
   const id=data.user.id;
-  await checkedDb(client.from('study_memberships').insert([{user_id:id,source:'study-v9'}]),`CREATE_${role.toUpperCase()}_MEMBERSHIP`);
+  await ensureStudyMembership(client,id,role);
   if(role==='admin')await checkedDb(client.from('study_admins').insert([{user_id:id}]),'CREATE_ADMIN_GRANT');
   return{id,email,password};
 }
