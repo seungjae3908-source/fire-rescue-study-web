@@ -682,7 +682,7 @@ try{
   assert((await m.locator('.concept-head h2').innerText()).trim()==='플레임오버','flameover has its own curriculum lesson title');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   const flameoverText=await m.locator('.book-section').innerText();
-  assert(flameoverText.includes('벽면')&&flameoverText.includes('천장')&&flameoverText.includes('롤오버와 비교'),'flameover lesson teaches wall-to-ceiling flame spread separately from rollover');
+  assert(flameoverText.includes('표면')&&flameoverText.includes('빠르게')&&flameoverText.includes('롤오버'),'flameover lesson teaches rapid surface flame spread separately from rollover');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C07'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C07');
