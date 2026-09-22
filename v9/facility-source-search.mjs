@@ -28,8 +28,9 @@ const queries={
     ['소화활동설비'],
     ['제연설비','연기'],
     ['연결송수관설비'],
-    ['무선통신보조설비'],
-    ['비상콘센트설비']
+    ['연결살수설비'],
+    ['비상콘센트설비'],
+    ['무선통신보조설비']
   ]
 };
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,'').replace(/[^0-9a-z가-힣]/g,'');
@@ -67,6 +68,11 @@ try{
    return defs.map(d=>({id:d.id,queryIndex:d.qi,terms:d.terms,top:best.get(d.id+':'+d.qi)}));
  },queries);
  for(const row of result)console.log('FACILITY_SOURCE_SEARCH',JSON.stringify(row,null,2));
+ const f07c15Boundaries=result.filter(row=>row.id==='F07-C15'&&row.queryIndex>0);
+ assert(f07c15Boundaries.length===5,'F07_C15_BOUNDARY_QUERY_COUNT '+f07c15Boundaries.length+' != 5');
+ const missing=f07c15Boundaries.filter(row=>!Array.isArray(row.top)||row.top.length===0);
+ assert(missing.length===0,'F07_C15_BOUNDARY_SOURCE_MISSING '+JSON.stringify(missing.map(row=>row.terms)));
+ console.log('F07_C15_BOUNDARY_CANDIDATES',JSON.stringify(f07c15Boundaries.map(row=>({terms:row.terms,page:row.top[0].page,score:row.top[0].score,hits:row.top[0].hits}))));
  console.log('FACILITY_SOURCE_SEARCH_COMPLETE');
  await ctx.close();
 }finally{await browser.close()}
