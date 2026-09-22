@@ -86,7 +86,7 @@ ok(V.VerifiedHighYield4119?.added===31&&verifiedHighYield4.length===31,'high-yie
 ok(verifiedHighYield4.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'high-yield level-four batch stays B-grade, page-verified and never claims past-exam status');
 ok(verifiedHighYield4.every(q=>/(소방전술|예방실무).*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'high-yield level-four batch carries exact official textbook page evidence');
 const verifiedFireTarget1=(V.questions||[]).filter(q=>/^119-vertarget-fire1-/.test(q.id||''));
-ok(V.VerifiedFireTarget1119?.added===41&&verifiedFireTarget1.length===41,'fire target1 adds forty-one new exact-page B-grade questions');
+ok(V.VerifiedFireTarget1119?.added===42&&verifiedFireTarget1.length===42,'fire target1 adds forty-two exact-page B-grade questions after the reviewed flameover reinforcement');
 ok(verifiedFireTarget1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.reviewStatus==='source-reviewed'&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'fire target1 remains source-reviewed B-grade evidence with no past-exam claim');
 ok(verifiedFireTarget1.every(q=>/2026\s+소방전술1.*\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/.test(String(q.source||''))),'fire target1 carries exact 2026 NFA textbook page evidence');
 const verifiedFireTarget2=(V.questions||[]).filter(q=>/^119-vertarget-fire2-/.test(q.id||''));
