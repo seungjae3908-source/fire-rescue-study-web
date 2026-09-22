@@ -43,9 +43,19 @@ const byConcept=Object.fromEntries(targetIds.map(id=>[
 ]));
 console.log('V29_VERIFIED_BREADTH_CANDIDATES',JSON.stringify({targetIds,byConcept},null,2));
 
+const expected={
+  'E03-C03':'119-factory-e03-c03-detail-b',
+  'E04-C01':'119-factory-e04-c01-detail-a',
+  'E04-C02':'119-factory-e04-c02-detail-b',
+  'E06-C02':'119-factory-e06-c02-detail-a',
+  'E10-C05':'119-factory-e10-c05-detail-b',
+  'E22-C02':'119-factory-e22-c02-detail-b',
+  'F04-C03':'119-factory-f04-c03-detail-a'
+};
 for(const id of targetIds){
-  const qs=rows.filter(x=>x.conceptId===id);
-  const verified=qs.filter(x=>x.grade==='A'||x.grade==='B');
-  if(verified.length!==2)throw new Error('V29_BASELINE_VERIFIED_COUNT '+id+' '+verified.length);
+  const qs=rows.filter(x=>x.conceptId===id),verified=qs.filter(x=>x.grade==='A'||x.grade==='B');
+  if(verified.length!==3)throw new Error('V29_VERIFIED_COUNT '+id+' '+verified.length);
+  const q=qs.find(x=>x.id===expected[id]);
+  if(!q||q.grade!=='B'||q.generatedPractice||!q.pageVerified||q.reviewStatus!=='source-reviewed'||q.pastExamClaim)throw new Error('V29_PROMOTION_CONTRACT '+id);
 }
 console.log('V29_VERIFIED_BREADTH_CANDIDATE_AUDIT_COMPLETE');
