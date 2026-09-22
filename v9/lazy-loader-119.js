@@ -41,10 +41,26 @@ async function ensureQuestions(){
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
     V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
+    const sourceImpact=V.SourceImpact119?.audit?.();
+    if(sourceImpact&&!sourceImpact.complete){
+      throw new Error('SOURCE_IMPACT_CONTRACT_FAIL '+JSON.stringify({
+        invalidRanges:sourceImpact.invalidRanges?.length||0,
+        orphanVerified:sourceImpact.orphanVerified?.length||0,
+        reviewedUnmapped:sourceImpact.reviewedUnmapped?.length||0
+      }));
+    }
     questionsReady=true;
     document.documentElement.dataset.questionLane='ready';
     document.body?.removeAttribute('aria-busy');
-    window.dispatchEvent(new CustomEvent('aitutor-question-lane-ready',{detail:{count:(V.questions||[]).length}}));
+    window.dispatchEvent(new CustomEvent('aitutor-question-lane-ready',{detail:{
+      count:(V.questions||[]).length,
+      sourceImpact:sourceImpact?{
+        complete:sourceImpact.complete,
+        conceptCount:sourceImpact.conceptCount,
+        verifiedQuestionCount:sourceImpact.verifiedQuestionCount,
+        reviewedQuestionCount:sourceImpact.reviewedQuestionCount
+      }:null
+    }}));
     return V.questions||[]
   })().catch(err=>{
     questionsPromise=null;
@@ -62,7 +78,7 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v1',
+  version:'119-lazy-runtime-v2-source-impact',
   questionFiles:[...QUESTION_FILES],
   ensureQuestions,needsQuestions,needsQuestionsForCurrentState,
   get questionsReady(){return questionsReady},
