@@ -20,6 +20,24 @@ function ageMs(value){
   const n=Date.parse(String(value||''));
   return Number.isFinite(n)?Math.max(0,Date.now()-n):Number.POSITIVE_INFINITY;
 }
+function healthFromSnapshot(x){
+  const items=Array.isArray(x?.items)?x.items:[];
+  const healthy=x?.healthy===true;
+  const coverageComplete=x?.coverageComplete===true;
+  return{
+    version:'119-official-monitor-health-v1',
+    generatedAt:String(x?.generatedAt||new Date().toISOString()),
+    healthy,
+    coverageComplete,
+    degraded:!healthy||!coverageComplete,
+    preservedLastGood:x?.preservedLastGood===true,
+    lastSuccessfulAt:healthy?String(x?.generatedAt||''):String(x?.lastSuccessfulAt||''),
+    sourceStatus:Array.isArray(x?.sourceStatus)?x.sourceStatus:[],
+    liveItems:items.length,
+    targetYear:items.filter(i=>i?.targetYearMatch).length,
+    reviewRequired:items.filter(i=>i?.reviewRequired).length
+  };
+}
 async function fetchJson(url,validator){
   const r=await fetch(url,{headers:{'user-agent':'119-study-official-monitor-api/2.0','cache-control':'no-cache'}});
   if(!r.ok)throw new Error('HTTP_'+r.status);
@@ -40,7 +58,7 @@ function send(res,snapshot,transport,health,stale=false){
   return res.status(200).json({...snapshot,transport,health:health||null,stale});
 }
 
-module.exports=async function handler(req,res){
+async function handler(req,res){
   if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'METHOD_NOT_ALLOWED'})}
   res.setHeader('Content-Type','application/json; charset=utf-8');
 
@@ -58,9 +76,10 @@ module.exports=async function handler(req,res){
   if(snapshotStale){
     try{
       const live=await fetchLive();
-      if(live.healthy===true)return send(res,{...live,degraded:live.coverageComplete!==true,notificationSuppressed:false},'live-fallback',health,false);
-      if(snapshot)return send(res,snapshot,'stale-snapshot',health,true);
-      return res.status(503).json({error:'OFFICIAL_MONITOR_UNAVAILABLE',health});
+      const liveHealth=healthFromSnapshot(live);
+      if(live.healthy===true)return send(res,{...live,degraded:live.coverageComplete!==true,notificationSuppressed:false},'live-fallback',liveHealth,false);
+      if(snapshot)return send(res,snapshot,'stale-snapshot',liveHealth,true);
+      return res.status(503).json({error:'OFFICIAL_MONITOR_UNAVAILABLE',health:liveHealth});
     }catch{
       if(snapshot)return send(res,snapshot,'stale-snapshot',health,true);
       return res.status(503).json({error:'OFFICIAL_MONITOR_UNAVAILABLE',health});
@@ -68,4 +87,7 @@ module.exports=async function handler(req,res){
   }
 
   return send(res,snapshot,'snapshot',health,false);
-};
+}
+
+handler.healthFromSnapshot=healthFromSnapshot;
+module.exports=handler;
