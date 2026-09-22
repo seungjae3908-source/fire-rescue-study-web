@@ -776,7 +776,9 @@ try{
     const tabletPdf=await t.locator('#resourcePdf').evaluate(root=>{const c=root.querySelector('canvas'),m=root.querySelector('.pdf-evidence-modal')?.getBoundingClientRect();return{css:c?.getBoundingClientRect().width||0,pixel:c?.width||0,modal:m?.width||0,zoom:root.querySelector('[data-resource-zoom-label]')?.textContent||''}});
     assert(tabletPdf.modal<=768&&tabletPdf.pixel>=tabletPdf.css*1.8&&tabletPdf.zoom==='100%','tablet original view fits the viewport and keeps 2x-density sharp text');
     assert(await t.locator('#resourcePdf [data-resource-pdf-zoom]').count()===2,'tablet original view keeps accessible zoom controls');
-    await t.locator('[data-resource-pdf-close]').click();
+    assert(await t.locator('#resourcePdf [data-source-nav="back"]').isVisible()&&await t.locator('#resourcePdf [data-source-nav="close"]').isVisible(),'tablet original view keeps explicit back and close controls');
+    await t.locator('#resourcePdf [data-source-nav="close"]').click();
+    await t.waitForSelector('#resourcePdf',{state:'detached'});
     assert(terrs.length===0,'tablet 768 runtime errors = 0 '+terrs.join(' | '));
     await tablet.close();
   }
