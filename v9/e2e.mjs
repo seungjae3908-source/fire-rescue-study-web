@@ -152,6 +152,8 @@ try{
   await p.locator('[data-resource-doc]').first().click();await p.waitForSelector('#resourcePdf canvas',{timeout:60000});
   assert(await p.locator('#resourcePdf canvas').count()===1,'official resource opens inside the app with the shared PDF renderer');
   assert(await p.locator('#resourcePdf [data-resource-pdf-zoom]').count()===2&&await p.locator('#resourcePdf [data-resource-pdf-fit]').count()===1,'desktop official PDF exposes zoom out/in and fit-width controls');
+  assert(await p.locator('#resourcePdf [data-source-back]').isVisible()&&await p.locator('#resourcePdf .pdf-close-btn[data-resource-pdf-close]').isVisible(),'desktop official PDF exposes explicit back and close actions');
+  assert(await p.locator('#resourcePdf .pdf-modal-head').evaluate(el=>getComputedStyle(el).position)==='sticky','desktop official PDF keeps the navigation header sticky');
   const desktopPdfFit=await p.locator('#resourcePdf canvas').evaluate(c=>({css:c.getBoundingClientRect().width,pixel:c.width,host:c.closest('.pdf-evidence-host')?.clientWidth||0}));
   assert(desktopPdfFit.css<=desktopPdfFit.host+2&&desktopPdfFit.pixel>=desktopPdfFit.css,'desktop official PDF opens fit-width at native-or-higher pixel density');
   await p.locator('#resourcePdf [data-resource-pdf-zoom="0.25"]').click();
@@ -160,7 +162,9 @@ try{
   assert(desktopPdfZoom>desktopPdfFit.css*1.15,'desktop PDF zoom increases readable page width without degrading the source');
   await p.locator('#resourcePdf [data-resource-pdf-fit]').click();
   await p.waitForFunction(()=>document.querySelector('#resourcePdf [data-resource-zoom-label]')?.textContent==='100%',null,{timeout:30000});
-  await p.locator('[data-resource-pdf-close]').click();
+  await p.locator('#resourcePdf .pdf-close-btn[data-resource-pdf-close]').click();
+  await p.waitForSelector('#resourcePdf',{state:'detached'});
+  await p.waitForFunction(()=>!history.state?.sourceView);
 
   await go(p,'settings');await cleanPage(p,'desktop settings');
   const settingsText=await p.locator('.page').innerText();
@@ -316,6 +320,9 @@ try{
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   await m.waitForFunction(()=>document.querySelector('#pdfEvidence')?.dataset.renderState==='ready',{timeout:60000});
   assert(await m.locator('#pdfEvidence canvas').count()===1,'official evidence opens a PDF.js canvas from the source tab');
+  assert(await m.locator('#pdfEvidence [data-source-back]').isVisible()&&await m.locator('#pdfEvidence .pdf-close-btn[data-pdf-close]').isVisible(),'mobile original view exposes explicit back and close actions');
+  const mobileSourceHead=await m.locator('#pdfEvidence .pdf-modal-head').evaluate(el=>({position:getComputedStyle(el).position,top:getComputedStyle(el).top}));
+  assert(mobileSourceHead.position==='sticky'&&mobileSourceHead.top==='0px','mobile original navigation stays sticky while reading long source pages');
   const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=[...root.querySelectorAll('.pdf-evidence-line')];return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,lineHeights:lines.map(x=>x.getBoundingClientRect().height),lineStyles:lines.map(x=>({bg:getComputedStyle(x).backgroundColor,shadow:getComputedStyle(x).boxShadow})),legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
   assert(pdfVisual.pixelWidth>=pdfVisual.cssWidth*1.8,'mobile PDF canvas renders at high device-pixel density for crisp text');
   assert(await m.locator('#pdfEvidence [data-pdf-zoom]').count()===2&&await m.locator('#pdfEvidence [data-pdf-fit]').count()===1,'mobile original view exposes zoom and fit-width controls');
@@ -334,9 +341,14 @@ try{
   const cache=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,a=await V.SourcePDF.openPdf(key),b=await V.SourcePDF.openPdf(key);return{same:a.pdf===b.pdf,origin:a.origin}});
   const local=await m.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc;return await V.SourcePDF.availability(key)});
   assert(cache.same&&(/local-cache/.test(cache.origin)||cache.origin==='official-static-range')&&(local.local||local.mirror),'official PDF uses local cache or stable static mirror and is reused after first load');
-  const closeBox=await m.locator('#pdfEvidence [data-pdf-close]').boundingBox();
+  await m.locator('#pdfEvidence .modal').evaluate(el=>{el.scrollTop=el.scrollHeight});
+  assert(await m.locator('#pdfEvidence [data-source-back]').isVisible()&&await m.locator('#pdfEvidence .pdf-close-btn[data-pdf-close]').isVisible(),'mobile back and close controls remain visible after scrolling the source viewer');
+  const closeBox=await m.locator('#pdfEvidence .pdf-close-btn[data-pdf-close]').boundingBox();
   assert(closeBox&&closeBox.height<60,'PDF close button stays compact instead of stretching with the header');
-  await m.locator('[data-pdf-close]').click();
+  await m.locator('#pdfEvidence [data-source-back]').click();
+  await m.waitForSelector('#pdfEvidence',{state:'detached'});
+  await m.waitForFunction(()=>!history.state?.sourceView);
+  assert(await m.evaluate(()=>{const s=window.AITUTOR_V9.Store.state;return s.page==='study'&&s.studyTab==='source'}),'explicit PDF back returns to the same source study tab without losing the concept');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
@@ -347,7 +359,9 @@ try{
   const flashSource=await m.locator('#pdfEvidence').evaluate(root=>{const V=window.AITUTOR_V9,page=Number(root.dataset.page)||0;return{page,bookPage:V.SourcePDF.bookPage('fire1',page),verified:root.dataset.anchorVerified,label:root.querySelector('[data-pdf-page-label]')?.textContent||'',lines:[...root.querySelectorAll('.pdf-evidence-line')].map(x=>x.title||'')}}); 
   assert(flashSource.bookPage===40||(flashSource.bookPage>=23&&flashSource.bookPage<=34),'fire phenomena source stays inside the declared official fire1 phenomenon evidence ranges');
   assert(flashSource.verified==='true'&&flashSource.lines.some(x=>/플래시오버|백드래프트|롤오버|플레임오버/.test(x)),'fire phenomena PDF is accepted only when the underlined evidence contains a phenomenon-specific concept term');
-  await m.locator('[data-pdf-close]').click();
+  await m.evaluate(()=>history.back());
+  await m.waitForSelector('#pdfEvidence',{state:'detached'});
+  assert(await m.evaluate(()=>{const s=window.AITUTOR_V9.Store.state;return s.page==='study'&&s.studyTab==='source'}),'mobile browser/system back closes only the source overlay and preserves the study context');
 
   await m.locator('.mobile-nav [data-go="exam"]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='exam');
   await cleanPage(m,'mobile exam');
@@ -760,7 +774,9 @@ try{
     const tabletPdf=await t.locator('#resourcePdf').evaluate(root=>{const c=root.querySelector('canvas'),m=root.querySelector('.pdf-evidence-modal')?.getBoundingClientRect();return{css:c?.getBoundingClientRect().width||0,pixel:c?.width||0,modal:m?.width||0,zoom:root.querySelector('[data-resource-zoom-label]')?.textContent||''}});
     assert(tabletPdf.modal<=768&&tabletPdf.pixel>=tabletPdf.css*1.8&&tabletPdf.zoom==='100%','tablet original view fits the viewport and keeps 2x-density sharp text');
     assert(await t.locator('#resourcePdf [data-resource-pdf-zoom]').count()===2,'tablet original view keeps accessible zoom controls');
-    await t.locator('[data-resource-pdf-close]').click();
+    assert(await t.locator('#resourcePdf [data-source-back]').isVisible()&&await t.locator('#resourcePdf .pdf-close-btn[data-resource-pdf-close]').isVisible(),'tablet original view keeps explicit back and close controls');
+    await t.locator('#resourcePdf .pdf-close-btn[data-resource-pdf-close]').click();
+    await t.waitForSelector('#resourcePdf',{state:'detached'});
     assert(terrs.length===0,'tablet 768 runtime errors = 0 '+terrs.join(' | '));
     await tablet.close();
   }
