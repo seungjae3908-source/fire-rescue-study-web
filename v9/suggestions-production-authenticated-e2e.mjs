@@ -104,6 +104,12 @@ try{
   assert(r.ok&&!r.data,'admin confirms temporary suggestion cleanup');
   suggestionId='';
 
+  r=await query(admin.page,'delete',adminSuggestionId);
+  assert(r.ok,'admin deletes own temporary isolation suggestion');
+  r=await query(admin.page,'get',adminSuggestionId);
+  assert(r.ok&&!r.data,'admin confirms own temporary isolation suggestion cleanup');
+  adminSuggestionId='';
+
   assert(member.errors.length===0,'member Production runtime errors = 0 '+member.errors.join(' | '));
   assert(admin.errors.length===0,'admin Production runtime errors = 0 '+admin.errors.join(' | '));
   console.log('PRODUCTION_SUGGESTIONS_AUTHENTICATED_ACCEPTANCE_SUCCESS');
