@@ -46,8 +46,8 @@ const flameText=JSON.stringify({summary:flame?.summary,detail:flame?.detail,must
 const flameQs=verified.filter(q=>q.conceptId==='F03-C10');
 const flamePositions=new Set(flameQs.map(q=>q.a));
 const factualErrors=[];
-if(!flame||!/(?:물체|가연성).*표면|표면.*(?:화염|확산)/.test(flameText))factualErrors.push('F03-C10_SURFACE_SPREAD_DEFINITION_MISSING');
-if(/벽면\s*→\s*천장\s*화염의\s*면이동/.test(JSON.stringify(flame?.must||[])))factualErrors.push('F03-C10_DIRECTION_OVERCONSTRAINED');
+if(!flame||!/(?:초기화재|초기 화재)/.test(flameText)||!/대류/.test(flameText)||!/벽면/.test(flameText)||!/천장/.test(flameText)||!/(?:면이동|면 이동)/.test(flameText))factualErrors.push('F03-C10_OFFICIAL_TEXTBOOK_DEFINITION_MISSING');
+if(/모든\s*표면.*플레임오버|가연성\s*물체의\s*표면을\s*따라\s*빠르게\s*확산/.test(flameText))factualErrors.push('F03-C10_OVERGENERALIZED_BEYOND_TEXTBOOK');
 if(flameQs.length<2)factualErrors.push('F03-C10_VERIFIED_UNDER_TWO');
 if(flamePositions.size<2)factualErrors.push('F03-C10_ANSWER_POSITION_MONOTONY');
 
