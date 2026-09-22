@@ -86,9 +86,6 @@ async function checkedDb(promise,label){
 async function cleanupRun(client,runId){
   const users=await qaUsersForRun(client,runId);
   for(const user of users){
-    await checkedDb(client.from('study_suggestions').delete().eq('user_id',user.id),'CLEANUP_SUGGESTIONS');
-    await checkedDb(client.from('study_admins').delete().eq('user_id',user.id),'CLEANUP_ADMIN');
-    await checkedDb(client.from('study_memberships').delete().eq('user_id',user.id),'CLEANUP_MEMBERSHIP');
     const {error}=await client.auth.admin.deleteUser(user.id);
     if(error)throw new Error(`CLEANUP_AUTH_USER: ${error.message||error}`);
   }
@@ -114,7 +111,7 @@ async function createQaUser(client,runId,role){
   });
   if(error||!data?.user?.id)throw new Error(`CREATE_${role.toUpperCase()}_AUTH: ${error?.message||'missing user'}`);
   const id=data.user.id;
-  await checkedDb(client.from('study_memberships').insert([{user_id:id,source:'production-acceptance-oidc'}]),`CREATE_${role.toUpperCase()}_MEMBERSHIP`);
+  await checkedDb(client.from('study_memberships').insert([{user_id:id,source:'study-v9'}]),`CREATE_${role.toUpperCase()}_MEMBERSHIP`);
   if(role==='admin')await checkedDb(client.from('study_admins').insert([{user_id:id}]),'CREATE_ADMIN_GRANT');
   return{id,email,password};
 }
