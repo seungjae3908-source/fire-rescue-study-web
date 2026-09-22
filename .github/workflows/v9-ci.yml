@@ -34,6 +34,7 @@ on:
       - '.github/workflows/v9-ci.yml'
       - '.github/workflows/official-monitor.yml'
       - '.github/workflows/production-current-main-acceptance.yml'
+      - '.github/workflows/production-suggestions-authenticated-acceptance.yml'
   pull_request:
     paths:
       - 'v9/**'
@@ -49,6 +50,7 @@ on:
       - '.github/workflows/v9-ci.yml'
       - '.github/workflows/official-monitor.yml'
       - '.github/workflows/production-current-main-acceptance.yml'
+      - '.github/workflows/production-suggestions-authenticated-acceptance.yml'
 
 concurrency:
   group: v9-development-${{ github.event.pull_request.number || github.ref }}
@@ -81,6 +83,8 @@ jobs:
           node --check v9/official-monitor-lib.mjs
           node --check v9/official-monitor-sync.mjs
           node --check v9/official-monitor-live-probe.mjs
+          node --check v9/suggestions-production-public-e2e.mjs
+          node --check v9/suggestions-production-authenticated-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -109,6 +113,10 @@ jobs:
         run: node v9/runtime-head-api-test.mjs
       - name: Production runtime dependency probe gate
         run: node v9/runtime-deps-production-contract.mjs
+      - name: Production suggestion acceptance script syntax
+        run: |
+          node --check v9/suggestions-production-public-e2e.mjs
+          node --check v9/suggestions-production-authenticated-e2e.mjs
       - name: High-yield semantic depth profile report
         run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
@@ -131,6 +139,27 @@ jobs:
         run: node v9/production-release-gate-audit.mjs
       - name: 119 final release gate audit
         run: node v9/release-gate-audit.mjs
+
+
+  suggestions_public_production_probe:
+    name: suggestions_public_production_probe (current Production guard)
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      STUDY_119_PREVIEW_URL: https://fire-rescue-study-web.vercel.app/
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Install Production suggestion browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify current Production suggestion guest + anon guards
+        run: node v9/suggestions-production-public-e2e.mjs
 
 
   official_monitor_live_probe:

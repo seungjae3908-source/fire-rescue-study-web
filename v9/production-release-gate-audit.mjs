@@ -9,6 +9,10 @@ const runtimeHead=read('api/runtime-head.js');
 const productionAcceptance=read('.github/workflows/production-current-main-acceptance.yml');
 const liveStudentSmoke=read('v9/live-student-ux-smoke.mjs');
 const runtimeDeps=read('v9/runtime-deps.js');
+const productionSuggestionsPublic=read('v9/suggestions-production-public-e2e.mjs');
+const developmentCi=read('.github/workflows/v9-ci.yml');
+const authenticatedSuggestionAcceptance=read('.github/workflows/production-suggestions-authenticated-acceptance.yml');
+const authenticatedSuggestionScript=read('v9/suggestions-production-authenticated-e2e.mjs');
 const sourceCatalog=read('v9/source-catalog-119.js');
 const monitorLib=read('v9/official-monitor-lib.mjs');
 const productionCiGate=read('v9/production-ci-gate.mjs');
@@ -40,11 +44,18 @@ const checks={
   postDeployProductionAcceptance:productionAcceptance.includes('workflow_run:')&&productionAcceptance.includes('V9 Development CI')&&productionAcceptance.includes('PRODUCTION_EXACT_HEAD_READY')&&productionAcceptance.includes('live-student-ux-smoke.mjs'),
   postDeployAcceptanceExactHead:productionAcceptance.includes('github.event.workflow_run.head_sha')&&liveStudentSmoke.includes("fetch('/api/runtime-head'")&&liveStudentSmoke.includes('runtime.sha===expected'),
   productionRuntimeDepsNoLocalProbe:runtimeDeps.includes("const local=()=>")&&runtimeDeps.includes("deps('../node_modules/pdfjs-dist/build/pdf.min.mjs'")&&runtimeDeps.includes("deps('../node_modules/tesseract.js/dist/tesseract.esm.min.js'"),
+  postDeploySuggestionPublicAcceptance:productionAcceptance.includes('suggestions-production-public-e2e.mjs')&&productionSuggestionsPublic.includes('LOGIN_REQUIRED')&&productionSuggestionsPublic.includes('study_suggestions')&&productionSuggestionsPublic.includes('study_admins')&&productionSuggestionsPublic.includes('anonymous Data API read is blocked'),
+  prSuggestionPublicProbe:developmentCi.includes('suggestions_public_production_probe')&&developmentCi.includes('github.event.pull_request.base.sha')&&developmentCi.includes('suggestions-production-public-e2e.mjs'),
+  authenticatedSuggestionGatePrepared:authenticatedSuggestionAcceptance.includes('workflow_dispatch:')&&authenticatedSuggestionAcceptance.includes('STUDY_119_MEMBER_EMAIL')&&authenticatedSuggestionAcceptance.includes('STUDY_119_MEMBER_PASSWORD')&&authenticatedSuggestionAcceptance.includes('STUDY_119_ADMIN_EMAIL')&&authenticatedSuggestionAcceptance.includes('STUDY_119_ADMIN_PASSWORD')&&authenticatedSuggestionAcceptance.includes('Wait for exact SHA to become Production')&&authenticatedSuggestionAcceptance.includes('suggestions-production-authenticated-e2e.mjs'),
+  authenticatedSuggestionAutoChain:authenticatedSuggestionAcceptance.includes('workflow_run:')&&authenticatedSuggestionAcceptance.includes('Production Current-Main Acceptance')&&authenticatedSuggestionAcceptance.includes("github.event.workflow_run.conclusion == 'success'")&&authenticatedSuggestionAcceptance.includes("github.event.workflow_run.head_branch == 'main'")&&authenticatedSuggestionAcceptance.includes('github.event.workflow_run.head_sha'),
+  authenticatedSuggestionNoStudySync:authenticatedSuggestionScript.includes('SupabaseLite.createClient')&&authenticatedSuggestionScript.includes('study_suggestions')&&authenticatedSuggestionScript.includes('study_admins')&&!authenticatedSuggestionScript.includes('V.Auth.signIn')&&!authenticatedSuggestionScript.includes('syncAll'),
+  authenticatedSuggestionIsolation:authenticatedSuggestionScript.includes('member cannot read another user suggestion through Production RLS')&&authenticatedSuggestionScript.includes('member cannot mutate admin-only reply or status through Production RLS'),
+  authenticatedSuggestionCleanup:authenticatedSuggestionScript.includes('member deletes own temporary suggestion')&&authenticatedSuggestionScript.includes('admin deletes own temporary isolation suggestion')&&authenticatedSuggestionScript.includes('finally')&&authenticatedSuggestionScript.includes("await query(side?.page,'delete',value)")&&authenticatedSuggestionScript.includes("const check=await query(admin?.page||side?.page,'get',value)")&&authenticatedSuggestionScript.includes('if(check?.ok&&!check.data)'),
   canonicalSupplementalMonitor:monitorLib.includes('https://www.nfa.go.kr/nfsa/news/0011/job/?pageIdx=1')&&monitorLib.includes('https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/')&&!monitorLib.includes('https://cherish.nfsa.go.kr/'),
   requiredRecruitmentSource:monitorLib.includes('https://gongmuwon.gosi.kr/spcsv/indexMain3.do')
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
-const summary={version:'119-v24-production-release-gate-v12',checks,blockers,ready:blockers.length===0};
+const summary={version:'119-v25-production-release-gate-v16',checks,blockers,ready:blockers.length===0};
 console.log('PRODUCTION_RELEASE_GATE_119',JSON.stringify(summary,null,2));
 if(blockers.length)throw Error('PRODUCTION_RELEASE_GATE_FAILED '+JSON.stringify(blockers));
 console.log('PRODUCTION_RELEASE_GATE_COMPLETE');

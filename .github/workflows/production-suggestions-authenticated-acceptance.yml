@@ -1,8 +1,8 @@
-name: Production Current-Main Acceptance
+name: Production Suggestion Authenticated Acceptance
 
 on:
   workflow_run:
-    workflows: ["V9 Development CI"]
+    workflows: ["Production Current-Main Acceptance"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -12,26 +12,30 @@ on:
         type: string
 
 concurrency:
-  group: production-current-main-acceptance
+  group: production-suggestion-authenticated-acceptance
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  production_current_main_acceptance:
+  production_suggestion_authenticated_acceptance:
     if: >-
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_branch == 'main') ||
       (github.event_name == 'workflow_dispatch' && inputs.expected_head != '')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     env:
       STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
       STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.expected_head }}
+      STUDY_119_MEMBER_EMAIL: ${{ secrets.STUDY_119_MEMBER_EMAIL }}
+      STUDY_119_MEMBER_PASSWORD: ${{ secrets.STUDY_119_MEMBER_PASSWORD }}
+      STUDY_119_ADMIN_EMAIL: ${{ secrets.STUDY_119_ADMIN_EMAIL }}
+      STUDY_119_ADMIN_PASSWORD: ${{ secrets.STUDY_119_ADMIN_PASSWORD }}
     steps:
-      - name: Validate expected SHA
+      - name: Validate exact SHA and acceptance secrets
         shell: bash
         run: |
           set -euo pipefail
@@ -39,6 +43,12 @@ jobs:
             echo "INVALID_EXPECTED_HEAD"
             exit 1
           fi
+          for name in STUDY_119_MEMBER_EMAIL STUDY_119_MEMBER_PASSWORD STUDY_119_ADMIN_EMAIL STUDY_119_ADMIN_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              echo "MISSING_ACCEPTANCE_SECRET: $name"
+              exit 1
+            fi
+          done
 
       - uses: actions/checkout@v7.0.1
         with:
@@ -61,22 +71,15 @@ jobs:
             fi
             sleep 10
           done
-          echo "PRODUCTION_EXACT_HEAD_TIMEOUT $STUDY_119_EXPECTED_RUNTIME_HEAD"
+          echo "PRODUCTION_EXACT_HEAD_TIMEOUT"
           exit 1
 
-      - name: Install Production browser QA
+      - name: Install authenticated suggestion browser QA
         run: |
-          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
+          npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Production exact-main mobile + desktop learner acceptance
+      - name: Production member-admin suggestion closed-loop acceptance
         env:
           STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
-          STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
-        run: node v9/live-student-ux-smoke.mjs
-
-      - name: Production suggestion guest + anon Data API acceptance
-        env:
-          STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
-          STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
-        run: node v9/suggestions-production-public-e2e.mjs
+        run: node v9/suggestions-production-authenticated-e2e.mjs
