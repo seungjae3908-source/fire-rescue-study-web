@@ -544,7 +544,7 @@ ok(sw.includes("'./sync-merge.js'")&&!sw.includes("'./sync-ui.js'"),'conflict-sa
 ok(sw.includes("'./depth-enrichment.js'")&&sw.includes("'./depth-enrichment-2.js'")&&sw.includes("'./content-rich-2026.js'")&&sw.includes("'./ems-rich-2026.js'"),'v9 depth enrichments are offline-cached');
 ok(sw.includes("'./curriculum-complete-2026.js'"),'complete curriculum expansion is offline-cached');
 ok(sw.includes("'./coverage-map-119.js'"),'full exam Coverage Map is offline-cached');
-ok(sw.includes("'./mock-exam-quality-119.js'"),'v14 mock exam engine is offline-cached');
+ok(sw.includes("'./lazy-loader-119.js'")&&!sw.includes("'./mock-exam-quality-119.js'"),'lazy question loader is precached while deferred mock engine is cache-on-demand');
 ok(!sw.includes("'./selftest.js'"),'developer selftest is not cached in the learner runtime');
 ok(sw.includes("'./questions-ems-restored-verified-119.js'"),'restored EMS verified questions are offline-cached');
 ok(sw.includes("'./questions-final-gap-119.js'"),'final source-backed gap practice bank is offline-cached');
@@ -568,7 +568,13 @@ ok(v9index.indexOf('./pdf.js')<v9index.indexOf('./auth.js'),'private document sy
 ok(v9index.indexOf('./source-catalog-119.js')>v9index.indexOf('./pdf.js')&&v9index.indexOf('./source-catalog-119.js')<v9index.indexOf('./source-pdf.js'),'official source catalog loads before PDF engine');
 ok(v9index.indexOf('./source-pdf.js')>v9index.indexOf('./source-catalog-119.js')&&v9index.indexOf('./source-pdf.js')<v9index.indexOf('./app.js'),'official PDF highlight engine loads before app UI');
 ok(v9index.indexOf('./coverage-map-119.js')>v9index.indexOf('./calculation-contract-119.js')&&v9index.indexOf('./coverage-map-119.js')<v9index.indexOf('./store.js'),'full exam Coverage Map loads after content/question contracts and before runtime state');
-ok(v9index.includes('./mock-exam-quality-119.js')&&v9index.indexOf('./mock-exam-quality-119.js')<v9index.indexOf('./app.js'),'v14 mock exam engine loads before app UI');
+const lazyLoader=fs.readFileSync(new URL('./lazy-loader-119.js',import.meta.url),'utf8');
+const lazyQuestionFiles=['questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','questions-verified-fire-target1-119.js','questions-verified-fire-target2-119.js','questions-verified-ems-target1-119.js','questions-verified-ems-target2-119.js','mock-exam-quality-119.js'];
+ok(v9index.includes('./lazy-loader-119.js')&&v9index.indexOf('./lazy-loader-119.js')<v9index.indexOf('./app.js'),'lazy runtime loader initializes before app UI');
+ok(lazyQuestionFiles.every(file=>lazyLoader.includes("'"+file+"'")),'lazy question manifest contains every deferred question pack in canonical order');
+ok(lazyQuestionFiles.every(file=>!v9index.includes('./'+file)),'deferred question packs are absent from eager HTML');
+ok(lazyQuestionFiles.every(file=>!sw.includes("'./"+file+"'")),'deferred question packs are not service-worker install precached');
+ok(lazyLoader.includes('ensureQuestions')&&lazyLoader.includes('needsQuestionsForCurrentState'),'lazy question lane exposes on-demand and restore-safe loaders');
 ok(!v9index.includes('./selftest.js'),'developer selftest is not shipped in the learner runtime');
 ok(v9index.indexOf('./study-emphasis-119.js')>v9index.indexOf('./quality2-comparison-families-119.js')&&v9index.indexOf('./study-emphasis-119.js')<v9index.indexOf('./quality2-study-schema-119.js'),'study emphasis SSOT loads before study schema');
 
