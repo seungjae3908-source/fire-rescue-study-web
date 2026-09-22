@@ -11,6 +11,12 @@ const rows=unique.map(asset=>{
   return{asset,size};
 });
 const totalBytes=rows.reduce((a,x)=>a+x.size,0);
+const lazySource=fs.readFileSync(new URL('./lazy-loader-119.js',root),'utf8');
+const lazyMatch=lazySource.match(/const QUESTION_FILES=\[([\s\S]*?)\];/);
+const lazyQuestionAssets=[...(lazyMatch?.[1]||'').matchAll(/'([^']+\.js)'/g)].map(m=>m[1]);
+const lazyRows=lazyQuestionAssets.map(asset=>({asset,size:fs.statSync(new URL('./'+asset,root)).size}));
+const lazyQuestionBytes=lazyRows.reduce((a,x)=>a+x.size,0);
+const combinedRuntimeBytes=totalBytes+lazyQuestionBytes;
 const jsCount=rows.filter(x=>x.asset.endsWith('.js')).length;
 const cssCount=rows.filter(x=>x.asset.endsWith('.css')).length;
 const largest=rows.slice().sort((a,b)=>b.size-a.size)[0]||{asset:'',size:0};
@@ -23,6 +29,8 @@ const limits={
 const checks={
   noDuplicateAssetTags:assets.length===unique.length,
   totalPayload:totalBytes<=limits.totalBytes,
+  lazyQuestionManifest:lazyQuestionAssets.length>=10&&lazyQuestionBytes>250000,
+  lazyQuestionNotEager:lazyQuestionAssets.every(asset=>!unique.includes(asset)),
   assetCount:rows.length<=limits.assetCount,
   jsCount:jsCount<=limits.jsCount,
   largestSingleAsset:largest.size<=limits.largestSingleAsset,
@@ -30,9 +38,14 @@ const checks={
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
 const result={
-  version:'119-performance-budget-v1',
+  version:'119-performance-budget-v2',
   totalBytes,
   totalKiB:Math.round(totalBytes/1024),
+  lazyQuestionBytes,
+  lazyQuestionKiB:Math.round(lazyQuestionBytes/1024),
+  combinedRuntimeBytes,
+  initialHeadroomBytes:limits.totalBytes-totalBytes,
+  lazyQuestionAssets:lazyQuestionAssets.length,
   assetCount:rows.length,
   jsCount,
   cssCount,
