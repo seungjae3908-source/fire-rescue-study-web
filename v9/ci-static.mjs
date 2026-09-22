@@ -319,7 +319,7 @@ ok(Object.entries(exactAnchorBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
 }),'seven sprinkler concepts are exact-page verified from 2026 prevention1 PDF');
-const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':40,'F03-C11':453,'F03-C12':319,'F03-C13':320,'F03-C14':319,'F03-C15':326,'F03-C16':453};
+const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':40,'F03-C11':453,'F03-C12':303,'F03-C13':304,'F03-C14':303,'F03-C15':326,'F03-C16':453};
 ok(Object.entries(exactFirePhenomenaBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
