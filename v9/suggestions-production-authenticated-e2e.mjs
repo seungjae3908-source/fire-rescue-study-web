@@ -56,7 +56,7 @@ async function query(page,fn,arg){
 async function signOut(page){try{await page.evaluate(()=>window.__suggestQaClient?.auth?.signOut())}catch{}}
 
 const browser=await chromium.launch({headless:true});
-let member=null,admin=null,suggestionId='';
+let member=null,admin=null,suggestionId='',adminSuggestionId='';
 try{
   member=await boot(browser);
   await qaSignIn(member.page,memberEmail,memberPassword,'member');
@@ -71,12 +71,24 @@ try{
   r=await query(member.page,'get',suggestionId);
   assert(r.ok&&r.data?.id===suggestionId&&r.data?.status==='접수','member reads own temporary suggestion through Production RLS');
 
+  r=await query(member.page,'update',{id:suggestionId,patch:{status:'개선완료',admin_reply:'member-must-not-write',updated_at:new Date().toISOString()}});
+  assert(r.ok,'member forbidden update returns a non-crashing Data API response');
+  r=await query(member.page,'get',suggestionId);
+  assert(r.ok&&r.data?.status==='접수'&&r.data?.admin_reply==='','member cannot mutate admin-only reply or status through Production RLS');
+
   admin=await boot(browser);
   await qaSignIn(admin.page,adminEmail,adminPassword,'admin');
   r=await query(admin.page,'isAdmin');
   assert(r.ok&&r.data===true,'admin account is recognized by live study_admins');
   r=await query(admin.page,'get',suggestionId);
   assert(r.ok&&r.data?.id===suggestionId,'admin reads member suggestion through Production RLS');
+
+  adminSuggestionId=await admin.page.evaluate(()=>crypto.randomUUID());
+  const adminId=await admin.page.evaluate(()=>window.__suggestQaUser?.id||'');
+  r=await query(admin.page,'insert',{id:adminSuggestionId,user_id:adminId,category:'기타',title:title+' admin-isolation',body:'Production authenticated acceptance admin-owned isolation row',anonymous:true,status:'접수',admin_reply:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
+  assert(r.ok,'admin inserts own temporary isolation suggestion');
+  r=await query(member.page,'get',adminSuggestionId);
+  assert(r.ok&&!r.data,'member cannot read another user suggestion through Production RLS');
 
   r=await query(admin.page,'update',{id:suggestionId,patch:{status:'개선완료',admin_reply:reply,admin_replied_at:new Date().toISOString(),updated_at:new Date().toISOString()}});
   assert(r.ok,'admin updates reply and status through Production RLS');
@@ -96,10 +108,17 @@ try{
   assert(admin.errors.length===0,'admin Production runtime errors = 0 '+admin.errors.join(' | '));
   console.log('PRODUCTION_SUGGESTIONS_AUTHENTICATED_ACCEPTANCE_SUCCESS');
 }finally{
-  if(suggestionId){
-    for(const side of [member,admin]){
-      try{const r=await query(side?.page,'delete',suggestionId);if(r?.ok){suggestionId='';break}}catch{}
+  for(const key of ['suggestionId','adminSuggestionId']){
+    let value=key==='suggestionId'?suggestionId:adminSuggestionId;
+    if(!value)continue;
+    for(const side of [admin,member]){
+      try{
+        await query(side?.page,'delete',value);
+        const check=await query(admin?.page||side?.page,'get',value);
+        if(check?.ok&&!check.data){value='';break}
+      }catch{}
     }
+    if(key==='suggestionId')suggestionId=value;else adminSuggestionId=value;
   }
   for(const side of [member,admin]){try{await signOut(side?.page)}catch{}try{await side?.ctx?.close()}catch{}}
   await browser.close()
