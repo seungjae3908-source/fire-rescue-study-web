@@ -37,9 +37,9 @@ const officialFallbacks={
   '연결살수설비':{
     sourceType:'official-law-paragraph',
     standard:'연결살수설비의 화재안전기술기준(NFTC 503)',
-    url:'https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000216274&chrClsCd=010201',
+    url:'https://law.go.kr/lbook/lbFileDownload.do?flExt=pdf&lbookConflSeq=107697&lbookSeq=107327',
     clauses:['1.1.1','1.2.1'],
-    required:['연결살수설비','설치 및 관리','소화활동설비']
+    required:['연결살수설비','설치 및 관리','소화활동설비','제2024-42호']
   }
 };
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,'').replace(/[^0-9a-z가-힣]/g,'');
@@ -49,14 +49,28 @@ async function verifyOfficialFallback(term){
   if(!def)return null;
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),30000);
+  let pdf=null;
   try{
     const res=await fetch(def.url,{redirect:'follow',signal:controller.signal,headers:{'user-agent':'119-study-official-evidence-audit/1.0'}});
-    const text=await res.text(),compact=norm(text);
     assert(res.ok,'F07_C15_OFFICIAL_FALLBACK_HTTP '+term+' '+res.status);
+    const bytes=new Uint8Array(await res.arrayBuffer());
+    const magic=String.fromCharCode(...bytes.slice(0,5));
+    assert(magic==='%PDF-','F07_C15_OFFICIAL_FALLBACK_PDF_MAGIC '+JSON.stringify({term,magic,url:def.url}));
+    const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs');
+    pdf=await pdfjs.getDocument({data:bytes}).promise;
+    let compact='',verifiedPage=null;
+    for(let n=1;n<=pdf.numPages;n++){
+      const pg=await pdf.getPage(n),tc=await pg.getTextContent();
+      compact+=norm((tc.items||[]).map(x=>x.str).join(' '));
+      if(def.required.every(x=>compact.includes(norm(x)))){verifiedPage=n;break;}
+    }
     const missingRequired=def.required.filter(x=>!compact.includes(norm(x)));
     assert(missingRequired.length===0,'F07_C15_OFFICIAL_FALLBACK_CONTENT_MISSING '+JSON.stringify({term,missingRequired,url:def.url}));
-    return{term,sourceType:def.sourceType,standard:def.standard,url:def.url,clauses:def.clauses,httpStatus:res.status,required:def.required};
-  }finally{clearTimeout(timer)}
+    return{term,sourceType:def.sourceType,standard:def.standard,url:def.url,clauses:def.clauses,httpStatus:res.status,required:def.required,verifiedPage};
+  }finally{
+    clearTimeout(timer);
+    if(pdf)await pdf.destroy();
+  }
 }
 const browser=await chromium.launch({headless:true});
 try{
