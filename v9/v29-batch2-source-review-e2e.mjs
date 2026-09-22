@@ -1,6 +1,10 @@
 import { chromium } from 'playwright';
 const base=process.env.STUDY_119_BRANCH_URL||'http://127.0.0.1:4173/v9/index.html';
 const targetIds=['F03-C10','F03-C12','F03-C13','F03-C14','E03-C01','E06-C05','E15-C03'];
+const requiredTerms={
+  'F03-C10':['플레임오버'],'F03-C12':['보일오버'],'F03-C13':['슬롭오버'],'F03-C14':['프로스오버'],
+  'E03-C01':['감염예방'],'E06-C05':['쇼크','20','30'],'E15-C03':['부목']
+};
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:1280,height:900}});
@@ -28,6 +32,8 @@ try{
       pages:result.rows.map(x=>({doc:x.doc,bookPage:x.bookPage,pdfPage:x.pdfPage,text:x.text.slice(0,2600)}))
     }));
     if(!result.rows.length)throw new Error('V29_BATCH2_SOURCE_PAGE_MISSING '+id);
+    const citedText=result.rows.map(x=>x.text).join(' ').replace(/\s+/g,' ');
+    for(const term of requiredTerms[id]||[])if(!citedText.includes(term))throw new Error('V29_BATCH2_SOURCE_TERM_MISSING '+id+' '+term);
   }
   await ctx.close();console.log('V29_BATCH2_SOURCE_REVIEW_COMPLETE');
 }finally{await browser.close()}
