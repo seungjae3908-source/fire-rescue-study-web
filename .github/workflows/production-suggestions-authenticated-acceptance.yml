@@ -1,0 +1,77 @@
+name: Production Suggestion Authenticated Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_head:
+        description: 'Exact main SHA that Production must serve'
+        required: true
+        type: string
+
+concurrency:
+  group: production-suggestion-authenticated-acceptance
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  production_suggestion_authenticated_acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ inputs.expected_head }}
+      STUDY_119_MEMBER_EMAIL: ${{ secrets.STUDY_119_MEMBER_EMAIL }}
+      STUDY_119_MEMBER_PASSWORD: ${{ secrets.STUDY_119_MEMBER_PASSWORD }}
+      STUDY_119_ADMIN_EMAIL: ${{ secrets.STUDY_119_ADMIN_EMAIL }}
+      STUDY_119_ADMIN_PASSWORD: ${{ secrets.STUDY_119_ADMIN_PASSWORD }}
+    steps:
+      - name: Validate exact SHA and acceptance secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$STUDY_119_EXPECTED_RUNTIME_HEAD" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "INVALID_EXPECTED_HEAD"
+            exit 1
+          fi
+          for name in STUDY_119_MEMBER_EMAIL STUDY_119_MEMBER_PASSWORD STUDY_119_ADMIN_EMAIL STUDY_119_ADMIN_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              echo "MISSING_ACCEPTANCE_SECRET: $name"
+              exit 1
+            fi
+          done
+
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Wait for exact SHA to become Production
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="${STUDY_119_PRODUCTION_URL%/}/api/runtime-head"
+          for attempt in $(seq 1 90); do
+            body="$(curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$endpoint" 2>/dev/null || true)"
+            if [[ "$body" == *"\"sha\":\"$STUDY_119_EXPECTED_RUNTIME_HEAD\""* && "$body" == *"\"environment\":\"production\""* ]]; then
+              echo "PRODUCTION_EXACT_HEAD_READY $STUDY_119_EXPECTED_RUNTIME_HEAD"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "PRODUCTION_EXACT_HEAD_TIMEOUT"
+          exit 1
+
+      - name: Install authenticated suggestion browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Production member-admin suggestion closed-loop acceptance
+        env:
+          STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
+        run: node v9/suggestions-production-authenticated-e2e.mjs
