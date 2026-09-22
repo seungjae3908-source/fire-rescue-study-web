@@ -6,7 +6,9 @@ const byConcept={};
 for(const id of targetIds){
   const c=V.curriculum.byId?.[id]||V.curriculum.concepts.find(x=>x.id===id),p=V.contentPacks?.get?.(id),qs=V.questions.filter(q=>q.conceptId===id);
   const verified=qs.filter(q=>q.grade==='A'||q.grade==='B');
-  if(verified.length!==2)throw new Error('V29_BATCH2_BASELINE_VERIFIED '+id+' '+verified.length);
+  if(verified.length!==3)throw new Error('V29_BATCH2_VERIFIED_COUNT '+id+' '+verified.length);
+  const promotedId='119-factory-'+id.toLowerCase()+'-detail-a',promoted=qs.find(q=>q.id===promotedId);
+  if(!promoted||promoted.grade!=='B'||promoted.generatedPractice||!promoted.pageVerified||promoted.reviewStatus!=='source-reviewed'||promoted.pastExamClaim)throw new Error('V29_BATCH2_PROMOTION_CONTRACT '+id);
   byConcept[id]={
     title:c?.title||'',source:p?.source||'',sourceRanges:c?.sourceRanges||[],
     verified:verified.map(q=>({id:q.id,q:q.q,a:q.a,choices:q.choices,source:q.source})),
@@ -18,4 +20,4 @@ for(const id of targetIds){
   };
 }
 console.log('V29_BATCH2_CANDIDATES',JSON.stringify({targetIds,byConcept},null,2));
-console.log('V29_BATCH2_CANDIDATE_AUDIT_COMPLETE');
+console.log('V29_BATCH2_PROMOTION_AUDIT_COMPLETE');
