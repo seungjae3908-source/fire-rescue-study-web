@@ -42,6 +42,7 @@ try{
  await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
  await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF,{timeout:60000});
  const head=await page.evaluate(()=>window.AITUTOR_V9_CONFIG?.exactHead||'');
+ console.log('FACILITY_SOURCE_PREVIEW_HEAD',head||'UNKNOWN');
  if(expected)assert(head===expected,'PREVIEW_HEAD_MISMATCH '+head+' != '+expected);
  const result=await page.evaluate(async queries=>{
    const V=window.AITUTOR_V9,source=await V.SourcePDF.resolveRow('prevention1');
