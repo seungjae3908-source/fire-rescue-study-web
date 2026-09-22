@@ -17,6 +17,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   production_suggestion_authenticated_acceptance:
@@ -30,12 +31,10 @@ jobs:
     env:
       STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
       STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.expected_head }}
-      STUDY_119_MEMBER_EMAIL: ${{ secrets.STUDY_119_MEMBER_EMAIL }}
-      STUDY_119_MEMBER_PASSWORD: ${{ secrets.STUDY_119_MEMBER_PASSWORD }}
-      STUDY_119_ADMIN_EMAIL: ${{ secrets.STUDY_119_ADMIN_EMAIL }}
-      STUDY_119_ADMIN_PASSWORD: ${{ secrets.STUDY_119_ADMIN_PASSWORD }}
+      STUDY_119_ACCEPTANCE_BROKER: https://petlfbztqguuzkasfpug.supabase.co/functions/v1/study-119-acceptance-broker
+      STUDY_119_OIDC_AUDIENCE: study-119-production-acceptance
     steps:
-      - name: Validate exact SHA and acceptance secrets
+      - name: Validate exact SHA
         shell: bash
         run: |
           set -euo pipefail
@@ -43,12 +42,6 @@ jobs:
             echo "INVALID_EXPECTED_HEAD"
             exit 1
           fi
-          for name in STUDY_119_MEMBER_EMAIL STUDY_119_MEMBER_PASSWORD STUDY_119_ADMIN_EMAIL STUDY_119_ADMIN_PASSWORD; do
-            if [[ -z "${!name}" ]]; then
-              echo "MISSING_ACCEPTANCE_SECRET: $name"
-              exit 1
-            fi
-          done
 
       - uses: actions/checkout@v7.0.1
         with:
@@ -79,7 +72,53 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
+      - name: Provision temporary member/admin through GitHub OIDC
+        shell: bash
+        run: |
+          set -euo pipefail
+          oidc_json="$(curl -fsS --max-time 20 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${STUDY_119_OIDC_AUDIENCE}")"
+          oidc="$(OIDC_JSON="$oidc_json" node -e "const x=JSON.parse(process.env.OIDC_JSON||'{}');if(!x.value)process.exit(2);process.stdout.write(x.value)")"
+          broker="$(curl -fsS --max-time 30 -X POST "$STUDY_119_ACCEPTANCE_BROKER" \
+            -H "Authorization: Bearer $oidc" \
+            -H 'Content-Type: application/json' \
+            --data '{"action":"provision"}')"
+          BROKER_RESPONSE="$broker" node <<'NODE'
+          const fs=require('node:fs');
+          const x=JSON.parse(process.env.BROKER_RESPONSE||'{}');
+          if(!x.ok||!x.member?.email||!x.member?.password||!x.admin?.email||!x.admin?.password){
+            throw new Error('ACCEPTANCE_BROKER_PROVISION_FAILED');
+          }
+          const values={
+            STUDY_119_MEMBER_EMAIL:x.member.email,
+            STUDY_119_MEMBER_PASSWORD:x.member.password,
+            STUDY_119_ADMIN_EMAIL:x.admin.email,
+            STUDY_119_ADMIN_PASSWORD:x.admin.password
+          };
+          for(const [name,value] of Object.entries(values)){
+            if(/[\r\n]/.test(value))throw new Error('UNSAFE_BROKER_VALUE');
+            console.log('::add-mask::'+value);
+            fs.appendFileSync(process.env.GITHUB_ENV,`${name}=${value}\n`);
+          }
+          NODE
+
       - name: Production member-admin suggestion closed-loop acceptance
         env:
           STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
         run: node v9/suggestions-production-authenticated-e2e.mjs
+
+      - name: Cleanup temporary acceptance accounts
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          oidc_json="$(curl -fsS --max-time 20 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${STUDY_119_OIDC_AUDIENCE}")"
+          oidc="$(OIDC_JSON="$oidc_json" node -e "const x=JSON.parse(process.env.OIDC_JSON||'{}');if(!x.value)process.exit(2);process.stdout.write(x.value)")"
+          broker="$(curl -fsS --max-time 30 -X POST "$STUDY_119_ACCEPTANCE_BROKER" \
+            -H "Authorization: Bearer $oidc" \
+            -H 'Content-Type: application/json' \
+            --data '{"action":"cleanup"}')"
+          BROKER_RESPONSE="$broker" node -e "const x=JSON.parse(process.env.BROKER_RESPONSE||'{}');if(!x.ok||x.action!=='cleanup')throw new Error('ACCEPTANCE_BROKER_CLEANUP_FAILED');console.log('ACCEPTANCE_BROKER_CLEANUP_OK')"
