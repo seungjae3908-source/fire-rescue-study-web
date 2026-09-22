@@ -49,8 +49,8 @@ ok(reviewed119.every(V.QuestionQuality119.isExamStyle),'every manually-authored 
 ok(V.QuestionFactory119?.generated===generated119.length&&generated119.length>0,'grounded factory reports exactly the generated practice questions it added');
 ok(V.Quality2QuestionFactory119?.added===generatedQ2.length&&generatedQ2.length>0,'Quality 2.0 factory reports exactly the additional source-grounded practice questions it added');
 ok(generated119.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q))&&generatedQ2.every(q=>q.grade==='P'&&V.QuestionQuality119.isExamStyle(q)),'all generated factory questions stay P-grade practice and pass the exam-style contract');
-const v29Promoted=['119-factory-e03-c03-detail-b','119-factory-e04-c01-detail-a','119-factory-e04-c02-detail-b','119-factory-e06-c02-detail-a','119-factory-e10-c05-detail-b','119-factory-e22-c02-detail-b','119-factory-f04-c03-detail-a'].map(id=>V.questionById[id]);
-ok(v29Promoted.length===7&&v29Promoted.every(q=>q?.grade==='B'&&q.generatedPractice===false&&q.pageVerified===true&&q.reviewStatus==='source-reviewed'&&q.pastExamClaim!==true),'V29 promotes only seven manually source-reviewed factory questions to B-grade evidence');
+const v29Promoted=['119-factory-e03-c03-detail-b','119-factory-e04-c01-detail-a','119-factory-e04-c02-detail-b','119-factory-e06-c02-detail-a','119-factory-e10-c05-detail-b','119-factory-e22-c02-detail-b','119-factory-f04-c03-detail-a','119-factory-f03-c10-detail-a','119-factory-f03-c12-detail-a','119-factory-f03-c13-detail-a','119-factory-f03-c14-detail-a','119-factory-e03-c01-detail-a','119-factory-e06-c05-detail-a','119-factory-e15-c03-detail-a'].map(id=>V.questionById[id]);
+ok(v29Promoted.length===14&&v29Promoted.every(q=>q?.grade==='B'&&q.generatedPractice===false&&q.pageVerified===true&&q.reviewStatus==='source-reviewed'&&q.pastExamClaim!==true),'V29 promotes only fourteen manually source-reviewed factory questions to B-grade evidence');
 const verifiedEmsBatch1=(V.questions||[]).filter(q=>/^119-verems-/.test(q.id||''));
 ok(V.VerifiedEMSBatch119?.added===37&&verifiedEmsBatch1.length===37,'verified EMS batch1 plus high-yield reinforcement adds thirty-seven exact-page questions');
 ok(verifiedEmsBatch1.every(q=>q.grade==='B'&&q.pageVerified===true&&q.pastExamClaim===false&&V.QuestionQuality119.isExamStyle(q)),'verified EMS batch1 stays B-grade, page-verified and never claims past-exam status');
@@ -319,7 +319,7 @@ ok(Object.entries(exactAnchorBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
 }),'seven sprinkler concepts are exact-page verified from 2026 prevention1 PDF');
-const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':40,'F03-C11':453,'F03-C12':319,'F03-C13':320,'F03-C14':319,'F03-C15':326,'F03-C16':453};
+const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':40,'F03-C11':453,'F03-C12':303,'F03-C13':304,'F03-C14':303,'F03-C15':326,'F03-C16':453};
 ok(Object.entries(exactFirePhenomenaBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';

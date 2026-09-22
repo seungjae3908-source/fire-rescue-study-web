@@ -670,9 +670,9 @@ try{
   for(const term of ['플레임오버','롤오버','플래시오버','백드래프트'])assert(firePhenomenaText.includes(term),'four-way fire comparison includes '+term);
 
   const tankPhenomena=[
-    ['F03-C12','보일오버',['원유','중질유','장시간','하부','슬롭오버','프로스오버']],
-    ['F03-C13','슬롭오버',['표면','물','포수용액','보일오버','프로스오버']],
-    ['F03-C14','프로스오버',['화재','고온','점성','보일오버','슬롭오버']]
+    ['F03-C12','보일오버',['원유','탱크','표면 화재','원유와 물','슬롭오버','프로스오버']],
+    ['F03-C13','슬롭오버',['점성','물','수증기','비산','보일오버','프로스오버']],
+    ['F03-C14','프로스오버',['점성','표면 아래','비등','직접적인 화재발생요인','슬롭오버']]
   ];
   for(const [id,title,terms] of tankPhenomena){
     await m.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
@@ -688,7 +688,7 @@ try{
   assert((await m.locator('.concept-head h2').innerText()).trim()==='플레임오버','flameover has its own curriculum lesson title');
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   const flameoverText=await m.locator('.book-section').innerText();
-  assert(flameoverText.includes('표면')&&flameoverText.includes('빠르게')&&flameoverText.includes('롤오버'),'flameover lesson teaches rapid surface flame spread separately from rollover');
+  assert(flameoverText.includes('초기화재')&&flameoverText.includes('대류')&&flameoverText.includes('벽면')&&flameoverText.includes('천장')&&flameoverText.includes('롤오버'),'flameover lesson follows the official textbook definition and comparison set');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C07'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C07');

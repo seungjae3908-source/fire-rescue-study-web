@@ -8,7 +8,14 @@ const reviewed={
   'E06-C02':'detail-a',
   'E10-C05':'detail-b',
   'E22-C02':'detail-b',
-  'F04-C03':'detail-a'
+  'F04-C03':'detail-a',
+  'F03-C10':'detail-a',
+  'F03-C12':'detail-a',
+  'F03-C13':'detail-a',
+  'F03-C14':'detail-a',
+  'E03-C01':'detail-a',
+  'E06-C05':'detail-a',
+  'E15-C03':'detail-a'
 };
 const promoted=[];
 for(const[conceptId,kind]of Object.entries(reviewed)){
@@ -20,5 +27,5 @@ for(const[conceptId,kind]of Object.entries(reviewed)){
 if(V.QuestionFactory119?.generated>=promoted.length)V.QuestionFactory119.generated-=promoted.length;
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
-V.V29ReviewedPromotions119={version:'119-v29-reviewed-promotions-v1',promoted};
+V.V29ReviewedPromotions119={version:'119-v29-reviewed-promotions-v2',promoted};
 })();
