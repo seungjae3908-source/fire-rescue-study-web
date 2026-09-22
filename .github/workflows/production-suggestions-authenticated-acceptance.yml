@@ -1,6 +1,9 @@
 name: Production Suggestion Authenticated Acceptance
 
 on:
+  workflow_run:
+    workflows: ["Production Current-Main Acceptance"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       expected_head:
@@ -17,11 +20,16 @@ permissions:
 
 jobs:
   production_suggestion_authenticated_acceptance:
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.expected_head != '')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
-      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ inputs.expected_head }}
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.expected_head }}
       STUDY_119_MEMBER_EMAIL: ${{ secrets.STUDY_119_MEMBER_EMAIL }}
       STUDY_119_MEMBER_PASSWORD: ${{ secrets.STUDY_119_MEMBER_PASSWORD }}
       STUDY_119_ADMIN_EMAIL: ${{ secrets.STUDY_119_ADMIN_EMAIL }}
