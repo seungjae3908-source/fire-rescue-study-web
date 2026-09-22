@@ -38,7 +38,9 @@ try{
   const ctx=await browser.newContext({viewport:{width:1280,height:900}});
   const page=await ctx.newPage();
   await page.goto(base,{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>!!window.AITUTOR_V9?.CoverageMap119&&!!window.AITUTOR_V9?.QuestionQuality119);
+  await page.waitForFunction(()=>!!window.AITUTOR_V9?.CoverageMap119&&!!window.AITUTOR_V9?.QuestionQuality119&&!!window.AITUTOR_V9?.Lazy119);
+  await page.evaluate(()=>window.AITUTOR_V9.Lazy119.ensureQuestions());
+  await page.waitForFunction(()=>window.AITUTOR_V9?.Lazy119?.questionsReady===true);
 
   const result=await page.evaluate(({requiredDetailSignals})=>{
     const V=window.AITUTOR_V9,norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
