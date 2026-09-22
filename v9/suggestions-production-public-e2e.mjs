@@ -4,7 +4,27 @@ const base=process.env.STUDY_119_PREVIEW_URL||'https://fire-rescue-study-web.ver
 const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 if(!/^[0-9a-f]{40}$/i.test(expected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function waitForExactRuntime(){
+  const url=new URL('/api/runtime-head',base);
+  let last={status:0,sha:'',error:''};
+  for(let attempt=1;attempt<=36;attempt++){
+    try{
+      const res=await fetch(url,{cache:'no-store'});
+      let body={};try{body=await res.json()}catch{}
+      last={status:res.status,sha:String(body?.sha||''),ok:body?.ok===true,error:String(body?.error||'')};
+      if(res.status===200&&body?.ok===true&&body?.sha===expected){
+        console.log('PRODUCTION_EXACT_BASE_READY',JSON.stringify({attempt,expected}));
+        return;
+      }
+    }catch(error){last={status:0,sha:'',ok:false,error:String(error?.message||error)}}
+    console.log('WAIT_PRODUCTION_EXACT_BASE',JSON.stringify({attempt,expected,last}));
+    if(attempt<36)await sleep(10000);
+  }
+  throw new Error('TIMEOUT_WAITING_FOR_PRODUCTION_EXACT_BASE '+JSON.stringify({expected,last}));
+}
 
+await waitForExactRuntime();
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
