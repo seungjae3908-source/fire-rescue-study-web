@@ -47,6 +47,7 @@ const checks={
   postDeploySuggestionPublicAcceptance:productionAcceptance.includes('suggestions-production-public-e2e.mjs')&&productionSuggestionsPublic.includes('LOGIN_REQUIRED')&&productionSuggestionsPublic.includes('study_suggestions')&&productionSuggestionsPublic.includes('study_admins')&&productionSuggestionsPublic.includes('anonymous Data API read is blocked'),
   prSuggestionPublicProbe:developmentCi.includes('suggestions_public_production_probe')&&developmentCi.includes('github.event.pull_request.base.sha')&&developmentCi.includes('suggestions-production-public-e2e.mjs'),
   authenticatedSuggestionGatePrepared:authenticatedSuggestionAcceptance.includes('workflow_dispatch:')&&authenticatedSuggestionAcceptance.includes('STUDY_119_MEMBER_EMAIL')&&authenticatedSuggestionAcceptance.includes('STUDY_119_MEMBER_PASSWORD')&&authenticatedSuggestionAcceptance.includes('STUDY_119_ADMIN_EMAIL')&&authenticatedSuggestionAcceptance.includes('STUDY_119_ADMIN_PASSWORD')&&authenticatedSuggestionAcceptance.includes('Wait for exact SHA to become Production')&&authenticatedSuggestionAcceptance.includes('suggestions-production-authenticated-e2e.mjs'),
+  authenticatedSuggestionAutoChain:authenticatedSuggestionAcceptance.includes('workflow_run:')&&authenticatedSuggestionAcceptance.includes('Production Current-Main Acceptance')&&authenticatedSuggestionAcceptance.includes("github.event.workflow_run.conclusion == 'success'")&&authenticatedSuggestionAcceptance.includes("github.event.workflow_run.head_branch == 'main'")&&authenticatedSuggestionAcceptance.includes('github.event.workflow_run.head_sha'),
   authenticatedSuggestionNoStudySync:authenticatedSuggestionScript.includes('SupabaseLite.createClient')&&authenticatedSuggestionScript.includes('study_suggestions')&&authenticatedSuggestionScript.includes('study_admins')&&!authenticatedSuggestionScript.includes('V.Auth.signIn')&&!authenticatedSuggestionScript.includes('syncAll'),
   authenticatedSuggestionIsolation:authenticatedSuggestionScript.includes('member cannot read another user suggestion through Production RLS')&&authenticatedSuggestionScript.includes('member cannot mutate admin-only reply or status through Production RLS'),
   authenticatedSuggestionCleanup:authenticatedSuggestionScript.includes('member deletes own temporary suggestion')&&authenticatedSuggestionScript.includes('admin deletes own temporary isolation suggestion')&&authenticatedSuggestionScript.includes('finally')&&authenticatedSuggestionScript.includes("await query(side?.page,'delete',value)")&&authenticatedSuggestionScript.includes("const check=await query(admin?.page||side?.page,'get',value)")&&authenticatedSuggestionScript.includes('if(check?.ok&&!check.data)'),
@@ -54,7 +55,7 @@ const checks={
   requiredRecruitmentSource:monitorLib.includes('https://gongmuwon.gosi.kr/spcsv/indexMain3.do')
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
-const summary={version:'119-v25-production-release-gate-v15',checks,blockers,ready:blockers.length===0};
+const summary={version:'119-v25-production-release-gate-v16',checks,blockers,ready:blockers.length===0};
 console.log('PRODUCTION_RELEASE_GATE_119',JSON.stringify(summary,null,2));
 if(blockers.length)throw Error('PRODUCTION_RELEASE_GATE_FAILED '+JSON.stringify(blockers));
 console.log('PRODUCTION_RELEASE_GATE_COMPLETE');
