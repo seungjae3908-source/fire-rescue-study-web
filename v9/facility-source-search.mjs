@@ -61,11 +61,11 @@ async function verifyOfficialFallback(term){
     let compact='',verifiedPage=null;
     for(let n=1;n<=pdf.numPages;n++){
       const pg=await pdf.getPage(n),tc=await pg.getTextContent();
-      compact+=norm((tc.items||[]).map(x=>x.str).join(' '));
+      compact=norm((tc.items||[]).map(x=>x.str).join(' '));
       if(def.required.every(x=>compact.includes(norm(x)))){verifiedPage=n;break;}
     }
     const missingRequired=def.required.filter(x=>!compact.includes(norm(x)));
-    assert(missingRequired.length===0,'F07_C15_OFFICIAL_FALLBACK_CONTENT_MISSING '+JSON.stringify({term,missingRequired,url:def.url}));
+    assert(verifiedPage!==null&&missingRequired.length===0,'F07_C15_OFFICIAL_FALLBACK_CONTENT_MISSING '+JSON.stringify({term,missingRequired,url:def.url}));
     return{term,sourceType:def.sourceType,standard:def.standard,url:def.url,clauses:def.clauses,httpStatus:res.status,required:def.required,verifiedPage};
   }finally{
     clearTimeout(timer);
