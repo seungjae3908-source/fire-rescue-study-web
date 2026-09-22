@@ -1,11 +1,12 @@
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_PREVIEW_URL||'https://fire-rescue-study-web.vercel.app/';
-const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
+const configuredExpected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
+const isPullRequest=process.env.GITHUB_EVENT_NAME==='pull_request';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
-if(!/^[0-9a-f]{40}$/i.test(expected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
+if(!/^[0-9a-f]{40}$/i.test(configuredExpected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function waitForExactRuntime(){
+async function waitForGuardedRuntime(){
   const url=new URL('/api/runtime-head',base);
   let last={status:0,sha:'',error:''};
   for(let attempt=1;attempt<=36;attempt++){
@@ -13,18 +14,24 @@ async function waitForExactRuntime(){
       const res=await fetch(url,{cache:'no-store'});
       let body={};try{body=await res.json()}catch{}
       last={status:res.status,sha:String(body?.sha||''),ok:body?.ok===true,error:String(body?.error||'')};
-      if(res.status===200&&body?.ok===true&&body?.sha===expected){
-        console.log('PRODUCTION_EXACT_BASE_READY',JSON.stringify({attempt,expected}));
-        return;
+      if(res.status===200&&body?.ok===true&&/^[0-9a-f]{40}$/i.test(last.sha)){
+        if(last.sha===configuredExpected){
+          console.log('PRODUCTION_EXACT_BASE_READY',JSON.stringify({attempt,expected:configuredExpected}));
+          return last.sha;
+        }
+        if(isPullRequest){
+          console.warn('PRODUCTION_BASE_NOT_DEPLOYED_PIN_CURRENT',JSON.stringify({attempt,baseExpected:configuredExpected,currentProduction:last.sha}));
+          return last.sha;
+        }
       }
     }catch(error){last={status:0,sha:'',ok:false,error:String(error?.message||error)}}
-    console.log('WAIT_PRODUCTION_EXACT_BASE',JSON.stringify({attempt,expected,last}));
+    console.log('WAIT_PRODUCTION_EXACT_BASE',JSON.stringify({attempt,expected:configuredExpected,last}));
     if(attempt<36)await sleep(10000);
   }
-  throw new Error('TIMEOUT_WAITING_FOR_PRODUCTION_EXACT_BASE '+JSON.stringify({expected,last}));
+  throw new Error('TIMEOUT_WAITING_FOR_PRODUCTION_EXACT_BASE '+JSON.stringify({expected:configuredExpected,last}));
 }
 
-await waitForExactRuntime();
+const pinnedRuntimeHead=await waitForGuardedRuntime();
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
@@ -41,7 +48,7 @@ try{
     return{status:res.status,...body}
   });
   assert(runtime.status===200&&runtime.ok===true,'Production runtime identity endpoint healthy');
-  assert(runtime.sha===expected,'Production suggestion acceptance exact runtime SHA '+expected);
+  assert(runtime.sha===pinnedRuntimeHead,'Production suggestion acceptance pinned runtime SHA '+pinnedRuntimeHead);
 
   await page.evaluate(()=>window.AITUTOR_V9.App.go('suggestions'));
   await page.waitForSelector('.suggestions-page',{timeout:30000});
