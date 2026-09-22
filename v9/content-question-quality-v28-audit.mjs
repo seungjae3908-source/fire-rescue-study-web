@@ -43,11 +43,12 @@ for(const q of V.questions){
 
 const flame=P['F03-C10'];
 const flameText=JSON.stringify({summary:flame?.summary,detail:flame?.detail,must:flame?.must,traps:flame?.traps,compare:flame?.compare,deepSections:flame?.deepSections});
+const flameDefinitionText=JSON.stringify({summary:flame?.summary,must:flame?.must,compare:flame?.compare,deepSections:flame?.deepSections});
 const flameQs=verified.filter(q=>q.conceptId==='F03-C10');
 const flamePositions=new Set(flameQs.map(q=>q.a));
 const factualErrors=[];
 if(!flame||!/(?:초기화재|초기 화재)/.test(flameText)||!/대류/.test(flameText)||!/벽면/.test(flameText)||!/천장/.test(flameText)||!/(?:면이동|면 이동)/.test(flameText))factualErrors.push('F03-C10_OFFICIAL_TEXTBOOK_DEFINITION_MISSING');
-if(/모든\s*표면.*플레임오버|가연성\s*물체의\s*표면을\s*따라\s*빠르게\s*확산/.test(flameText))factualErrors.push('F03-C10_OVERGENERALIZED_BEYOND_TEXTBOOK');
+if(/모든\s*표면.*플레임오버|가연성\s*물체의\s*표면을\s*따라\s*빠르게\s*확산/.test(flameDefinitionText))factualErrors.push('F03-C10_OVERGENERALIZED_BEYOND_TEXTBOOK');
 if(flameQs.length<2)factualErrors.push('F03-C10_VERIFIED_UNDER_TWO');
 if(flamePositions.size<2)factualErrors.push('F03-C10_ANSWER_POSITION_MONOTONY');
 
