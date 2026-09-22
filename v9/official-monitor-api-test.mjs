@@ -44,6 +44,13 @@ const healthyState={
   sourceStatus
 };
 
+const derivedHealthy=handler.healthFromSnapshot(snapshot);
+assert(derivedHealthy.healthy===true&&derivedHealthy.coverageComplete===true&&derivedHealthy.degraded===false,'live health derivation stays consistent with a complete healthy live snapshot');
+assert(derivedHealthy.generatedAt===snapshot.generatedAt&&derivedHealthy.liveItems===1&&derivedHealthy.targetYear===1&&derivedHealthy.reviewRequired===1,'live health derivation uses the same live generation and item counters');
+const partialLive={...snapshot,coverageComplete:false,sourceStatus:sourceStatus.map((x,i)=>i?{...x,ok:false,pagesOk:0,status:'error',error:'WAF_CHALLENGE'}:x)};
+const derivedPartial=handler.healthFromSnapshot(partialLive);
+assert(derivedPartial.healthy===true&&derivedPartial.coverageComplete===false&&derivedPartial.degraded===true,'healthy live fallback still reports supplemental-source degradation consistently');
+
 let currentSnapshot=snapshot;
 let currentHealth=healthyState;
 let fetchCalls=[];
