@@ -51,7 +51,7 @@ try{
   assert(/^sb_publishable_/.test(apiGate.key),'Production uses a publishable browser key');
 
   async function anonGet(table){
-    const url=apiGate.url+'/rest/v1/'+table+'?select=id&limit=1';
+    const url=apiGate.url+'/rest/v1/'+table+'?select=*&limit=1';
     const res=await fetch(url,{headers:{apikey:apiGate.key,Accept:'application/json'}});
     const text=await res.text();
     let body={};try{body=JSON.parse(text)}catch{}
