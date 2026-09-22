@@ -135,8 +135,5 @@ V.TextbookGrounded119={
   targetChars:TARGET,enriched,depthClosed,sectionsClosed,trapsClosed,memoryClosed,
   sourcePolicy:'verified content pack + numeric official sourceRanges OR verified official go.kr web anchor; no invented page claims'
 };
-const v29={'E03-C03':'detail-b','E04-C01':'detail-a','E04-C02':'detail-b','E06-C02':'detail-a','E10-C05':'detail-b','E22-C02':'detail-b','F04-C03':'detail-a'};
-for(const[c,k]of Object.entries(v29)){const q=V.questionById[`119-factory-${c.toLowerCase()}-${k}`];if(!q)throw new Error('V29_PROMOTION_MISSING '+c);q.grade='B';q.generatedPractice=false;q.pageVerified=true;q.reviewStatus='source-reviewed'}
-V.QuestionFactory119.generated-=7;
 V.Quality2StudySchema119?.refreshAll?.();
 })();
