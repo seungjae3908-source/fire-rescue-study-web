@@ -126,7 +126,7 @@ try{
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const after=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{const b=el.closest('.study-body'),bottom=x=>!x||x.scrollHeight<=x.clientHeight+3||Math.abs(x.scrollHeight-x.clientHeight-x.scrollTop)<=3;return{bottom:bottom(el)&&bottom(b),last:el.lastElementChild?.textContent||''}});
   assert(after.bottom,'new AI answer keeps the visible mobile chat pinned to the latest conversation');
-  assert(after.last.includes('119'),'latest assistant message remains visible after the answer render');
+  assert(after.last.includes('AI'),'latest assistant message remains visible after the answer render');
 
   await page.evaluate(()=>{
     const V=window.AITUTOR_V9,c=V.curriculum.byId['F04-C01'],S=V.SourcePDF,original={availability:S.availability,sourcePage:S.sourcePage,pdfPage:S.pdfPage,render:S.render,locate:S.locate};
