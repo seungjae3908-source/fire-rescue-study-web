@@ -27,6 +27,8 @@ const key=s=>compact(s).toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
 const chars=s=>String(s||'').replace(/\s+/g,'').length;
 const officialUrl=/^https:\/\//i;
 const pageSource=/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽/;
+const officialSource=/(?:https:\/\/[^\s]*(?:go\.kr|law\.go\.kr)|법률|시행령|시행규칙|고시|훈령|소방공무원\s*임용령|채용시험\s*시행계획|소방청\s*공식|출제범위)/i;
+const verifiedStructure=q=>!!q&&Array.isArray(q.choices)&&q.choices.length===4&&new Set(q.choices.map(key)).size===4&&Number.isInteger(q.a)&&q.a>=0&&q.a<4&&Array.isArray(q.choiceExplanations)&&q.choiceExplanations.length===4&&q.choiceExplanations.every(x=>compact(x).length>=8)&&!!q.difficulty&&!!q.type&&!!q.source;
 const sourceFraming=/(?:20\d{2}\s*)?(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)/i;
 const processExpected=/단계|절차|처치|평가|소생술|분만|이동|조사|작동|사용|확보|흡인|산소 치료|제세동|심장충격|가슴압박|제거|대응|복구|예방|대비|긴급구조|화재 진행|현장 확인|재평가|제독|부목|헬멧|경보|소화전|제연|연결송수/;
 const principleExpected=/연소|화재|폭발|소화|스프링클러|감지|경보|기도|호흡|심장|쇼크|출혈|화상|중독|알레르기|질환|복통|경련|뇌졸중|당뇨|익수|열 손상|한랭|감염|패혈증|제독|Flow Path|BLEVE|가스계|분말|포소화/;
@@ -61,8 +63,8 @@ for(const c of V.curriculum.concepts){
   const answerKinds=new Set(verified.map(q=>q.a)).size;
   if(verified.length>=2&&answerKinds<2)local.push('verified-answer-position-pattern');
   for(const q of verified){
-    if(!Q.isExamStyle(q))local.push('verified-not-exam-style:'+q.id);
-    if(!pageSource.test(String(q.source||''))&&!/https:\/\/|법률|시행령|시행규칙|고시|소방청|출제범위/i.test(String(q.source||'')))local.push('verified-source:'+q.id);
+    if(!verifiedStructure(q))local.push('verified-structure:'+q.id);
+    if(!pageSource.test(String(q.source||''))&&!officialSource.test(String(q.source||'')))local.push('verified-source:'+q.id);
     if(compact(q.ex)!==compact(q.choiceExplanations?.[q.a]))local.push('explanation-drift:'+q.id);
     if(sourceFraming.test(String(q.q||'')))local.push('source-framed-stem:'+q.id);
   }
