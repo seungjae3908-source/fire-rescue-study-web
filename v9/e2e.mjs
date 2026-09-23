@@ -82,6 +82,20 @@ try{
   await p.waitForFunction(()=>window.AITUTOR_V9.Lazy119?.questionsReady===true);
   const lazyAfter=await p.evaluate(()=>({ready:window.AITUTOR_V9.Lazy119?.questionsReady===true,count:window.AITUTOR_V9.questions?.length||0,hasDeferred:!!window.AITUTOR_V9.questionById?.['119-vertarget-ems2-047'],mock:!!window.AITUTOR_V9.MockExam119}));
   assert(lazyAfter.ready&&lazyAfter.count>=3000&&lazyAfter.hasDeferred&&lazyAfter.mock,'opening the study quiz loads the full bank and mock engine on demand');
+  const globalLearnerFraming=await p.evaluate(()=>{
+    const V=window.AITUTOR_V9,clean=V.App.studentStudyText,qclean=V.App.studentQuestionText,re=/(?:20\d{2}\s*)?(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)/i;
+    const contentBad=[];
+    for(const concept of V.curriculum.concepts){
+      const pack=V.contentPacks.get(concept.id)||{},vals=[pack.summary,...(pack.detail||[]),...(pack.must||[]),...(pack.features||[]),...(pack.flow||[]),...(pack.traps||[]),...(pack.compare||[]).flat(),...(pack.deepSections||[]).flatMap(x=>[x?.title,x?.body,...(x?.bullets||[])]),...(pack.specialCombustibleStorage||[]),...(pack.calculations||[]).flatMap(x=>[x?.note,x?.example])].filter(Boolean);
+      const hit=vals.map(clean).find(x=>re.test(x));if(hit)contentBad.push({id:concept.id,hit});
+    }
+    const questionBad=(V.questions||[]).flatMap(q=>{
+      const vals=[qclean(q.q),...(q.choices||[]).map(clean),clean(q.ex||''),...(q.choiceExplanations||[]).map(clean)].filter(Boolean),hit=vals.find(x=>re.test(x));
+      return hit?[{id:q.id,hit}]:[];
+    });
+    return{contentBad:contentBad.slice(0,10),questionBad:questionBad.slice(0,10),contentCount:contentBad.length,questionCount:questionBad.length}
+  });
+  assert(globalLearnerFraming.contentCount===0&&globalLearnerFraming.questionCount===0,'all concepts and the full loaded question bank remove textbook/year source-framing from learner-facing core detail and problem copy');
   const flameoverQuestion=await p.evaluate(()=>{const V=window.AITUTOR_V9,q=(V.questions||[]).find(x=>x.conceptId==='F03-C10'&&x.generatedBy==='119-grounded-question-factory-v1'&&/화재현상/.test(String(x.q||'')));return q?{q:q.q,choices:q.choices}:null});
   assert(flameoverQuestion&&!/2026\s*소방전술1.*기준으로/.test(flameoverQuestion.q)&&/초기화재|대류/.test(flameoverQuestion.q),'flameover question stem reads like an exam question without textbook-source framing');
   assert(['플레임오버','플래시오버','롤오버','백드래프트'].every(x=>flameoverQuestion.choices.includes(x)),'flameover identification question uses the four confusing fire phenomena as choices');
