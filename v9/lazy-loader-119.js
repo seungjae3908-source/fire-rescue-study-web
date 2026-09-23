@@ -15,6 +15,7 @@ const QUESTION_FILES=[
   'questions-verified-ems-target1-119.js',
   'questions-verified-ems-target2-119.js',
   'questions-verified-v52-fire-breadth-119.js',
+  'questions-v52-breadth-batch2-119.js',
   'questions-official-past-2025-119.js',
   'mock-exam-quality-119.js',
   'v29-reviewed-promotions-119.js'
