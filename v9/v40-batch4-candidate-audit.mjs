@@ -11,7 +11,8 @@ const promotedExpected={
 };
 const expectedCounts={'F06-C02':4,'E03-C02':3,'E06-C03':3,'E06-C04':3,'E09-C06':3};
 const blockers={'E11-C02':3,'E09-C07':2};
-const result={promoted:{},blockers:{}};
+const reviewCandidates=['E02-C01','E01-C02','E07-C04'];
+const result={promoted:{},blockers:{},reviewCandidates:{}};
 
 for(const[id,qid]of Object.entries(promotedExpected)){
   const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B'),q=qs.find(x=>x.id===qid);
@@ -25,6 +26,11 @@ for(const[id,count]of Object.entries(blockers)){
   const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B');
   if(verified.length!==count)throw new Error('V40_BATCH4_BLOCKER_COUNT '+id+' '+verified.length);
   result.blockers[id]={verified:verified.map(q=>({id:q.id,a:q.a,q:q.q,source:q.source})),practice:qs.filter(q=>q.grade==='P').map(q=>({id:q.id,a:q.a,q:q.q,source:q.source}))};
+}
+for(const id of reviewCandidates){
+  const c=V.curriculum.byId?.[id]||V.curriculum.concepts.find(x=>x.id===id),p=V.contentPacks?.get?.(id),qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B');
+  if(verified.length!==2)throw new Error('V40_BATCH4_REVIEW_CANDIDATE_COUNT '+id+' '+verified.length);
+  result.reviewCandidates[id]={title:c?.title||'',source:p?.source||'',sourceRanges:c?.sourceRanges||[],detail:p?.detail||[],practice:qs.filter(q=>q.grade==='P').map(q=>({id:q.id,a:q.a,q:q.q,choices:q.choices,source:q.source,generatedPractice:q.generatedPractice===true}))};
 }
 const promotedIds=new Set(V.V29ReviewedPromotions119?.promoted||[]);
 for(const id of Object.keys(blockers)){
