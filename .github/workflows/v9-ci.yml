@@ -147,6 +147,8 @@ jobs:
         run: node v9/v48-semantic-study-audit.mjs
       - name: V51 full 183-concept content + question audit
         run: node v9/v51-full-content-question-audit.mjs
+      - name: V52 low-verified fire breadth audit
+        run: node v9/v52-verified-fire-breadth-audit.mjs
       - name: 390-run real mock exam composition quality audit
         run: node v9/mock-exam-quality-audit.mjs
       - name: A/B verified question coverage gap report
