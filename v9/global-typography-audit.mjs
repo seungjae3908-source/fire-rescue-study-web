@@ -109,12 +109,13 @@ async function auditLearnerFraming(page,{id,tab,width}){
 }
 async function auditStudyRole(page,{id,tab},coreCache){
   if(!['core','detail'].includes(tab))return;
-  const x=await page.evaluate(tab=>{
+  const x=await page.evaluate(({tab,id})=>{
     const visible=el=>{if(!el)return false;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
     const root=[...document.querySelectorAll('.study-body-mobile,.study-body-desktop')].find(visible);
     if(!root)return null;
-    const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');
+    const V=window.AITUTOR_V9,pack=V.contentPacks.get(id)||{},norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');
     const rows=sel=>[...root.querySelectorAll(sel)].filter(visible).map(x=>norm(x.textContent)).filter(Boolean);
+    const compareCards=[...root.querySelectorAll('.concept-class-card.static')].filter(visible),hazGrid=root.querySelector('.hazmat-class-grid'),jump=root.querySelector('.book-jumpbar');
     return{
       quick:root.querySelectorAll('.study-quick').length,
       essentials:root.querySelectorAll('.study-core-essentials li').length,
@@ -125,12 +126,25 @@ async function auditStudyRole(page,{id,tab},coreCache){
       essentialTexts:rows('.study-core-essentials li span'),
       coreTexts:[...rows('.study-quick p'),...rows('.study-core-essentials li span')],
       detailTexts:[...rows('.detail-section:not(.detail-definition) h3'),...rows('.detail-section:not(.detail-definition) p'),...rows('.detail-section:not(.detail-definition) li')],
-      detailHeadings:[...root.querySelectorAll('.detail-section h3,.detail-compare h3,.detail-exam-points h3')].filter(visible).map(x=>(x.textContent||'').trim()).filter(Boolean),
+      detailHeadings:[...root.querySelectorAll('.detail-section h3,.detail-compare h3,.detail-criteria h3,.detail-exam-points h3')].filter(visible).map(x=>(x.textContent||'').trim()).filter(Boolean),
       emphasisCount:root.querySelectorAll('.study-key-emphasis').length,
       detailFull:root.querySelector('.detail-view')?.textContent||'',
+      expectedCompare:(pack.compare||[]).length,
+      compareCards:compareCards.length,
+      compareBodiesVisible:compareCards.every(el=>visible(el.querySelector('p'))&&(el.querySelector('p')?.textContent||'').trim().length>0),
+      expandableCompare:root.querySelectorAll('details.concept-class-card').length,
+      expectedCriteria:(V.StudyEmphasis119?.numberRows?.(pack,16)||[]).length>0,
+      detailCriteria:root.querySelectorAll('.detail-criteria').length,
+      coreFavoriteText:(root.querySelector('.study-core-save')?.textContent||'').trim(),
+      separatePassOpen:root.querySelectorAll('[data-pass-note-open]').length,
+      jumpPosition:jump?getComputedStyle(jump).position:'',
+      hazCards:root.querySelectorAll('.hazmat-class-card').length,
+      hazToggles:root.querySelectorAll('[data-hazmat-class-toggle]').length,
+      hazVisible:[...root.querySelectorAll('.hazmat-class-detail')].filter(visible).length,
+      hazGridCols:hazGrid?getComputedStyle(hazGrid).gridTemplateColumns.split(/\s+/).filter(Boolean).length:0,
       tab
     }
-  },tab);
+  },{tab,id});
   if(!x){pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'study-role-root-missing'});return}
   if(tab==='core'){
     coreCache.set(id,x.coreTexts);
@@ -138,12 +152,19 @@ async function auditStudyRole(page,{id,tab},coreCache){
     if(x.essentials<1||x.essentials>5)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-essential-count',count:x.essentials});
     if(x.emphasisCount>12)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-emphasis-excess',count:x.emphasisCount});
     if(x.details||x.schemas)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-detail-leak',details:x.details,schemas:x.schemas});
+    if(x.coreFavoriteText&&!/^합격노트\s*[☆★]$/.test(x.coreFavoriteText))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'favorite-label',text:x.coreFavoriteText});
+    if(x.separatePassOpen)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'duplicate-favorite-control',count:x.separatePassOpen});
+    if((page.viewportSize()?.width||0)<=720&&x.jumpPosition&&x.jumpPosition!=='static')pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'mobile-tab-overlap-risk',position:x.jumpPosition});
+    if(id==='F05-C01'&&(x.hazCards!==6||x.hazToggles!==0||x.hazVisible!==6||((page.viewportSize()?.width||0)<=720&&x.hazGridCols!==1)))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'hazmat-visible-layout',cards:x.hazCards,toggles:x.hazToggles,visible:x.hazVisible,cols:x.hazGridCols});
     const nums=new Set(x.numbers),dupe=(x.essentialTexts||[]).some(t=>nums.has(t)&&t.length>=18);
     if(dupe&&x.numbers.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-number-duplicate'});
   }else{
     if((x.detailHeadings||[]).some(h=>/^상세\s*설명$/.test(h)))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'generic-detail-heading'});
     if(new Set(x.detailHeadings||[]).size<2)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-structure-too-flat',headings:x.detailHeadings});
     if(x.quick||x.essentials||x.numbers.length||x.traps.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-core-leak',quick:x.quick,essentials:x.essentials,numbers:x.numbers.length,traps:x.traps.length});
+    if(x.expectedCompare&&(x.compareCards!==x.expectedCompare||!x.compareBodiesVisible||x.expandableCompare))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'comparison-not-directly-visible',expected:x.expectedCompare,cards:x.compareCards,bodies:x.compareBodiesVisible,expandable:x.expandableCompare});
+    if(x.expectedCriteria&&x.detailCriteria!==1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-criteria-missing',count:x.detailCriteria});
+    if((page.viewportSize()?.width||0)<=720&&x.jumpPosition&&x.jumpPosition!=='static')pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'mobile-tab-overlap-risk',position:x.jumpPosition});
     if(/개념\s*구조와\s*읽는\s*순서|학습\s*순서|검증문제·범위/.test(x.detailFull))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-meta-copy'});
     const core=coreCache.get(id)||[];
     const repeated=x.detailTexts.filter(d=>core.some(k=>{const min=Math.min(d.length,k.length),max=Math.max(d.length,k.length);return min>=24&&min/max>=.78&&(d===k||d.includes(k)||k.includes(d))})).slice(0,3);
