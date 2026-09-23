@@ -29,7 +29,9 @@ const reviewedFactory={
 };
 const reviewedExact={
   'E03-C04':'119-q2factory-e03-c04-title-4',
-  'E05-C04':'119-q2factory-e05-c04-title-0'
+  'E05-C04':'119-q2factory-e05-c04-title-0',
+  'E01-C02':'119-q2factory-e01-c02-title-1',
+  'E02-C01':'119-q2factory-e02-c01-title-1'
 };
 const promoted=[];let factoryPromoted=0;
 const promote=(conceptId,id,isFactory)=>{
