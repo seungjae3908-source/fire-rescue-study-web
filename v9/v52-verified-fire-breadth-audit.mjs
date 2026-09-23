@@ -4,7 +4,7 @@ import vm from 'node:vm';
 globalThis.window={AITUTOR_V9:{}};
 const files=[
   'curriculum.js','curriculum-complete-2026.js','curriculum-fire-depth-119.js','curriculum-ems-quality2-119.js','master-syllabus-119.js',
-  'content-packs.js','fire-admin-split-119.js','questions.js','verified-expansion.js','verified-completion.js','verified-final.js',
+  'content-packs.js','fire-admin-split-119.js','questions.js','questions-fire-admin-split-119.js','verified-expansion.js','verified-completion.js','verified-final.js',
   'questions-scope-2026.js','questions-fire-depth-119.js','questions-ems-depth-119.js','questions-ems-restored-verified-119.js','questions-hazmat-depth-119.js',
   'questions-suppression-depth-119.js','questions-governance-depth-119.js','questions-investigation-depth-119.js','questions-facilities-depth-119.js','questions-restored-fire-verified-119.js','questions-quality2-119.js','questions-verified-ems-batch1-119.js','questions-verified-fire-batch1-119.js',
   'question-difficulty.js','question-quality-119.js','question-type-119.js','content-contract-119.js','depth-enrichment.js','depth-enrichment-2.js',
@@ -63,7 +63,7 @@ console.log('V52_TARGET_ROWS');console.table(targetRows);
 console.log('V52_REMAINING_UNDER3');console.table(under3);
 console.log('V52_BAD');console.table(bad);
 if(targetRows.length!==14)throw new Error('V52_TARGET_COUNT '+targetRows.length);
-const expectedRemaining=['F01-C06','F01-C07','F03-C01','F03-C04','F03-C16','F04-C02','F04-C07','E07-C03','E09-C07','E21-C02','E21-C05','E25-C01','E25-C02','E25-C03','E25-C04','E25-C05'];
+const expectedRemaining=['F03-C01','F03-C04','F03-C16','F04-C02','F04-C07','E07-C03','E09-C07','E21-C02','E21-C05','E25-C01','E25-C02','E25-C03','E25-C04','E25-C05'];
 const remainingIds=under3.map(x=>x.id).sort(),expectedIds=[...expectedRemaining].sort();
 if(JSON.stringify(remainingIds)!==JSON.stringify(expectedIds))throw new Error('V52_REMAINING_UNDER3_DRIFT '+JSON.stringify(remainingIds));
 if(bad.length)throw new Error('V52_VERIFIED_FIRE_BREADTH_FAILED '+JSON.stringify(bad));
