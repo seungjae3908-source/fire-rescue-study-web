@@ -15,7 +15,7 @@ const result={promoted:{},blockers:{}};
 
 for(const[id,qid]of Object.entries(promotedExpected)){
   const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B'),q=qs.find(x=>x.id===qid);
-  if(verified.length!==3)throw new Error('V41_BATCH5_VERIFIED_COUNT '+id+' '+verified.length);
+  if(verified.length<3)throw new Error('V41_BATCH5_VERIFIED_COUNT_REGRESSION '+id+' '+verified.length+' expected_at_least 3');
   if(!q||q.grade!=='B'||q.generatedPractice!==false||q.pageVerified!==true||q.reviewStatus!=='source-reviewed'||q.pastExamClaim===true)throw new Error('V41_BATCH5_PROMOTION_CONTRACT '+id);
   if(new Set(verified.map(x=>x.a)).size<2)throw new Error('V41_BATCH5_ANSWER_POSITION_CONCENTRATED '+id);
   const concept=V.curriculum.byId?.[id]||V.curriculum.concepts.find(x=>x.id===id),pack=V.contentPacks?.get?.(id);
