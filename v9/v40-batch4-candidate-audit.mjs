@@ -7,11 +7,13 @@ const promotedExpected={
   'E03-C02':'119-factory-e03-c02-detail-a',
   'E06-C03':'119-factory-e06-c03-detail-a',
   'E06-C04':'119-factory-e06-c04-summary',
-  'E09-C06':'119-factory-e09-c06-detail-b'
+  'E09-C06':'119-factory-e09-c06-detail-b',
+  'E01-C02':'119-q2factory-e01-c02-title-1',
+  'E02-C01':'119-q2factory-e02-c01-title-1'
 };
-const expectedCounts={'F06-C02':4,'E03-C02':3,'E06-C03':3,'E06-C04':3,'E09-C06':3};
+const expectedCounts={'F06-C02':4,'E03-C02':3,'E06-C03':3,'E06-C04':3,'E09-C06':3,'E01-C02':3,'E02-C01':3};
 const blockers={'E11-C02':3,'E09-C07':2};
-const reviewCandidates=['E02-C01','E01-C02','E07-C04'];
+const reviewCandidates=['E07-C04'];
 const result={promoted:{},blockers:{},reviewCandidates:{}};
 
 for(const[id,qid]of Object.entries(promotedExpected)){
@@ -46,8 +48,8 @@ const conceptRows=V.curriculum.concepts.map(c=>{
 const under3=conceptRows.filter(x=>x.verified<3).length;
 const concentrated=conceptRows.filter(x=>x.verified>=3&&(x.answerPositionKinds<2||x.maxAnswerShare>=0.8));
 const totalVerified=V.questions.filter(q=>q.grade==='A'||q.grade==='B').length;
-if(totalVerified!==674)throw new Error('V40_BATCH4_TOTAL_VERIFIED '+totalVerified);
-if(under3!==56)throw new Error('V40_BATCH4_UNDER3 '+under3);
+if(totalVerified!==676)throw new Error('V40_BATCH4_TOTAL_VERIFIED '+totalVerified);
+if(under3!==54)throw new Error('V40_BATCH4_UNDER3 '+under3);
 if(concentrated.length!==1||concentrated[0].id!=='E11-C02')throw new Error('V40_BATCH4_CONCENTRATION '+JSON.stringify(concentrated));
 result.summary={totalVerified,under3,concentrated};
 console.log('V40_BATCH4_PROMOTION_SUMMARY',JSON.stringify(result,null,2));
