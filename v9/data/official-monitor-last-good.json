@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-09-23T17:08:49.857Z",
+  "generatedAt": "2026-09-23T20:26:54.184Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -188,7 +188,7 @@
       "id": "ca6997cc3211a79fc3525d15",
       "fingerprint": "c3a6d772977f90ec4e09",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -209,7 +209,7 @@
       "id": "e738f5d6f153f72f32fb50f8",
       "fingerprint": "1696d7f1cb3c8d151ced",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -230,7 +230,7 @@
       "id": "e5f966bd8c51e95a236c724c",
       "fingerprint": "5b0ead2b24e9ffbee975",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -251,7 +251,7 @@
       "id": "e359cc57c0b29f37f0cc638c",
       "fingerprint": "9f131c25171602b3ad2a",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -272,7 +272,7 @@
       "id": "2b6091f0db73bb3343ecf531",
       "fingerprint": "cdc06eb05fd875e5bce8",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -293,7 +293,7 @@
       "id": "8530e2fae88a3fffde515804",
       "fingerprint": "85b1a2c04c97237d5870",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -314,7 +314,7 @@
       "id": "02581e98587e1ca9e5ee348f",
       "fingerprint": "0734a53e6976151d74df",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -335,7 +335,7 @@
       "id": "6b230b042bcfbf59544d8e0b",
       "fingerprint": "c27da5f4b06a42a9df4b",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -419,7 +419,7 @@
       "id": "5b3a0a598e8d70de9b132f55",
       "fingerprint": "8441f097d72ba011b682",
       "detailEligible": false,
-      "changeState": "new",
+      "changeState": "same",
       "previousFingerprint": "",
       "changeSummary": []
     },
@@ -428,7 +428,7 @@
       "sourceLabel": "중앙소방학교 고시·공고",
       "title": "중앙소방학교 훈령·예규",
       "publishedAt": "",
-      "url": "https://www.nfa.go.kr/nfsa/releaseinformation/legalinformation/instruction;jsessionid=cHu8yPRTAeB-xSq7C8YgDAye.nfa22",
+      "url": "https://www.nfa.go.kr/nfsa/releaseinformation/legalinformation/instruction;jsessionid=0l+4cBJUpE9gT96kmWPyikvG.nfa22",
       "kind": "exam_scope",
       "meaningful": true,
       "reviewRequired": true,
@@ -437,8 +437,8 @@
       "explicitYear": null,
       "noticeYear": null,
       "notificationEligible": false,
-      "id": "089ae38a3e1250b70d5fec4e",
-      "fingerprint": "de474c3ffcdcb2041649",
+      "id": "ad88afb0ee42bde73d647e5b",
+      "fingerprint": "d633872d0be0764f0591",
       "detailEligible": false,
       "changeState": "new",
       "previousFingerprint": "",
@@ -490,23 +490,14 @@
   "degraded": false,
   "preservedLastGood": false,
   "notificationSuppressed": false,
-  "lastAttemptAt": "2026-09-23T17:08:49.857Z",
-  "lastSuccessfulAt": "2026-09-23T17:08:49.857Z",
+  "lastAttemptAt": "2026-09-23T20:26:54.184Z",
+  "lastSuccessfulAt": "2026-09-23T20:26:54.184Z",
   "delta": {
     "newIds": [
-      "ca6997cc3211a79fc3525d15",
-      "e738f5d6f153f72f32fb50f8",
-      "e5f966bd8c51e95a236c724c",
-      "e359cc57c0b29f37f0cc638c",
-      "2b6091f0db73bb3343ecf531",
-      "8530e2fae88a3fffde515804",
-      "02581e98587e1ca9e5ee348f",
-      "6b230b042bcfbf59544d8e0b",
-      "5b3a0a598e8d70de9b132f55",
-      "089ae38a3e1250b70d5fec4e"
+      "ad88afb0ee42bde73d647e5b"
     ],
     "updatedIds": [],
-    "newCount": 10,
+    "newCount": 1,
     "updatedCount": 0
   }
 }
