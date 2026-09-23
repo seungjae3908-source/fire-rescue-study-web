@@ -53,7 +53,29 @@ for(const[conceptId,id]of Object.entries(reviewedExact))promote(conceptId,id,fal
 if(V.QuestionFactory119?.generated>=factoryPromoted)V.QuestionFactory119.generated-=factoryPromoted;
 const exactPromoted=Object.keys(reviewedExact).length;
 if(V.Quality2QuestionFactory119?.added>=exactPromoted)V.Quality2QuestionFactory119.added-=exactPromoted;
+
+// V42: preserve the reviewed question and evidence while removing the only
+// verified-answer-position concentration (E11-C02). The global question-quality
+// lane has already normalized this target to index 1 at this point; move that
+// reviewed answer to index 2 with its explanation, changing presentation only.
+const choiceOrderBalanced=[];
+const swapChoiceOrder=(id,conceptId,left,right)=>{
+  const q=(V.questions||[]).find(x=>x.id===id);
+  if(!q)throw new Error('V42_CHOICE_ORDER_MISSING '+id);
+  if(q.conceptId!==conceptId)throw new Error('V42_CHOICE_ORDER_CONCEPT_MISMATCH '+id+' '+q.conceptId);
+  if(!Array.isArray(q.choices)||q.choices.length!==4||!Array.isArray(q.choiceExplanations)||q.choiceExplanations.length!==4)throw new Error('V42_CHOICE_ORDER_STRUCTURE '+id);
+  if(q.a!==left)throw new Error('V42_CHOICE_ORDER_ANSWER_DRIFT '+id+' '+q.a);
+  [q.choices[left],q.choices[right]]=[q.choices[right],q.choices[left]];
+  [q.choiceExplanations[left],q.choiceExplanations[right]]=[q.choiceExplanations[right],q.choiceExplanations[left]];
+  q.a=right;
+  choiceOrderBalanced.push(id);
+};
+swapChoiceOrder('119-vertarget-ems1-027','E11-C02',1,2);
+
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
+// Keep the established V41 promotion registry immutable; V42 is a separate
+// presentation-quality contract, not a new evidence promotion batch.
 V.V29ReviewedPromotions119={version:'119-v41-reviewed-promotions-v5',promoted,factoryPromoted,exactPromoted};
+V.V42AnswerPosition119={version:'119-v42-answer-position-v1',choiceOrderBalanced};
 })();
