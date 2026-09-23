@@ -5,6 +5,7 @@ if(!Array.isArray(V.questions)||!V.curriculum?.concepts||!V.contentPacks?.author
 
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
 const clip=(s,n=180)=>{const x=String(s||'').replace(/\s+/g,' ').trim();return x.length>n?x.slice(0,n-1)+'…':x};
+const studentQuote=(s,n=210)=>clip(String(s||'').replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+)\s*기준으로\s*/gi,'').replace(/\s*교재의\s*정의(?:이)?다\.?/gi,'').replace(/\s+/g,' ').trim(),n);
 const uniq=list=>{const seen=new Set(),out=[];for(const x of list){const k=norm(x);if(!k||seen.has(k))continue;seen.add(k);out.push(x)}return out};
 const hash=s=>{let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const identity=c=>`${c.scopeTitle} > ${c.title}`;
@@ -42,20 +43,29 @@ function arrange(id,kind,correct,distractors,correctExplanation){
   if(new Set(items.map(x=>norm(x.text))).size!==4)return null;
   return{choices:items.map(x=>x.text),a:position,choiceExplanations:items.map(x=>x.explanation)};
 }
-function titleChoice(c,quote,kind,difficulty,type,offset=0){
-  const peers=peerTitles(c,3,offset);if(peers.length<3||!quote)return null;
-  const ar=arrange(c.id,kind,c.title,peers.map(({text,concept})=>({
+function semanticTitleChoices(c,p){
+  const rows=(p?.compare||[]).filter(x=>Array.isArray(x)&&x[0]&&x[1]),self=rows.find(x=>norm(x[0])===norm(c.title));
+  if(!self||rows.length<4)return null;
+  const distractors=rows.filter(x=>norm(x[0])!==norm(c.title)).slice(0,3).map(x=>({text:clip(x[0],60),explanation:`오답. ‘${x[0]}’은 ${studentQuote(x[1],120)}`}));
+  return distractors.length===3?{distractors,correctExplanation:`정답. ‘${c.title}’은 ${studentQuote(self[1],140)}`}:null
+}
+function titleChoice(c,p,quote,kind,difficulty,type,offset=0){
+  const clean=studentQuote(quote,210);if(!clean)return null;
+  const semantic=semanticTitleChoices(c,p),peers=semantic?[]:peerTitles(c,3,offset);if(!semantic&&peers.length<3)return null;
+  const distractors=semantic?semantic.distractors:peers.map(({text,concept})=>({
     text,
     explanation:`오답. 이 선택지는 ${concept.scopeTitle}의 ‘${concept.title}’ 개념이며 제시문이 설명하는 개념과 다르다.`
-  })),`정답. 제시문은 ‘${c.title}’의 핵심 내용을 설명한다.`);
+  }));
+  const ar=arrange(c.id,kind,c.title,distractors,semantic?.correctExplanation||`정답. 제시문은 ‘${c.title}’의 핵심 내용을 설명한다.`);
   if(!ar)return null;
+  const phenomenon=V.ConceptArchitecture119?.typeOf?.(c.id)==='phenomenon',lead=phenomenon?'다음 설명에 해당하는 화재현상은?':'다음 설명에 해당하는 것은?';
   const stems={
-    summary:`다음 설명에 해당하는 것은? “${clip(quote,210)}”`,
-    'detail-a':`다음 설명에 해당하는 개념은? “${clip(quote,210)}”`,
-    'detail-b':`다음 설명과 가장 관련 있는 것은? “${clip(quote,210)}”`,
-    deep:`다음 내용이 설명하는 것은? “${clip(quote,210)}”`
+    summary:`${lead} “${clean}”`,
+    'detail-a':`다음 설명에 해당하는 개념은? “${clean}”`,
+    'detail-b':`다음 설명과 가장 관련 있는 것은? “${clean}”`,
+    deep:`다음 내용이 설명하는 것은? “${clean}”`
   };
-  return{kind,difficulty,type,q:stems[kind]||`다음 설명에 해당하는 것은? “${clip(quote,210)}”`,...ar};
+  return{kind,difficulty,type,q:stems[kind]||`${lead} “${clean}”`,...ar};
 }
 function memoryChoice(c,p,kind='memory',difficulty='low'){
   const correct=clip((p.must||[])[0]||p.summary,110);
@@ -94,14 +104,14 @@ function trapChoice(c,p){
   return ar?{kind:'trap',difficulty:'high',type:'함정식별형',q:`다음 중 ${c.title}과 관련해 주의해야 할 설명으로 옳은 것은?`,...ar}:null;
 }
 function deepChoice(c,p){
-  const quote=(p.deepSections||[]).map(x=>x.body).find(Boolean);return titleChoice(c,quote,'deep','mid','심화식별형',15);
+  const quote=(p.deepSections||[]).map(x=>x.body).find(x=>x&&!/(기준문장|학습노드|공식 원문|회상 루프)/.test(String(x)));return titleChoice(c,p,quote,'deep','mid','심화식별형',15);
 }
 function candidateSet(c,p){
   return[
-    titleChoice(c,p.summary,'summary','low','개념식별형',0),
+    titleChoice(c,p,p.summary,'summary','low','개념식별형',0),
     memoryChoice(c,p),
-    titleChoice(c,(p.detail||[])[0],'detail-a','mid','사례식별형',2),
-    titleChoice(c,(p.detail||[])[1],'detail-b','mid','사례식별형',5),
+    titleChoice(c,p,(p.detail||[])[0],'detail-a','mid','사례식별형',2),
+    titleChoice(c,p,(p.detail||[])[1],'detail-b','mid','사례식별형',5),
     deepChoice(c,p),
     pairChoice(c,p,'pair-a','high',0),
     pairChoice(c,p,'pair-b','high',1),
