@@ -26,6 +26,23 @@ for(const[id,count]of Object.entries(blockers)){
   if(verified.length!==count)throw new Error('V40_BATCH4_BLOCKER_COUNT '+id+' '+verified.length);
   result.blockers[id]={verified:verified.map(q=>({id:q.id,a:q.a,q:q.q,source:q.source})),practice:qs.filter(q=>q.grade==='P').map(q=>({id:q.id,a:q.a,q:q.q,source:q.source}))};
 }
-if(result.blockers['E11-C02'].practice.length!==0)throw new Error('V40_BATCH4_E11_UNEXPECTED_PRACTICE');
+const promotedIds=new Set(V.V29ReviewedPromotions119?.promoted||[]);
+for(const id of Object.keys(blockers)){
+  const qs=V.questions.filter(q=>q.conceptId===id);
+  if(qs.some(q=>promotedIds.has(q.id)))throw new Error('V40_BATCH4_BLOCKER_WAS_PROMOTED '+id);
+}
+const conceptRows=V.curriculum.concepts.map(c=>{
+  const verified=V.questions.filter(q=>q.conceptId===c.id&&(q.grade==='A'||q.grade==='B')),pos=[0,0,0,0];
+  for(const q of verified)pos[q.a]=(pos[q.a]||0)+1;
+  const kinds=pos.filter(Boolean).length,max=verified.length?Math.max(...pos)/verified.length:0;
+  return{id:c.id,verified:verified.length,answerPositionKinds:kinds,maxAnswerShare:max};
+});
+const under3=conceptRows.filter(x=>x.verified<3).length;
+const concentrated=conceptRows.filter(x=>x.verified>=3&&(x.answerPositionKinds<2||x.maxAnswerShare>=0.8));
+const totalVerified=V.questions.filter(q=>q.grade==='A'||q.grade==='B').length;
+if(totalVerified!==674)throw new Error('V40_BATCH4_TOTAL_VERIFIED '+totalVerified);
+if(under3!==56)throw new Error('V40_BATCH4_UNDER3 '+under3);
+if(concentrated.length!==1||concentrated[0].id!=='E11-C02')throw new Error('V40_BATCH4_CONCENTRATION '+JSON.stringify(concentrated));
+result.summary={totalVerified,under3,concentrated};
 console.log('V40_BATCH4_PROMOTION_SUMMARY',JSON.stringify(result,null,2));
 console.log('V40_BATCH4_PROMOTION_AUDIT_COMPLETE');
