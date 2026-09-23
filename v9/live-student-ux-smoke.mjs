@@ -39,7 +39,36 @@ try{
       assert(await page.locator('.book-section .detail-view>.lead').count()===0,'detail summary is not duplicated above structured content');
       const bodyHeight=await page.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
       assert(bodyHeight>=320,'mobile learning body keeps useful reading height');
+      assert(await page.locator('.book-jumpbar').evaluate(el=>getComputedStyle(el).position)==='static','mobile learning tabs do not cover scrolled content');
 
+      await page.locator('.book-jumpbar [data-study-tab="core"]').click();
+      await page.waitForSelector('.study-core-save');
+      assert((await page.locator('.study-core-save').innerText()).trim()==='합격노트 ☆','Production core uses one 합격노트 ☆ toggle');
+      await page.locator('.study-core-save').click();
+      assert((await page.locator('.study-core-save').innerText()).trim()==='합격노트 ★','Production pass-note toggle changes to ★ after save');
+      await page.locator('.study-core-save').click();
+      assert((await page.locator('.study-core-save').innerText()).trim()==='합격노트 ☆','Production pass-note toggle removes on second press');
+
+      await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
+      await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
+      await page.waitForSelector('.book-section .hazmat-class-grid');
+      const hazmat=await page.locator('.book-section .hazmat-class-grid').evaluate(root=>({cards:root.querySelectorAll('.hazmat-class-card').length,toggles:root.querySelectorAll('[data-hazmat-class-toggle]').length,details:[...root.querySelectorAll('.hazmat-class-detail')].filter(x=>getComputedStyle(x).display!=='none').length,cols:getComputedStyle(root).gridTemplateColumns.split(/\s+/).filter(Boolean).length,text:root.innerText}));
+      assert(hazmat.cards===6&&hazmat.toggles===0&&hazmat.details===6&&hazmat.cols===1&&hazmat.text.includes('아염소산염류'),'Production hazardous-material classes are one-column and fully visible without expand');
+
+      await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C04'));
+      await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C04');
+      await page.locator('.book-jumpbar [data-study-tab="detail"]').click();
+      await page.waitForSelector('.concept-class-card.static');
+      const hydrantCompare=await page.locator('.book-section .detail-view').innerText();
+      assert(hydrantCompare.includes('옥내소화전')&&hydrantCompare.includes('건물 내부')&&hydrantCompare.includes('옥외소화전')&&hydrantCompare.includes('건물 외부'),'Production hydrant comparison is visible without expansion');
+
+      await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C14',{keepTab:true}));
+      await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C14');
+      const waterDetail=await page.locator('.book-section .detail-view').innerText();
+      for(const term of ['소화수조','저수조','채수구','흡수관투입구','20㎥','65mm'])assert(waterDetail.includes(term),'Production fire-water detail includes '+term);
+
+      await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
+      await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
       await page.locator('.book-jumpbar [data-study-tab="source"]').click();
       await page.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
       const started=Date.now();

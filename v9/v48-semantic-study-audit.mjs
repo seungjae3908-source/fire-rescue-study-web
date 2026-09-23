@@ -7,11 +7,12 @@ const note=fs.readFileSync(new URL('./pass-note.js',import.meta.url),'utf8');
 const mock=fs.readFileSync(new URL('./mock-exam-quality-119.js',import.meta.url),'utf8');
 
 ok(app.includes('<div class="study-quick-title"><span>핵심</span>')&&!app.includes('>30초 핵심<'),'core learner label is concise 핵심 instead of 30초 핵심');
-ok(app.includes('data-pass-core')&&app.includes('study-core-save')&&app.includes('data-pass-note-open')&&app.includes('합격노트 보기')&&app.includes("V.PassNote.toggleConceptCore"),'core uses one whole-concept favorite plus direct pass-note navigation');
-ok(app.includes('data-hazmat-class-toggle')&&app.includes('hazmat-item-list')&&app.includes('류 자세히 학습'),'hazard class cards expand into item list and detailed concept navigation');
+ok(app.includes('data-pass-core')&&app.includes('study-core-save')&&app.includes('합격노트 ${saved?\'★\':\'☆\'}')&&app.includes("V.PassNote.toggleConceptCore")&&!app.includes('<button class="study-note-link" data-pass-note-open>합격노트 보기</button>'),'core uses one whole-concept 합격노트 ☆/★ toggle with no separate add/view control');
+ok(app.includes('hazmat-class-card always-open')&&app.includes('hazmat-item-list')&&app.includes('류 자세히 학습')&&!app.includes('<button class="hazmat-class-summary" data-hazmat-class-toggle'),'hazard class cards show item lists immediately without an expand control');
 for(const type of ['hazmat','facility','governance','law','emsCondition','emsProcedure','emsAssessment','phenomenon','history','organizationTheory','suppression','investigation','emsSystem','emsAnatomy','emsTrauma','emsResuscitation','equipment'])ok(app.includes(type+':['),'semantic detail rules cover '+type);
 ok(!app.includes('detail-key"><span class="study-star">★</span>'),'detail prose no longer paints every bullet with decorative stars');
 ok(css.includes('.study-key-emphasis')&&css.includes('.detail-plain-list')&&css.includes('.concept-class-grid'),'clean emphasis and semantic classification-card styles are present');
+ok(app.includes('concept-class-card static')&&app.includes('detailCriteriaBlock')&&css.includes('.concept-class-card.static'),'comparison explanations and numeric criteria are visible directly in detail views');
 ok(note.includes('font-size:13.5pt')&&note.includes('maximum-scale=5')&&note.includes('텍스트 기반 문서 · PDF 저장 후 확대해도 선명하게'),'summary print output uses larger text and zoom-friendly vector/text document');
 ok(mock.includes('q?.officialPastExam===true')&&mock.includes('q.currentCompatibility===true'),'real mock recognizes official past exams and excludes unverified current-law compatibility');
 

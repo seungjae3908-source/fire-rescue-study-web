@@ -12,7 +12,7 @@ for(const file of [
   'content-rich-2026.js','fire-depth-119.js','fire-visuals-119.js','governance-depth-119.js','governance-visuals-119.js',
   'investigation-depth-119.js','investigation-visuals-119.js','facilities-depth-119.js','quality2-content-119.js','facilities-visuals-119.js',
   'hazmat-reference-2026.js','hazmat-depth-119.js','hazmat-visuals-119.js','suppression-depth-119.js','suppression-visuals-119.js',
-  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','study-emphasis-119.js','concept-architecture-119.js','quality2-study-schema-119.js',
+  'ems-rich-2026.js','ems-depth-119.js','ems-visuals-119.js','exam-gap-enrichment-119.js','quality2-official-gap-content-119.js','quality2-ems-medical-content-119.js','quality2-fire-admin-content-119.js','quality2-global-content-119.js','quality2-comparison-families-119.js','quality4-highyield-119.js','v50-visible-detail-coverage-119.js','study-emphasis-119.js','concept-architecture-119.js','quality2-study-schema-119.js',
   'questions-calculation-119.js','questions-calculation-quality2-119.js','calculation-training-v3-119.js','questions-law-119.js','questions-special-combustible-119.js','questions-ems-gap-practice-119.js','questions-final-gap-119.js','questions-pals-advanced-119.js','questions-fire-terminology-119.js',
   'question-bank-119.js','question-bank-quality2-119.js','questions-quality2-gap-119.js','questions-verified-ems-batch2-119.js','questions-verified-ems-batch3-119.js','questions-verified-fire-batch2-119.js','questions-verified-ems-breadth1-119.js','questions-verified-ems-breadth2-119.js','questions-verified-fire-breadth2-119.js','questions-verified-highyield4-119.js','questions-verified-fire-target1-119.js','questions-verified-fire-target2-119.js','questions-verified-ems-target1-119.js','questions-verified-ems-target2-119.js','textbook-grounded-119.js','visual-completion-119.js','calculation-contract-119.js','coverage-map-119.js','v29-reviewed-promotions-119.js','questions-official-past-2025-119.js'
 ]){
@@ -26,6 +26,15 @@ ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content comp
 ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style question quality gate is loaded');
 ok(V.StudyEmphasis119?.version==='119-study-emphasis-ssot-v1','study emphasis SSOT is loaded');
 ok(V.Quality2StudySchema119?.version==='119-quality2-study-schema-v2','study schema consumes the emphasis SSOT');
+ok(V.VisibleDetailCoverage119?.version==='119-visible-detail-coverage-v50','V50 visible detail normalization and facility coverage layer is loaded');
+ok(V.VisibleDetailCoverage119?.normalizedConcepts===V.curriculum.concepts.length,'V50 normalization reaches every curriculum concept');
+const v50CompareDupes=V.curriculum.concepts.filter(concept=>{const p=V.contentPacks.get(concept.id)||{},norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,''),labels=(p.compare||[]).map(r=>norm(r?.[0])).filter(Boolean);return labels.length!==new Set(labels).size});
+ok(v50CompareDupes.length===0,'all curriculum comparison labels are deduplicated before learner rendering');
+const v50Water=V.contentPacks.get('F07-C14'),v50WaterText=[...(v50Water?.must||[]),...(v50Water?.deepSections||[]).flatMap(x=>[x?.title,x?.body,...(x?.bullets||[])]),...(v50Water?.compare||[]).flat()].join(' ');
+for(const term of ['소화수조','저수조','채수구','흡수관투입구','20㎥','0.6m','65mm','4.5m'])ok(v50WaterText.includes(term),'fire-water detail includes '+term);
+const v50Indoor=V.contentPacks.get('F07-C03'),v50Outdoor=V.contentPacks.get('F07-C04');
+ok([...(v50Indoor?.must||[]),...(v50Indoor?.deepSections||[]).map(x=>x?.body)].join(' ').includes('2.6㎥'),'indoor hydrant detail restores source-backed water-volume content');
+ok([...(v50Outdoor?.must||[]),...(v50Outdoor?.deepSections||[]).map(x=>x?.body)].join(' ').includes('7㎥'),'outdoor hydrant detail restores source-backed water-volume content');
 const emphasisMismatches=(V.curriculum.concepts||[]).filter(concept=>{
   const p=V.contentPacks.get(concept.id),e=V.StudyEmphasis119.forConcept(concept.id,{numberLimit:10}),s=V.Quality2StudySchema119.get(concept.id);
   if(!e||!s)return true;
