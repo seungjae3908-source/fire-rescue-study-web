@@ -53,7 +53,25 @@ for(const[conceptId,id]of Object.entries(reviewedExact))promote(conceptId,id,fal
 if(V.QuestionFactory119?.generated>=factoryPromoted)V.QuestionFactory119.generated-=factoryPromoted;
 const exactPromoted=Object.keys(reviewedExact).length;
 if(V.Quality2QuestionFactory119?.added>=exactPromoted)V.Quality2QuestionFactory119.added-=exactPromoted;
+
+// V42: preserve the reviewed question and evidence while removing the only
+// verified-answer-position concentration (E11-C02). Reorder choices and the
+// matching explanations together; never alter question wording or truth.
+const choiceOrderBalanced=[];
+const swapChoiceOrder=(id,conceptId,left,right)=>{
+  const q=(V.questions||[]).find(x=>x.id===id);
+  if(!q)throw new Error('V42_CHOICE_ORDER_MISSING '+id);
+  if(q.conceptId!==conceptId)throw new Error('V42_CHOICE_ORDER_CONCEPT_MISMATCH '+id+' '+q.conceptId);
+  if(!Array.isArray(q.choices)||q.choices.length!==4||!Array.isArray(q.choiceExplanations)||q.choiceExplanations.length!==4)throw new Error('V42_CHOICE_ORDER_STRUCTURE '+id);
+  if(q.a!==left)throw new Error('V42_CHOICE_ORDER_ANSWER_DRIFT '+id+' '+q.a);
+  [q.choices[left],q.choices[right]]=[q.choices[right],q.choices[left]];
+  [q.choiceExplanations[left],q.choiceExplanations[right]]=[q.choiceExplanations[right],q.choiceExplanations[left]];
+  q.a=right;
+  choiceOrderBalanced.push(id);
+};
+swapChoiceOrder('119-vertarget-ems1-027','E11-C02',0,2);
+
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
-V.V29ReviewedPromotions119={version:'119-v41-reviewed-promotions-v5',promoted,factoryPromoted,exactPromoted};
+V.V29ReviewedPromotions119={version:'119-v42-reviewed-promotions-v6',promoted,factoryPromoted,exactPromoted,choiceOrderBalanced};
 })();
