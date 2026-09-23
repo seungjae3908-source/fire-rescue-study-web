@@ -182,7 +182,12 @@ function trapBlock(pack){
 const rows=V.StudyEmphasis119?.trapRows?.(pack)||[];if(!rows.length)return'';
 return `<section class="study-traps"><div class="study-traps-title">자주 틀리는 포인트</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
 }
-function comparisonBlock(c,pack){if(!pack.compare?.length)return'';const typeLike=pack.compare.length>=2&&/원리|종류|분류|구분/.test(String(c?.title||'')+' '+String(pack.summary||'')),title=c?.id==='F04-C01'?'소화의 종류':typeLike?'종류 · 구분':pack.compareFamily?.title||'비슷한 개념 비교';return `<section class="detail-compare"><h3>${esc(title)}</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>내용 · 핵심 차이</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`}
+function comparisonBlock(c,pack){
+if(!pack.compare?.length)return'';
+const type=V.ConceptArchitecture119?.typeOf?.(c.id)||'',typeLike=pack.compare.length>=2&&/원리|종류|분류|구분/.test(String(c?.title||'')+' '+String(pack.summary||'')),title=c?.id==='F04-C01'?'소화의 종류':typeLike?'종류 · 구분':pack.compareFamily?.title||'비교 · 구분',cardTypes=new Set(['hazmat','facility','governance','law','emsSystem','equipment']);
+if(cardTypes.has(type)&&pack.compare.length<=12)return `<section class="detail-compare detail-compare-cards"><h3>${esc(title)}</h3><div class="concept-class-grid">${pack.compare.map(r=>`<details class="concept-class-card"><summary>${esc(r[0])}</summary><p>${esc(r[1])}</p></details>`).join('')}</div></section>`;
+return `<section class="detail-compare"><h3>${esc(title)}</h3><div class="compare-wrap"><table class="compare"><thead><tr><th>구분</th><th>내용 · 핵심 차이</th></tr></thead><tbody>${pack.compare.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div></section>`
+}
 function specialCombustibleBlock(pack){
 const rows=pack?.specialCombustibles||[],rules=pack?.specialCombustibleStorage||[];if(!rows.length)return'';
 return `<section class="hazmat-reference special-combustible-reference"><div class="lesson-heading"><div><span class="eyebrow">2026 현행 법령</span><h3>특수가연물 품명별 기준수량</h3></div></div><div class="table-scroll"><table class="hazmat-table"><thead><tr><th>품명</th><th>기준수량</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x[0])}</td><td><b>${esc(x[1])}</b></td></tr>`).join('')}</tbody></table></div>${rules.length?`<div class="lesson-box"><b>저장·취급 상세</b><ul>${rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}</section>`;
