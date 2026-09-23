@@ -564,7 +564,7 @@ ok(sw.includes("'./questions-special-combustible-119.js'"),'special-combustible 
 ok(sw.includes("'./questions-ems-gap-practice-119.js'"),'CBRN/PALS practice bank is offline-cached');
 
 const v9index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
-ok(v9index.includes("register('./sw.js',{scope:'./'})"),'v9 service worker registers only at ./ scope');
+ok(v9index.includes("register('./sw.js',{scope:'./',updateViaCache:'none'})"),'v9 service worker stays ./ scoped and bypasses stale worker-script caching');
 ok(v9index.indexOf('./curriculum-complete-2026.js')>v9index.indexOf('./curriculum.js')&&v9index.indexOf('./curriculum-complete-2026.js')<v9index.indexOf('./content-packs.js'),'complete curriculum loads before content packs');
 ok(v9index.indexOf('./depth-enrichment.js')>v9index.indexOf('./verified-final.js'),'depth enrichment loads after base verified packs');
 ok(v9index.indexOf('./depth-enrichment-2.js')>v9index.indexOf('./depth-enrichment.js'),'depth enrichment batch 2 loads after batch 1');
