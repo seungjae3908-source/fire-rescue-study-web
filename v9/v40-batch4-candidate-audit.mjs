@@ -51,7 +51,7 @@ const concentrated=conceptRows.filter(x=>x.verified>=3&&(x.answerPositionKinds<2
 const totalVerified=V.questions.filter(q=>q.grade==='A'||q.grade==='B').length;
 if(totalVerified<677)throw new Error('V40_BATCH4_TOTAL_VERIFIED_REGRESSION '+totalVerified);
 if(under3>53)throw new Error('V40_BATCH4_UNDER3_REGRESSION '+under3);
-if(concentrated.length!==1||concentrated[0].id!=='E11-C02')throw new Error('V40_BATCH4_CONCENTRATION '+JSON.stringify(concentrated));
+if(concentrated.length!==0)throw new Error('V40_BATCH4_CONCENTRATION '+JSON.stringify(concentrated));
 result.summary={totalVerified,under3,concentrated};
 console.log('V40_BATCH4_PROMOTION_SUMMARY',JSON.stringify(result,null,2));
 console.log('V40_BATCH4_PROMOTION_AUDIT_COMPLETE');
