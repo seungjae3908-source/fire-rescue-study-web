@@ -8,7 +8,7 @@ recent=(h,n=4)=>new Set((h||[]).slice(-n).flatMap(x=>x.questionIds||[])),
 norm=s=>String(s||'').replace(/\s+/g,' ').trim();
 
 function factoryLike(q){return /(?:^|-)q?2?factory-|generated/i.test(String(q?.id||''))||q?.generatedPractice===true}
-function sourceSpecific(q){const s=String(q?.source||'');return q?.pageVerified===true||/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽|제\s*\d+\s*조|국가법령정보센터|시행령|시행규칙/.test(s)}
+function sourceSpecific(q){const s=String(q?.source||'');return q?.officialPastExam===true||q?.pageVerified===true||/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽|제\s*\d+\s*조|국가법령정보센터|시행령|시행규칙|https:\/\/[^\s]*\.go\.kr/.test(s)}
 function explanationStrength(q){const a=q?.choiceExplanations||[];return a.length===4?Math.round(a.reduce((n,x)=>n+norm(x).length,0)/4):0}
 function quality(q){
   const stem=norm(q?.q),choices=(q?.choices||[]).map(norm),lens=choices.map(x=>x.length),max=Math.max(1,...lens),min=lens.length?Math.min(...lens):0,family=fam(q);
@@ -16,6 +16,7 @@ function quality(q){
   if(q?.grade==='A'||q?.grade==='B')score+=20;
   if(q?.pageVerified===true)score+=18;
   if(q?.reviewStatus==='source-reviewed')score+=12;
+  if(q?.officialPastExam===true)score+=42;
   if(sourceSpecific(q))score+=8;
   if(factoryLike(q))score-=55;else score+=24;
   if(q?.generatedPractice===true)score-=22;
@@ -53,7 +54,7 @@ function pick(a,n,l,sc,h=[]){
 }
 function seq(qs){const s=sh(qs),o=[];while(s.length){const a=o.at(-1),b=o.at(-2),ban=a&&b&&fam(a)===fam(b)?fam(a):'',c={};for(const q of s)c[fam(q)]=(c[fam(q)]||0)+1;const fs=Object.keys(c).filter(f=>f!==ban).sort((x,y)=>c[y]-c[x]);let i=-1;for(const f of fs){i=s.findIndex(q=>fam(q)===f&&(!a||q.scopeId!==a.scopeId));if(i<0)i=s.findIndex(q=>fam(q)===f);if(i>=0)break}if(i<0)i=0;o.push(s.splice(i,1)[0])}return o}
 function build({mode='real',level='mid',history=[]}={}){
-  const ok=q=>mode==='real'?(q.grade==='A'||q.grade==='B'):V.QuestionQuality119?.isExamStyle?.(q)!==false,all=(V.questions||[]).filter(ok);
+  const ok=q=>mode==='real'?((q.grade==='A'||q.grade==='B')&&(!q.officialPastExam||q.currentCompatibility===true)):V.QuestionQuality119?.isExamStyle?.(q)!==false,all=(V.questions||[]).filter(ok);
   const fs=V.curriculum.fire.map(x=>x.id),es=V.curriculum.ems.map(x=>x.id);
   const fp=subjectPool(all,'fire',25,fs),ep=subjectPool(all,'ems',40,es);
   const f=pick(fp,25,level,fs,history),e=pick(ep,40,level,es,history);
@@ -63,8 +64,8 @@ function metrics(qs){
   const f=qs.map(fam),sc={},d={low:0,mid:0,high:0},ans=[0,0,0,0],families={};let run=0;
   for(let i=0;i<f.length;i++)run=Math.max(run,f[i]===f[i-1]?(f[i]===f[i-2]?3:2):1);
   for(const q of qs){sc[q.scopeId]=(sc[q.scopeId]||0)+1;d[dif(q)]++;ans[q.a]++;families[fam(q)]=(families[fam(q)]||0)+1}
-  const scores=qs.map(quality),factoryCount=qs.filter(factoryLike).length,strongCount=qs.filter(strong).length,pageVerified=qs.filter(q=>q.pageVerified===true).length,sourceSpecificCount=qs.filter(sourceSpecific).length,officialWebCount=qs.filter(q=>sourceSpecific(q)&&q.pageVerified!==true).length;
-  return{n:qs.length,uniqueIds:new Set(qs.map(q=>q.id)).size,uniqueConcepts:new Set(qs.map(q=>q.conceptId)).size,fire:qs.filter(q=>q.subject==='fire').length,ems:qs.filter(q=>q.subject==='ems').length,maxFamilyRun:run,activeFamilies:new Set(f).size,scopes:sc,difficulties:d,answers:ans,families,factoryCount,strongCount,pageVerified,sourceSpecificCount,officialWebCount,qualityAverage:scores.length?Number((scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)):0,qualityMin:scores.length?Math.min(...scores):0}
+  const scores=qs.map(quality),factoryCount=qs.filter(factoryLike).length,strongCount=qs.filter(strong).length,pageVerified=qs.filter(q=>q.pageVerified===true).length,sourceSpecificCount=qs.filter(sourceSpecific).length,officialWebCount=qs.filter(q=>sourceSpecific(q)&&q.pageVerified!==true).length,officialPastCount=qs.filter(q=>q.officialPastExam===true).length;
+  return{n:qs.length,uniqueIds:new Set(qs.map(q=>q.id)).size,uniqueConcepts:new Set(qs.map(q=>q.conceptId)).size,fire:qs.filter(q=>q.subject==='fire').length,ems:qs.filter(q=>q.subject==='ems').length,maxFamilyRun:run,activeFamilies:new Set(f).size,scopes:sc,difficulties:d,answers:ans,families,factoryCount,strongCount,pageVerified,sourceSpecificCount,officialWebCount,officialPastCount,qualityAverage:scores.length?Number((scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)):0,qualityMin:scores.length?Math.min(...scores):0}
 }
-V.MockExam119={build,metrics,quality,strong,factoryLike,policy:{version:'119-mock-quality-v2',recentWindow:4,uniqueConceptPerExam:true,maxFamilyRun:2,realPrefersSourceReviewedNonFactory:true,answerPositionBalance:true,notOfficialExamWeight:true}};
+V.MockExam119={build,metrics,quality,strong,factoryLike,policy:{version:'119-mock-quality-v3-official-past-priority',recentWindow:4,uniqueConceptPerExam:true,maxFamilyRun:2,realPrefersSourceReviewedNonFactory:true,answerPositionBalance:true,notOfficialExamWeight:true}};
 })();

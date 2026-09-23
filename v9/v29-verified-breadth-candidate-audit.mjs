@@ -54,7 +54,7 @@ const expected={
 };
 for(const id of targetIds){
   const qs=rows.filter(x=>x.conceptId===id),verified=qs.filter(x=>x.grade==='A'||x.grade==='B');
-  if(verified.length!==3)throw new Error('V29_VERIFIED_COUNT '+id+' '+verified.length);
+  if(verified.length<3)throw new Error('V29_VERIFIED_COUNT _REGRESSION '+id+' '+verified.length+' expected_at_least 3');
   const q=qs.find(x=>x.id===expected[id]);
   if(!q||q.grade!=='B'||q.generatedPractice||!q.pageVerified||q.reviewStatus!=='source-reviewed'||q.pastExamClaim)throw new Error('V29_PROMOTION_CONTRACT '+id);
 }

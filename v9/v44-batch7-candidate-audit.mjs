@@ -15,7 +15,7 @@ const result={promoted:{},blockers:{}};
 
 for(const[id,qid]of Object.entries(promotedExpected)){
   const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B'),q=qs.find(x=>x.id===qid);
-  if(verified.length!==3)throw new Error('V44_BATCH7_VERIFIED_COUNT '+id+' '+verified.length);
+  if(verified.length<3)throw new Error('V44_BATCH7_VERIFIED_COUNT_REGRESSION '+id+' '+verified.length+' expected_at_least 3');
   if(!q||q.grade!=='B'||q.generatedPractice!==false||q.pageVerified!==true||q.reviewStatus!=='source-reviewed'||q.pastExamClaim===true)throw new Error('V44_BATCH7_PROMOTION_CONTRACT '+id);
   const pos=[0,0,0,0];for(const x of verified)pos[x.a]=(pos[x.a]||0)+1;
   const kinds=pos.filter(Boolean).length,max=Math.max(...pos)/verified.length;

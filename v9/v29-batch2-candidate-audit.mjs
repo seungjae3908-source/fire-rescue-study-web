@@ -6,7 +6,7 @@ const byConcept={};
 for(const id of targetIds){
   const c=V.curriculum.byId?.[id]||V.curriculum.concepts.find(x=>x.id===id),p=V.contentPacks?.get?.(id),qs=V.questions.filter(q=>q.conceptId===id);
   const verified=qs.filter(q=>q.grade==='A'||q.grade==='B');
-  if(verified.length!==3)throw new Error('V29_BATCH2_VERIFIED_COUNT '+id+' '+verified.length);
+  if(verified.length<3)throw new Error('V29_BATCH2_VERIFIED_COUNT _REGRESSION '+id+' '+verified.length+' expected_at_least 3');
   const promotedId='119-factory-'+id.toLowerCase()+'-detail-a',promoted=qs.find(q=>q.id===promotedId);
   if(!promoted||promoted.grade!=='B'||promoted.generatedPractice||!promoted.pageVerified||promoted.reviewStatus!=='source-reviewed'||promoted.pastExamClaim)throw new Error('V29_BATCH2_PROMOTION_CONTRACT '+id);
   byConcept[id]={
