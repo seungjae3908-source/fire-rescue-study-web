@@ -725,7 +725,7 @@ ok(appSource.includes('detailSemanticTitle')&&appSource.includes('detailDefiniti
 ok(appSource.includes('study-key-underline')&&appSource.includes('coreHighlightTerms'),'core view underlines high-yield terms and numeric criteria');
 ok(appSource.includes("scope:'document'")&&appSource.includes('broadHit.score>=8'),'source evidence recovery expands beyond mapped pages only for a strong whole-document match');
 ok(appSource.includes("updatedAt:Date.now()"),'profile save stamps its conflict clock directly without a second sync UI listener');
-ok(appSource.includes('근거를 그대로 나열하는 검색기가 아니라')&&appSource.includes('wantsTutorEvidence'),'study AI is answer-first by default and preserves an explicit evidence-only mode');
+ok(appSource.includes('이전 답을 반복하지 말고 현재 질문에 직접 답한다')&&appSource.includes('wantsTutorEvidence'),'study AI is answer-first, follow-up aware, and preserves an explicit evidence-only mode');
 ok(appSource.includes("navigator.gpu&&V.LocalAI?.ensure"),'first eligible AI question may initialize the local reasoning engine instead of staying on static evidence fallback');
 ok(appSource.includes('scrollTutorToBottom')&&appSource.includes("document.querySelectorAll('.study-ai-chat')")&&appSource.includes('runtime.tutorForceLatest=true')&&appSource.includes('requestAnimationFrame(()=>requestAnimationFrame'),'AI study chat keeps the existing bottom helper, forces explicit sends to latest, and retains intentional history reading');
 ok(appSource.includes('tutorRichAnswer')&&appSource.includes('tutor-ai-table-wrap')&&appSource.includes('tutorTableDivider'),'AI markdown tables are normalized into responsive semantic tables instead of raw pipe text');
