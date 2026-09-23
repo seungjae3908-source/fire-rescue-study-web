@@ -4,6 +4,7 @@ const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 if(!Array.isArray(V.questions)||!V.curriculum?.concepts||!V.contentPacks?.authored||!V.QuestionQuality119)return;
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
 const clip=(s,n=180)=>{const x=String(s||'').replace(/\s+/g,' ').trim();return x.length>n?x.slice(0,n-1)+'…':x};
+const studentQuote=(s,n=210)=>clip(String(s||'').replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+)\s*기준으로\s*/gi,'').replace(/\s*교재의\s*정의(?:이)?다\.?/gi,'').replace(/\s+/g,' ').trim(),n);
 const uniq=list=>{const seen=new Set(),out=[];for(const x of list||[]){const t=String(x||'').trim(),k=norm(t);if(!k||seen.has(k))continue;seen.add(k);out.push(t)}return out};
 const hash=s=>{let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const concepts=V.curriculum.concepts;
@@ -34,12 +35,20 @@ function arrange(id,correct,distractors,correctEx){
   if(new Set(items.map(x=>norm(x.text))).size!==4)return null;
   return{choices:items.map(x=>x.text),a:pos,choiceExplanations:items.map(x=>x.ex)}
 }
-function titleCandidate(c,quote,index){
-  const peers=peerTitleChoices(c,index*3+1);if(peers.length<3||!quote)return null;
-  const id=`119-q2factory-${c.id.toLowerCase()}-title-${index}`;
-  const ar=arrange(id,c.title,peers.map(p=>({text:p.title,explanation:`오답. 이 내용은 ‘${p.title}’보다 ‘${c.title}’의 공식 학습내용과 직접 연결된다.`})),`정답. 제시문은 ‘${c.title}’의 공식 근거 기반 설명이다.`);
+function semanticTitleChoices(c,p){
+  const rows=(p?.compare||[]).filter(x=>Array.isArray(x)&&x[0]&&x[1]),self=rows.find(x=>norm(x[0])===norm(c.title));
+  if(!self||rows.length<4)return null;
+  const distractors=rows.filter(x=>norm(x[0])!==norm(c.title)).slice(0,3).map(x=>({text:clip(x[0],60),explanation:`오답. ‘${x[0]}’은 ${studentQuote(x[1],120)}`}));
+  return distractors.length===3?{distractors,correctExplanation:`정답. ‘${c.title}’은 ${studentQuote(self[1],140)}`}:null
+}
+function titleCandidate(c,p,quote,index){
+  const clean=studentQuote(quote,210);if(!clean)return null;
+  const semantic=semanticTitleChoices(c,p),peers=semantic?[]:peerTitleChoices(c,index*3+1);if(!semantic&&peers.length<3)return null;
+  const id=`119-q2factory-${c.id.toLowerCase()}-title-${index}`,distractors=semantic?semantic.distractors:peers.map(x=>({text:x.title,explanation:`오답. 이 내용은 ‘${x.title}’보다 ‘${c.title}’의 학습내용과 직접 연결된다.`}));
+  const ar=arrange(id,c.title,distractors,semantic?.correctExplanation||`정답. 제시문은 ‘${c.title}’의 핵심 설명이다.`);
   if(!ar)return null;
-  return{id,difficulty:index===0?'low':index%3===0?'high':'mid',type:'개념식별형',q:`다음 설명에 해당하는 것은? “${clip(quote,210)}”`,...ar}
+  const phenomenon=V.ConceptArchitecture119?.typeOf?.(c.id)==='phenomenon',lead=phenomenon?'다음 설명에 해당하는 화재현상은?':'다음 설명에 해당하는 것은?';
+  return{id,difficulty:index===0?'low':index%3===0?'high':'mid',type:'개념식별형',q:`${lead} “${clean}”`,...ar}
 }
 function statementCandidate(c,text,index,kind='핵심'){
   if(!text)return null;
@@ -68,7 +77,7 @@ function compareCandidate(c,row,index){
 function candidates(c,p){
   const out=[];
   const quotes=uniq([p.summary,...(p.detail||[]),...(p.deepSections||[]).map(x=>x.body)]).filter(x=>x.length>=20);
-  quotes.slice(0,6).forEach((x,i)=>out.push(titleCandidate(c,x,i)));
+  quotes.slice(0,6).forEach((x,i)=>out.push(titleCandidate(c,p,x,i)));
   uniq(p.must||[]).slice(0,5).forEach((x,i)=>out.push(statementCandidate(c,x,i,'핵심')));
   uniq(p.features||[]).slice(0,4).forEach((x,i)=>out.push(statementCandidate(c,x,i,'특징')));
   uniq(p.flow||[]).slice(0,4).forEach((x,i)=>out.push(statementCandidate(c,x,i,'흐름')));
@@ -81,7 +90,7 @@ function candidates(c,p){
 const existingIds=new Set(V.questions.map(q=>q.id)),existingTexts=new Set(V.questions.map(q=>norm(q.q))),added=[];
 for(const c of concepts){
   const p=V.contentPacks.authored[c.id];if(!p||p.status!=='verified')continue;
-  const highYield=/플래시오버|백드래프트|위험물|스프링클러|포소화|심정지|소생술|쇼크|환자 평가|기도|호흡|뇌졸중|화상|출혈/.test(c.title);
+  const highYield=/플레임오버|플래시오버|롤오버|백드래프트|위험물|스프링클러|포소화|심정지|소생술|쇼크|환자 평가|기도|호흡|뇌졸중|화상|출혈/.test(c.title);
   const target=highYield?20:12,existing=V.QuestionQuality119.forConcept(c.id),need=Math.max(0,target-existing.length);if(!need)continue;
   const pool=candidates(c,p),usedStem=new Set();
   for(const cand of pool){
