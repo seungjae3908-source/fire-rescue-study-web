@@ -29,32 +29,67 @@ try{
     for(const bookPage of samplePages(r.from,r.to))set.add(bookPage);
     pageNeeds.set(r.doc,set);
   }
-  const pageText={};
-  const docMeta={};
+  const docs=[...pageNeeds.keys()];
+  const catalogMeta=await page.evaluate(docs=>{
+    const V=window.AITUTOR_V9,out={};
+    for(const doc of docs){const x=V.SourceCatalog119?.get?.(doc);out[doc]=x?{transport:x.transport||'',directPdf:x.directPdf||'',mirrorPdf:x.mirrorPdf||'',proxyPdf:x.proxyPdf||'',officialPage:x.officialPage||''}:null}
+    return out;
+  },docs);
+  const pageText={},docMeta={},sourceIssues=[];
   for(const [doc,set] of pageNeeds){
-    const result=await page.evaluate(async ({doc,pages})=>{
-      const V=window.AITUTOR_V9,entry=await V.SourcePDF.openPdf(doc,{timeoutMs:120000}),out={};
-      for(const bookPage of pages){
-        const pdfPage=V.SourcePDF.pdfPage(doc,bookPage);
-        if(pdfPage<1||pdfPage>entry.pdf.numPages){out[bookPage]={pdfPage,text:'',invalid:true};continue}
-        const pg=await entry.pdf.getPage(pdfPage),tc=await pg.getTextContent(),text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
-        out[bookPage]={pdfPage,text,invalid:false};
+    const cat=catalogMeta[doc];
+    if(!cat){sourceIssues.push({doc,type:'CATALOG_MISSING'});continue}
+    if(cat.transport!=='range-static'){
+      const raw=cat.proxyPdf||cat.directPdf||'';
+      if(!raw){sourceIssues.push({doc,type:'PROXY_URL_MISSING'});docMeta[doc]={...cat,mode:'contract',contractOk:false};continue}
+      const metaUrl=raw+(raw.includes('?')?'&':'?')+'meta=1';
+      try{
+        const res=await fetch(metaUrl,{signal:AbortSignal.timeout(25000)});
+        const body=await res.json().catch(()=>({}));
+        const ok=res.ok&&(body.magicOk===true||body.ok===true&&body.magicOk!==false);
+        docMeta[doc]={...cat,mode:'proxy-contract',contractOk:ok,status:res.status,magicOk:body.magicOk===true};
+        if(!ok)sourceIssues.push({doc,type:'PROXY_CONTRACT_FAILED',status:res.status,magicOk:body.magicOk});
+      }catch(err){
+        docMeta[doc]={...cat,mode:'proxy-contract',contractOk:false,error:String(err?.message||err)};
+        sourceIssues.push({doc,type:'PROXY_CONTRACT_ERROR',error:String(err?.message||err)});
       }
-      return{origin:entry.origin,numPages:entry.pdf.numPages,pages:out};
-    },{doc,pages:[...set].sort((a,b)=>a-b)});
-    docMeta[doc]={origin:result.origin,numPages:result.numPages};
-    for(const [bookPage,row] of Object.entries(result.pages))pageText[doc+':'+bookPage]=row;
+      continue;
+    }
+    try{
+      const result=await page.evaluate(async ({doc,pages})=>{
+        const V=window.AITUTOR_V9,entry=await V.SourcePDF.openPdf(doc,{timeoutMs:45000}),out={};
+        for(const bookPage of pages){
+          const pdfPage=V.SourcePDF.pdfPage(doc,bookPage);
+          if(pdfPage<1||pdfPage>entry.pdf.numPages){out[bookPage]={pdfPage,text:'',invalid:true};continue}
+          const pg=await entry.pdf.getPage(pdfPage),tc=await pg.getTextContent(),text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
+          out[bookPage]={pdfPage,text,invalid:false};
+        }
+        return{origin:entry.origin,numPages:entry.pdf.numPages,pages:out};
+      },{doc,pages:[...set].sort((a,b)=>a-b)});
+      docMeta[doc]={...cat,mode:'text-sampled',contractOk:true,origin:result.origin,numPages:result.numPages};
+      for(const [bookPage,row] of Object.entries(result.pages))pageText[doc+':'+bookPage]=row;
+    }catch(err){
+      docMeta[doc]={...cat,mode:'text-sampled',contractOk:false,error:String(err?.message||err)};
+      sourceIssues.push({doc,type:'STATIC_PDF_READ_ERROR',error:String(err?.message||err)});
+    }
   }
 
-  const issues=[],anchorReview=[],rows=[];
+  const issues=[...sourceIssues],anchorReview=[],rows=[];
   for(const row of plan){
     const terms=[row.title,...(row.terms||[])].flatMap(x=>String(x||'').split(/[·,/()\s\-]+/)).map(x=>x.trim()).filter(x=>x.length>=2&&!generic.has(x)).sort((a,b)=>b.length-a.length).slice(0,18);
-    let sampled=0,readable=0,anchorHits=0,invalid=0;const matches=[];
+    let sampled=0,readable=0,anchorHits=0,invalid=0,contractRanges=0,contractOk=0;const matches=[];
     for(const r of row.ranges||[]){
+      const dm=docMeta[r.doc];
+      if(dm?.mode==='proxy-contract'){
+        contractRanges++;
+        if(dm.contractOk)contractOk++;
+        continue;
+      }
       for(const bookPage of samplePages(r.from,r.to)){
         sampled++;
         const p=pageText[r.doc+':'+bookPage];
-        if(!p||p.invalid){invalid++;continue}
+        if(!p){continue}
+        if(p.invalid){invalid++;continue}
         if(String(p.text||'').trim().length>=20)readable++;
         const compact=clean(p.text);
         const hit=terms.filter(t=>compact.includes(clean(t)));
@@ -62,13 +97,15 @@ try{
       }
     }
     if((row.ranges||[]).length){
-      if(!sampled||!readable)issues.push({id:row.id,type:'PDF_RANGE_UNREADABLE',ranges:row.ranges});
+      const staticRanges=(row.ranges||[]).filter(r=>docMeta[r.doc]?.mode==='text-sampled').length;
+      if(staticRanges&&(!sampled||!readable))issues.push({id:row.id,type:'PDF_RANGE_UNREADABLE',ranges:row.ranges.filter(r=>docMeta[r.doc]?.mode==='text-sampled')});
+      if(contractRanges&&contractOk!==contractRanges)issues.push({id:row.id,type:'PDF_PROXY_CONTRACT_UNAVAILABLE',contractRanges,contractOk});
       if(invalid)issues.push({id:row.id,type:'PDF_RANGE_OUT_OF_BOUNDS',invalid,ranges:row.ranges});
-      if(!anchorHits)anchorReview.push({id:row.id,title:row.title,scopeId:row.scopeId,terms:terms.slice(0,10),ranges:row.ranges});
+      if(sampled&&!anchorHits)anchorReview.push({id:row.id,title:row.title,scopeId:row.scopeId,terms:terms.slice(0,10),ranges:row.ranges.filter(r=>docMeta[r.doc]?.mode==='text-sampled')});
     }else if(!(row.links||[]).length){
       issues.push({id:row.id,type:'NO_OFFICIAL_SOURCE'});
     }
-    rows.push({id:row.id,title:row.title,scopeId:row.scopeId,subject:row.subject,ranges:(row.ranges||[]).length,links:(row.links||[]).length,sampled,readable,anchorHits,matches:matches.slice(0,4)});
+    rows.push({id:row.id,title:row.title,scopeId:row.scopeId,subject:row.subject,ranges:(row.ranges||[]).length,links:(row.links||[]).length,sampled,readable,anchorHits,contractRanges,contractOk,matches:matches.slice(0,4)});
   }
   const summary={
     version:'119-v51-official-textbook-browser-audit-v1',
@@ -76,6 +113,8 @@ try{
     pdfBacked:rows.filter(x=>x.ranges>0).length,
     webOnly:rows.filter(x=>x.ranges===0&&x.links>0).length,
     docs:Object.fromEntries(Object.entries(docMeta).map(([k,v])=>[k,v])),
+    textSampledDocs:Object.entries(docMeta).filter(([,v])=>v.mode==='text-sampled'&&v.contractOk).map(([k])=>k),
+    proxyContractDocs:Object.entries(docMeta).filter(([,v])=>v.mode==='proxy-contract'&&v.contractOk).map(([k])=>k),
     sampledPages:Object.keys(pageText).length,
     issues:issues.length,
     anchorReview:anchorReview.length
@@ -83,7 +122,7 @@ try{
   console.log('V51_OFFICIAL_TEXTBOOK_SUMMARY',JSON.stringify(summary,null,2));
   console.log('V51_OFFICIAL_TEXTBOOK_ISSUES');console.table(issues);
   console.log('V51_OFFICIAL_TEXTBOOK_ANCHOR_REVIEW');console.table(anchorReview);
-  console.log('V51_OFFICIAL_TEXTBOOK_ROWS');console.table(rows.map(x=>({id:x.id,title:x.title,scopeId:x.scopeId,subject:x.subject,ranges:x.ranges,links:x.links,sampled:x.sampled,readable:x.readable,anchorHits:x.anchorHits})));
+  console.log('V51_OFFICIAL_TEXTBOOK_ROWS');console.table(rows.map(x=>({id:x.id,title:x.title,scopeId:x.scopeId,subject:x.subject,ranges:x.ranges,links:x.links,sampled:x.sampled,readable:x.readable,anchorHits:x.anchorHits,contractRanges:x.contractRanges,contractOk:x.contractOk})));
   if(rows.length!==183)throw new Error('V51_OFFICIAL_CURRICULUM_COUNT '+rows.length);
   if(issues.length)throw new Error('V51_OFFICIAL_TEXTBOOK_FAILED '+JSON.stringify(issues.slice(0,40)));
   console.log('V51_OFFICIAL_TEXTBOOK_BROWSER_AUDIT_COMPLETE');
