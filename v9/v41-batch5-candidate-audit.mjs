@@ -39,7 +39,7 @@ const under3=conceptRows.filter(x=>x.verified<3).length;
 const concentrated=conceptRows.filter(x=>x.verified>=3&&(x.answerPositionKinds<2||x.maxAnswerShare>=0.8));
 if(totalVerified!==683)throw new Error('V41_BATCH5_TOTAL_VERIFIED '+totalVerified);
 if(under3!==47)throw new Error('V41_BATCH5_UNDER3 '+under3);
-if(concentrated.length!==1||concentrated[0].id!=='E11-C02')throw new Error('V41_BATCH5_CONCENTRATION '+JSON.stringify(concentrated));
+if(concentrated.length!==0)throw new Error('V41_BATCH5_CONCENTRATION '+JSON.stringify(concentrated));
 result.summary={totalVerified,under3,concentrated};
 console.log('V41_BATCH5_PROMOTION_SUMMARY',JSON.stringify(result,null,2));
 console.log('V41_BATCH5_PROMOTION_AUDIT_COMPLETE');
