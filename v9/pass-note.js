@@ -48,9 +48,10 @@ function questionNote(qid){
   return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`${q.q}\n\n정답: ${right}\n\n해설: ${q.ex||''}\n\n출처: ${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
 }
 async function toggleQuestion(qid){const id=questionKey(qid);if(has(id)){await remove(id);return{saved:false,id}}const note=questionNote(qid);if(!note)throw Error('PASS_QUESTION_NOT_FOUND');await persist(note);return{saved:true,id,note}}
-async function saveManual({id,title,body,sourceType='manual'}){
+async function saveManual({id,title,body,sourceType='manual',subject=''}){
   const text=normalize(body);if(!text)throw Error('NOTE_BODY_REQUIRED');
-  return persist({id:id||('note-'+now()+'-'+hash(text)),title:normalize(title)||'내 합격노트',body:text,sourceType});
+  const subj=subject==='ems'?'ems':subject==='fire'?'fire':(V.Store.state.subject==='ems'?'ems':'fire');
+  return persist({id:id||('note-'+now()+'-'+hash(text)),title:normalize(title)||'내 합격노트',body:text,sourceType,subject:subj});
 }
 function extractLines(text){
   const rows=uniq(String(text||'').split(/\n+/).map(x=>x.replace(/^\[\d+쪽\]\s*/,'').trim()).filter(x=>x.length>=10&&x.length<=260));
@@ -100,7 +101,7 @@ function printDocument(mode){
   const map={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'};
   const title=map[mode]||'119 합격노트';
   let body='';
-  if(mode==='pass')body=notesHtml(state().notes||[]);
+  if(mode==='pass'){const all=state().notes||[],fire=all.filter(n=>n.subject==='fire'),ems=all.filter(n=>n.subject==='ems'),other=all.filter(n=>n.subject!=='fire'&&n.subject!=='ems');body=(fire.length?'<h1>소방학</h1>'+notesHtml(fire):'')+(ems.length?'<h1>구급</h1>'+notesHtml(ems):'')+(other.length?'<h1>기타 메모</h1>'+notesHtml(other):'');if(!body)body='<p>저장한 합격노트가 없습니다.</p>'}
   else if(mode==='rapid'){
     const starred=passNotes(),sets=rapidConceptSets();
     body=starred.length?'<h1>내 ★ 핵심</h1>'+notesHtml(starred):'<p>저장한 ★ 핵심이 없습니다.</p>';
@@ -119,5 +120,10 @@ function exportPdf(mode){
   const html=printDocument(mode),w=window.open('','_blank');if(!w)throw Error('POPUP_BLOCKED');try{w.opener=null}catch{}
   w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch{}},350);return true;
 }
-V.PassNote={conceptKey,questionKey,has,find,persist,remove,toggleConcept,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,subjectOf,subjectLabel};
+function exportEditable(mode){
+  const names={fire:'소방학-핵심',ems:'구급-핵심',pass:'내-합격노트',rapid:'시험직전-초압축'},html=printDocument(mode);
+  const blob=new Blob(['\ufeff',html],{type:'application/msword;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=(names[mode]||'119-합격노트')+'.doc';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return true
+}
+V.PassNote={conceptKey,questionKey,has,find,persist,remove,toggleConcept,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,exportEditable,subjectOf,subjectLabel};
 })();

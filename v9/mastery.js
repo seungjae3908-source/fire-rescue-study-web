@@ -14,7 +14,40 @@ function statsFor(id){const r=V.Store.state.progress[id],p=r?{...defaults(id),..
 function riskFor(id){const s=V.Store.state,p=statsFor(id),w=s.wrongs.filter(x=>!x.resolved&&x.conceptId===id),d=w.filter(x=>x.confidence==='sure').length;let score=0;const r=[];if(d){score+=160+d*15;r.push('확신 오답')}if(w.length){score+=Math.min(80,w.length*16);r.push('오답 복구')}if(p.overdue){score+=100+Math.min(80,Math.ceil(p.overdueDays)*8);r.push('복습 지연')}if(p.attempts&&p.mastery<60){score+=80-p.mastery;r.push('취약개념')}if(p.attempts>=3&&p.accuracy<70){score+=Math.round((70-p.accuracy)*.8);r.push('정답률 보강')}if(p.lapses)score+=Math.min(30,p.lapses*5);if(!p.attempts){score+=20;r.push('신규 학습')}if(p.ageDays!=null&&p.ageDays>30){score+=Math.min(30,Math.round((p.ageDays-30)/3));r.push('장기 미학습')}return{score,reason:r.slice(0,2).join(' + ')||'신규 학습',wrong:w.length,danger:d,progress:p}}
 function examPhase(){const m=V.OfficialMonitor119?.summary?.()||{},y=+(m.targetExamYear||V.Store.state.profile?.examYear||0),x=(m.items||[]).filter(x=>x?.schedule?.writtenExam&&(x.targetYearMatch===true||y&&(+x.noticeYear===y||+x.explicitYear===y))).sort((a,b)=>(a.changeState==='updated'?-1:0)-(b.changeState==='updated'?-1:0)||({change_notice:1,exam_schedule:2,recruitment_notice:3}[a.kind]||4)-({change_notice:1,exam_schedule:2,recruitment_notice:3}[b.kind]||4)||String(b.publishedAt||'').localeCompare(String(a.publishedAt||'')))[0],s=String(x?.schedule?.writtenExam||''),a=s.match(/^(20\d{2})-(\d{2})-(\d{2})$/);if(!a)return{phase:'normal',daysLeft:null,writtenExam:''};const t=Date.UTC(+a[1],+a[2]-1,+a[3]),d=new Date(t);if(d.getUTCFullYear()!=+a[1]||d.getUTCMonth()!=+a[2]-1||d.getUTCDate()!=+a[3])return{phase:'normal',daysLeft:null,writtenExam:''};const k=new Date(Date.now()+324e5),n=Date.UTC(k.getUTCFullYear(),k.getUTCMonth(),k.getUTCDate()),z=Math.round((t-n)/day);return{phase:z<0?'normal':z<=1?'D1':z<=7?'D7':z<=30?'D30':'normal',daysLeft:z,writtenExam:s}}
 function todayPlan(limit=8){const exam=examPhase(),weight={D1:3,D7:2,D30:1}[exam.phase]||0;return V.curriculum.concepts.map(concept=>{const risk=riskFor(concept.id),p=risk.progress,phaseBoost=weight*((risk.danger?40:0)+(risk.wrong?30:0)+(p.overdue?25:0)+(p.attempts?Math.max(0,70-p.retentionEstimate):exam.phase==='D1'?-20:15));return{concept,...risk,score:risk.score+phaseBoost,phaseBoost,examPhase:exam.phase}}).sort((a,b)=>b.score-a.score||(a.progress.lastStudy||0)-(b.progress.lastStudy||0)||a.concept.id.localeCompare(b.concept.id)).slice(0,limit)}
+function localDayKey(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),x=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${x}`}
+function dayStartMs(){const d=new Date();d.setHours(0,0,0,0);return d.getTime()}
+function ensureDailyGoal(limit=6){
+  const s=V.Store.state,key=localDayKey(),valid=new Set(V.curriculum.concepts.map(x=>x.id));let changed=false,g=s.todayGoal;
+  if(!g||g.date!==key){
+    g={date:key,ids:todayPlan(limit).map(x=>x.concept.id),done:{},customized:false,createdAt:Date.now()};s.todayGoal=g;changed=true
+  }else{
+    const ids=[...new Set((g.ids||[]).filter(id=>valid.has(id)))];
+    if(JSON.stringify(ids)!==JSON.stringify(g.ids||[])){g.ids=ids;changed=true}
+    if(!g.done||typeof g.done!=='object'){g.done={};changed=true}
+    if(!g.ids.length&&!g.customized){g.ids=todayPlan(limit).map(x=>x.concept.id);changed=true}
+  }
+  if(changed)V.Store.save();return g
+}
+function dailyGoalRows(limit=6){
+  const g=ensureDailyGoal(limit),rank=new Map(todayPlan(V.curriculum.concepts.length).map(x=>[x.concept.id,x]));
+  return (g.ids||[]).map(id=>{const concept=V.curriculum.byId[id],risk=rank.get(id)||riskFor(id),auto=(risk?.progress?.lastStudy||0)>=dayStartMs();return concept?{concept,reason:risk?.reason||'직접 추가',done:!!g.done?.[id]||auto,manualDone:!!g.done?.[id]}:null}).filter(Boolean)
+}
+function dailyGoalAdd(id){const c=V.curriculum.byId[id];if(!c)return false;const g=ensureDailyGoal();if(!g.ids.includes(id))g.ids.push(id);g.customized=true;g.updatedAt=Date.now();V.Store.save();return true}
+function dailyGoalRemove(id){const g=ensureDailyGoal();g.ids=(g.ids||[]).filter(x=>x!==id);if(g.done)delete g.done[id];g.customized=true;g.updatedAt=Date.now();V.Store.save();return true}
+function dailyGoalToggle(id){const g=ensureDailyGoal();if(!g.ids.includes(id))return false;g.done[id]=!g.done[id];g.updatedAt=Date.now();V.Store.save();return g.done[id]}
+function dailyGoalReset(limit=6){const s=V.Store.state;s.todayGoal={date:localDayKey(),ids:todayPlan(limit).map(x=>x.concept.id),done:{},customized:false,createdAt:Date.now(),updatedAt:Date.now()};V.Store.save();return s.todayGoal}
+function dailyGoalSummary(limit=6){
+  const rows=dailyGoalRows(limit),done=rows.filter(x=>x.done).length,total=rows.length,percent=total?Math.round(done/total*100):0,fire=rows.filter(x=>x.concept.subject==='fire'),ems=rows.filter(x=>x.concept.subject==='ems');
+  return{rows,done,total,percent,remaining:Math.max(0,total-done),fire:{done:fire.filter(x=>x.done).length,total:fire.length},ems:{done:ems.filter(x=>x.done).length,total:ems.length}}
+}
+function dailyGoalMessage(summary=dailyGoalSummary()){
+  if(!summary.total)return'오늘 목표를 직접 추가해 학습 순서를 정해보세요.';
+  if(summary.percent>=100)return'오늘의 목표를 모두 마쳤습니다. 오답과 ★ 합격노트를 짧게 복습하면 좋습니다.';
+  if(summary.percent>=70)return`거의 끝났습니다. 남은 ${summary.remaining}개를 마치면 오늘 목표 달성입니다.`;
+  if(summary.percent>=35)return`오늘 목표 ${summary.done}/${summary.total} 완료. 지금 흐름을 이어가세요.`;
+  return`오늘 목표는 ${summary.total}개입니다. 가장 중요한 한 개념부터 시작하세요.`
+}
 function readiness(){const cs=V.curriculum.concepts,s=V.Store.state,studied=cs.filter(c=>(s.progress[c.id]?.attempts||0)>0),covered=studied.length,questionConcepts=new Set(V.questions.filter(q=>q.grade==='A'||q.grade==='B').map(q=>q.conceptId)),retention=studied.length?Math.round(studied.reduce((a,c)=>a+statsFor(c.id).retentionEstimate,0)/studied.length):0,dangerous=s.wrongs.filter(w=>!w.resolved&&w.confidence==='sure').length,recoveryPending=s.wrongs.filter(w=>!w.resolved&&(w.recoveryCorrect||0)<requiredRecoveries(w)).length,overdue=Object.values(s.reviewSchedule).filter(r=>r.due<=Date.now()).length,mock=V.examReadiness(),exam=examPhase();return{scopeCoverage:Math.round(covered/cs.length*100),covered,total:cs.length,verifiedQuestionCoverage:Math.round(questionConcepts.size/cs.length*100),questionConcepts:questionConcepts.size,retention,dangerous,recoveryPending,overdue,mock,examPhase:exam.phase,examDaysLeft:exam.daysLeft}}
 function conceptPriority(id){return todayPlan(V.curriculum.concepts.length).findIndex(x=>x.concept.id===id)}
-V.Mastery={version:'119-mastery-v2',ensure,recordAnswer,markReviewed,statsFor,todayPlan,readiness,conceptPriority,intervalFor,riskFor,requiredRecoveries,examPhase};
+V.Mastery={version:'119-mastery-v2',ensure,recordAnswer,markReviewed,statsFor,todayPlan,readiness,conceptPriority,intervalFor,riskFor,requiredRecoveries,examPhase,ensureDailyGoal,dailyGoalRows,dailyGoalAdd,dailyGoalRemove,dailyGoalToggle,dailyGoalReset,dailyGoalSummary,dailyGoalMessage,localDayKey};
 })();

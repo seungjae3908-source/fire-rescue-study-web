@@ -472,7 +472,11 @@ try{
   await go(m,'notes');
   assert((await m.locator('.top h1').innerText()).includes('합격노트'),'notes area is promoted to pass-note workspace');
   assert(await m.locator('[data-pass-export]').count()===4,'pass-note workspace exposes fire, EMS, personal and rapid-review PDF exports');
-  assert(await m.locator('[data-note-filter]').count()===6,'pass-note workspace exposes study filters without a personal-upload source filter');
+  assert(await m.locator('[data-pass-editable]').count()===4,'pass-note workspace exposes editable document exports for all four study documents');
+  assert(await m.locator('[data-note-subject]').count()===2,'pass-note workspace separates fire and EMS into dedicated subject tabs');
+  const noteSubjectLabels=(await m.locator('[data-note-subject]').allInnerTexts()).join(' ');
+  assert(noteSubjectLabels.includes('소방학')&&noteSubjectLabels.includes('구급'),'pass-note subject tabs are clearly labeled fire and EMS');
+  assert(await m.locator('[data-note-filter]').count()===4&&await m.locator('[data-note-filter="fire"],[data-note-filter="ems"],[data-note-filter="doc"]').count()===0,'pass-note uses four type filters inside the selected subject without duplicate subject or upload-source filters');
   assert(await m.locator('#noteSearch').count()===1,'pass-note workspace exposes note search');
   const sourceNoteId=await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.find(n=>n.sourceType==='pass-star')?.id||'');
   if(sourceNoteId){
@@ -775,6 +779,11 @@ try{
     await noX(t,'tablet 768 study');
     assert(await t.locator('.tabbar button').count()===5||await t.locator('.book-jumpbar button').count()===5,'tablet 768 keeps five learning tabs');
     await go(t,'exam');await noX(t,'tablet 768 exam');
+    await t.locator('[data-exam-start="practice"]').click();await t.waitForSelector('.exam-run-workspace');
+    assert(await t.locator('.exam-compact-status').isVisible()&&await t.locator('.exam-side').isHidden(),'tablet active exam uses compact horizontal progress instead of a cramped desktop sidebar');
+    const tabletQuestion=await t.locator('.exam-question-card').boundingBox();
+    assert(tabletQuestion&&tabletQuestion.width>500,'tablet active exam keeps a wide readable question card');
+    t.once('dialog',d=>d.accept());await t.locator('[data-exam-abandon]').click();await t.waitForFunction(()=>window.AITUTOR_V9.App.runtime.exam===null);
     await go(t,'resources');await noX(t,'tablet 768 resources');
     await t.locator('[data-resource-doc]').first().click();await t.waitForSelector('#resourcePdf canvas',{timeout:60000});
     const tabletPdf=await t.locator('#resourcePdf').evaluate(root=>{const c=root.querySelector('canvas'),m=root.querySelector('.pdf-evidence-modal')?.getBoundingClientRect();return{css:c?.getBoundingClientRect().width||0,pixel:c?.width||0,modal:m?.width||0,zoom:root.querySelector('[data-resource-zoom-label]')?.textContent||''}});

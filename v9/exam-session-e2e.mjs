@@ -18,6 +18,8 @@ try{
   await page.evaluate(()=>window.AITUTOR_V9.App.go('exam'));
   await page.locator('[data-exam-start="practice"]').click();
   await page.waitForSelector('.exam-run-workspace');
+  assert(await page.locator('.exam-compact-status').isVisible()&&await page.locator('.exam-side').isHidden(),'mobile active exam uses compact progress navigation instead of a squeezed desktop sidebar');
+  assert(await page.locator('.exam-question-card .choice-no').count()===4,'mobile exam choices use clear exam-style numbered markers');
 
   await page.locator('[data-exam-answer="1"]').click();
   await page.locator('[data-exam-confidence="sure"]').click();
@@ -39,10 +41,14 @@ try{
 
   page.once('dialog',d=>d.accept());
   await page.locator('[data-exam-abandon]').click();
-  await page.waitForFunction(()=>window.AITUTOR_V9.App.runtime.exam===null);
-  const cleared=await page.evaluate(()=>!window.AITUTOR_V9.ExamSession119.has(window.AITUTOR_V9.Store.ownerId));
-  assert(cleared,'abandoning an exam clears the local active-exam snapshot without scoring it');
+  await page.waitForFunction(()=>window.AITUTOR_V9.App.runtime.exam===null&&window.AITUTOR_V9.Store.state.page==='stats');
+  const stopped=await page.evaluate(()=>{const V=window.AITUTOR_V9,rec=V.Store.state.examHistory.at(-1);return{cleared:!V.ExamSession119.has(V.Store.ownerId),partial:rec?.partial===true,abandoned:rec?.abandoned===true,answered:rec?.totalAnswered,unanswered:rec?.unanswered,score:rec?.score,wrong:rec?.incorrectQuestionIds?.length||0}});
+  assert(stopped.cleared&&stopped.partial&&stopped.abandoned&&stopped.answered===1&&stopped.unanswered===64,'stopping an exam clears the active snapshot and stores a one-question partial result');
+  assert(stopped.score===0||stopped.score===100,'partial exam score is based only on answered questions');
+  assert(await page.locator('.exam-report-summary.partial').count()===1&&await page.locator('.exam-missed-section .exam-miss').count()<=1,'stopped-exam report excludes untouched questions from wrong-answer analysis');
 
+  await page.evaluate(()=>window.AITUTOR_V9.App.go('exam'));
+  await page.waitForSelector('[data-exam-start="real"]');
   await page.locator('[data-exam-start="real"]').click();
   await page.waitForSelector('[data-exam-timer]');
   const t1=(await page.locator('[data-exam-timer]').innerText()).trim();
@@ -51,7 +57,7 @@ try{
   assert(t1!==t2,'real exam countdown visibly advances from wall-clock time');
   page.once('dialog',d=>d.accept());
   await page.locator('[data-exam-abandon]').click();
-  assert(errors.length===0,'exam persistence/timer flow produces no browser runtime errors');
+  assert(errors.length===0,'exam persistence, partial-result, and timer flow produces no browser runtime errors');
   console.log('EXAM_SESSION_RECOVERY_E2E_COMPLETE');
   await ctx.close();
 }finally{await browser.close()}
