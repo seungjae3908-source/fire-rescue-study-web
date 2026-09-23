@@ -223,8 +223,6 @@ jobs:
         run: node v9/phase-a-source-audit.mjs
       - name: Phase B EMS official-PDF evidence audit
         run: node v9/phase-b-ems-source-audit.mjs
-      - name: V51 all-183 official textbook mapped-source audit
-        run: node v9/v51-official-textbook-browser-audit.mjs
       - name: V29 first-batch official source page review
         run: node v9/v29-source-review-e2e.mjs
       - name: V29 second-batch official source page review
@@ -267,6 +265,32 @@ jobs:
         run: node v9/auth-session-e2e.mjs
       - name: Private suggestion board + admin reply QA
         run: node v9/suggestions-e2e.mjs
+
+
+  v51_official_textbook_audit:
+    name: v51_official_textbook_audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Install V51 official textbook audit browser
+        run: |
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149
+          npx playwright install --with-deps chromium
+      - name: Start branch-only static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/study119-v51-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/study119-v51-http.log
+          exit 1
+      - name: Audit all 183 concepts against mapped official textbook sources
+        run: node v9/v51-official-textbook-browser-audit.mjs
 
 
   global_typography_audit:
