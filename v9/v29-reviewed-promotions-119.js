@@ -35,7 +35,9 @@ const reviewedFactory={
   'E08-C01':'detail-a',
   'E08-C02':'detail-a',
   'E08-C03':'detail-a',
-  'E19-C04':'detail-a'
+  'E19-C04':'detail-a',
+  'E08-C04':'detail-b',
+  'E09-C08':'summary'
 };
 const reviewedExact={
   'E03-C04':'119-q2factory-e03-c04-title-4',
@@ -45,7 +47,11 @@ const reviewedExact={
   'E19-C01':'119-q2factory-e19-c01-title-1',
   'E22-C01':'119-q2factory-e22-c01-title-3',
   'E07-C05':'119-q2factory-e07-c05-title-3',
-  'E16-C02':'119-q2factory-e16-c02-title-2'
+  'E16-C02':'119-q2factory-e16-c02-title-2',
+  'E08-C05':'119-q2factory-e08-c05-title-1',
+  'E15-C02':'119-q2factory-e15-c02-title-3',
+  'E19-C05':'119-q2factory-e19-c05-title-2',
+  'E20-C05':'119-q2factory-e20-c05-title-2'
 };
 const promoted=[];let factoryPromoted=0;
 const promote=(conceptId,id,isFactory)=>{
@@ -81,8 +87,8 @@ swapChoiceOrder('119-vertarget-ems1-027','E11-C02',1,2);
 
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
-// V43 extends the source-reviewed evidence registry. V42 remains a separate
+// V44 extends the source-reviewed evidence registry. V42 remains a separate
 // presentation-quality contract and its answer-order correction is preserved.
-V.V29ReviewedPromotions119={version:'119-v43-reviewed-promotions-v6',promoted,factoryPromoted,exactPromoted};
+V.V29ReviewedPromotions119={version:'119-v44-reviewed-promotions-v7',promoted,factoryPromoted,exactPromoted};
 V.V42AnswerPosition119={version:'119-v42-answer-position-v1',choiceOrderBalanced};
 })();
