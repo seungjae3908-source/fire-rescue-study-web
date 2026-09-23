@@ -472,7 +472,11 @@ try{
   await go(m,'notes');
   assert((await m.locator('.top h1').innerText()).includes('합격노트'),'notes area is promoted to pass-note workspace');
   assert(await m.locator('[data-pass-export]').count()===4,'pass-note workspace exposes fire, EMS, personal and rapid-review PDF exports');
-  assert(await m.locator('[data-note-filter]').count()===6,'pass-note workspace exposes study filters without a personal-upload source filter');
+  assert(await m.locator('[data-pass-editable]').count()===4,'pass-note workspace exposes editable document exports for all four study documents');
+  assert(await m.locator('[data-note-subject]').count()===2,'pass-note workspace separates fire and EMS into dedicated subject tabs');
+  const noteSubjectLabels=(await m.locator('[data-note-subject]').allInnerTexts()).join(' ');
+  assert(noteSubjectLabels.includes('소방학')&&noteSubjectLabels.includes('구급'),'pass-note subject tabs are clearly labeled fire and EMS');
+  assert(await m.locator('[data-note-filter]').count()===4&&await m.locator('[data-note-filter="fire"],[data-note-filter="ems"],[data-note-filter="doc"]').count()===0,'pass-note uses four type filters inside the selected subject without duplicate subject or upload-source filters');
   assert(await m.locator('#noteSearch').count()===1,'pass-note workspace exposes note search');
   const sourceNoteId=await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.find(n=>n.sourceType==='pass-star')?.id||'');
   if(sourceNoteId){
