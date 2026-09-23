@@ -20,11 +20,19 @@ const reviewedFactory={
   'E05-C03':'detail-b',
   'E06-C01':'detail-b',
   'E08-C06':'detail-b',
-  'E20-C02':'summary'
+  'E20-C02':'summary',
+  'F06-C02':'detail-a',
+  'E03-C02':'detail-a',
+  'E06-C03':'detail-a',
+  'E06-C04':'summary',
+  'E09-C06':'detail-b',
+  'E07-C04':'summary'
 };
 const reviewedExact={
   'E03-C04':'119-q2factory-e03-c04-title-4',
-  'E05-C04':'119-q2factory-e05-c04-title-0'
+  'E05-C04':'119-q2factory-e05-c04-title-0',
+  'E01-C02':'119-q2factory-e01-c02-title-1',
+  'E02-C01':'119-q2factory-e02-c01-title-1'
 };
 const promoted=[];let factoryPromoted=0;
 const promote=(conceptId,id,isFactory)=>{
@@ -41,5 +49,5 @@ const exactPromoted=Object.keys(reviewedExact).length;
 if(V.Quality2QuestionFactory119?.added>=exactPromoted)V.Quality2QuestionFactory119.added-=exactPromoted;
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
-V.V29ReviewedPromotions119={version:'119-v38-reviewed-promotions-v3',promoted,factoryPromoted,exactPromoted};
+V.V29ReviewedPromotions119={version:'119-v40-reviewed-promotions-v4',promoted,factoryPromoted,exactPromoted};
 })();
