@@ -74,6 +74,7 @@ sec('가압송수장치','소화수조 또는 저수조가 수조 내부바닥 �
 officialLinks:[link('소화수조 및 저수조 화재안전성능기준 NFPC 402','https://law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000278592&chrClsCd=010202&lsId=33671')]
 });
 
-for(const p of Object.values(P)){if(!p)continue;p.must=uniqText(p.must||[]);p.traps=uniqText(p.traps||[]);p.compare=uniqCompare(p.compare||[]);p.deepSections=uniqSections(p.deepSections||[]);p.visibleDetailCoverageV50=true}
-V.VisibleDetailCoverage119={version:'119-visible-detail-coverage-v50',normalizedConcepts:Object.keys(P).length,officialFacilityConcepts:['F07-C03','F07-C04','F07-C14']};
+let normalizedConcepts=0;
+for(const concept of V.curriculum?.concepts||[]){const p=V.contentPacks?.get?.(concept.id);if(!p)continue;p.must=uniqText(p.must||[]);p.traps=uniqText(p.traps||[]);p.compare=uniqCompare(p.compare||[]);p.deepSections=uniqSections(p.deepSections||[]);p.visibleDetailCoverageV50=true;normalizedConcepts++}
+V.VisibleDetailCoverage119={version:'119-visible-detail-coverage-v50',normalizedConcepts,officialFacilityConcepts:['F07-C03','F07-C04','F07-C14']};
 })();
