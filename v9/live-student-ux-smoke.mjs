@@ -42,12 +42,13 @@ try{
       assert(await page.locator('.book-jumpbar').evaluate(el=>getComputedStyle(el).position)==='static','mobile learning tabs do not cover scrolled content');
 
       await page.locator('.book-jumpbar [data-study-tab="core"]').click();
-      await page.waitForSelector('.study-core-save');
-      assert((await page.locator('.study-core-save').innerText()).trim()==='합격노트 ☆','Production core uses one 합격노트 ☆ toggle');
-      await page.locator('.study-core-save').click();
-      assert((await page.locator('.study-core-save').innerText()).trim()==='합격노트 ★','Production pass-note toggle changes to ★ after save');
-      await page.locator('.study-core-save').click();
-      assert((await page.locator('.study-core-save').innerText()).trim()==='합격노트 ☆','Production pass-note toggle removes on second press');
+      const passNote=page.locator('.study-body-mobile .study-core-save');
+      await passNote.waitFor({state:'visible'});
+      assert((await passNote.innerText()).trim()==='합격노트 ☆','Production core uses one 합격노트 ☆ toggle');
+      await passNote.click();
+      assert((await passNote.innerText()).trim()==='합격노트 ★','Production pass-note toggle changes to ★ after save');
+      await passNote.click();
+      assert((await passNote.innerText()).trim()==='합격노트 ☆','Production pass-note toggle removes on second press');
 
       await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
       await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
