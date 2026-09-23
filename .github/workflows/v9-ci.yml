@@ -143,6 +143,8 @@ jobs:
         run: node v9/v45-batch8-candidate-audit.mjs
       - name: Final 183-concept learner content audit
         run: node v9/final-user-content-qa.mjs
+      - name: V48 semantic study + official past-exam audit
+        run: node v9/v48-semantic-study-audit.mjs
       - name: 390-run real mock exam composition quality audit
         run: node v9/mock-exam-quality-audit.mjs
       - name: A/B verified question coverage gap report
