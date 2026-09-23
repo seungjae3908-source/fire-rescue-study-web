@@ -425,7 +425,7 @@ try{
   const pastStart=m.locator('[data-exam-start="past2025"]');
   assert(await pastStart.count()===1,'exam landing exposes the NFA-attributed 2025 actual past-exam subset');
   await pastStart.click();await m.waitForSelector('.exam-run-workspace');
-  const pastTruth=await m.evaluate(()=>{const V=window.AITUTOR_V9,e=V.App.runtime.exam;return{mode:e.mode,n:e.qs.length,allPast:e.qs.every(q=>q.officialPastExam===true&&q.pastExamClaim===true&&q.generatedPractice===false),source:e.qs.every(q=>/nfa\.go\.kr/.test(q.source||'')),imageFree:e.qs.every(q=>!/<그림>|Image:/.test(q.q||''))}});
+  const pastTruth=await m.evaluate(()=>{const V=window.AITUTOR_V9,e=V.App.runtime.exam;return{mode:e.mode,n:e.qs.length,allPast:e.qs.every(q=>q.officialPastExam===true&&q.pastExamClaim===true&&q.generatedPractice===false),source:e.qs.every(q=>/nfa\.go\.kr/.test(q.sourceUrl||'')),imageFree:e.qs.every(q=>!/<그림>|Image:/.test(q.q||''))}});
   assert(pastTruth.mode==='past'&&pastTruth.n>=30&&pastTruth.allPast&&pastTruth.source&&pastTruth.imageFree,'2025 actual past-exam lane contains only NFA-attributed image-independent past questions');
   await m.evaluate(()=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.ExamSession119?.clear?.(V.Store.ownerId);V.App.go('exam')});await m.waitForSelector('.exam-start');
   const realStart=m.locator('[data-exam-start="real"]');
