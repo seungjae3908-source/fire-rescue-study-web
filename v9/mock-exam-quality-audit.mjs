@@ -9,7 +9,7 @@ const E=V.MockExam119;if(!E?.build||!E?.metrics||!E?.quality)throw Error('MOCK_E
 let seed=0x1192027;Math.random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
 
 const fireScopes=V.curriculum.fire.map(x=>x.id),emsScopes=V.curriculum.ems.map(x=>x.id),allScopes=[...fireScopes,...emsScopes];
-const summary={version:'119-v47-mock-engine-audit-v2',simulations:0,failures:[],levels:{},answerPos:[0,0,0,0],familyRuns:{max:0},recent:{chains:30,maxRepeat:0,totalRepeat:0},quality:{factorySelected:0,strongSelected:0,pageVerifiedSelected:0,totalSelected:0,minAverage:999,minQuestion:999}};
+const summary={version:'119-v47-mock-engine-audit-v3',simulations:0,failures:[],levels:{},answerPos:[0,0,0,0],familyRuns:{max:0},recent:{chains:30,maxRepeat:0,totalRepeat:0},quality:{factorySelected:0,strongSelected:0,pageVerifiedSelected:0,sourceSpecificSelected:0,officialWebSelected:0,totalSelected:0,minAverage:999,minQuestion:999}};
 const fail=(code,detail)=>summary.failures.push({code,detail});
 for(const level of ['low','mid','high']){
  const d={runs:0,activeFamiliesMin:99,difficulty:{low:0,mid:0,high:0},factory:0,strong:0,pageVerified:0,qualitySum:0,qualityMin:999};
@@ -22,17 +22,17 @@ for(const level of ['low','mid','high']){
   if(m.maxFamilyRun>2)fail('FAMILY_RUN',{level,i,max:m.maxFamilyRun});
   if(m.activeFamilies<5)fail('FAMILY_DIVERSITY',{level,i,active:m.activeFamilies});
   if(m.factoryCount>0)fail('FACTORY_REAL_MOCK',{level,i,count:m.factoryCount,ids:qs.filter(E.factoryLike).map(q=>q.id)});
-  if(m.pageVerified!==65)fail('PAGE_VERIFIED_REAL_MOCK',{level,i,pageVerified:m.pageVerified});
-  if(m.strongCount<60)fail('WEAK_REAL_MOCK_POOL',{level,i,strong:m.strongCount,avg:m.qualityAverage,min:m.qualityMin});
-  if(m.qualityAverage<70)fail('LOW_REAL_MOCK_QUALITY',{level,i,avg:m.qualityAverage,min:m.qualityMin});
+  if(m.sourceSpecificCount!==65)fail('SOURCE_SPECIFIC_REAL_MOCK',{level,i,sourceSpecific:m.sourceSpecificCount,pageVerified:m.pageVerified,officialWeb:m.officialWebCount});
+  if(m.strongCount!==65)fail('WEAK_REAL_MOCK_POOL',{level,i,strong:m.strongCount,avg:m.qualityAverage,min:m.qualityMin});
+  if(m.qualityAverage<95||m.qualityMin<65)fail('LOW_REAL_MOCK_QUALITY',{level,i,avg:m.qualityAverage,min:m.qualityMin});
   d.activeFamiliesMin=Math.min(d.activeFamiliesMin,m.activeFamilies);
-  d.factory+=m.factoryCount;d.strong+=m.strongCount;d.pageVerified+=m.pageVerified;d.qualitySum+=m.qualityAverage;d.qualityMin=Math.min(d.qualityMin,m.qualityMin);
-  summary.quality.factorySelected+=m.factoryCount;summary.quality.strongSelected+=m.strongCount;summary.quality.pageVerifiedSelected+=m.pageVerified;summary.quality.totalSelected+=m.n;summary.quality.minAverage=Math.min(summary.quality.minAverage,m.qualityAverage);summary.quality.minQuestion=Math.min(summary.quality.minQuestion,m.qualityMin);
+  d.factory+=m.factoryCount;d.strong+=m.strongCount;d.pageVerified+=m.pageVerified;d.sourceSpecific=(d.sourceSpecific||0)+m.sourceSpecificCount;d.officialWeb=(d.officialWeb||0)+m.officialWebCount;d.qualitySum+=m.qualityAverage;d.qualityMin=Math.min(d.qualityMin,m.qualityMin);
+  summary.quality.factorySelected+=m.factoryCount;summary.quality.strongSelected+=m.strongCount;summary.quality.pageVerifiedSelected+=m.pageVerified;summary.quality.sourceSpecificSelected+=m.sourceSpecificCount;summary.quality.officialWebSelected+=m.officialWebCount;summary.quality.totalSelected+=m.n;summary.quality.minAverage=Math.min(summary.quality.minAverage,m.qualityAverage);summary.quality.minQuestion=Math.min(summary.quality.minQuestion,m.qualityMin);
   for(const k of ['low','mid','high'])d.difficulty[k]+=m.difficulties[k]||0;
   m.answers.forEach((n,j)=>summary.answerPos[j]+=n);
  }
  const total=d.runs*65;d.difficultyShares=Object.fromEntries(Object.entries(d.difficulty).map(([k,n])=>[k,Number((n/total).toFixed(3))]));
- d.qualityAverage=Number((d.qualitySum/d.runs).toFixed(1));d.strongShare=Number((d.strong/total).toFixed(3));d.pageVerifiedShare=Number((d.pageVerified/total).toFixed(3));
+ d.qualityAverage=Number((d.qualitySum/d.runs).toFixed(1));d.strongShare=Number((d.strong/total).toFixed(3));d.pageVerifiedShare=Number((d.pageVerified/total).toFixed(3));d.sourceSpecificShare=Number(((d.sourceSpecific||0)/total).toFixed(3));d.officialWebShare=Number(((d.officialWeb||0)/total).toFixed(3));
  summary.levels[level]=d;
 }
 const dl=summary.levels.low.difficultyShares,dm=summary.levels.mid.difficultyShares,dh=summary.levels.high.difficultyShares;
@@ -54,6 +54,7 @@ summary.recent.avgRepeat=Number((summary.recent.totalRepeat/summary.recent.chain
 summary.familyRuns.max=2;
 summary.quality.strongShare=Number((summary.quality.strongSelected/Math.max(1,summary.quality.totalSelected)).toFixed(3));
 summary.quality.pageVerifiedShare=Number((summary.quality.pageVerifiedSelected/Math.max(1,summary.quality.totalSelected)).toFixed(3));
+summary.quality.sourceSpecificShare=Number((summary.quality.sourceSpecificSelected/Math.max(1,summary.quality.totalSelected)).toFixed(3));summary.quality.officialWebShare=Number((summary.quality.officialWebSelected/Math.max(1,summary.quality.totalSelected)).toFixed(3));
 console.log('MOCK_ENGINE_119_SUMMARY',JSON.stringify(summary,null,2));
 if(summary.failures.length)throw Error('MOCK_ENGINE_119_FAILED '+JSON.stringify(summary.failures.slice(0,20)));
 console.log('MOCK_ENGINE_119_AUDIT_COMPLETE');
