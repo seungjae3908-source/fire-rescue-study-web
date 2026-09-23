@@ -27,6 +27,14 @@ ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style questio
 ok(V.StudyEmphasis119?.version==='119-study-emphasis-ssot-v1','study emphasis SSOT is loaded');
 ok(V.Quality2StudySchema119?.version==='119-quality2-study-schema-v2','study schema consumes the emphasis SSOT');
 ok(V.VisibleDetailCoverage119?.version==='119-visible-detail-coverage-v50','V50 visible detail normalization and facility coverage layer is loaded');
+ok(V.VisibleDetailCoverage119?.normalizedConcepts===V.curriculum.concepts.length,'V50 normalization reaches every curriculum concept');
+const v50CompareDupes=V.curriculum.concepts.filter(concept=>{const p=V.contentPacks.get(concept.id)||{},norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,''),labels=(p.compare||[]).map(r=>norm(r?.[0])).filter(Boolean);return labels.length!==new Set(labels).size});
+ok(v50CompareDupes.length===0,'all curriculum comparison labels are deduplicated before learner rendering');
+const v50Water=V.contentPacks.get('F07-C14'),v50WaterText=[...(v50Water?.must||[]),...(v50Water?.deepSections||[]).flatMap(x=>[x?.title,x?.body,...(x?.bullets||[])]),...(v50Water?.compare||[]).flat()].join(' ');
+for(const term of ['소화수조','저수조','채수구','흡수관투입구','20㎥','0.6m','65mm','4.5m'])ok(v50WaterText.includes(term),'fire-water detail includes '+term);
+const v50Indoor=V.contentPacks.get('F07-C03'),v50Outdoor=V.contentPacks.get('F07-C04');
+ok([...(v50Indoor?.must||[]),...(v50Indoor?.deepSections||[]).map(x=>x?.body)].join(' ').includes('2.6㎥'),'indoor hydrant detail restores source-backed water-volume content');
+ok([...(v50Outdoor?.must||[]),...(v50Outdoor?.deepSections||[]).map(x=>x?.body)].join(' ').includes('7㎥'),'outdoor hydrant detail restores source-backed water-volume content');
 const emphasisMismatches=(V.curriculum.concepts||[]).filter(concept=>{
   const p=V.contentPacks.get(concept.id),e=V.StudyEmphasis119.forConcept(concept.id,{numberLimit:10}),s=V.Quality2StudySchema119.get(concept.id);
   if(!e||!s)return true;
