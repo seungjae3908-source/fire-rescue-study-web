@@ -57,7 +57,9 @@ async function verifyOfficialFallback(term){
     const magic=String.fromCharCode(...bytes.slice(0,5));
     assert(magic==='%PDF-','F07_C15_OFFICIAL_FALLBACK_PDF_MAGIC '+JSON.stringify({term,magic,url:def.url}));
     const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs');
-    pdf=await pdfjs.getDocument({data:bytes}).promise;
+    const cMapUrl=new URL('../node_modules/pdfjs-dist/cmaps/',import.meta.url).href;
+    const standardFontDataUrl=new URL('../node_modules/pdfjs-dist/standard_fonts/',import.meta.url).href;
+    pdf=await pdfjs.getDocument({data:bytes,cMapUrl,cMapPacked:true,standardFontDataUrl}).promise;
     let compact='',verifiedPage=null;
     for(let n=1;n<=pdf.numPages;n++){
       const pg=await pdf.getPage(n),tc=await pg.getTextContent();
