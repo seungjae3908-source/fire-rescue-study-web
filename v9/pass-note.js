@@ -43,7 +43,11 @@ async function toggleConcept(key){
   if(has(key)){await remove(key);return{saved:false,id:key}}
   const note=conceptNoteFromKey(key);if(!note)throw Error('PASS_NOTE_SOURCE_NOT_FOUND');await persist(note);return{saved:true,id:key,note};
 }
-function cleanStudentText(v){return normalize(v).replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+)\s*기준으로\s*/gi,'').replace(/\s*교재의\s*정의(?:이)?다\.?/gi,'').trim()}
+function cleanStudentText(v){return normalize(v)
+.replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
+.replace(/\b(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
+.replace(/(?:연결된\s*)?(?:공식\s*)?(?:교재|원문|학습팩|근거)(?:\s*근거)?\s*(?:에서는?|에\s*따르면|에서|은|는)\s*/gi,'')
+.replace(/\s*교재의\s*정의(?:이)?다\.?/gi,'').trim()}
 function conceptCoreNote(conceptId){
   const c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
   const E=emphasis(),summary=cleanStudentText(p?.studySchema?.quick30||p.summary||''),core=uniq([...E.mustRows(p),...E.featureRows(p)].map(cleanStudentText)).filter(x=>x&&x!==summary).slice(0,6),numbers=uniq(E.numberRows(p,12).map(cleanStudentText)).filter(Boolean),traps=uniq(E.trapRows(p).map(cleanStudentText)).filter(Boolean).slice(0,4),source=E.evidence(conceptId,p).source||'공식교재',parts=[];
@@ -58,7 +62,7 @@ async function toggleConceptCore(conceptId){const id=conceptCoreKey(conceptId);i
 function questionNote(qid){
   const q=V.questionById?.[qid],c=q&&V.curriculum?.byId?.[q.conceptId];if(!q||!c)return null;
   const subj=subjectOf(c),right=`${q.a+1}. ${q.choices?.[q.a]||''}`;
-  return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`${q.q}\n\n정답: ${right}\n\n해설: ${q.ex||''}\n\n출처: ${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
+  return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`${cleanStudentText(q.q)}\n\n정답: ${cleanStudentText(right)}\n\n해설: ${cleanStudentText(q.ex||'')}\n\n출처: ${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
 }
 async function toggleQuestion(qid){const id=questionKey(qid);if(has(id)){await remove(id);return{saved:false,id}}const note=questionNote(qid);if(!note)throw Error('PASS_QUESTION_NOT_FOUND');await persist(note);return{saved:true,id,note}}
 async function saveManual({id,title,body,sourceType='manual',subject=''}){
