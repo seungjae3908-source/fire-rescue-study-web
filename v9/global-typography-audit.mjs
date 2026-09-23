@@ -94,6 +94,19 @@ async function auditVisible(page,meta){
   for(const p of result.density||[])pushIssue({...meta,...p});
   if(result.small.length)warnings.push({...meta,type:'small-font',count:result.small.length,samples:result.small.slice(0,4)});
 }
+async function auditLearnerFraming(page,{id,tab,width}){
+  if(!['core','detail','quiz'].includes(tab))return;
+  const x=await page.evaluate(()=>{
+    const visible=el=>{if(!el)return false;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
+    const root=[...document.querySelectorAll('.study-body-mobile,.study-body-desktop')].find(visible);
+    const text=(root?.innerText||'').replace(/\s+/g,' ').trim();
+    const sourceFraming=/(?:20\d{2}\s*)?(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)/i;
+    const metaStudy=/개념\s*구조와\s*읽는\s*순서|핵심\s*포인트\s*연결|문제\s*적용과\s*난이도\s*대응|공식\s*원문으로\s*복귀하는\s*기준|회상\s*루프/;
+    return{text,sourceFraming:sourceFraming.test(text),metaStudy:metaStudy.test(text)}
+  });
+  if(x?.sourceFraming)pushIssue({width,id,tab,type:'learner-source-framing',sample:x.text.slice(0,240)});
+  if((tab==='core'||tab==='detail')&&x?.metaStudy)pushIssue({width,id,tab,type:'learner-meta-study-copy',sample:x.text.slice(0,240)});
+}
 async function auditStudyRole(page,{id,tab},coreCache){
   if(!['core','detail'].includes(tab))return;
   const x=await page.evaluate(tab=>{
@@ -174,6 +187,7 @@ try{
       for(const tab of tabs){
         await setStudy(page,id,tab);
         await auditVisible(page,{width:vp.width,id,tab});
+        await auditLearnerFraming(page,{width:vp.width,id,tab});
         await auditStudyRole(page,{id,tab},coreCache);
         states++;
         if(issues.length>=maxIssues)break;
@@ -200,5 +214,5 @@ try{
     if(issues.length)console.error('GLOBAL_TYPOGRAPHY_AUDIT_ISSUES',JSON.stringify(issues,null,2));
     throw new Error('GLOBAL_TYPOGRAPHY_AUDIT_FAILED '+JSON.stringify({issues:issues.length,smallTextGroups:warnings.length}));
   }
-  assert(true,'all concept tabs, primary app routes and active exam pass global typography/layout audit with no clipping, nested mobile study scroll, excessive study padding, nested panels or sub-11px student controls');
+  assert(true,'all concept tabs, primary app routes and active exam pass global typography/layout audit with no source-framing/meta-study leakage, clipping, nested mobile study scroll, excessive study padding, nested panels or sub-11px student controls');
 }finally{await browser.close()}

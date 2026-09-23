@@ -6,8 +6,8 @@ const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 const note=fs.readFileSync(new URL('./pass-note.js',import.meta.url),'utf8');
 const mock=fs.readFileSync(new URL('./mock-exam-quality-119.js',import.meta.url),'utf8');
 
-ok(app.includes('<div class="study-quick-title">핵심</div>')&&!app.includes('<div class="study-quick-title">30초 핵심</div>'),'core learner label is concise 핵심 instead of 30초 핵심');
-ok(app.includes('data-pass-note-open')&&app.includes('합격노트 보기')&&app.includes("V.PassNote.toggleConcept"),'core favorites support save/remove plus direct pass-note navigation');
+ok(app.includes('<div class="study-quick-title"><span>핵심</span>')&&!app.includes('>30초 핵심<'),'core learner label is concise 핵심 instead of 30초 핵심');
+ok(app.includes('data-pass-core')&&app.includes('study-core-save')&&app.includes('data-pass-note-open')&&app.includes('합격노트 보기')&&app.includes("V.PassNote.toggleConceptCore"),'core uses one whole-concept favorite plus direct pass-note navigation');
 ok(app.includes('data-hazmat-class-toggle')&&app.includes('hazmat-item-list')&&app.includes('류 자세히 학습'),'hazard class cards expand into item list and detailed concept navigation');
 for(const type of ['hazmat','facility','governance','law','emsCondition','emsProcedure','emsAssessment','phenomenon','history','organizationTheory','suppression','investigation','emsSystem','emsAnatomy','emsTrauma','emsResuscitation','equipment'])ok(app.includes(type+':['),'semantic detail rules cover '+type);
 ok(!app.includes('detail-key"><span class="study-star">★</span>'),'detail prose no longer paints every bullet with decorative stars');

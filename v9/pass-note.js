@@ -12,6 +12,7 @@ const uniq=arr=>{const out=[];for(const x of arr||[]){const t=normalize(x);if(t&
 const emphasis=()=>{const E=V.StudyEmphasis119;if(!E)throw Error('STUDY_EMPHASIS_SSOT_MISSING');return E};
 
 function conceptKey(conceptId,bucket='must',index=0){return 'pass-c-'+conceptId+'-'+bucket+'-'+index}
+function conceptCoreKey(conceptId){return 'pass-c-'+conceptId+'-core'}
 function questionKey(questionId){return 'pass-q-'+questionId}
 function find(id){return (state().notes||[]).find(n=>n.id===id)||null}
 function has(id){return !!find(id)}
@@ -42,10 +43,26 @@ async function toggleConcept(key){
   if(has(key)){await remove(key);return{saved:false,id:key}}
   const note=conceptNoteFromKey(key);if(!note)throw Error('PASS_NOTE_SOURCE_NOT_FOUND');await persist(note);return{saved:true,id:key,note};
 }
+function cleanStudentText(v){return normalize(v)
+.replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
+.replace(/(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
+.replace(/(?:연결된\s*)?(?:공식\s*)?(?:교재|원문|학습팩|근거)(?:\s*근거)?\s*(?:에서는?|에\s*따르면|에서|은|는)\s*/gi,'')
+.replace(/\s*교재의\s*정의(?:이)?다\.?/gi,'').trim()}
+function conceptCoreNote(conceptId){
+  const c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
+  const E=emphasis(),summary=cleanStudentText(p?.studySchema?.quick30||p.summary||''),core=uniq([...E.mustRows(p),...E.featureRows(p)].map(cleanStudentText)).filter(x=>x&&x!==summary).slice(0,6),numbers=uniq(E.numberRows(p,12).map(cleanStudentText)).filter(Boolean),traps=uniq(E.trapRows(p).map(cleanStudentText)).filter(Boolean).slice(0,4),source=E.evidence(conceptId,p).source||'공식교재',parts=[];
+  if(summary||core.length)parts.push('[핵심]\n'+[summary,...core].filter(Boolean).join('\n'));
+  if(numbers.length)parts.push('[숫자·단위·기준]\n'+numbers.join('\n'));
+  if(traps.length)parts.push('[주의·예외]\n'+traps.join('\n'));
+  parts.push('[공식근거]\n'+source);
+  const subj=subjectOf(c),id=conceptCoreKey(conceptId);return{id,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:parts.join('\n\n'),sourceType:'pass-star-concept',conceptId,subject:subj,sourceRef:source};
+}
+async function toggleConceptCore(conceptId){const id=conceptCoreKey(conceptId);if(has(id)){await remove(id);return{saved:false,id}}const note=conceptCoreNote(conceptId);if(!note)throw Error('PASS_NOTE_SOURCE_NOT_FOUND');await persist(note);return{saved:true,id,note}}
+
 function questionNote(qid){
   const q=V.questionById?.[qid],c=q&&V.curriculum?.byId?.[q.conceptId];if(!q||!c)return null;
   const subj=subjectOf(c),right=`${q.a+1}. ${q.choices?.[q.a]||''}`;
-  return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`${q.q}\n\n정답: ${right}\n\n해설: ${q.ex||''}\n\n출처: ${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
+  return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`${cleanStudentText(q.q)}\n\n정답: ${cleanStudentText(right)}\n\n해설: ${cleanStudentText(q.ex||'')}\n\n출처: ${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
 }
 async function toggleQuestion(qid){const id=questionKey(qid);if(has(id)){await remove(id);return{saved:false,id}}const note=questionNote(qid);if(!note)throw Error('PASS_QUESTION_NOT_FOUND');await persist(note);return{saved:true,id,note}}
 async function saveManual({id,title,body,sourceType='manual',subject=''}){
@@ -127,5 +144,5 @@ function exportEditable(mode){
   const blob=new Blob(['\ufeff',html],{type:'application/msword;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download=(names[mode]||'119-합격노트')+'.doc';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return true
 }
-V.PassNote={conceptKey,questionKey,has,find,persist,remove,toggleConcept,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,exportEditable,subjectOf,subjectLabel};
+V.PassNote={conceptKey,conceptCoreKey,questionKey,has,find,persist,remove,toggleConcept,toggleConceptCore,conceptCoreNote,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,exportEditable,subjectOf,subjectLabel};
 })();

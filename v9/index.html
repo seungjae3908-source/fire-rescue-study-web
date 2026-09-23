@@ -109,6 +109,6 @@
   <script src="./pass-note.js"></script>
   <script src="./lazy-loader-119.js"></script>
   <script src="./app.js"></script>
-  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(console.warn))}</script>
+  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(reg=>reg.update()).catch(console.warn))}</script>
 </body>
 </html>
