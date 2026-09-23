@@ -2,7 +2,7 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},S=V.Store;const $=(s,r=document)=>r.querySelector(s);const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const SESSION_EXPIRED_CONTRACT_COPY='로그인 세션이 만료되어 게스트 모드로 전환되었습니다.';
-const runtime={more:false,account:false,bankConcept:'',bankFilter:'',bankIndex:0,calcGroup:'all',calcStage:'all',noteFilter:'all',noteSubject:'fire',noteQuery:'',goalEditor:false,studyQuizIndex:{},exam:null,examTimer:null,examDifficulty:'mid',examReportId:'',aiEngine:null,aiStatus:'근거 기반 답변',suggestions:[],suggestionsAdmin:false,suggestionsLoading:false,suggestionsOwner:'',suggestionPage:0,suggestionPageSize:20,suggestionsHasMore:false,suggestionDraft:{category:'개선',title:'',body:'',anonymous:true},suggestionError:'',questionAt:Date.now(),toast:'',authNotice:'',pendingAuthEmail:''};
+const runtime={more:false,account:false,bankConcept:'',bankFilter:'',bankIndex:0,calcGroup:'all',calcStage:'all',noteFilter:'all',noteSubject:'fire',noteQuery:'',goalEditor:false,hazmatClassOpen:'',studyQuizIndex:{},exam:null,examTimer:null,examDifficulty:'mid',examReportId:'',aiEngine:null,aiStatus:'근거 기반 답변',suggestions:[],suggestionsAdmin:false,suggestionsLoading:false,suggestionsOwner:'',suggestionPage:0,suggestionPageSize:20,suggestionsHasMore:false,suggestionDraft:{category:'개선',title:'',body:'',anonymous:true},suggestionError:'',questionAt:Date.now(),toast:'',authNotice:'',pendingAuthEmail:''};
 function persistActiveExam(){return runtime.exam?V.ExamSession119?.save?.(runtime.exam,S.ownerId):false}
 function clearActiveExam(){return V.ExamSession119?.clear?.(S.ownerId)}
 function stopExamTicker(){if(runtime.examTimer){clearInterval(runtime.examTimer);runtime.examTimer=null}}
