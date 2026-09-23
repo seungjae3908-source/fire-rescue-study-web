@@ -25,7 +25,8 @@ const reviewedFactory={
   'E03-C02':'detail-a',
   'E06-C03':'detail-a',
   'E06-C04':'summary',
-  'E09-C06':'detail-b'
+  'E09-C06':'detail-b',
+  'E07-C04':'summary'
 };
 const reviewedExact={
   'E03-C04':'119-q2factory-e03-c04-title-4',
