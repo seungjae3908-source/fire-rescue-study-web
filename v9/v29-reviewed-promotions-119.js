@@ -74,5 +74,8 @@ swapChoiceOrder('119-vertarget-ems1-027','E11-C02',1,2);
 
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
-V.V29ReviewedPromotions119={version:'119-v42-reviewed-promotions-v6',promoted,factoryPromoted,exactPromoted,choiceOrderBalanced};
+// Keep the established V41 promotion registry immutable; V42 is a separate
+// presentation-quality contract, not a new evidence promotion batch.
+V.V29ReviewedPromotions119={version:'119-v41-reviewed-promotions-v5',promoted,factoryPromoted,exactPromoted};
+V.V42AnswerPosition119={version:'119-v42-answer-position-v1',choiceOrderBalanced};
 })();
