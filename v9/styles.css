@@ -104,5 +104,5 @@
 @media(max-width:720px){
   .study-quick-title{align-items:flex-start}
   .study-quick-actions{gap:5px}
-  .study-core-save,.study-note-link{font-size:10px!important}
+  .study-core-save,.study-note-link{font-size:12px!important}
 }
