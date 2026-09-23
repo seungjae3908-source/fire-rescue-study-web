@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 const base=process.env.STUDY_119_BRANCH_URL||'http://127.0.0.1:4173/v9/index.html';
-const targetIds=['E11-C02','F06-C02','E03-C02','E06-C03','E06-C04','E09-C06','E09-C07'];
+const targetIds=['E11-C02','F06-C02','E03-C02','E06-C03','E06-C04','E09-C06','E09-C07','E02-C01','E01-C02','E07-C04'];
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:1280,height:900}}),page=await ctx.newPage();
@@ -20,10 +20,10 @@ try{
           rows.push({doc:r.doc,from:r.from,to:r.to,bookPage:book,pdfPage:n,text});
         }
       }
-      return{id,title:c?.title||'',packSource:p?.source||'',must:p?.must||[],summary:p?.summary||'',ranges,rows};
+      return{id,title:c?.title||'',packSource:p?.source||'',must:p?.must||[],summary:p?.summary||'',detail:p?.detail||[],ranges,rows};
     },id);
     console.log('V40_BATCH4_SOURCE_REVIEW',JSON.stringify({
-      id:result.id,title:result.title,packSource:result.packSource,ranges:result.ranges,must:result.must,summary:result.summary,
+      id:result.id,title:result.title,packSource:result.packSource,ranges:result.ranges,must:result.must,summary:result.summary,detail:result.detail,
       pages:result.rows.map(x=>({doc:x.doc,bookPage:x.bookPage,pdfPage:x.pdfPage,text:x.text.slice(0,2600)}))
     }));
     if(!result.rows.length)throw new Error('V40_BATCH4_SOURCE_PAGE_MISSING '+id);
