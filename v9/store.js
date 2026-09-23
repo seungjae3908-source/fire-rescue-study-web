@@ -19,7 +19,7 @@ function compactForQuota(s){
 }
 const quotaError=e=>e?.name==='QuotaExceededError'||e?.name==='NS_ERROR_DOM_QUOTA_REACHED'||e?.code===22||e?.code===1014;
 const gid=()=>{let id=localStorage.getItem(ROOT+'guestId');if(!id){id='guest-'+(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2));localStorage.setItem(ROOT+'guestId',id)}return id};
-const defaultState=ownerId=>({schema:9,ownerId,page:'home',subject:'fire',scopeId:'F01',conceptId:'F01-C01',studyTab:'core',outline:false,profile:{examYear:'2027',examDate:'',dailyMinutes:40,level:'처음 시작'},answers:{},confidence:{},answerEvents:[],wrongs:[],reviewSchedule:{},progress:{},notes:[],examHistory:[],studySessions:[],chat:[],settings:{cloudSync:false,syncOriginalDocuments:false},migrations:{},updatedAt:Date.now()});
+const defaultState=ownerId=>({schema:9,ownerId,page:'home',subject:'fire',scopeId:'F01',conceptId:'F01-C01',studyTab:'core',outline:false,profile:{examYear:'2027',examDate:'',dailyMinutes:40,level:'처음 시작'},answers:{},confidence:{},answerEvents:[],wrongs:[],reviewSchedule:{},progress:{},notes:[],examHistory:[],studySessions:[],chat:[],todayGoal:null,settings:{cloudSync:false,syncOriginalDocuments:false},migrations:{},updatedAt:Date.now()});
 const key=id=>ROOT+'state:'+id;
 let ownerId=gid();let state=jget(key(ownerId),defaultState(ownerId));
 function save(){
