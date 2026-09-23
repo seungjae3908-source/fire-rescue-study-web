@@ -51,7 +51,12 @@ const reviewedExact={
   'E08-C05':'119-q2factory-e08-c05-title-1',
   'E15-C02':'119-q2factory-e15-c02-title-3',
   'E19-C05':'119-q2factory-e19-c05-title-2',
-  'E20-C05':'119-q2factory-e20-c05-title-2'
+  'E20-C05':'119-q2factory-e20-c05-title-2',
+  'E21-C06':'119-q2factory-e21-c06-title-1',
+  'E21-C07':'119-q2factory-e21-c07-title-2',
+  'E21-C08':'119-q2factory-e21-c08-title-1',
+  'E23-C01':'119-q2factory-e23-c01-title-3',
+  'E23-C03':'119-q2factory-e23-c03-title-2'
 };
 const promoted=[];let factoryPromoted=0;
 const promote=(conceptId,id,isFactory)=>{
@@ -87,8 +92,8 @@ swapChoiceOrder('119-vertarget-ems1-027','E11-C02',1,2);
 
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
-// V44 extends the source-reviewed evidence registry. V42 remains a separate
+// V45 extends the source-reviewed evidence registry. V42 remains a separate
 // presentation-quality contract and its answer-order correction is preserved.
-V.V29ReviewedPromotions119={version:'119-v44-reviewed-promotions-v7',promoted,factoryPromoted,exactPromoted};
+V.V29ReviewedPromotions119={version:'119-v45-reviewed-promotions-v8',promoted,factoryPromoted,exactPromoted};
 V.V42AnswerPosition119={version:'119-v42-answer-position-v1',choiceOrderBalanced};
 })();
