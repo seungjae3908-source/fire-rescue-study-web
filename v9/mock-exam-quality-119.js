@@ -11,7 +11,7 @@ function factoryLike(q){return /(?:^|-)q?2?factory-|generated/i.test(String(q?.i
 function sourceSpecific(q){const s=String(q?.source||'');return q?.pageVerified===true||/\d+(?:\s*[·~\-–]\s*\d+)*\s*쪽|제\s*\d+\s*조|국가법령정보센터|시행령|시행규칙/.test(s)}
 function explanationStrength(q){const a=q?.choiceExplanations||[];return a.length===4?Math.round(a.reduce((n,x)=>n+norm(x).length,0)/4):0}
 function quality(q){
-  const stem=norm(q?.q),choices=(q?.choices||[]).map(norm),lens=choices.map(x=>x.length),max=Math.max(1,...lens),min=Math.min(...lens,0),family=fam(q);
+  const stem=norm(q?.q),choices=(q?.choices||[]).map(norm),lens=choices.map(x=>x.length),max=Math.max(1,...lens),min=lens.length?Math.min(...lens):0,family=fam(q);
   let score=0;
   if(q?.grade==='A'||q?.grade==='B')score+=20;
   if(q?.pageVerified===true)score+=18;
