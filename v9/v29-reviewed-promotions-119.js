@@ -30,7 +30,12 @@ const reviewedFactory={
   'E02-C02':'deep',
   'E15-C01':'detail-b',
   'E16-C03':'detail-a',
-  'E17-C01':'detail-b'
+  'E17-C01':'detail-b',
+  'E05-C01':'detail-b',
+  'E08-C01':'detail-a',
+  'E08-C02':'detail-a',
+  'E08-C03':'detail-a',
+  'E19-C04':'detail-a'
 };
 const reviewedExact={
   'E03-C04':'119-q2factory-e03-c04-title-4',
@@ -38,7 +43,9 @@ const reviewedExact={
   'E01-C02':'119-q2factory-e01-c02-title-1',
   'E02-C01':'119-q2factory-e02-c01-title-1',
   'E19-C01':'119-q2factory-e19-c01-title-1',
-  'E22-C01':'119-q2factory-e22-c01-title-3'
+  'E22-C01':'119-q2factory-e22-c01-title-3',
+  'E07-C05':'119-q2factory-e07-c05-title-3',
+  'E16-C02':'119-q2factory-e16-c02-title-2'
 };
 const promoted=[];let factoryPromoted=0;
 const promote=(conceptId,id,isFactory)=>{
@@ -74,8 +81,8 @@ swapChoiceOrder('119-vertarget-ems1-027','E11-C02',1,2);
 
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
-// Keep the established V41 promotion registry immutable; V42 is a separate
-// presentation-quality contract, not a new evidence promotion batch.
-V.V29ReviewedPromotions119={version:'119-v41-reviewed-promotions-v5',promoted,factoryPromoted,exactPromoted};
+// V43 extends the source-reviewed evidence registry. V42 remains a separate
+// presentation-quality contract and its answer-order correction is preserved.
+V.V29ReviewedPromotions119={version:'119-v43-reviewed-promotions-v6',promoted,factoryPromoted,exactPromoted};
 V.V42AnswerPosition119={version:'119-v42-answer-position-v1',choiceOrderBalanced};
 })();
