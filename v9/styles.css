@@ -90,3 +90,19 @@
 }
 
 .official-past-exam-card{margin-top:12px;padding:13px;border:1px solid rgba(111,182,255,.26);border-radius:13px;background:#091827;display:grid;gap:10px}.official-past-exam-card>div{display:grid;gap:5px}.official-past-exam-card b{font-size:16px}.official-past-exam-card small{color:var(--muted);line-height:1.55}.official-past-exam-card>a{font-size:11px;color:#89bff0;text-decoration:none;font-weight:800}.official-past-tag{background:rgba(111,182,255,.10)!important;border-color:rgba(111,182,255,.34)!important;color:#bfe0ff!important}.past-law-warning{background:rgba(242,202,126,.08)!important;border-color:rgba(242,202,126,.28)!important;color:#f0d18f!important}
+
+
+/* V49 learner-first core: one concept favorite and restrained emphasis */
+.study-quick-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.study-quick-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.study-core-save{border:1px solid #2b4058;background:transparent;color:#c7d3df;border-radius:9px;padding:6px 9px;font-size:11px;font-weight:850;white-space:nowrap}
+.study-core-save.on{color:#f0c777;border-color:rgba(240,199,119,.45)}
+.study-key-term{color:#dcecff!important;background:transparent!important;text-decoration:none!important}
+.study-key-number{color:#f2ca7e!important;background:transparent!important;text-decoration:none!important}
+.study-core-essentials li,.study-numbers li{grid-template-columns:minmax(0,1fr)!important}
+.study-core-essentials li>span,.study-numbers li>span{color:#dbe5ee!important}
+@media(max-width:720px){
+  .study-quick-title{align-items:flex-start}
+  .study-quick-actions{gap:5px}
+  .study-core-save,.study-note-link{font-size:10px!important}
+}
