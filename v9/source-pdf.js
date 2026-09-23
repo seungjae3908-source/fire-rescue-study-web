@@ -22,34 +22,37 @@ const done=t=>new Promise((res,rej)=>{t.oncomplete=()=>res();t.onerror=()=>rej(t
 async function attach(key,file){if(!key||!file)throw Error('SOURCE_PDF_REQUIRED');if(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name))throw Error('PDF_ONLY');await clearPdfCache(key);const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').put({key,name:file.name,mime:file.type||'application/pdf',blob:file,updatedAt:Date.now()});await done(t);return{key,name:file.name,size:file.size}}
 async function get(key){const d=await db(),t=d.transaction('sources','readonly'),r=t.objectStore('sources').get(key);return await new Promise((res,rej)=>{r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error)})}
 async function putSourceRow(row){const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').put(row);await done(t);return row}
-async function cacheOfficial(key,{timeoutMs=90000,onProgress}={}){
+async function cacheOfficial(key,{timeoutMs=90000,onProgress,preferProxy=false}={}){
   const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};
   if(activeRemote?.key===key&&activeRemote?.row?.blob)return activeRemote.row;
-  const catalog=V.SourceCatalog119?.get?.(key);if(!catalog?.directPdf)throw Error('SOURCE_REMOTE_UNRESOLVED');
-  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeoutMs);
-  try{
-    const res=await fetch(catalog.directPdf,{credentials:'omit',redirect:'follow',signal:ctl.signal,cache:'force-cache'});
-    if(!res.ok)throw Error('SOURCE_REMOTE_HTTP_'+res.status);
-    const total=Number(res.headers.get('content-length'))||0,chunks=[];let loaded=0;
-    if(res.body?.getReader){
-      const reader=res.body.getReader();
-      while(true){const {done,value}=await reader.read();if(done)break;if(value){chunks.push(value);loaded+=value.byteLength;onProgress?.({loaded,total,percent:total?Math.min(100,Math.round(loaded/total*100)):null})}}
-    }else{
-      const buf=new Uint8Array(await res.arrayBuffer());chunks.push(buf);loaded=buf.byteLength;onProgress?.({loaded,total:total||loaded,percent:100});
-    }
-    const blob=new Blob(chunks,{type:'application/pdf'}),head=new Uint8Array(await blob.slice(0,8).arrayBuffer());
-    if(new TextDecoder('latin1').decode(head).indexOf('%PDF-')<0)throw Error('SOURCE_REMOTE_NOT_PDF');
-    const row={key,name:catalog.expectedNames?.[0]||catalog.label||key,mime:'application/pdf',blob,updatedAt:Date.now(),origin:'official-local-cache',officialPage:catalog.officialPage,license:catalog.license};
-    activeRemote={key,row};
-    try{await putSourceRow(row)}catch{}
-    onProgress?.({loaded:blob.size,total:blob.size,percent:100,done:true});
-    return row;
-  }catch(err){if(err?.name==='AbortError')throw Error('SOURCE_PDF_TIMEOUT');throw err}
-  finally{clearTimeout(timer)}
+  const catalog=V.SourceCatalog119?.get?.(key),ordered=preferProxy?[catalog?.proxyPdf,catalog?.directPdf]:[catalog?.directPdf,catalog?.proxyPdf],urls=[...new Set(ordered.filter(Boolean))];
+  if(!urls.length)throw Error('SOURCE_REMOTE_UNRESOLVED');
+  let lastError=Error('SOURCE_REMOTE_UNRESOLVED');
+  for(let i=0;i<urls.length;i++){
+    const url=urls[i],remaining=Math.max(7000,Math.floor(timeoutMs/Math.max(1,urls.length-i))),ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),remaining);
+    try{
+      const res=await fetch(url,{credentials:'omit',redirect:'follow',signal:ctl.signal,cache:'no-store'});
+      if(!res.ok)throw Error('SOURCE_REMOTE_HTTP_'+res.status);
+      const total=Number(res.headers.get('content-length'))||0,chunks=[];let loaded=0;
+      if(res.body?.getReader){
+        const reader=res.body.getReader();
+        while(true){const {done,value}=await reader.read();if(done)break;if(value){chunks.push(value);loaded+=value.byteLength;onProgress?.({loaded,total,percent:total?Math.min(100,Math.round(loaded/total*100)):null,transport:url===catalog?.proxyPdf?'proxy':'mirror'})}}
+      }else{
+        const buf=new Uint8Array(await res.arrayBuffer());chunks.push(buf);loaded=buf.byteLength;onProgress?.({loaded,total:total||loaded,percent:100});
+      }
+      const blob=new Blob(chunks,{type:'application/pdf'}),head=new Uint8Array(await blob.slice(0,8).arrayBuffer());
+      if(new TextDecoder('latin1').decode(head).indexOf('%PDF-')<0)throw Error('SOURCE_REMOTE_NOT_PDF');
+      const row={key,name:catalog.expectedNames?.[0]||catalog.label||key,mime:'application/pdf',blob,updatedAt:Date.now(),origin:url===catalog?.proxyPdf?'official-proxy-cache':'official-mirror-cache',officialPage:catalog.officialPage,license:catalog.license};
+      activeRemote={key,row};try{await putSourceRow(row)}catch{}
+      onProgress?.({loaded:blob.size,total:blob.size,percent:100,done:true,transport:url===catalog?.proxyPdf?'proxy':'mirror'});return row;
+    }catch(err){lastError=err?.name==='AbortError'?Error('SOURCE_PDF_TIMEOUT'):err}
+    finally{clearTimeout(timer)}
+  }
+  throw lastError;
 }
 async function remoteRow(key,opts={}){return cacheOfficial(key,opts)}
 async function resolveRow(key,opts={}){const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};return cacheOfficial(key,opts)}
-async function availability(key){const local=await get(key),c=V.SourceCatalog119?.get?.(key),mirror=c?.transport==='range-static'&&!!c?.directPdf;return{local:!!local?.blob,mirror,mirrorUrl:mirror?c.directPdf:'',direct:!!c?.directPdf,officialPage:c?.officialPage||SOURCE_PAGES[key]||'',license:c?.license||'',label:c?.label||key}}
+async function availability(key){const local=await get(key),c=V.SourceCatalog119?.get?.(key),mirror=c?.transport==='range-static'&&!!c?.mirrorPdf;return{local:!!local?.blob,mirror,mirrorUrl:mirror?c.mirrorPdf:'',proxyUrl:c?.proxyPdf||'',direct:!!(c?.directPdf||c?.proxyPdf),officialPage:c?.officialPage||SOURCE_PAGES[key]||'',license:c?.license||'',label:c?.label||key}}
 async function has(key){const a=await availability(key);return a.local||a.direct}
 async function remove(key){await clearPdfCache(key);const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').delete(key);await done(t);if(activeRemote?.key===key)activeRemote=null}
 const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
@@ -57,12 +60,15 @@ const stop=new Set(['그리고','하지만','에서','으로','하는','한다',
 function queryTokens(queries){const out=[];for(const q of queries||[]){for(const w of String(q||'').split(/[\s·,()\/→]+/)){const n=norm(w);if(n.length>=2&&!stop.has(n)&&!out.includes(n))out.push(n)}}return out.sort((a,b)=>b.length-a.length).slice(0,24)}
 async function pdfjs(){if(V.RuntimeDeps?.loadPdfJs)return V.RuntimeDeps.loadPdfJs();const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p}
 async function clearPdfCache(key){const hit=pdfCache.get(key);pdfCache.delete(key);if(hit?.task)await hit.task.destroy?.().catch?.(()=>{});else if(hit?.pdf)await hit.pdf.destroy?.().catch?.(()=>{})}
-async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCache.get(key);if(cached?.pdf)return cached;const p=await pdfjs(),local=await get(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static'&&!!catalog?.directPdf;let task,name,origin;
+function waitPdfTask(task,timeoutMs){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('SOURCE_PDF_PARSE_TIMEOUT')),timeoutMs);task.promise.then(v=>{clearTimeout(timer);resolve(v)},e=>{clearTimeout(timer);reject(e)})})}
+async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCache.get(key);if(cached?.pdf)return cached;const p=await pdfjs(),local=await get(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static'&&!!catalog?.mirrorPdf;let task,name,origin;
   if(local?.blob){task=p.getDocument({data:await local.blob.arrayBuffer()});name=local.name||key;origin='local-cache'}
-  else if(staticRange){task=p.getDocument({url:catalog.directPdf,withCredentials:false,disableRange:false,disableStream:false,disableAutoFetch:true,rangeChunkSize:65536});name=catalog.expectedNames?.[0]||catalog.label||key;origin='official-static-range'}
-  else{const row=await resolveRow(key,{timeoutMs,onProgress});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=row.origin||'local-cache'}
-  const timer=new Promise((_,rej)=>setTimeout(()=>rej(Error('SOURCE_PDF_PARSE_TIMEOUT')),Math.min(timeoutMs,25000)));
-  try{const pdf=await Promise.race([task.promise,timer]),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await task.destroy?.().catch?.(()=>{});throw err}
+  else if(staticRange){
+    task=p.getDocument({url:catalog.mirrorPdf,withCredentials:false,disableRange:false,disableStream:false,disableAutoFetch:true,rangeChunkSize:65536});name=catalog.expectedNames?.[0]||catalog.label||key;origin='official-static-range';
+    try{const pdf=await waitPdfTask(task,Math.min(7000,timeoutMs)),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}
+    catch{await task.destroy?.().catch?.(()=>{});onProgress?.({fallback:true,transport:'proxy'});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-7000),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin='official-proxy-fallback'}
+  }else{const row=await resolveRow(key,{timeoutMs,onProgress});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=row.origin||'local-cache'}
+  try{const pdf=await waitPdfTask(task,Math.min(timeoutMs,25000)),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await task.destroy?.().catch?.(()=>{});throw err}
 }
 async function locate(key,queries=[],options={}){const {pdf}=await openPdf(key),tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};const ranges=Array.isArray(options.bookRanges)?options.bookRanges.filter(x=>x&&x.doc===key):[],pageSet=new Set();if(ranges.length){for(const r of ranges){const from=Math.max(1,pdfPage(key,Number(r.from)||1)),to=Math.min(pdf.numPages,pdfPage(key,Number(r.to)||Number(r.from)||1));for(let n=from;n<=to;n++)pageSet.add(n)}}const pages=pageSet.size?[...pageSet].sort((a,b)=>a-b):Array.from({length:pdf.numPages},(_,i)=>i+1);let best={page:pages[0]||1,score:-1,pages:pdf.numPages};for(const n of pages){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
 function evidenceLines(items,viewport,p,queries=[],options={}){
