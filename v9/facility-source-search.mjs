@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 const base=process.env.STUDY_119_PREVIEW_URL||'https://study-119-preview.vercel.app/';
 const expected=process.env.STUDY_119_EXPECTED_APP_HEAD||'';
@@ -57,8 +58,8 @@ async function verifyOfficialFallback(term){
     const magic=String.fromCharCode(...bytes.slice(0,5));
     assert(magic==='%PDF-','F07_C15_OFFICIAL_FALLBACK_PDF_MAGIC '+JSON.stringify({term,magic,url:def.url}));
     const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs');
-    const cMapUrl=new URL('../node_modules/pdfjs-dist/cmaps/',import.meta.url).href;
-    const standardFontDataUrl=new URL('../node_modules/pdfjs-dist/standard_fonts/',import.meta.url).href;
+    const cMapUrl=fileURLToPath(new URL('../node_modules/pdfjs-dist/cmaps/',import.meta.url));
+    const standardFontDataUrl=fileURLToPath(new URL('../node_modules/pdfjs-dist/standard_fonts/',import.meta.url));
     pdf=await pdfjs.getDocument({data:bytes,cMapUrl,cMapPacked:true,standardFontDataUrl}).promise;
     let compact='',verifiedPage=null;
     for(let n=1;n<=pdf.numPages;n++){
