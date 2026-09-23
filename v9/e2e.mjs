@@ -82,6 +82,9 @@ try{
   await p.waitForFunction(()=>window.AITUTOR_V9.Lazy119?.questionsReady===true);
   const lazyAfter=await p.evaluate(()=>({ready:window.AITUTOR_V9.Lazy119?.questionsReady===true,count:window.AITUTOR_V9.questions?.length||0,hasDeferred:!!window.AITUTOR_V9.questionById?.['119-vertarget-ems2-047'],mock:!!window.AITUTOR_V9.MockExam119}));
   assert(lazyAfter.ready&&lazyAfter.count>=3000&&lazyAfter.hasDeferred&&lazyAfter.mock,'opening the study quiz loads the full bank and mock engine on demand');
+  const flameoverQuestion=await p.evaluate(()=>{const V=window.AITUTOR_V9,q=(V.questions||[]).find(x=>x.conceptId==='F03-C10'&&x.generatedBy==='119-grounded-question-factory-v1'&&/화재현상/.test(String(x.q||'')));return q?{q:q.q,choices:q.choices}:null});
+  assert(flameoverQuestion&&!/2026\s*소방전술1.*기준으로/.test(flameoverQuestion.q)&&/초기화재|대류/.test(flameoverQuestion.q),'flameover question stem reads like an exam question without textbook-source framing');
+  assert(['플레임오버','플래시오버','롤오버','백드래프트'].every(x=>flameoverQuestion.choices.includes(x)),'flameover identification question uses the four confusing fire phenomena as choices');
   const quality2Content=await p.evaluate(()=>{const V=window.AITUTOR_V9,flash=V.contentPacks.get('F03-C09'),foam=V.contentPacks.get('F07-C08'),baseQs=V.questions.filter(q=>/^119-q2-(foamprop|flash)-/.test(q.id||'')),gapQs=V.questions.filter(q=>/^119-q2-(haz-special|sprinkler-base)-/.test(q.id||''));return{flashText:[flash.summary,...(flash.detail||[]),...(flash.must||[])].join(' '),flashCompare:flash.compare?.length||0,flashDeep:flash.deepSections?.length||0,foamText:[foam.summary,...(foam.detail||[]),...(foam.must||[])].join(' '),foamCompare:foam.compare?.length||0,foamDeep:foam.deepSections?.length||0,foamQs:V.questions.filter(q=>q.conceptId==='F07-C08'&&/^119-q2-foamprop-/.test(q.id||'')).length,flashQs:V.questions.filter(q=>q.conceptId==='F03-C09'&&/^119-q2-flash-/.test(q.id||'')).length,baseQuality2:baseQs.length,gapQuality2:gapQs.length,allB:[...baseQs,...gapQs].every(q=>q.grade==='B'&&q.choices?.length===4&&q.choiceExplanations?.length===4)}}); 
   assert(/483~649℃/.test(quality2Content.flashText)&&/20 kW\/㎡/.test(quality2Content.flashText)&&quality2Content.flashCompare>=4&&quality2Content.flashDeep>=5,'flashover quality2 content includes official phase, radiation, temperature range, before/after and four-way comparison');
   assert(/라인 프로포셔너/.test(quality2Content.foamText)&&/펌프 프로포셔너/.test(quality2Content.foamText)&&/프레셔 프로포셔너/.test(quality2Content.foamText)&&/프레셔사이드 프로포셔너/.test(quality2Content.foamText)&&quality2Content.foamCompare>=4&&quality2Content.foamDeep>=6,'foam quality2 content covers all four proportioners with operating principles and comparison');
@@ -243,20 +246,22 @@ try{
   }
   await m.locator('.book-jumpbar [data-study-tab="core"]').click();
   await m.waitForSelector('.book-section .study-core-essentials');
-  assert(await m.locator('.book-section .study-quick').count()===1,'core keeps one 30-second summary only');
+  assert(await m.locator('.book-section .study-quick').count()===1,'core keeps one concise summary only');
   assert(await m.locator('.book-section .study-core-essentials li').count()>=1&&await m.locator('.book-section .study-core-essentials li').count()<=5,'core limits exam essentials to five concise points');
   assert(await m.locator('.book-section .study-must,.book-section .study-schema,.book-section .detail-section').count()===0,'core excludes detailed/exam-full duplicate sections');
   const coreDuplicateNumeric=await m.locator('.book-section .core-view').evaluate(root=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const essentials=[...root.querySelectorAll('.study-core-essentials li span')].map(x=>norm(x.textContent)).filter(Boolean),nums=[...root.querySelectorAll('.study-numbers li .study-key-text')].map(x=>norm(x.textContent)).filter(Boolean);return essentials.some(a=>nums.some(b=>a===b||(Math.min(a.length,b.length)>=18&&(a.includes(b)||b.includes(a)))))}); 
   assert(!coreDuplicateNumeric,'core keeps numeric facts in one dedicated block instead of repeating them in exam essentials');
   const starBefore=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
-  await m.locator('.book-section .study-star-btn').first().click();
-  const starAfter=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
-  assert(starAfter===starBefore+1,'core star saves the exact concise point into pass notes');
-  assert(await m.locator('.book-section .study-star-btn.on').count()>=1,'saved core point visibly keeps its filled star state');
+  assert(await m.locator('.book-section .study-star-btn').count()===0,'core removes sentence-by-sentence favorite stars');
+  assert(await m.locator('.book-section .study-core-save').count()===1,'core exposes exactly one concept-level favorite control');
+  await m.locator('.book-section .study-core-save').click();
+  const starAfter=await m.evaluate(()=>{const V=window.AITUTOR_V9,n=V.PassNote.passNotes().find(x=>x.id===V.PassNote.conceptCoreKey(V.Store.state.conceptId));return{count:V.PassNote.passNotes().length,body:n?.body||'',type:n?.sourceType||''}});
+  assert(starAfter.count===starBefore+1&&starAfter.type==='pass-star-concept'&&starAfter.body.includes('[핵심]'),'one core favorite saves the whole concept 핵심 into pass notes');
+  assert(await m.locator('.book-section .study-core-save.on').count()===1,'saved concept visibly keeps its filled favorite state');
   assert(await m.locator('.book-section [data-pass-note-open]').count()>=1,'core exposes direct navigation to the subject-split pass note');
-  await m.locator('.book-section .study-star-btn.on').first().click();
+  await m.locator('.book-section .study-core-save.on').click();
   const starRemoved=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
-  assert(starRemoved===starBefore,'pressing the filled star removes the exact point from pass notes');
+  assert(starRemoved===starBefore,'pressing the saved concept favorite removes the whole concept note');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
