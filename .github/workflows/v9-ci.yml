@@ -135,6 +135,8 @@ jobs:
         run: node v9/v40-batch4-candidate-audit.mjs
       - name: V41 fifth-batch low-verified candidate audit
         run: node v9/v41-batch5-candidate-audit.mjs
+      - name: V43 sixth-batch low-verified candidate audit
+        run: node v9/v43-batch6-candidate-audit.mjs
       - name: Final 183-concept learner content audit
         run: node v9/final-user-content-qa.mjs
       - name: 390-run real mock exam composition quality audit
@@ -223,6 +225,8 @@ jobs:
         run: node v9/v40-batch4-source-review-e2e.mjs
       - name: V41 fifth-batch official source page review
         run: node v9/v41-batch5-source-review-e2e.mjs
+      - name: V43 sixth-batch official source page review
+        run: node v9/v43-batch6-source-review-e2e.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
       - name: Korean image OCR quality + owner isolation QA
