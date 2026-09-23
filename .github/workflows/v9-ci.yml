@@ -145,6 +145,8 @@ jobs:
         run: node v9/final-user-content-qa.mjs
       - name: V48 semantic study + official past-exam audit
         run: node v9/v48-semantic-study-audit.mjs
+      - name: V51 full 183-concept content + question audit
+        run: node v9/v51-full-content-question-audit.mjs
       - name: 390-run real mock exam composition quality audit
         run: node v9/mock-exam-quality-audit.mjs
       - name: A/B verified question coverage gap report
@@ -221,6 +223,8 @@ jobs:
         run: node v9/phase-a-source-audit.mjs
       - name: Phase B EMS official-PDF evidence audit
         run: node v9/phase-b-ems-source-audit.mjs
+      - name: V51 all-183 official textbook mapped-source audit
+        run: node v9/v51-official-textbook-browser-audit.mjs
       - name: V29 first-batch official source page review
         run: node v9/v29-source-review-e2e.mjs
       - name: V29 second-batch official source page review
