@@ -55,8 +55,9 @@ const exactPromoted=Object.keys(reviewedExact).length;
 if(V.Quality2QuestionFactory119?.added>=exactPromoted)V.Quality2QuestionFactory119.added-=exactPromoted;
 
 // V42: preserve the reviewed question and evidence while removing the only
-// verified-answer-position concentration (E11-C02). Reorder choices and the
-// matching explanations together; never alter question wording or truth.
+// verified-answer-position concentration (E11-C02). The global question-quality
+// lane has already normalized this target to index 1 at this point; move that
+// reviewed answer to index 2 with its explanation, changing presentation only.
 const choiceOrderBalanced=[];
 const swapChoiceOrder=(id,conceptId,left,right)=>{
   const q=(V.questions||[]).find(x=>x.id===id);
@@ -69,7 +70,7 @@ const swapChoiceOrder=(id,conceptId,left,right)=>{
   q.a=right;
   choiceOrderBalanced.push(id);
 };
-swapChoiceOrder('119-vertarget-ems1-027','E11-C02',0,2);
+swapChoiceOrder('119-vertarget-ems1-027','E11-C02',1,2);
 
 V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
 V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
