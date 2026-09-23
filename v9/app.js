@@ -343,18 +343,33 @@ function tutorMessageHtml(m){const t=cleanTutorText(m?.text||''),r=Array.isArray
 function wantsTutorDetail(prompt){return /상세|자세히|깊게|전부|원리부터|교재처럼/.test(String(prompt||''))}
 function wantsTutorCompare(prompt){return /비교|차이|뭐가\s*달|vs|구분/.test(String(prompt||'').toLowerCase())}
 function wantsTutorEvidence(prompt){return /근거만|출처만|원문만|공식\s*근거만|근거\s*위주/.test(String(prompt||''))}
-function fallbackTutor(prompt,c,pack){
-const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),rows=[];
-if(evidenceOnly)rows.push('근거','• '+(pack.source||'공식 학습팩'),...(pack.must||[]).slice(0,4).map(x=>'• '+x));
-else{
-rows.push('답변',pack.summary||((pack.must||[])[0])||c.title);
-const why=uniqueTextRows([...(pack.detail||[]),...(pack.deepSections||[]).map(x=>x?.body).filter(Boolean)]).slice(0,detail?6:3);
-if(why.length)rows.push('','왜 그런가',...why.map(x=>'• '+x));
-if(compare&&(pack.compare||[]).length)rows.push('','비교 판단',...(pack.compare||[]).slice(0,4).map(x=>'• '+x.join(' → ')));
-if((pack.traps||[]).length)rows.push('','시험 적용',...(pack.traps||[]).slice(0,detail?3:2).map(x=>'• '+x));
-rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));
+function tutorKeywords(v){
+const stop=new Set(['그럼','그러면','그거','그건','이거','이건','뭐가있어','뭐야','무엇','어떤','알려줘','설명해줘','해줘','있어','있나','관련','대해','핵심','요약','시험','상세','자세히']);
+return [...new Set(String(v||'').toLowerCase().split(/[^0-9a-z가-힣]+/).map(x=>x.replace(/(?:들에게|에서|으로|부터|까지|하고|이랑|들은|에게|처럼|보다|은|는|이|가|을|를|의|에|도|만)$/,'')).filter(x=>x.length>=2&&!stop.has(x)))]
 }
-return cleanTutorText(rows.join('\n'))
+function previousTutorQuestion(c,prompt){
+const rows=(state().chat||[]).filter(m=>m.conceptId===c.id&&m.role==='user'&&String(m.text||'').trim()!==String(prompt||'').trim());return rows.slice(-1)[0]?.text||''
+}
+function tutorRelevantRows(prompt,c,pack){
+const current=tutorKeywords(prompt),previous=tutorKeywords(previousTutorQuestion(c,prompt)),candidates=[];
+const push=(text,label='')=>{const t=String(text||'').trim();if(t)candidates.push({text:t,label})};
+push(pack.summary,'요약');(pack.must||[]).forEach(x=>push(x,'시험필수'));(pack.detail||[]).forEach(x=>push(x,'상세'));(pack.compare||[]).forEach(x=>push((x||[]).join(' → '),'비교'));(pack.traps||[]).forEach(x=>push(x,'시험주의'));
+for(const sec of pack.deepSections||[]){push(sec?.body,sec?.title||'상세');(sec?.bullets||[]).forEach(x=>push(x,sec?.title||'상세'))}
+const score=row=>{const n=studyNorm(row.text),label=studyNorm(row.label);let z=0;for(const t of current){const q=studyNorm(t);if(n.includes(q)||label.includes(q))z+=24+Math.min(12,q.length)}for(const t of previous){const q=studyNorm(t);if(n.includes(q)||label.includes(q))z+=5}return z};
+return candidates.map(x=>({...x,score:score(x)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||b.text.length-a.text.length)
+}
+function fallbackTutor(prompt,c,pack){
+const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),rows=[],general=/30초|요약|핵심\s*(?:정리|설명)?$/.test(String(prompt||''));
+if(evidenceOnly)rows.push('근거','• '+(pack.source||'공식 학습팩'));
+else if(general){rows.push('답변',pack.summary||((pack.must||[])[0])||c.title);const must=(pack.must||[]).slice(0,detail?5:3);if(must.length)rows.push('','핵심 포인트',...must.map(x=>'• '+x))}
+else{
+const hits=tutorRelevantRows(prompt,c,pack),picked=uniqueTextRows(hits.slice(0,detail?6:4).map(x=>x.text));
+if(picked.length){rows.push('답변',picked[0]);if(picked.length>1)rows.push('','질문과 직접 관련된 내용',...picked.slice(1).map(x=>'• '+x))}
+else rows.push('답변',pack.summary||((pack.must||[])[0])||c.title);
+if(compare&&(pack.compare||[]).length)rows.push('','비교 판단',...(pack.compare||[]).slice(0,6).map(x=>'• '+x.join(' → ')));
+if(/시험|함정|주의/.test(String(prompt||''))&&(pack.traps||[]).length)rows.push('','시험 적용',...(pack.traps||[]).slice(0,3).map(x=>'• '+x))
+}
+rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));return cleanTutorText(rows.join('\n'))
 }
 function tutorConceptFor(prompt){
 const q=studyNorm(prompt),current=currentConcept();if(!q)return current;
