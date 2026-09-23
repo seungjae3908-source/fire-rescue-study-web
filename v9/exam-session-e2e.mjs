@@ -18,6 +18,8 @@ try{
   await page.evaluate(()=>window.AITUTOR_V9.App.go('exam'));
   await page.locator('[data-exam-start="practice"]').click();
   await page.waitForSelector('.exam-run-workspace');
+  assert(await page.locator('.exam-compact-status').isVisible()&&await page.locator('.exam-side').isHidden(),'mobile active exam uses compact progress navigation instead of a squeezed desktop sidebar');
+  assert(await page.locator('.exam-question-card .choice-no').count()===4,'mobile exam choices use clear exam-style numbered markers');
 
   await page.locator('[data-exam-answer="1"]').click();
   await page.locator('[data-exam-confidence="sure"]').click();
