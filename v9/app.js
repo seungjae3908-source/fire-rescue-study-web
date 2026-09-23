@@ -88,7 +88,7 @@ function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(
 const DETAIL_META_SECTION_RE=/^(?:개념\s*구조와\s*읽는\s*순서|핵심\s*포인트\s*연결|문제\s*적용과\s*난이도\s*대응|공식\s*원문으로\s*복귀하는\s*기준|회상\s*루프)$/;
 function uniqueSections(rows=[]){const out=[];for(const row of rows){if(!row?.body||DETAIL_META_SECTION_RE.test(String(row.title||'').trim()))continue;if(out.some(x=>sameStudyText(x.body,row.body)))continue;out.push(row)}return out}
 function coreEssentialRows(pack){
-const quick=pack?.studySchema?.quick30||pack?.summary||'',numbers=V.StudyEmphasis119?.numberRows?.(pack,12)||[];
+const quick=pack?.studySchema?.quick30||pack?.summary||'',numbers=(V.StudyEmphasis119?.numberRows?.(pack,12)||[]).map(studentStudyText).filter(Boolean);
 const candidates=[
 ...(V.StudyEmphasis119?.mustRows?.(pack)||[]).map((text,index)=>({text,bucket:'must',index})),
 ...(V.StudyEmphasis119?.featureRows?.(pack)||[]).map((text,index)=>({text,bucket:'feature',index}))
