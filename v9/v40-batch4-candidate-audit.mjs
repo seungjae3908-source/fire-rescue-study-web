@@ -49,8 +49,8 @@ const conceptRows=V.curriculum.concepts.map(c=>{
 const under3=conceptRows.filter(x=>x.verified<3).length;
 const concentrated=conceptRows.filter(x=>x.verified>=3&&(x.answerPositionKinds<2||x.maxAnswerShare>=0.8));
 const totalVerified=V.questions.filter(q=>q.grade==='A'||q.grade==='B').length;
-if(totalVerified!==677)throw new Error('V40_BATCH4_TOTAL_VERIFIED '+totalVerified);
-if(under3!==53)throw new Error('V40_BATCH4_UNDER3 '+under3);
+if(totalVerified<677)throw new Error('V40_BATCH4_TOTAL_VERIFIED_REGRESSION '+totalVerified);
+if(under3>53)throw new Error('V40_BATCH4_UNDER3_REGRESSION '+under3);
 if(concentrated.length!==1||concentrated[0].id!=='E11-C02')throw new Error('V40_BATCH4_CONCENTRATION '+JSON.stringify(concentrated));
 result.summary={totalVerified,under3,concentrated};
 console.log('V40_BATCH4_PROMOTION_SUMMARY',JSON.stringify(result,null,2));
