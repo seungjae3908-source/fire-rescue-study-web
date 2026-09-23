@@ -525,7 +525,7 @@ const host=root.querySelector('#resourcePdfHost'),badge=root.querySelector('[dat
 if(!catalog||!V.SourcePDF){host.innerHTML='<div class="empty">연결된 원문이 없습니다.</div>';return}
 host.innerHTML='<div class="pdf-loading"><b>공식 교재 여는 중…</b><small>필요한 페이지만 불러옵니다.</small><div class="progressbar"><i style="width:35%"></i></div></div>';
 try{
-const result=await V.SourcePDF.render(key,Number(pageOverride)||1,host,[],{timeoutMs:90000,zoom:Number(root.dataset.zoom)||1});
+const result=await V.SourcePDF.render(key,Number(pageOverride)||1,host,[],{timeoutMs:30000,zoom:Number(root.dataset.zoom)||1});
 root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);const zl=root.querySelector('[data-resource-zoom-label]');if(zl)zl.textContent=Math.round((result.zoom||1)*100)+'%';
 badge.textContent=result.bookPage?`교재 ${result.bookPage}쪽`:`PDF ${result.page}/${result.pages}쪽`;
 const prev=root.querySelector('[data-resource-pdf-page="-1"]'),next=root.querySelector('[data-resource-pdf-page="1"]');
@@ -534,7 +534,7 @@ root.querySelector('.pdf-pager')?.classList.remove('hidden');
 }catch(err){
 root.dataset.renderState='error';
 badge.textContent='원문을 불러오지 못했습니다';
-host.innerHTML=`<div class="source-connect official-fallback"><b>교재를 불러오지 못했습니다.</b><p>네트워크 상태를 확인한 뒤 다시 시도하세요.</p>${official?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div>`;
+host.innerHTML=`<div class="source-connect official-fallback"><b>교재를 불러오지 못했습니다.</b><p>30초 안에 열리지 않으면 연결을 중단합니다. 다시 시도하거나 공식 사이트에서 바로 확인하세요.</p><div class="toolbar"><button class="btn primary" data-resource-pdf-retry>다시 시도</button>${official?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div></div>`;
 root.querySelector('.pdf-pager')?.classList.add('hidden');
 }
 }
@@ -560,16 +560,15 @@ let page=Number(pageOverride)||Number(root.dataset.page)||initialPdfPage||0;
 const progress=({loaded,total,percent})=>{const bar=root.querySelector('[data-pdf-progress]'),label=root.querySelector('[data-pdf-progress-label]');if(bar&&percent!=null)bar.style.width=Math.max(4,percent)+'%';if(label)label.textContent=percent!=null?`원문 준비 중`:`원문 준비 중`};
 if(!page){badge.textContent='근거 위치 찾는 중…';const located=await V.SourcePDF.locate(key,queries);page=located.page;root.dataset.autoLocated='true'}
 badge.textContent=staticRange?'공식 교재 여는 중…':(availability.local?'공식 원문 여는 중…':'공식 원문 여는 중…');
-let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:90000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
+let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:30000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
 if(pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
 const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key);
 const candidates=[];
 const mappedHit=await V.SourcePDF.locate(key,queries,{bookRanges:mapped}).catch(()=>null);
 if(mappedHit?.page&&mappedHit.score>0)candidates.push({...mappedHit,scope:'mapped'});
-const broadHit=await V.SourcePDF.locate(key,queries).catch(()=>null);
-if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'});
+if(!mapped.length){const broadHit=await V.SourcePDF.locate(key,queries).catch(()=>null);if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'})}
 for(const located of candidates){
-const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:90000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
+const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:30000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
 if(hasAnchorEvidence(anchorResult,anchorQueries)||anchorResult.hits>=2){result=anchorResult;root.dataset.autoLocated='true';root.dataset.searchScope=located.scope;break}
 }
 }
@@ -598,7 +597,7 @@ const hasMappedBookPage=Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOf
 document.addEventListener('click',async e=>{const t=e.target instanceof Element?e.target:null;if(!t)return;if(t.matches('[data-backdrop-close-more]')){runtime.more=false;return render()}if(t.matches('[data-backdrop-close-account]')){runtime.account=false;return render()}if(t.matches('[data-source-backdrop],[data-resource-pdf-backdrop],[data-pdf-backdrop]')){sourceClose();return}const b=t.closest('button,[data-outline-close]');if(!b)return;if('sourceBack'in b.dataset){sourceClose();return}if('resourcePdfClose'in b.dataset){sourceClose();return}
 if(b.dataset.resourceDoc){await openResourcePdf(b.dataset.resourceDoc);return}
 if(b.dataset.resourceDownload){await downloadOfficialPdf(b.dataset.resourceDownload);return}
-if(b.dataset.resourcePdfPage){const root=document.querySelector('#resourcePdf'),key=root?.dataset.docKey,current=Number(root?.dataset.page)||1;await renderResourcePdf(key,current+Number(b.dataset.resourcePdfPage));return}if(b.dataset.resourcePdfZoom){const root=document.querySelector('#resourcePdf');root.dataset.zoom=String(Math.max(.75,Math.min(2.25,(Number(root.dataset.zoom)||1)+Number(b.dataset.resourcePdfZoom))));await renderResourcePdf(root.dataset.docKey,Number(root.dataset.page)||1);return}if('resourcePdfFit'in b.dataset){const root=document.querySelector('#resourcePdf');root.dataset.zoom='1';await renderResourcePdf(root.dataset.docKey,Number(root.dataset.page)||1);return}
+if('resourcePdfRetry'in b.dataset){const root=document.querySelector('#resourcePdf'),key=root?.dataset.docKey||'';if(key)await V.SourcePDF.clearPdfCache?.(key);await renderResourcePdf(key,Number(root?.dataset.page)||1);return}if(b.dataset.resourcePdfPage){const root=document.querySelector('#resourcePdf'),key=root?.dataset.docKey,current=Number(root?.dataset.page)||1;await renderResourcePdf(key,current+Number(b.dataset.resourcePdfPage));return}if(b.dataset.resourcePdfZoom){const root=document.querySelector('#resourcePdf');root.dataset.zoom=String(Math.max(.75,Math.min(2.25,(Number(root.dataset.zoom)||1)+Number(b.dataset.resourcePdfZoom))));await renderResourcePdf(root.dataset.docKey,Number(root.dataset.page)||1);return}if('resourcePdfFit'in b.dataset){const root=document.querySelector('#resourcePdf');root.dataset.zoom='1';await renderResourcePdf(root.dataset.docKey,Number(root.dataset.page)||1);return}
 if('sourceClose'in b.dataset){sourceClose();return}if('pdfClose'in b.dataset){sourceClose();return}if('pdfRetry'in b.dataset){const root=document.querySelector('#pdfEvidence'),id=root?.dataset.conceptId;await V.SourcePDF.clearPdfCache?.(V.curriculum.byId[id]?.sourceRanges?.[0]?.doc||'');await renderPdfEvidence(id);return}if(b.dataset.pdfEvidence){await openPdfEvidence(b.dataset.pdfEvidence);return}if(b.dataset.pdfPage){const root=document.querySelector('#pdfEvidence'),id=root?.dataset.conceptId,current=Number(root?.dataset.page)||1;await renderPdfEvidence(id,current+Number(b.dataset.pdfPage));return}if(b.dataset.pdfZoom){const root=document.querySelector('#pdfEvidence');root.dataset.zoom=String(Math.max(.75,Math.min(2.25,(Number(root.dataset.zoom)||1)+Number(b.dataset.pdfZoom))));await renderPdfEvidence(root.dataset.conceptId,Number(root.dataset.page)||1);return}if('pdfFit'in b.dataset){const root=document.querySelector('#pdfEvidence');root.dataset.zoom='1';await renderPdfEvidence(root.dataset.conceptId,Number(root.dataset.page)||1);return}if(b.dataset.examReport){runtime.examReportId=b.dataset.examReport;return go('stats')}if(b.dataset.skillTrain){state().page='exam';S.save();runtime.examReportId='';return startTraining('skill:'+b.dataset.skillTrain)}if('reportClose'in b.dataset){runtime.examReportId='';return render()}if(b.dataset.go)return go(b.dataset.go);if('more'in b.dataset){runtime.more=true;return render()}if('closeMore'in b.dataset){runtime.more=false;return render()}if('account'in b.dataset){runtime.account=true;return render()}if('closeAccount'in b.dataset){runtime.account=false;return render()}if('outline'in b.dataset){state().outline=!state().outline;S.save();return render()}if('outlineClose'in b.dataset){state().outline=false;S.save();return render()}if(b.dataset.subject){state().subject=b.dataset.subject;const sc=(b.dataset.subject==='fire'?V.curriculum.fire:V.curriculum.ems)[0];state().scopeId=sc.id;state().conceptId=`${sc.id}-C01`;S.save();return render()}if(b.dataset.scope){const sc=V.curriculum.scopeById[b.dataset.scope];state().scopeId=sc.id;state().conceptId=`${sc.id}-C01`;S.save();return render()}if(b.dataset.passStar){try{const r=await V.PassNote.toggleConcept(b.dataset.passStar);toast(r.saved?'합격노트에 저장됨':'합격노트에서 해제됨');return render()}catch(err){return toast('합격노트 저장 실패 · '+String(err?.message||err).slice(0,40))}}
 if(b.dataset.passQuestion){try{const r=await V.PassNote.toggleQuestion(b.dataset.passQuestion);toast(r.saved?'문제를 합격노트에 저장':'합격노트에서 문제 해제');return render()}catch(err){return toast('문제 저장 실패 · '+String(err?.message||err).slice(0,40))}}
 if(b.dataset.passExport){try{V.PassNote.exportPdf(b.dataset.passExport);toast('인쇄 화면에서 PDF로 저장하세요.')}catch(err){toast(err?.message==='POPUP_BLOCKED'?'팝업을 허용한 뒤 다시 눌러주세요.':'PDF 내보내기 실패')}return}
