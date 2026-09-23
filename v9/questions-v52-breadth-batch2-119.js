@@ -4,14 +4,6 @@ const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 if(!Array.isArray(V.questions))return;
 const B=[
 {
- id:'119-v52-b2-firehistory-01',grade:'B',subject:'fire',scopeId:'F01',conceptId:'F01-C06',difficulty:'mid',type:'연혁순서형',
- source:'소방청 공식 연혁 https://nfa.go.kr/nfa/introduce/status/history · 소방청 국가직 전환 보도자료 https://www.nfa.go.kr/nfa/news/pressrelease/press/?cntId=772&mode=view',
- pageVerified:false,reviewStatus:'official-web-reviewed',pastExamClaim:false,
- q:'최근 소방행정 조직 변천의 순서로 옳은 것은?',
- choices:['2004 소방방재청 → 2014 중앙소방본부 → 2017 소방청 → 2020 소방공무원 국가직 전환','2014 소방방재청 → 2004 중앙소방본부 → 2020 소방청 → 2017 국가직 전환','2017 소방방재청 → 2020 중앙소방본부 → 2004 소방청 → 2014 국가직 전환','2020 소방방재청 → 2017 중앙소방본부 → 2014 소방청 → 2004 국가직 전환'],a:0,
- choiceExplanations:['정답. 소방방재청 2004, 국민안전처 중앙소방본부 2014, 소방청 2017, 소방공무원 국가직 전환 2020 순서다.','연도가 서로 뒤바뀌어 있다.','소방청 출범과 국가직 전환의 순서를 포함해 맞지 않는다.','전체 연혁의 시간 순서가 역전되어 있다.']
-},
-{
  id:'119-v52-b2-firedef-01',grade:'B',subject:'fire',scopeId:'F03',conceptId:'F03-C01',difficulty:'mid',type:'개념판별형',
  source:'2026 소방전술1(화재1) 3~7쪽',pageVerified:true,reviewStatus:'source-reviewed',pastExamClaim:false,
  q:'화재의 개념에 포함되는 범위를 판단한 설명으로 옳지 않은 것은?',
@@ -111,32 +103,7 @@ const B=[
 }
 ];
 
-const P=[
-{
- id:'119-v52-b2-orgtheory-p01',grade:'P',subject:'fire',scopeId:'F01',conceptId:'F01-C07',difficulty:'low',type:'기초이론연습형',
- source:'2026 소방공무원 채용시험 소방학개론 공식 출제범위 https://js119.gwd.go.kr/egf/bp/board/article/download?fileSeq=1245182 · 조직관리 기초이론 연습용',
- pageVerified:false,reviewStatus:'scope-reviewed-practice',pastExamClaim:false,
- q:'조직관리에서 명령통일 원리를 가장 잘 설명한 것은?',
- choices:['한 구성원이 원칙적으로 한 직속상관의 지휘·보고 계통을 따르도록 한다','한 관리자가 감독할 수 있는 부하 수를 정하는 원리다','업무를 기능별로 나누는 원리다','분화된 부서를 공통목표에 맞게 연결하는 원리다'],a:0,
- choiceExplanations:['정답. 명령통일은 지휘·보고 계통을 명확히 해 상충되는 지시를 줄이는 원리다.','통솔범위에 가까운 설명이다.','분업·전문화 원리에 가깝다.','조정·통합 원리에 가깝다.']
-},
-{
- id:'119-v52-b2-orgtheory-p02',grade:'P',subject:'fire',scopeId:'F01',conceptId:'F01-C07',difficulty:'mid',type:'기초이론연습형',
- source:'2026 소방공무원 채용시험 소방학개론 공식 출제범위 https://js119.gwd.go.kr/egf/bp/board/article/download?fileSeq=1245182 · 조직관리 기초이론 연습용',
- pageVerified:false,reviewStatus:'scope-reviewed-practice',pastExamClaim:false,
- q:'한 관리자가 효과적으로 직접 감독할 수 있는 인원이나 업무의 범위를 뜻하는 조직원리는?',
- choices:['계층제','통솔범위','명령통일','조정·통합'],a:1,
- choiceExplanations:['계층제는 상하 권한·책임과 직무의 단계를 다룬다.','정답. 통솔범위는 관리자가 직접 감독할 수 있는 적정 범위를 뜻한다.','명령통일은 지휘·보고 계통의 일관성을 다룬다.','조정·통합은 분화된 활동을 공통목표로 연결하는 원리다.']
-},
-{
- id:'119-v52-b2-orgtheory-p03',grade:'P',subject:'fire',scopeId:'F01',conceptId:'F01-C07',difficulty:'mid',type:'기초이론연습형',
- source:'2026 소방공무원 채용시험 소방학개론 공식 출제범위 https://js119.gwd.go.kr/egf/bp/board/article/download?fileSeq=1245182 · 조직관리 기초이론 연습용',
- pageVerified:false,reviewStatus:'scope-reviewed-practice',pastExamClaim:false,
- q:'분업·전문화가 강화된 조직에서 조정·통합이 필요한 이유로 가장 적절한 것은?',
- choices:['모든 부서의 전문성을 없애기 위해','상하 계층을 완전히 없애기 위해','분화된 업무와 부서의 활동을 공통 목표에 맞게 연결하고 충돌을 줄이기 위해','각 구성원이 여러 상관의 상충된 명령을 동시에 받게 하기 위해'],a:2,
- choiceExplanations:['조정은 전문성을 없애는 목적이 아니다.','계층을 없애는 원리와 동일하지 않다.','정답. 분화된 기능을 공통 목표에 맞게 연결하고 중복·충돌을 줄이는 것이 조정의 핵심이다.','상충된 복수명령은 오히려 명령통일 원리와 반대되는 상황이다.']
-}
-];
+const P=[];
 
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
 const ids=new Set(V.questions.map(q=>q.id)),texts=new Set(V.questions.map(q=>norm(q.q)));
@@ -151,5 +118,5 @@ for(const q of [...B,...P]){
 }
 V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));
 V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);
-V.VerifiedV52BreadthBatch2={version:'119-v52-breadth-batch2-v1',verifiedAdded:B.length,practiceAdded:P.length,verifiedIds:B.map(q=>q.id),practiceIds:P.map(q=>q.id),policy:'15 source-reviewed B questions plus 3 explicitly P-grade scope-only organization-theory drills; no false promotion'};
+V.VerifiedV52BreadthBatch2={version:'119-v52-breadth-batch2-v1',verifiedAdded:B.length,practiceAdded:P.length,verifiedIds:B.map(q=>q.id),practiceIds:P.map(q=>q.id),policy:'14 source-reviewed B questions for the canonical residual under-3 concepts; existing F01-C06/F01-C07 verified banks are reused without duplication'};
 })();
