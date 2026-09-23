@@ -2,7 +2,7 @@
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};if(!Array.isArray(V.questions)||!V.curriculum?.concepts)return;
 const OFFICIAL_URL='https://www.nfa.go.kr/nfa/news/job/nfajob/?cntId=426&mode=view';
-const SOURCE='소방청 2025년 소방공무원 채용시험 문제지·가답안 · '+OFFICIAL_URL;
+const SOURCE='소방청 공식 2025년 소방공무원 채용시험 문제지·가답안';
 const LICENSE='공공누리 제1유형';
 const safeConcept=(preferred,subject,scope)=>{
   const c=V.curriculum.byId?.[preferred]||V.curriculum.concepts.find(x=>x.subject===subject&&x.scopeId===scope)||V.curriculum.concepts.find(x=>x.subject===subject);
@@ -127,5 +127,5 @@ function buildPractice(){
   const fire=added.filter(q=>q.subject==='fire'),ems=added.filter(q=>q.subject==='ems');
   return [...fire,...ems].sort((a,b)=>a.id.localeCompare(b.id));
 }
-V.OfficialPastExam119={version:'119-official-past-2025-v1',year:2025,date:'2025-03-29',sourceUrl:OFFICIAL_URL,license:LICENSE,questions:added,fire:added.filter(q=>q.subject==='fire').length,ems:added.filter(q=>q.subject==='ems').length,buildPractice,ready:added.length>=30,policy:{verbatimPastExam:true,officialSource:true,noImageDependentQuestions:true,currentLawCompatibilitySeparated:true}};
+V.OfficialPastExam119={version:'119-official-past-2025-v1',year:2025,date:'2025-03-29',sourceUrl:OFFICIAL_URL,license:LICENSE,questions:added,fire:added.filter(q=>q.subject==='fire').length,ems:added.filter(q=>q.subject==='ems').length,buildPractice,ready:added.length>=30,policy:{verbatimPastExam:false,transcribedWithTypographyNormalization:true,officialSource:true,noImageDependentQuestions:true,currentLawCompatibilitySeparated:true}};
 })();
