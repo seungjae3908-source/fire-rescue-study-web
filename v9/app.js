@@ -118,9 +118,32 @@ const sentences=text.split(/(?<=[.!?。])\s+/).map(studentStudyText).filter(Bool
 if(sentences.length<2)return text;
 return sentences.filter(x=>!isCoreStudyText(x,seeds)).join(' ').trim()
 }
-function detailSemanticTitle(v){const t=String(v||'');if(/종류|분류|구분|나뉜|형태/.test(t))return'종류 · 구분';if(/구성|요소|장치|기관|조직/.test(t))return'구성 · 역할';if(/목적|기능|의의|효과/.test(t))return'목적 · 기능';if(/원인|조건|요인/.test(t))return'원인 · 조건';if(/원리|작용|차단|억제|낮춘|높인|제거|공급|반응|발생|전파|흡수|냉각|질식/.test(t))return'작용 원리';if(/순서|단계|절차|시행|평가|확인|처치|대응|이송/.test(t))return'진행 · 절차';if(/수치|시간|거리|농도|온도|압력|비율|이상|이하/.test(t))return'수치 · 기준';if(/예외|금지|주의|오류|함정/.test(t))return'예외 · 주의';if(/특징|성질|증상|징후|소견|기준|위험/.test(t))return'특징 · 판단기준';return'핵심 해설'}
-function detailSectionTitle(v,body=''){const raw=sectionTitle(v).replace(/핵심\s*정리/g,'상세 정리').replace(/핵심\s*포인트/g,'상세 포인트').replace(/핵심/g,'').replace(/\s{2,}/g,' ').trim();return !raw||/^(상세 설명|정의 · 상세)$/.test(raw)?detailSemanticTitle(body):raw}
-function detailGroups(rows=[],seeds=[]){const g=new Map;for(const x of uniqueTextRows(rows)){const body=detailOnlyText(x,seeds);if(!body)continue;const k=detailSemanticTitle(body),a=g.get(k)||[];a.push(body);g.set(k,a)}return[...g].map(([title,bullets])=>({title,body:'',bullets}))}
+const DETAIL_TYPE_RULES={
+hazmat:[['품명 · 분류',/품명|제[1-6]류|분류|산화성|가연성|금수성|인화성|자기반응성/],['성질 · 위험성',/성질|위험|발화|폭발|산화|환원|혼촉|증기/],['저장 · 취급',/저장|취급|보관|격리|용기|누설|습기|점화원/],['소화 · 대응',/소화|주수|냉각|질식|포|분말|마른모래|대응/],['지정수량 · 기준',/지정수량|기준수량|수량|kg|㎥|\bL\b|배수/],['예외 · 주의',/예외|주의|금지|함정|피해야|혼동/]],
+facility:[['목적 · 기능',/목적|기능|용도|역할/],['구성요소',/구성|요소|장치|배관|밸브|헤드|감지기|수신기|발신기|중계기/],['작동 원리',/작동|원리|신호|방수|압력|감지|연동/],['종류 · 구분',/종류|형식|분류|습식|건식|준비작동|일제살수|P형|R형|GP형|GR형/],['설치 · 기준',/설치|기준|거리|면적|높이|수치/],['점검 · 주의',/점검|시험|유지|관리|주의|함정|예외/]],
+governance:[['조직 · 기관',/기관|조직|통제단|본부|위원회|소방청|소방본부|소방서/],['역할 · 권한',/역할|권한|책임|임무|지휘|총괄|조정/],['운영 · 절차',/운영|절차|보고|대응|복구|동원|협업/],['법적 기준',/법|시행령|조문|기준|요건/],['구분 · 비교',/구분|비교|차이|혼동/]],
+law:[['적용 · 정의',/정의|적용|대상|범위/],['주체 · 책임',/주체|기관|책임|권한|의무/],['요건 · 기준',/요건|기준|수치|기간|횟수/],['절차',/절차|신고|승인|검사|보고|처분/],['예외 · 주의',/예외|주의|금지|제외|함정/]],
+emsCondition:[['정의 · 원인',/정의|원인|병태|기전/],['증상 · 징후',/증상|징후|소견|호소/],['평가',/평가|병력|검진|활력|의식/],['처치',/처치|산소|기도|투여|고정|이송/],['위험신호 · 금기',/위험|금기|악화|즉시|주의|예외/]],
+emsProcedure:[['목적 · 적응',/목적|적응|필요|대상/],['준비 · 평가',/준비|평가|확인|장비/],['시행 순서',/순서|절차|시행|단계|방법/],['재평가 · 이송',/재평가|관찰|이송|기록/],['금기 · 주의',/금기|주의|위험|합병증|예외/]],
+emsAssessment:[['평가 목적',/목적|평가/],['평가 순서',/순서|단계|1차|2차|ABCDE|OPQRST|SAMPLE/],['확인 항목',/병력|신체검진|생체징후|의식|동공/],['위험 신호',/위험|생명위협|중증|응급/],['재평가',/재평가|반복|변화|이송/]],
+phenomenon:[['발생 조건',/조건|원인|요인/],['발생 원리',/원리|기전|발생|반응|전파/],['진행 과정',/진행|단계|과정|시기/],['징후',/징후|전조|연기|불꽃|온도/],['위험 · 대응',/위험|대응|환기|진입|소화|안전/],['비교',/비교|차이|구분/]]
+};
+function detailSemanticTitle(c,v){
+const t=String(v||''),type=V.ConceptArchitecture119?.typeOf?.(c?.id)||'';
+for(const [title,re] of DETAIL_TYPE_RULES[type]||[])if(re.test(t))return title;
+if(/종류|분류|구분|나뉜|형태/.test(t))return'종류 · 구분';
+if(/구성|요소|장치|기관|조직/.test(t))return'구성 · 역할';
+if(/목적|기능|의의|효과/.test(t))return'목적 · 기능';
+if(/수치|시간|거리|농도|온도|압력|비율|이상|이하/.test(t))return'수치 · 기준';
+if(/예외|금지|주의|오류|함정/.test(t))return'예외 · 주의';
+if(/특징|성질|증상|징후|소견|기준|위험/.test(t))return'특징 · 판단기준';
+return type==='hazmat'?'성질 · 시험 포인트':type==='facility'?'설비 상세':type.startsWith('ems')?'평가 · 처치 상세':'상세 해설'
+}
+function detailSectionTitle(c,v,body=''){
+const raw=sectionTitle(v).replace(/핵심\s*정리/g,'상세 정리').replace(/핵심\s*포인트/g,'상세 포인트').replace(/핵심/g,'').replace(/\s{2,}/g,' ').trim(),generic=/^(상세 설명|정의 · 상세|원인 · 조건|진행 · 절차|핵심 해설)$/;
+return !raw||generic.test(raw)?detailSemanticTitle(c,body||raw):raw
+}
+function detailGroups(c,rows=[],seeds=[]){const g=new Map;for(const x of uniqueTextRows(rows)){const body=detailOnlyText(x,seeds);if(!body)continue;const k=detailSemanticTitle(c,body),a=g.get(k)||[];a.push(body);g.set(k,a)}return[...g].map(([title,bullets])=>({title,body:'',bullets}))}
 function schemaDetailRows(c,pack){if(V.ConceptArchitecture119?.get?.(c.id)?.genericSchema!==true)return[];const x=pack?.studySchema||{},rows=[['발생 조건',x.conditions],['작용 원리',x.mechanisms],['시기 · 단계',x.timingStages],['전조 · 위험신호',x.warningSigns],['발생 전 · 후',x.beforeAfter]];return rows.filter(([,v])=>v?.length).map(([title,bullets])=>({title,body:'',bullets}))}
 function detailDefinitionBlock(c,pack){const body=studentStudyText(pack?.studySchema?.definition||pack?.summary||'');if(!body)return'';const stem=String(c?.title||'개념').replace(/\s*(?:개론|원리|이론|기초|개요)\s*$/,'').trim()||String(c?.title||'개념'),title=stem+'의 정의';return `<section class="detail-section detail-definition" data-detail-section="definition"><div class="detail-copy"><h3>${esc(title)}</h3><p>${esc(body)}</p></div></section>`}
 function detailExamPointBlock(pack){const rows=uniqueTextRows([...(pack?.traps||[])]).map(studentStudyText).filter(Boolean).slice(0,4);if(!rows.length)return'';return `<section class="detail-exam-points"><h3>시험 포인트</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
