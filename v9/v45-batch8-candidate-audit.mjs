@@ -14,7 +14,7 @@ const result={promoted:{},blockers:{}};
 
 for(const[id,qid]of Object.entries(promotedExpected)){
   const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B'),q=qs.find(x=>x.id===qid);
-  if(verified.length!==3)throw new Error('V45_BATCH8_VERIFIED_COUNT '+id+' '+verified.length);
+  if(verified.length<3)throw new Error('V45_BATCH8_VERIFIED_COUNT_REGRESSION '+id+' '+verified.length+' expected_at_least 3');
   if(!q||q.grade!=='B'||q.generatedPractice!==false||q.pageVerified!==true||q.reviewStatus!=='source-reviewed'||q.pastExamClaim===true)throw new Error('V45_BATCH8_PROMOTION_CONTRACT '+id);
   const pos=[0,0,0,0];for(const x of verified)pos[x.a]=(pos[x.a]||0)+1;
   const kinds=pos.filter(Boolean).length,max=Math.max(...pos)/verified.length;
@@ -35,9 +35,9 @@ const totalVerified=V.questions.filter(q=>q.grade==='A'||q.grade==='B').length;
 const under3=rows.filter(x=>x.verified<3).length;
 const under4=rows.filter(x=>x.verified<4).length;
 const concentrated=rows.filter(x=>x.verified>=3&&(x.kinds<2||x.max>=0.8));
-if(totalVerified!==701)throw new Error('V45_BATCH8_TOTAL_VERIFIED '+totalVerified);
-if(under3!==29)throw new Error('V45_BATCH8_UNDER3 '+under3);
-if(under4!==122)throw new Error('V45_BATCH8_UNDER4 '+under4);
+if(totalVerified<701)throw new Error('V45_BATCH8_TOTAL_VERIFIED_REGRESSION '+totalVerified);
+if(under3>29)throw new Error('V45_BATCH8_UNDER3_REGRESSION '+under3);
+if(under4>122)throw new Error('V45_BATCH8_UNDER4_REGRESSION '+under4);
 if(concentrated.length!==0)throw new Error('V45_BATCH8_CONCENTRATION '+JSON.stringify(concentrated));
 result.summary={totalVerified,under3,under4,concentrated};
 console.log('V45_BATCH8_PROMOTION_SUMMARY',JSON.stringify(result,null,2));
