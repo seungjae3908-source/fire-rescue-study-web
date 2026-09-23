@@ -289,10 +289,16 @@ try{
   await orgNode.waitFor();
   const orgStyle=await orgNode.evaluate(el=>({writingMode:getComputedStyle(el).writingMode,wordBreak:getComputedStyle(el).wordBreak,width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,text:el.textContent||''}));
   assert(orgStyle.writingMode==='horizontal-tb'&&orgStyle.width>orgStyle.height*1.4,'mobile fire-organization labels render horizontally instead of one Korean character per line');
-  const compareFirst= m.locator('.book-section .compare tbody tr').first();
-  await compareFirst.waitFor();
-  const compareLayout=await compareFirst.evaluate(el=>{const cells=[...el.querySelectorAll('td')];return{display:getComputedStyle(el).display,cells:cells.map(td=>({display:getComputedStyle(td).display,width:td.getBoundingClientRect().width,text:td.textContent||''}))}});
-  assert(compareLayout.display==='block'&&compareLayout.cells.length===2&&compareLayout.cells.every(x=>x.display==='block'&&x.width>250),'mobile comparison rows stack label and explanation at full width');
+  const compareTable=m.locator('.book-section .compare tbody tr').first(),compareCard=m.locator('.book-section .concept-class-card').first();
+  if(await compareCard.count()){
+    await compareCard.waitFor();await compareCard.locator('summary').click();
+    const cardLayout=await compareCard.evaluate(el=>{const s=el.querySelector('summary'),p=el.querySelector('p'),r=el.getBoundingClientRect();return{width:r.width,summary:s?.textContent||'',body:p?.textContent||'',bodyVisible:!!p&&getComputedStyle(p).display!=='none'}});
+    assert(cardLayout.width>250&&cardLayout.summary&&cardLayout.body&&cardLayout.bodyVisible,'mobile classification comparison uses a full-width expandable card');
+  }else{
+    await compareTable.waitFor();
+    const compareLayout=await compareTable.evaluate(el=>{const cells=[...el.querySelectorAll('td')];return{display:getComputedStyle(el).display,cells:cells.map(td=>({display:getComputedStyle(td).display,width:td.getBoundingClientRect().width,text:td.textContent||''}))}});
+    assert(compareLayout.display==='block'&&compareLayout.cells.length===2&&compareLayout.cells.every(x=>x.display==='block'&&x.width>250),'mobile comparison rows stack label and explanation at full width');
+  }
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03',{keepTab:true}));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
   const keyLine= m.locator('.book-section .detail-view .study-key-text').first();
