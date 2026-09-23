@@ -77,7 +77,7 @@ function sectionTitle(v){const raw=String(v||'개념').trim();return /개념\s*�
 function studentStudyText(v){return String(v||'')
 .replace(/개념\s*구조와\s*읽는\s*순서/gi,'')
 .replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
-.replace(/\b(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
+.replace(/(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
 .replace(/(?:연결된\s*)?(?:공식\s*)?(?:교재|원문|학습팩|근거)(?:\s*근거)?\s*(?:에서는?|에\s*따르면|에서|은|는)\s*/gi,'')
 .replace(/\s*교재의\s*정의(?:이)?다\.?/gi,'')
 .replace(/\[\s*\]/g,'').replace(/\s{2,}/g,' ').trim()}
