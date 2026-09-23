@@ -30,6 +30,23 @@ function writeJson(file,value){
   fs.mkdirSync(path.dirname(file),{recursive:true});
   fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');
 }
+function isPublishableMonitorRow(row){
+  if(row?.sourceId!=='nfsa-notice')return true;
+  try{
+    const url=new URL(String(row?.url||''));
+    const mode=String(url.searchParams.get('mode')||'').toLowerCase();
+    const hasStablePostId=['cntId','cntid','nttId','nttid'].some(key=>url.searchParams.has(key));
+    return mode==='view'||hasStablePostId;
+  }catch{return false}
+}
+function filterNavigationRows(snapshot){
+  const before=Array.isArray(snapshot?.items)?snapshot.items:[];
+  const items=before.filter(isPublishableMonitorRow);
+  if(items.length!==before.length){
+    console.log('OFFICIAL_MONITOR_NAV_ROWS_FILTERED',before.length-items.length);
+  }
+  return{...snapshot,items};
+}
 function structuredChanges(oldRow,newRow){
   const labels={
     applicationStart:'원서접수 시작',
@@ -90,7 +107,8 @@ function degradedSnapshot(live,lastGood){
 }
 
 const previous=await previousSnapshot();
-const live=await collectOfficialNotices(fetch,new Date());
+const collected=await collectOfficialNotices(fetch,new Date());
+const live=filterNavigationRows(collected);
 let snapshot;
 
 if(live.healthy){
