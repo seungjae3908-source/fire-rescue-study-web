@@ -47,9 +47,9 @@ try{
   await p.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C11',{keepTab:true}));
   await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C11'&&window.AITUTOR_V9.Store.state.studyTab==='detail');
   const detailSelect=p.locator('.study-body-desktop [data-detail-jump-select]');
-  assert(await detailSelect.count()===1&&await detailSelect.locator('option').count()>=4,'long desktop detail exposes a compact jumpable section selector');
-  const detailJump=await detailSelect.locator('option').nth(1).getAttribute('value');
-  assert(detailJump!==null&&await p.locator(`.study-body-desktop [data-detail-section="${detailJump}"]`).count()===1,'detail selector points to a real textbook section in the active pane');
+  assert(await detailSelect.count()===0,'desktop detail removes the redundant section-selector control and reads like a continuous textbook page');
+  const semanticDetail=await p.locator('.study-body-desktop .detail-view').innerText();
+  assert(semanticDetail.length>220,'desktop detail keeps substantive textbook content after removing navigation clutter');
   const architectureTruth=await p.evaluate(()=>{const V=window.AITUTOR_V9,ids=['F01-C01','F01-C06','F01-C07','F03-C06','F05-C05','F07-C05','E08-C01','E24-C01'];return{total:V.curriculum.concepts.length,mapped:Object.keys(V.ConceptArchitecture119?.map||{}).length,types:Object.fromEntries(ids.map(id=>[id,V.ConceptArchitecture119?.typeOf?.(id)||'']))}});
   assert(architectureTruth.mapped===architectureTruth.total,'every fire and EMS concept has an explicit study architecture type');
   assert(architectureTruth.types['F01-C01']==='governance'&&architectureTruth.types['F01-C06']==='history'&&architectureTruth.types['F01-C07']==='organizationTheory'&&architectureTruth.types['F03-C06']==='phenomenon'&&architectureTruth.types['F05-C05']==='hazmat'&&architectureTruth.types['E08-C01']==='emsAssessment'&&architectureTruth.types['E24-C01']==='emsResuscitation','fire and EMS concepts receive domain-specific templates, including split history and organization theory');
@@ -253,12 +253,22 @@ try{
   const starAfter=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
   assert(starAfter===starBefore+1,'core star saves the exact concise point into pass notes');
   assert(await m.locator('.book-section .study-star-btn.on').count()>=1,'saved core point visibly keeps its filled star state');
+  assert(await m.locator('.book-section [data-pass-note-open]').count()>=1,'core exposes direct navigation to the subject-split pass note');
+  await m.locator('.book-section .study-star-btn.on').first().click();
+  const starRemoved=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
+  assert(starRemoved===starBefore,'pressing the filled star removes the exact point from pass notes');
+
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
   await m.waitForSelector('.book-section .core-view .hazmat-class-grid');
   assert(await m.locator('.book-section .core-view .hazmat-class-card').count()===6,'hazardous-material core keeps all six class names visible');
   const hazCore=await m.locator('.book-section .core-view .hazmat-class-grid').innerText();
   assert(hazCore.includes('제4류')&&hazCore.includes('제5류')&&hazCore.includes('제6류'),'hazardous-material core does not omit classes 4, 5 or 6');
+  await m.locator('.book-section .hazmat-class-summary').first().click();
+  const hazExpanded=await m.locator('.book-section .hazmat-class-card.open').innerText();
+  assert(hazExpanded.includes('아염소산염류')&&hazExpanded.includes('지정')===false&&hazExpanded.includes('50 kg'),'class-1 card expands into real item names and designated quantities instead of a count-only card');
+  assert(await m.locator('.book-section .hazmat-class-card.open [data-concept="F05-C02"]').count()===1,'expanded hazardous-material class links directly to its detailed concept');
+
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.book-section .hazmat-class-grid');
   assert(await m.locator('.book-section .hazmat-class-card').count()===6,'hazardous-material detail keeps the six-class reference');
