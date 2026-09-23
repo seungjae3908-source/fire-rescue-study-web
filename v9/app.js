@@ -468,6 +468,13 @@ const chat=state().chat.filter(m=>m.conceptId===c.id).slice(-18);
 const arch=V.ConceptArchitecture119?.get?.(c.id);
 return `<div class="study-ai"><div class="study-ai-head"><div><span class="eyebrow">현재 개념 전용 AI</span><b>${esc(c.title)} 범위에서만 답합니다.</b><small class="tiny muted">${esc(arch?.label||'개념 학습')}</small></div><div class="tutor-head-actions"><span class="tiny muted">${esc(runtime.aiStatus)}</span>${chat.length?'<button class="btn small ghost" data-tutor-clear>대화 지우기</button>':''}</div></div><div class="study-ai-chat">${chat.length?chat.map(tutorMessageHtml).join(''):`<div class="tutor-empty compact"><p><b>${esc(c.title)}</b>에 대해 질문하세요. 후속 질문도 앞 대화의 대상을 이어서 답합니다.</p><div class="tutor-quick"><button data-tutor-prompt="핵심 요약해줘">핵심 요약</button><button data-tutor-prompt="헷갈리는 것만 비교해줘">헷갈리는 비교</button></div></div>`}</div><div class="tutor-compose"><input data-tutor-input class="input" placeholder="${esc(c.title)}에 대해 질문하세요"><button class="btn primary" data-tutor-send>보내기</button></div></div>`
 }
+function tutorNumericClaims(v){
+return [...new Set((String(v||'').match(/\d+(?:[.,]\d+)?(?:\s*(?:~|–|-)\s*\d+(?:[.,]\d+)?)?\s*(?:mg\/kg|mg|g|kg|mL|L\/min|L|mmHg|cm|mm|℃|°C|%|J|mA|회\/분|회|분|초|시간|쪽)?/g)||[]).map(x=>x.replace(/\s+/g,'').replace(/,/g,'.')).filter(x=>/[a-zA-Z가-힣%℃°]|\d{2,}/.test(x)))]
+}
+function tutorUnsupportedNumbers(answer,corpus){
+const source=String(corpus||'').replace(/\s+/g,'').replace(/,/g,'.'),allowed=new Set(['119','2020','2026']);
+return tutorNumericClaims(answer).filter(x=>!allowed.has(x)&&!source.includes(x))
+}
 function visibleTutorInput(){const all=[...document.querySelectorAll('[data-tutor-input]')];return all.find(x=>x.offsetParent!==null)||all[0]||null}
 function trimTutorChat(conceptId,limit=20){
 const own=(state().chat||[]).filter(m=>m.conceptId===conceptId),drop=new Set(own.slice(0,Math.max(0,own.length-limit)).map(x=>x.id));if(drop.size)state().chat=(state().chat||[]).filter(x=>!drop.has(x.id))
@@ -492,18 +499,22 @@ try{runtime.aiStatus='AI 준비 중';runtime.aiEngine=await V.LocalAI.ensure({on
 if(runtime.aiEngine||V.LocalAI?.ready){
 try{
 const deep=(pack.deepSections||[]).map(x=>[x?.title,x?.body,...(x?.bullets||[])].filter(Boolean).join(': ')).join('\n');
-const context=`[현재 개념]\n${current.id} ${current.title}\n[유형]\n${V.ConceptArchitecture119?.get?.(current.id)?.label||''}\n[요약]\n${pack.summary||''}\n[상세]\n${(pack.detail||[]).join('\n')}\n[시험필수]\n${(pack.must||[]).join('\n')}\n[심화]\n${deep}\n[비교]\n${(pack.compare||[]).map(x=>x.join(': ')).join('\n')}\n[함정]\n${(pack.traps||[]).join('\n')}\n[공식근거]\n${pack.source||''}`;
+const ev=V.StudyEmphasis119?.evidence?.(current.id,pack)||{},rangeText=(ev.ranges||[]).map(x=>`${x.label||x.doc} ${x.from}~${x.to}쪽`).join(' · '),officialLinks=(pack.officialLinks||[]).map(x=>x?.label).filter(Boolean).join(' · ');
+const context=`[현재 개념]\n${current.id} ${current.title}\n[유형]\n${V.ConceptArchitecture119?.get?.(current.id)?.label||''}\n[요약]\n${pack.summary||''}\n[상세]\n${(pack.detail||[]).join('\n')}\n[시험필수]\n${(pack.must||[]).join('\n')}\n[심화]\n${deep}\n[비교]\n${(pack.compare||[]).map(x=>x.join(': ')).join('\n')}\n[함정]\n${(pack.traps||[]).join('\n')}\n[공식근거]\n${ev.source||pack.source||''}\n[직접 연결 범위]\n${rangeText}\n[공식 링크]\n${officialLinks}`;
 const style=evidenceOnly?'근거만 요청했다. 판단을 확장하지 말고 출처와 근거만 답한다.':compare?'현재 질문이 요구하는 대상의 차이를 먼저 답하고 필요한 경우 표를 사용한다.':detailed?'현재 질문에 대한 결론부터 제시한 뒤 원리·이유와 시험 적용을 자세히 설명한다.':'현재 질문에 직접 답하고 필요한 이유와 시험 포인트만 짧게 설명한다.';
 const history=prior.filter(m=>m.role==='user'||m.role==='assistant').map(m=>({role:m.role,content:cleanTutorText(m.text||'')})).filter(m=>m.content&&!/답변 준비 중|생각 중/.test(m.content));
 const enhanced=await V.LocalAI.chat([
-{role:'system',content:'119 소방·구급 시험 학습도우미다. 제공된 공식 학습팩 안에서만 답한다. 사용자의 후속질문에서 “그럼”, “그건”, “둘”, “기관들” 같은 지시대상은 직전 대화 문맥으로 해석한다. 현재 질문이 달라졌으면 이전 답을 반복하지 말고 현재 질문에 직접 답한다. 학습팩 밖 사실·숫자·법규·의학 기준을 만들지 않는다. 표는 열 수가 맞는 Markdown 표로 작성한다. '+style},
+{role:'system',content:'119 소방·구급 시험 학습도우미다. 제공된 공식 학습팩과 직접 연결된 공식근거 안에서만 답한다. 사용자의 후속질문에서 “그럼”, “그건”, “둘”, “기관들” 같은 지시대상은 직전 대화 문맥으로 해석한다. 현재 질문이 달라졌으면 이전 답을 반복하지 말고 현재 질문에 직접 답한다. 근거에 없는 기관명·수치·법규·의학 기준은 추측하거나 보완하지 말고 “현재 연결된 공식 근거에서 확인되지 않습니다”라고 명시한다. 답변의 사실과 숫자는 반드시 제공된 근거에서 확인 가능해야 한다. 표는 열 수가 맞는 Markdown 표로 작성한다. '+style},
 {role:'system',content:context},
 ...history,
 {role:'user',content:prompt}
 ],{temperature:.1,max_tokens:detailed?950:600});
 if(enhanced){
-out=cleanTutorText(enhanced);runtime.aiEngine=V.LocalAI.engine||runtime.aiEngine;idx=state().chat.findIndex(x=>x.id===assistant.id);
-if(idx>=0){state().chat[idx]={...state().chat[idx],text:out,enhanced:true};trimTutorChat(current.id,20);S.save();if(currentConcept()?.id===current.id&&state().studyTab==='ai')render()}
+const candidate=cleanTutorText(enhanced),numericCorpus=context+'\n'+prompt+'\n'+history.map(x=>x.content).join('\n'),unsupported=tutorUnsupportedNumbers(candidate,numericCorpus);
+out=unsupported.length?fallbackTutor(prompt,current,pack):candidate;
+runtime.aiStatus=unsupported.length?'근거 검증 후 답변':'공식근거 기반 답변';
+runtime.aiEngine=V.LocalAI.engine||runtime.aiEngine;idx=state().chat.findIndex(x=>x.id===assistant.id);
+if(idx>=0){state().chat[idx]={...state().chat[idx],text:out,enhanced:!unsupported.length,groundingRejected:unsupported.length>0};trimTutorChat(current.id,20);S.save();if(currentConcept()?.id===current.id&&state().studyTab==='ai')render()}
 }
 }catch{runtime.aiStatus='근거 기반 답변'}
 }
