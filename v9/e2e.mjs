@@ -416,6 +416,12 @@ try{
   assert(calcEvidence.oxygenQs.length===4&&calcEvidence.dripQs.length===4&&[...calcEvidence.oxygenQs,...calcEvidence.dripQs].every(x=>x==='P'),'legacy and newly source-backed oxygen/drip calculation drills all remain P-grade and cannot enter verified real-mock credit');
   assert(calcEvidence.staged.length===42&&calcEvidence.staged.every(x=>x.grade==='P'&&x.past===false),'all staged calculation drills remain P-grade and outside real-mock credit');
   await go(m,'exam');await m.waitForSelector('.exam-start');
+  const pastStart=m.locator('[data-exam-start="past2025"]');
+  assert(await pastStart.count()===1,'exam landing exposes the NFA-attributed 2025 actual past-exam subset');
+  await pastStart.click();await m.waitForSelector('.exam-run-workspace');
+  const pastTruth=await m.evaluate(()=>{const V=window.AITUTOR_V9,e=V.App.runtime.exam;return{mode:e.mode,n:e.qs.length,allPast:e.qs.every(q=>q.officialPastExam===true&&q.pastExamClaim===true&&q.generatedPractice===false),source:e.qs.every(q=>/nfa\.go\.kr/.test(q.source||'')),imageFree:e.qs.every(q=>!/<그림>|Image:/.test(q.q||''))}});
+  assert(pastTruth.mode==='past'&&pastTruth.n>=30&&pastTruth.allPast&&pastTruth.source&&pastTruth.imageFree,'2025 actual past-exam lane contains only NFA-attributed image-independent past questions');
+  await m.evaluate(()=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.ExamSession119?.clear?.(V.Store.ownerId);V.App.go('exam')});await m.waitForSelector('.exam-start');
   const realStart=m.locator('[data-exam-start="real"]');
   assert(await realStart.count()===1,'real mock start is enabled only after verified fire+EMS scope coverage closes');
   await realStart.click();await m.waitForSelector('.question-card');
