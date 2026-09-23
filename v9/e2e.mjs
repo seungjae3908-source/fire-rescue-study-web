@@ -268,14 +268,15 @@ try{
   const starBefore=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
   assert(await m.locator('.book-section .study-star-btn').count()===0,'core removes sentence-by-sentence favorite stars');
   assert(await m.locator('.book-section .study-core-save').count()===1,'core exposes exactly one concept-level favorite control');
+  assert((await m.locator('.book-section .study-core-save').innerText()).trim()==='합격노트 ☆','unsaved concept favorite is labeled 합격노트 ☆');
+  assert(await m.locator('.book-section [data-pass-note-open]').count()===0,'core removes the separate 합격노트 보기 control');
   await m.locator('.book-section .study-core-save').click();
   const starAfter=await m.evaluate(()=>{const V=window.AITUTOR_V9,n=V.PassNote.passNotes().find(x=>x.id===V.PassNote.conceptCoreKey(V.Store.state.conceptId));return{count:V.PassNote.passNotes().length,body:n?.body||'',type:n?.sourceType||''}});
-  assert(starAfter.count===starBefore+1&&starAfter.type==='pass-star-concept'&&starAfter.body.includes('[핵심]'),'one core favorite saves the whole concept 핵심 into pass notes');
-  assert(await m.locator('.book-section .study-core-save.on').count()===1,'saved concept visibly keeps its filled favorite state');
-  assert(await m.locator('.book-section [data-pass-note-open]').count()>=1,'core exposes direct navigation to the subject-split pass note');
+  assert(starAfter.count===starBefore+1&&starAfter.type==='pass-star-concept'&&starAfter.body.includes('[핵심]'),'합격노트 ☆ saves the whole concept core as one pass note');
+  assert((await m.locator('.book-section .study-core-save.on').innerText()).trim()==='합격노트 ★','saved concept favorite changes to 합격노트 ★');
   await m.locator('.book-section .study-core-save.on').click();
   const starRemoved=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
-  assert(starRemoved===starBefore,'pressing the saved concept favorite removes the whole concept note');
+  assert(starRemoved===starBefore&&(await m.locator('.book-section .study-core-save').innerText()).trim()==='합격노트 ☆','pressing 합격노트 ★ removes the whole concept note and restores ☆');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
@@ -283,10 +284,10 @@ try{
   assert(await m.locator('.book-section .core-view .hazmat-class-card').count()===6,'hazardous-material core keeps all six class names visible');
   const hazCore=await m.locator('.book-section .core-view .hazmat-class-grid').innerText();
   assert(hazCore.includes('제4류')&&hazCore.includes('제5류')&&hazCore.includes('제6류'),'hazardous-material core does not omit classes 4, 5 or 6');
-  await m.locator('.book-section .hazmat-class-summary').first().click();
-  const hazExpanded=await m.locator('.book-section .hazmat-class-card.open').innerText();
-  assert(hazExpanded.includes('아염소산염류')&&hazExpanded.includes('지정')===false&&hazExpanded.includes('50 kg'),'class-1 card expands into real item names and designated quantities instead of a count-only card');
-  assert(await m.locator('.book-section .hazmat-class-card.open [data-concept="F05-C02"]').count()===1,'expanded hazardous-material class links directly to its detailed concept');
+  assert(await m.locator('.book-section [data-hazmat-class-toggle]').count()===0,'hazardous-material classes require no expand toggle');
+  const hazVisible=await m.locator('.book-section .hazmat-class-card').first().innerText();
+  assert(hazVisible.includes('아염소산염류')&&hazVisible.includes('50 kg'),'class-1 item names and designated quantities are visible without tapping');
+  assert(await m.locator('.book-section .hazmat-class-card [data-concept="F05-C02"]').count()===1,'always-visible hazardous-material class links directly to its detailed concept');
 
   await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.book-section .hazmat-class-grid');
@@ -308,16 +309,10 @@ try{
   await orgNode.waitFor();
   const orgStyle=await orgNode.evaluate(el=>({writingMode:getComputedStyle(el).writingMode,wordBreak:getComputedStyle(el).wordBreak,width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,text:el.textContent||''}));
   assert(orgStyle.writingMode==='horizontal-tb'&&orgStyle.width>orgStyle.height*1.4,'mobile fire-organization labels render horizontally instead of one Korean character per line');
-  const compareTable=m.locator('.book-section .compare tbody tr').first(),compareCard=m.locator('.book-section .concept-class-card').first();
-  if(await compareCard.count()){
-    await compareCard.waitFor();await compareCard.locator('summary').click();
-    const cardLayout=await compareCard.evaluate(el=>{const s=el.querySelector('summary'),p=el.querySelector('p'),r=el.getBoundingClientRect();return{width:r.width,summary:s?.textContent||'',body:p?.textContent||'',bodyVisible:!!p&&getComputedStyle(p).display!=='none'}});
-    assert(cardLayout.width>250&&cardLayout.summary&&cardLayout.body&&cardLayout.bodyVisible,'mobile classification comparison uses a full-width expandable card');
-  }else{
-    await compareTable.waitFor();
-    const compareLayout=await compareTable.evaluate(el=>{const cells=[...el.querySelectorAll('td')];return{display:getComputedStyle(el).display,cells:cells.map(td=>({display:getComputedStyle(td).display,width:td.getBoundingClientRect().width,text:td.textContent||''}))}});
-    assert(compareLayout.display==='block'&&compareLayout.cells.length===2&&compareLayout.cells.every(x=>x.display==='block'&&x.width>250),'mobile comparison rows stack label and explanation at full width');
-  }
+  const compareCard=m.locator('.book-section .concept-class-card.static').first();
+  await compareCard.waitFor();
+  const cardLayout=await compareCard.evaluate(el=>{const b=el.querySelector('b'),p=el.querySelector('p'),r=el.getBoundingClientRect();return{width:r.width,label:b?.textContent||'',body:p?.textContent||'',bodyVisible:!!p&&getComputedStyle(p).display!=='none',hasDetails:!!el.closest('details')||el.tagName==='DETAILS'}});
+  assert(cardLayout.width>250&&cardLayout.label&&cardLayout.body&&cardLayout.bodyVisible&&!cardLayout.hasDetails,'mobile comparison shows label and explanation immediately in a full-width static card');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03',{keepTab:true}));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
   const keyLine= m.locator('.book-section .detail-view .study-key-text').first();
@@ -345,6 +340,29 @@ try{
   assert(studyScroller&&nav&&studyScroller.y+studyScroller.height<=nav.y+2,'learning scroller ends cleanly above the single bottom navigation');
   const scrollState=await m.locator('.study-body-mobile').evaluate(el=>({overflow:getComputedStyle(el).overflowY,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}));
   assert(['auto','scroll'].includes(scrollState.overflow),'mobile study uses one dedicated vertical body scroller');
+  const mobileTabPosition=await m.locator('.book-jumpbar').evaluate(el=>getComputedStyle(el).position);
+  assert(mobileTabPosition==='static','mobile study tabs do not stick over or cover the learning text');
+
+  await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C14',{keepTab:true}));
+  await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C14');
+  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.book-section .detail-view');
+  const waterSupplyDetail=await m.locator('.book-section .detail-view').innerText();
+  for(const term of ['소화수조','저수조','채수구','흡수관투입구','2m','20㎥','0.6m','65mm','0.5m','1m'])assert(waterSupplyDetail.includes(term),'fire-water detail visibly contains '+term);
+  assert(await m.locator('.book-section .concept-class-card.static').count()>=4,'fire-water comparison facts are visible without any expand action');
+
+  const fullDetailContract=await m.evaluate(()=>{
+    const V=window.AITUTOR_V9,out={total:0,dupCompare:[],missingV50:[]};
+    const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
+    for(const concept of V.curriculum.concepts){
+      const p=V.contentPacks.get(concept.id)||{};out.total++;
+      const labels=(p.compare||[]).map(r=>norm(r?.[0])).filter(Boolean);
+      if(labels.length!==new Set(labels).size)out.dupCompare.push(concept.id);
+      if(p.visibleDetailCoverageV50!==true)out.missingV50.push(concept.id);
+    }
+    return out
+  });
+  assert(fullDetailContract.total>=183&&fullDetailContract.dupCompare.length===0&&fullDetailContract.missingV50.length===0,'all curriculum concepts use the V50 normalized detail layer with duplicate comparison labels removed');
   await noX(m,'mobile study detail');
 
   const pageMap=await m.evaluate(()=>{const S=window.AITUTOR_V9.SourcePDF;return{fire1:S.pdfPage('fire1',14),fire2:S.pdfPage('fire2',352),ems:S.pdfPage('ems',72),fire1Back:S.bookPage('fire1',30),fire2Back:S.bookPage('fire2',362),emsBack:S.bookPage('ems',90),prevention1Pdf:S.pdfPage('prevention1',3),prevention2Pdf:S.pdfPage('prevention2',3),law1Pdf:S.pdfPage('law1',3),law2Pdf:S.pdfPage('law2',332),law3Pdf:S.pdfPage('law3',3),law4Pdf:S.pdfPage('law4',281),law5Pdf:S.pdfPage('law5',499),prevention1Book:S.bookPage('prevention1',17),law2Book:S.bookPage('law2',344)}});
