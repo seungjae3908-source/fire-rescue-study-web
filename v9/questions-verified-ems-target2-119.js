@@ -117,4 +117,20 @@ for(const q of vb){
 }
 V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.VerifiedChoiceBalance119={count:vb.length,version:'119-v13-verified-choice-balance-v2'};
 
+// V51: low-count verified concepts must not teach an answer-position pattern.
+// Presentation only: rotate one already source-reviewed question while preserving
+// its correct choice and per-choice explanation.
+const v51Diversity=[];
+for(const concept of V.curriculum?.concepts||[]){
+  const qs=(V.questions||[]).filter(q=>q.conceptId===concept.id&&(q.grade==='A'||q.grade==='B')&&Array.isArray(q.choices)&&q.choices.length===4&&Array.isArray(q.choiceExplanations)&&q.choiceExplanations.length===4);
+  if(qs.length<2||new Set(qs.map(q=>q.a)).size>=2)continue;
+  const q=qs[qs.length-1],from=q.a,to=(from+1)%4;
+  [q.choices[from],q.choices[to]]=[q.choices[to],q.choices[from]];
+  [q.choiceExplanations[from],q.choiceExplanations[to]]=[q.choiceExplanations[to],q.choiceExplanations[from]];
+  q.a=to;q.ex=q.choiceExplanations[to];
+  v51Diversity.push({conceptId:concept.id,id:q.id,from,to});
+}
+V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));
+V.V51AnswerDiversity119={version:'119-v51-answer-diversity-v1',changed:v51Diversity};
+
 })();
