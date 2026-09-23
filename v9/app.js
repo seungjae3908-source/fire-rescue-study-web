@@ -361,10 +361,10 @@ return candidates.map(x=>({...x,score:score(x)})).filter(x=>x.score>0).sort((a,b
 function fallbackTutor(prompt,c,pack){
 const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),rows=[],general=/30초|요약|핵심\s*(?:정리|설명)?$/.test(String(prompt||''));
 if(evidenceOnly)rows.push('근거','• '+(pack.source||'공식 학습팩'));
-else if(general){rows.push('답변',pack.summary||((pack.must||[])[0])||c.title);const must=(pack.must||[]).slice(0,detail?5:3);if(must.length)rows.push('','핵심 포인트',...must.map(x=>'• '+x))}
+else if(general){rows.push('답변',pack.summary||((pack.must||[])[0])||c.title);const must=(pack.must||[]).slice(0,detail?5:3),why=uniqueTextRows([...(pack.detail||[]),...(pack.deepSections||[]).map(x=>x?.body).filter(Boolean)]).slice(0,detail?4:2);if(must.length)rows.push('','핵심 포인트',...must.map(x=>'• '+x));if(why.length)rows.push('','왜 그런가',...why.map(x=>'• '+x))}
 else{
 const hits=tutorRelevantRows(prompt,c,pack),picked=uniqueTextRows(hits.slice(0,detail?6:4).map(x=>x.text));
-if(picked.length){rows.push('답변',picked[0]);if(picked.length>1)rows.push('','질문과 직접 관련된 내용',...picked.slice(1).map(x=>'• '+x))}
+if(picked.length){rows.push('답변',picked[0]);if(picked.length>1)rows.push('','왜 그런가',...picked.slice(1).map(x=>'• '+x))}
 else rows.push('답변',pack.summary||((pack.must||[])[0])||c.title);
 if(compare&&(pack.compare||[]).length)rows.push('','비교 판단',...(pack.compare||[]).slice(0,6).map(x=>'• '+x.join(' → ')));
 if(/시험|함정|주의/.test(String(prompt||''))&&(pack.traps||[]).length)rows.push('','시험 적용',...(pack.traps||[]).slice(0,3).map(x=>'• '+x))
@@ -405,7 +405,7 @@ const input=visibleTutorInput(),prompt=input?.value.trim();if(!prompt)return;
 const current=currentConcept(),pack=V.contentPacks.get(current.id),target=tutorTargetAllowed(prompt,current,pack),prior=(state().chat||[]).filter(m=>m.conceptId===current.id).slice(-8);
 const mkid=p=>crypto.randomUUID?crypto.randomUUID():p+Date.now()+Math.random().toString(36).slice(2);
 const userMsg={id:mkid('chat-u-'),role:'user',text:prompt,at:Date.now(),conceptId:current.id};
-const assistant={id:mkid('chat-a-'),role:'assistant',text:'답변 준비 중…',at:Date.now(),conceptId:current.id};
+const assistant={id:mkid('chat-a-'),role:'assistant',text:'생각 중…',at:Date.now(),conceptId:current.id};
 state().chat.push(userMsg,assistant);trimTutorChat(current.id,20);runtime.tutorForceLatest=true;S.save();render();
 if(!target.allowed){
 const out=`현재 학습 항목은 「${current.title}」입니다.\n이 AI는 현재 항목과 직접 등록된 비교 내용만 설명합니다.\n「${target.detected?.title||'다른 개념'}」은 해당 개념 페이지로 이동해서 질문해 주세요.`;
@@ -566,7 +566,7 @@ const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key);
 const candidates=[];
 const mappedHit=await V.SourcePDF.locate(key,queries,{bookRanges:mapped}).catch(()=>null);
 if(mappedHit?.page&&mappedHit.score>0)candidates.push({...mappedHit,scope:'mapped'});
-if(!mapped.length){const broadHit=await V.SourcePDF.locate(key,queries).catch(()=>null);if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'})}
+const broadHit=await Promise.race([V.SourcePDF.locate(key,queries).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),6000))]);if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'});
 for(const located of candidates){
 const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:30000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
 if(hasAnchorEvidence(anchorResult,anchorQueries)||anchorResult.hits>=2){result=anchorResult;root.dataset.autoLocated='true';root.dataset.searchScope=located.scope;break}
