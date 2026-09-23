@@ -14,11 +14,39 @@ const QUESTION_FILES=[
   'questions-verified-fire-target2-119.js',
   'questions-verified-ems-target1-119.js',
   'questions-verified-ems-target2-119.js',
-  'v29-reviewed-promotions-119.js',
   'questions-official-past-2025-119.js',
-  'mock-exam-quality-119.js'
+  'mock-exam-quality-119.js',
+  'v29-reviewed-promotions-119.js'
 ];
 let questionsPromise=null,questionsReady=false;
+
+// V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
+// tokens as real learner-facing underlines as well as marker emphasis so the core
+// contract remains visible on every responsive layout without re-highlighting full lines.
+function restoreCoreUnderlineSemantics(root=document){
+  root?.querySelectorAll?.('.study-key-emphasis').forEach(el=>{
+    el.classList.add('study-key-underline');
+    el.style.setProperty('text-decoration','underline','important');
+    el.style.setProperty('text-decoration-thickness','2px','important');
+    el.style.setProperty('text-underline-offset','3px','important');
+  });
+}
+function installCoreUnderlineObserver(){
+  if(typeof document==='undefined'||typeof MutationObserver==='undefined')return;
+  restoreCoreUnderlineSemantics(document);
+  const root=document.documentElement||document.body;
+  if(!root)return;
+  new MutationObserver(records=>{
+    for(const record of records){
+      for(const node of record.addedNodes||[]){
+        if(node?.nodeType!==1)continue;
+        if(node.matches?.('.study-key-emphasis'))restoreCoreUnderlineSemantics(node.parentElement||node);
+        else restoreCoreUnderlineSemantics(node);
+      }
+    }
+  }).observe(root,{childList:true,subtree:true});
+}
+installCoreUnderlineObserver();
 
 function loadScript(file){
   return new Promise((resolve,reject)=>{
