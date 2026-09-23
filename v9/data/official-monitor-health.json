@@ -1,11 +1,11 @@
 {
   "version": "119-official-monitor-health-v1",
-  "generatedAt": "2026-09-23T11:44:45.878Z",
+  "generatedAt": "2026-09-23T17:08:49.857Z",
   "healthy": true,
-  "coverageComplete": false,
-  "degraded": true,
+  "coverageComplete": true,
+  "degraded": false,
   "preservedLastGood": false,
-  "lastSuccessfulAt": "2026-09-23T11:44:45.878Z",
+  "lastSuccessfulAt": "2026-09-23T17:08:49.857Z",
   "sourceStatus": [
     {
       "id": "gosi-fire",
@@ -23,28 +23,28 @@
       "id": "nfsa-notice",
       "label": "중앙소방학교 고시·공고",
       "required": false,
-      "ok": false,
-      "pagesOk": 0,
-      "status": "error",
-      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
-      "errorCode": "WAF_CHALLENGE",
-      "errorUrl": "https://www.nfa.go.kr/nfsa/news/0011/job/?pageIdx=1",
+      "ok": true,
+      "pagesOk": 1,
+      "status": "ok",
+      "error": "",
+      "errorCode": "",
+      "errorUrl": "",
       "fallbackUsed": false
     },
     {
       "id": "nfsa-materials",
       "label": "중앙소방학교 공식교재",
       "required": false,
-      "ok": false,
-      "pagesOk": 0,
-      "status": "error",
-      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
-      "errorCode": "WAF_CHALLENGE",
-      "errorUrl": "https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/",
+      "ok": true,
+      "pagesOk": 1,
+      "status": "ok",
+      "error": "",
+      "errorCode": "",
+      "errorUrl": "",
       "fallbackUsed": false
     }
   ],
-  "liveItems": 9,
+  "liveItems": 19,
   "targetYear": 0,
-  "reviewRequired": 8
+  "reviewRequired": 18
 }
