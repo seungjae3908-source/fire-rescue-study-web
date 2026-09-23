@@ -360,7 +360,7 @@ const cls=important?'note-important':'';
 return `<span class="note-preview-line ${cls}">${esc(line)}</span>`
 }).join('')
 }
-function sourceBackedNote(n){return ['pass-star','pass-question'].includes(String(n?.sourceType||''))}
+function sourceBackedNote(n){const t=String(n?.sourceType||'');return t.startsWith('pass-star')||t==='pass-question'}
 function splitSourceNote(n){
 const body=String(n?.body||''),marker='\n\n[내 메모]\n',i=body.indexOf(marker);
 return i>=0?{official:body.slice(0,i),memo:body.slice(i+marker.length)}:{official:body,memo:''}
