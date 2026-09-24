@@ -13,13 +13,13 @@ try{
   // Subject-specific study position memory.
   await page.evaluate(async()=>{const V=window.AITUTOR_V9;await V.App.chooseConcept('F07-C14')});
   await page.waitForSelector('.page-study');
-  await page.locator('.study-body-desktop [data-study-tab="detail"]').click();
+  await page.locator('.page-study .tabbar [data-study-tab="detail"]').click();
   await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.studyTab==='detail');
   await page.locator('.study-toolbar [data-subject="ems"]').click();
   await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.subject==='ems');
   await page.evaluate(async()=>{const V=window.AITUTOR_V9;await V.App.chooseConcept('E09-C07')});
   await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E09-C07');
-  await page.locator('.study-body-desktop [data-study-tab="detail"]').click();
+  await page.locator('.page-study .tabbar [data-study-tab="detail"]').click();
   await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.studyTab==='detail');
   await page.locator('.study-toolbar [data-subject="fire"]').click();
   const fireRestore=await page.evaluate(()=>({subject:window.AITUTOR_V9.Store.state.subject,id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
@@ -74,7 +74,7 @@ try{
   // Concept-quiz direct question navigation.
   await page.evaluate(async()=>{const V=window.AITUTOR_V9;await V.App.chooseConcept('F03-C06')});
   await page.waitForSelector('.page-study');
-  await page.locator('.study-body-desktop [data-study-tab="quiz"]').click();
+  await page.locator('.page-study .tabbar [data-study-tab="quiz"]').click();
   await page.waitForSelector('.study-body-desktop .study-quiz-jumps button');
   const jumpCount=await page.locator('.study-body-desktop .study-quiz-jumps button').count();
   assert(jumpCount>=6,'concept quiz exposes direct question-number navigation');
