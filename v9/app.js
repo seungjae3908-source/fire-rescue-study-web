@@ -117,8 +117,19 @@ return[...new Set(a.map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).
 function studyHighlight(v,pack){
 const t=studentStudyText(v),a=coreHighlightTerms(pack).filter(x=>t.includes(x)).slice(0,2),n=(t.match(/\d+(?:\.\d+)?(?:\s*(?:~|–|-)\s*\d+(?:\.\d+)?)?\s*(?:초|분|시간|cm|mm|m|kg|L|%|J\/kg)?/g)||[]).slice(0,1),terms=[...new Set([...a,...n].filter(Boolean))].slice(0,3).sort((x,y)=>y.length-x.length);
 if(!terms.length)return esc(t);
+const escaped=terms.map(x=>x.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\function studyHighlight(v,pack){
+const t=studentStudyText(v),a=coreHighlightTerms(pack).filter(x=>t.includes(x)).slice(0,2),n=(t.match(/\d+(?:\.\d+)?(?:\s*(?:~|–|-)\s*\d+(?:\.\d+)?)?\s*(?:초|분|시간|cm|mm|m|kg|L|%|J\/kg)?/g)||[]).slice(0,1),terms=[...new Set([...a,...n].filter(Boolean))].slice(0,3).sort((x,y)=>y.length-x.length);
+if(!terms.length)return esc(t);
 const escaped=terms.map(x=>x.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&')),re=new RegExp('('+escaped.join('|')+')','g');
 return t.split(re).map((x,i)=>i%2?`<span class="study-key-emphasis ${/\d/.test(x)?'study-key-number':'study-key-term'}">${esc(x)}</span>`:esc(x)).join('')
+}
+')),re=new RegExp('('+escaped.join('|')+')','g');
+return t.split(re).map((x,i)=>i%2?`<span class="study-key-emphasis ${/\d/.test(x)?'study-key-number':'study-key-term'}">${esc(x)}</span>`:esc(x)).join('')
+}
+function numberHighlight(v){
+const t=studentStudyText(v),n=(t.match(/\d+(?:[.,]\d+)?(?:\s*(?:~|–|-)\s*\d+(?:[.,]\d+)?)?\s*(?:㎥|㎡|mmHg|mg\/kg|L\/min|cm|mm|m|kg|mg|mL|L|%|℃|°C|J\/kg|J|회\/분|회|분|초|시간)?/g)||[])[0];
+if(!n)return esc(t);
+const i=t.indexOf(n);return esc(t.slice(0,i))+`<span class="study-key-emphasis study-key-number">${esc(n)}</span>`+esc(t.slice(i+n.length))
 }
 function isCoreStudyText(v,seeds=[]){
 const text=studentStudyText(v),x=studyNorm(text);if(!x)return false;
@@ -180,7 +191,7 @@ function detailExamPointBlock(pack){const rows=uniqueTextRows([...(pack?.traps||
 function detailCriteriaBlock(pack){
 const rows=uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,16)||[]).map(studentStudyText).filter(Boolean)).slice(0,12);
 if(!rows.length)return'';
-return `<section class="detail-criteria" data-detail-section="criteria"><h3>수치 · 기준</h3><ul>${rows.map(x=>`<li>${studyHighlight(x,pack)}</li>`).join('')}</ul></section>`
+return `<section class="detail-criteria" data-detail-section="criteria"><h3>수치 · 기준</h3><ul>${rows.map(x=>`<li>${numberHighlight(x)}</li>`).join('')}</ul></section>`
 }
 function detailHasUniqueContent(x,seeds=[]){if(!x)return false;if(detailOnlyText(x.body,seeds))return true;return(x.bullets||[]).some(v=>detailOnlyText(v,seeds))}
 function detailSection(c,x,index=0,coreSeeds=[]){
@@ -221,7 +232,7 @@ return rows.map((x,i)=>`<section class="calc-lab" data-calculation-index="${i}">
 function quickCoreBlock(c,pack){const text=pack?.studySchema?.quick30||pack?.summary||'';if(!text)return'';const key=V.PassNote?.conceptCoreKey?.(c.id)||'',saved=key&&V.PassNote?.has?.(key);return `<section class="study-quick"><div class="study-quick-title"><span>핵심</span><div class="study-quick-actions"><button class="study-core-save ${saved?'on':''}" data-pass-core="${esc(c.id)}" aria-label="${saved?'합격노트에서 삭제':'합격노트에 추가'}">합격노트 ${saved?'★':'☆'}</button></div></div><p class="lead">${studyHighlight(text,pack)}</p></section>`}
 function coreEssentialBlock(c,pack){const rows=coreEssentialRows(pack).slice(0,5);if(!rows.length)return'';return `<section class="study-core-essentials"><div class="study-core-title"><span>시험 핵심</span></div><ul>${rows.map(x=>`<li><span>${esc(x.text)}</span></li>`).join('')}</ul></section>`}
 function coreCompareBlock(pack){const rows=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[0]&&x[1]).map(x=>[studentStudyText(x[0]),studentStudyText(x[1])]).filter(x=>x[0]&&x[1]).slice(0,4);if(rows.length<2)return'';return `<section class="study-core-compare"><div class="study-core-title"><span>이것만 구분</span></div><div class="study-core-compare-grid">${rows.map(x=>`<div class="study-core-compare-row"><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div>`).join('')}</div></section>`}
-function numberBlock(c,pack){const rows=uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,12)||[]).map(studentStudyText).filter(Boolean)).slice(0,6);if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title"><span>숫자 · 단위 · 기준</span></div><ul>${rows.map(x=>`<li><span class="study-key-text">${studyHighlight(x,pack)}</span></li>`).join('')}</ul></section>`}
+function numberBlock(c,pack){const rows=uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,12)||[]).map(studentStudyText).filter(Boolean)).slice(0,6);if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title"><span>숫자 · 단위 · 기준</span></div><ul>${rows.map(x=>`<li><span class="study-key-text">${numberHighlight(x)}</span></li>`).join('')}</ul></section>`}
 function trapBlock(pack){
 const rows=(V.StudyEmphasis119?.trapRows?.(pack)||[]).map(studentStudyText).filter(Boolean).slice(0,3);if(!rows.length)return'';
 return `<section class="study-traps"><div class="study-traps-title">자주 틀리는 포인트</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
