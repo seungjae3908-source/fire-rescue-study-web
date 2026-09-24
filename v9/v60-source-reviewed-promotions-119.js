@@ -67,17 +67,29 @@ function select(subject,limit){
     const bc=V.QuestionQuality119.forConcept(b.q.conceptId).filter(x=>x.grade==='A'||x.grade==='B').length;
     return ac-bc||a.q.conceptId.localeCompare(b.q.conceptId)||a.q.a-b.q.a||a.q.id.localeCompare(b.q.id)
   });
-  const picked=[],byConcept={},byAnswer=[0,0,0,0],byDifficulty={low:0,mid:0,high:0};
+  const picked=[],byConcept={},byAnswer=[0,0,0,0],byDifficulty={low:0,mid:0,high:0},pickedPositions={};
+  const existingPositions={};
+  for(const q of V.questions||[]){
+    if(q.subject!==subject||(q.grade!=='A'&&q.grade!=='B'))continue;
+    const pos=existingPositions[q.conceptId]||(existingPositions[q.conceptId]=[0,0,0,0]);pos[q.a]=(pos[q.a]||0)+1;
+  }
+  const wouldConcentrate=q=>{
+    const base=existingPositions[q.conceptId]||[0,0,0,0],extra=pickedPositions[q.conceptId]||[0,0,0,0],pos=base.map((n,i)=>n+(extra[i]||0)+(i===q.a?1:0));
+    const total=pos.reduce((a,b)=>a+b,0);if(total<3)return false;
+    const kinds=pos.filter(Boolean).length,maxShare=Math.max(...pos)/total;
+    return kinds<2||maxShare>=0.8
+  };
   while(picked.length<limit){
     let best=null,bestScore=Infinity;
     for(const x of all){
-      if(x.picked||(byConcept[x.q.conceptId]||0)>=conceptCap)continue;
+      if(x.picked||(byConcept[x.q.conceptId]||0)>=conceptCap||wouldConcentrate(x.q))continue;
       const answerPenalty=(byAnswer[x.q.a]||0)*7,diffPenalty=(byDifficulty[x.q.difficulty]||0)*2,conceptPenalty=(byConcept[x.q.conceptId]||0)*18;
       const score=answerPenalty+diffPenalty+conceptPenalty;
       if(score<bestScore){best=x;bestScore=score}
     }
     if(!best)break;
-    best.picked=true;picked.push(best);byConcept[best.q.conceptId]=(byConcept[best.q.conceptId]||0)+1;byAnswer[best.q.a]++;byDifficulty[best.q.difficulty]=(byDifficulty[best.q.difficulty]||0)+1
+    best.picked=true;picked.push(best);byConcept[best.q.conceptId]=(byConcept[best.q.conceptId]||0)+1;byAnswer[best.q.a]++;byDifficulty[best.q.difficulty]=(byDifficulty[best.q.difficulty]||0)+1;
+    const pos=pickedPositions[best.q.conceptId]||(pickedPositions[best.q.conceptId]=[0,0,0,0]);pos[best.q.a]=(pos[best.q.a]||0)+1
   }
   return{picked,available:all.length,byAnswer,byDifficulty}
 }
