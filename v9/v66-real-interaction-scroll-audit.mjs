@@ -13,6 +13,9 @@ assert(app.includes("document.addEventListener('wheel'")&&app.includes('passive:
 assert(app.includes("document.addEventListener('touchstart'")&&app.includes("document.addEventListener('touchmove'")&&app.includes('Math.abs(totalY)>Math.abs(totalX)'),'vertical touch bridge preserves horizontal gesture intent');
 assert(e2e.includes('global top bar')&&e2e.includes('study toolbar')&&e2e.includes('study actionbar')&&e2e.includes('exam header')&&e2e.includes('exam footer')&&e2e.includes('pdf zoombar')&&e2e.includes('pdf pager'),'browser audit covers global, study, exam and PDF fixed chrome');
 assert(e2e.includes('touchBridge')&&e2e.includes('horizontalTouchSafe'),'browser audit covers touch forwarding and horizontal safety');
+assert(e2e.includes('diagonalTrackpad')&&e2e.includes('horizontalWheelSafe'),'browser audit covers diagonal and horizontal trackpad intent');
+assert(e2e.includes('boundaryWheelSafe')&&e2e.includes('does not chain into document'),'browser audit covers top/bottom scroll chaining boundaries');
+assert(e2e.includes('openResourcePdf')&&e2e.includes('resource PDF modal'),'browser audit covers both concept evidence and resource-library PDF viewers');
 assert(e2e.includes('effectiveVerticalOwners')&&e2e.includes("querySelectorAll('*')"),'browser audit scans all effective vertical scrollers, not only owner markers');
 assert(e2e.includes('Input.dispatchTouchEvent')&&e2e.includes('newCDPSession'),'mobile audit uses Chromium trusted touch input');
 assert(ci.includes('V66 fixed-chrome interaction scroll audit'),'deterministic V66 audit is wired to development CI');
