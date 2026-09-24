@@ -261,6 +261,8 @@ jobs:
         run: node v9/v55-core-detail-precision-e2e.mjs
       - name: V56 study usability + answer integrity + PDF find QA
         run: node v9/v56-study-usability-integrity-e2e.mjs
+      - name: V57 daily-study UX + filters + retry + undo + multi-result PDF QA
+        run: node v9/v57-daily-study-ux-e2e.mjs
       - name: Official monitor offline/cache fallback QA
         run: node v9/official-monitor-browser-e2e.mjs
       - name: Keyboard and accessibility semantic smoke QA
