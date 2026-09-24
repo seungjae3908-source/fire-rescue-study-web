@@ -26,14 +26,15 @@ function ensureDailyGoal(limit=6){
     if(!g.done||typeof g.done!=='object'){g.done={};changed=true}
     if(!g.ids.length&&!g.customized){g.ids=todayPlan(limit).map(x=>x.concept.id);changed=true}
   }
+  if(V.CorrectionLoopV64?.syncTodayGoal?.(s,g,{limit:3}))changed=true;
   if(changed)V.Store.save();return g
 }
 function dailyGoalRows(limit=6){
   const g=ensureDailyGoal(limit),rank=new Map(todayPlan(V.curriculum.concepts.length).map(x=>[x.concept.id,x]));
-  return (g.ids||[]).map(id=>{const concept=V.curriculum.byId[id],risk=rank.get(id)||riskFor(id),auto=(risk?.progress?.lastStudy||0)>=dayStartMs();return concept?{concept,reason:risk?.reason||'직접 추가',done:!!g.done?.[id]||auto,manualDone:!!g.done?.[id]}:null}).filter(Boolean)
+  return (g.ids||[]).map(id=>{const concept=V.curriculum.byId[id],risk=rank.get(id)||riskFor(id),correction=V.CorrectionLoopV64?.statusFor?.(id,V.Store.state),auto=correction?.active?false:(risk?.progress?.lastStudy||0)>=dayStartMs(),reason=correction?.active?('취약점 교정 · '+correction.recentCorrect+'/'+Math.max(1,correction.recentAttempts)+' 정답 · 확실 '+correction.sureCorrect):correction?.completed?'취약점 교정 완료':risk?.reason||'직접 추가';return concept?{concept,reason,done:correction?.completed||!!g.done?.[id]||auto,manualDone:!!g.done?.[id],correction:correction||null}:null}).filter(Boolean)
 }
-function dailyGoalAdd(id){const c=V.curriculum.byId[id];if(!c)return false;const g=ensureDailyGoal();if(!g.ids.includes(id))g.ids.push(id);g.customized=true;g.updatedAt=Date.now();V.Store.save();return true}
-function dailyGoalRemove(id){const g=ensureDailyGoal();g.ids=(g.ids||[]).filter(x=>x!==id);if(g.done)delete g.done[id];g.customized=true;g.updatedAt=Date.now();V.Store.save();return true}
+function dailyGoalAdd(id){const c=V.curriculum.byId[id];if(!c)return false;const g=ensureDailyGoal();V.CorrectionLoopV64?.restoreTodayGoal?.(g,id);if(!g.ids.includes(id))g.ids.push(id);g.customized=true;g.updatedAt=Date.now();V.Store.save();return true}
+function dailyGoalRemove(id){const g=ensureDailyGoal();V.CorrectionLoopV64?.dismissTodayGoal?.(V.Store.state,g,id);g.ids=(g.ids||[]).filter(x=>x!==id);if(g.done)delete g.done[id];g.customized=true;g.updatedAt=Date.now();V.Store.save();return true}
 function dailyGoalToggle(id){const g=ensureDailyGoal();if(!g.ids.includes(id))return false;g.done[id]=!g.done[id];g.updatedAt=Date.now();V.Store.save();return g.done[id]}
 function dailyGoalReset(limit=6){const s=V.Store.state;s.todayGoal={date:localDayKey(),ids:todayPlan(limit).map(x=>x.concept.id),done:{},customized:false,createdAt:Date.now(),updatedAt:Date.now()};V.Store.save();return s.todayGoal}
 function dailyGoalSummary(limit=6){
