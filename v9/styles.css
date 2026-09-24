@@ -818,8 +818,7 @@
 .page-exam.exam-active .exam-navigator{
   grid-template-columns:repeat(10,minmax(0,1fr))!important;
   max-height:none!important;
-  overflow-y:visible!important;
-  overflow-x:hidden!important;
+  overflow:visible!important;
 }
 .page-exam.exam-active .exam-side{
   max-height:none!important;
