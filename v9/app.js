@@ -200,9 +200,9 @@ return `<section class="detail-section" data-detail-section="${index}"><div clas
 function detailToc(c,pack,rows=[]){
 const items=[['definition','정의']];
 if((pack?.compare||[]).length)items.push(['comparison','비교 · 구분']);
-for(let i=0;i<rows.length;i++){const row=rows[i],sample=detailOnlyText(row?.body,[])||(row?.bullets||[]).map(studentStudyText).filter(Boolean)[0]||'',title=detailSectionTitle(c,row?.title||'',sample);if(title)items.push([String(i),title])}
 if((V.StudyEmphasis119?.numberRows?.(pack,16)||[]).length)items.push(['criteria','수치 · 기준']);
 if((pack?.traps||[]).length)items.push(['traps','시험 함정 · 주의']);
+for(let i=0;i<rows.length;i++){const row=rows[i],sample=detailOnlyText(row?.body,[])||(row?.bullets||[]).map(studentStudyText).filter(Boolean)[0]||'',title=detailSectionTitle(c,row?.title||'',sample);if(title)items.push([String(i),title])}
 const seen=new Set,uniq=items.filter(([,label])=>{const k=studyNorm(label);if(!k||seen.has(k))return false;seen.add(k);return true}).slice(0,8);
 return `<nav class="detail-toc" aria-label="상세 바로가기"><div class="detail-toc-row"><b class="detail-toc-label">상세 바로가기</b><div class="detail-toc-chips">${uniq.map(([key,label])=>`<button class="detail-toc-chip" data-detail-jump="${esc(key)}">${esc(label)}</button>`).join('')}</div><button class="btn small ghost detail-source-button" data-source-concept="${esc(c.id)}">원문 근거</button></div></nav>`
 }
