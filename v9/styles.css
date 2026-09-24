@@ -286,3 +286,9 @@
   .detail-source-button{grid-column:2;grid-row:2;width:auto!important;min-width:88px}
   .detail-toc-chip{min-height:38px;font-size:13px;padding:7px 10px}
 }
+
+@media(max-width:720px){
+  .detail-toc-chips{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;overflow:visible!important}
+  .detail-toc-chip{min-width:0!important;width:100%!important;min-height:36px!important;padding:5px 4px!important;font-size:12px!important;line-height:1.2!important;white-space:normal!important;word-break:keep-all!important;overflow-wrap:anywhere!important}
+  .detail-toc-chip:nth-child(n+5){display:none!important}
+}
