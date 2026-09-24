@@ -127,6 +127,8 @@ jobs:
         run: node v9/v58-question-bank-expansion-audit.mjs
       - name: V59 seeded rounds + safe variant truth audit
         run: node v9/v59-seeded-variant-audit.mjs
+      - name: V60 source-reviewed B-pool promotion audit
+        run: node v9/v60-source-reviewed-promotion-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
       - name: V28 183-concept depth + verified-question quality audit
