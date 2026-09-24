@@ -58,16 +58,12 @@ async function swipe(page,target,ownerName,label,scope='.page'){
   await loc.waitFor({state:'visible',timeout:30000});
   const box=await loc.boundingBox();
   assert(!!box,label+' swipe target visible');
-  const x=box.x+Math.min(box.width/2,30), y0=box.y+Math.min(Math.max(box.height*.72,22),box.height-8), y1=Math.max(box.y+8,y0-260);
+  const x=box.x+Math.min(box.width/2,30), y=box.y+Math.min(Math.max(box.height*.72,22),box.height-8);
   const cdp=await page.context().newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y:y0,radiusX:4,radiusY:4,force:1}]});
-  for(let i=1;i<=6;i++){
-    const y=y0+(y1-y0)*i/6;
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y,radiusX:4,radiusY:4,force:1}]});
-    await page.waitForTimeout(25);
-  }
-  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  await settle(page,220);
+  await cdp.send('Input.synthesizeScrollGesture',{
+    x,y,yDistance:-320,speed:800,gestureSourceType:'touch',preventFling:true
+  });
+  await settle(page,260);
   const after=await page.locator(scope).evaluate((root,ownerName)=>{
     const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
     return owner?.scrollTop??-1;
