@@ -52,6 +52,19 @@ try{
   if(issues.length){console.error('V55_CORE_DETAIL_PRECISION_ISSUES',JSON.stringify(issues.slice(0,80),null,2));throw new Error('V55_CORE_DETAIL_PRECISION_FAILED '+issues.length)}
   assert(types.size>=12,'precision audit covers the major fire/EMS concept architecture families');
 
+  const precisionCases=[
+    ['F03-C06',['플래시오버','백드래프트','롤오버','산소부족']],
+    ['F02-C02',['재난관리책임기관','재난관리주관기관','관계 중앙행정기관','별표 1의3']],
+    ['F05-C08',['물질성상','물과의 반응성','보일오버','슬롭오버','프로스오버']],
+    ['F07-C14',['소화수조','저수조','채수구','흡수관투입구','2m','20㎥','65mm','4.5m']]
+  ];
+  for(const [id,terms] of precisionCases){
+    await page.evaluate(id=>{const V=window.AITUTOR_V9,c=V.curriculum.byId[id],s=V.Store.state;s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=id;s.studyTab='detail';V.Store.save();V.App.render()},id);
+    await page.waitForSelector('.page-study .study-body-desktop .detail-view');
+    const text=await page.locator('.page-study .study-body-desktop .detail-view').innerText();
+    for(const term of terms)assert(text.includes(term),id+' detail keeps precise verified term: '+term);
+  }
+
   await page.evaluate(()=>{const V=window.AITUTOR_V9,c=V.curriculum.byId['F07-C14'],s=V.Store.state;s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=c.id;s.studyTab='core';V.Store.save();V.App.render()});
   await page.waitForSelector('.page-study .study-body-desktop .core-view .study-numbers .study-key-emphasis');
   const underline=await page.locator('.page-study .study-body-desktop .core-view .study-numbers .study-key-emphasis').first().evaluate(el=>getComputedStyle(el).textDecorationLine);
