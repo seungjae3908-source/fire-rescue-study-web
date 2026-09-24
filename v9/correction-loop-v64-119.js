@@ -52,7 +52,7 @@ function rows(state=V.Store?.state,{now=Date.now(),includeCompleted=true}={}){
   return list.sort((a,b)=>Number(b.active)-Number(a.active)||b.priority-a.priority||b.weakness-a.weakness||a.conceptId.localeCompare(b.conceptId));
 }
 function activeRows(state=V.Store?.state,opts={}){return rows(state,{...opts,includeCompleted:false}).filter(x=>x.active)}
-function statusFor(id,state=V.Store?.state,opts={}){return rowFor(state,id,opts)}
+function statusFor(id,state=V.Store?.state,opts={}){return rowFor(state,id,{...opts,analytics:opts.analytics??false})}
 function summary(state=V.Store?.state,opts={}){
   const all=rows(state,opts),active=all.filter(x=>x.active),completed=all.filter(x=>x.completed);
   return{version:POLICY.version,active:active.length,completed:completed.length,rows:all,top:active.slice(0,6),policy:POLICY}
