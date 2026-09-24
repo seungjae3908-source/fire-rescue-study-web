@@ -269,3 +269,20 @@
   .detail-criteria ul{grid-template-columns:1fr!important}
   .detail-criteria li{font-size:15px!important}
 }
+
+
+/* V55 detail navigation: keep the textbook page continuous; use light jump chips, not a section selector. */
+.detail-toc-row{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;gap:8px!important;align-items:center!important}
+.detail-toc-label{font-size:12px;white-space:nowrap;color:#dce9f5}
+.detail-toc-chips{min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px}
+.detail-toc-chips::-webkit-scrollbar{display:none}
+.detail-toc-chip{flex:0 0 auto;min-height:34px;border:1px solid rgba(148,170,194,.18);border-radius:999px;background:#0b1b2d;color:#cdd9e6;padding:6px 9px;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer}
+.detail-toc-chip:hover,.detail-toc-chip:focus-visible{border-color:#4a729c;color:#fff;outline:none}
+@media(max-width:720px){
+  .page-study .detail-view .detail-toc{position:sticky!important;top:0!important}
+  .detail-toc-row{grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important}
+  .detail-toc-label{grid-column:1/-1;font-size:11px}
+  .detail-toc-chips{grid-column:1;grid-row:2}
+  .detail-source-button{grid-column:2;grid-row:2;width:auto!important;min-width:88px}
+  .detail-toc-chip{min-height:38px;font-size:13px;padding:7px 10px}
+}
