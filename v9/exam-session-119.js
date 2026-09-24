@@ -16,7 +16,7 @@ function save(exam,ownerId){
     if(questionIds.includes(id)&&Number.isInteger(n)&&n>=0&&n<=3)answers[id]=n;
   }
   const row={
-    version:'119-active-exam-v1',
+    version:'119-active-exam-v2',
     ownerId:String(ownerId||V.Store?.ownerId||'guest'),
     id:String(exam.id||''),
     mode:String(exam.mode||'practice'),
@@ -29,6 +29,7 @@ function save(exam,ownerId){
     answers,
     confidence:Object.fromEntries(Object.entries(exam.confidence||{}).filter(([id,v])=>questionIds.includes(id)&&['sure','maybe','none'].includes(v))),
     blueprint:exam.blueprint&&typeof exam.blueprint==='object'?exam.blueprint:null,
+    questionSnapshots:Object.fromEntries((exam.qs||[]).filter(q=>q?.variantGenerated).map(q=>[q.id,V.VariantEngine119?.snapshot?.(q)||q])),
     savedAt:Date.now()
   };
   if(!row.id)return false;
@@ -38,10 +39,11 @@ function clear(ownerId){try{localStorage.removeItem(key(ownerId));return true}ca
 function restore(ownerId){
   let row=null;
   try{row=safeParse(localStorage.getItem(key(ownerId))||'')}catch{}
-  if(!row||row.version!=='119-active-exam-v1'||!row.id||!Array.isArray(row.questionIds)||!row.questionIds.length){clear(ownerId);return null}
+  if(!row||!['119-active-exam-v1','119-active-exam-v2'].includes(row.version)||!row.id||!Array.isArray(row.questionIds)||!row.questionIds.length){clear(ownerId);return null}
   const age=Date.now()-Number(row.savedAt||0),maxAge=row.mode==='real'?REAL_MAX_AGE:TRAINING_MAX_AGE;
   if(!Number.isFinite(age)||age<0||age>maxAge||!Number.isFinite(Number(row.startedAt))){clear(ownerId);return null}
-  const qs=row.questionIds.map(id=>V.questionById?.[id]).filter(Boolean);
+  const snapshots=row.questionSnapshots&&typeof row.questionSnapshots==='object'?row.questionSnapshots:{};
+  const qs=row.questionIds.map(id=>snapshots[id]||V.questionById?.[id]).filter(Boolean);
   if(qs.length!==row.questionIds.length){clear(ownerId);return null}
   const answers={};
   for(const [id,value] of Object.entries(row.answers||{})){
@@ -64,5 +66,5 @@ function restore(ownerId){
   }
 }
 function has(ownerId){try{return !!localStorage.getItem(key(ownerId))}catch{return false}}
-V.ExamSession119={version:'119-active-exam-v1',save,restore,clear,has,policy:{localOnly:true,questionIdsOnly:true,realMaxAgeHours:6,trainingMaxAgeDays:7,cloudSync:false}};
+V.ExamSession119={version:'119-active-exam-v2',save,restore,clear,has,policy:{localOnly:true,questionIdsOnly:false,variantSnapshots:true,realMaxAgeHours:6,trainingMaxAgeDays:7,cloudSync:false}};
 })();
