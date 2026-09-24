@@ -59,7 +59,7 @@ function seq(qs,random=Math.random){const s=sh(qs,random),o=[];while(s.length){c
 function build({mode='real',level='mid',history=[],seed=null}={}){
   V.VariantEngine119?.annotateAll?.();
   const random=seed===null||seed===undefined?Math.random:seeded(seed);
-  const ok=q=>mode==='real'?((q.grade==='A'||q.grade==='B')&&(!q.officialPastExam||q.currentCompatibility===true)):V.QuestionQuality119?.isExamStyle?.(q)!==false,all=(V.questions||[]).filter(ok);
+  const ok=q=>mode==='real'?((q.grade==='A'||q.grade==='B')&&(!q.officialPastExam||q.currentCompatibility===true)):(q.officialPastExam!==true&&V.QuestionQuality119?.isExamStyle?.(q)!==false),all=(V.questions||[]).filter(ok);
   const fs=V.curriculum.fire.map(x=>x.id),es=V.curriculum.ems.map(x=>x.id);
   const fp=subjectPool(all,'fire',25,fs,mode==='real'),ep=subjectPool(all,'ems',40,es,mode==='real');
   const f=pick(fp,25,level,fs,history,random),e=pick(ep,40,level,es,history,random);
@@ -72,5 +72,5 @@ function metrics(qs){
   const scores=qs.map(quality),factoryCount=qs.filter(factoryLike).length,strongCount=qs.filter(strong).length,pageVerified=qs.filter(q=>q.pageVerified===true).length,sourceSpecificCount=qs.filter(sourceSpecific).length,officialWebCount=qs.filter(q=>sourceSpecific(q)&&q.pageVerified!==true).length,officialPastCount=qs.filter(q=>q.officialPastExam===true).length;
   return{n:qs.length,uniqueIds:new Set(qs.map(q=>q.id)).size,uniqueConcepts:new Set(qs.map(q=>q.conceptId)).size,fire:qs.filter(q=>q.subject==='fire').length,ems:qs.filter(q=>q.subject==='ems').length,maxFamilyRun:run,activeFamilies:new Set(f).size,scopes:sc,difficulties:d,answers:ans,families,factoryCount,strongCount,pageVerified,sourceSpecificCount,officialWebCount,officialPastCount,qualityAverage:scores.length?Number((scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)):0,qualityMin:scores.length?Math.min(...scores):0}
 }
-V.MockExam119={build,metrics,quality,strong,factoryLike,policy:{version:'119-mock-quality-v3-official-past-priority',recentWindow:4,uniqueConceptPerExam:true,maxFamilyRun:2,realPrefersSourceReviewedNonFactory:true,answerPositionBalance:true,notOfficialExamWeight:true,practiceUsesExpandedExamStylePool:true,realKeepsVerifiedABOnly:true,seededRounds:true,familyRecentSuppression:true}};
+V.MockExam119={build,metrics,quality,strong,factoryLike,policy:{version:'119-mock-quality-v3-official-past-priority',recentWindow:4,uniqueConceptPerExam:true,maxFamilyRun:2,realPrefersSourceReviewedNonFactory:true,answerPositionBalance:true,notOfficialExamWeight:true,practiceUsesExpandedExamStylePool:true,practiceKeepsOfficialPastSeparate:true,realKeepsVerifiedABOnly:true,seededRounds:true,familyRecentSuppression:true}};
 })();
