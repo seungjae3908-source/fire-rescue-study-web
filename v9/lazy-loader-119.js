@@ -19,7 +19,8 @@ const QUESTION_FILES=[
   'questions-official-past-2025-119.js',
   'question-variant-engine-119.js',
   'mock-exam-quality-119.js',
-  'v29-reviewed-promotions-119.js'
+  'v29-reviewed-promotions-119.js',
+  'v60-source-reviewed-promotions-119.js'
 ];
 let questionsPromise=null,questionsReady=false;
 
