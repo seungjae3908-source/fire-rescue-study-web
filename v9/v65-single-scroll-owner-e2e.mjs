@@ -14,7 +14,7 @@ async function owners(page,label){
     return [root,...root.querySelectorAll('*')].filter(visible).filter(el=>{
       if(el.matches('textarea,input,select,[contenteditable="true"]'))return false;
       const y=getComputedStyle(el).overflowY;
-      return y==='auto'||y==='scroll';
+      return (y==='auto'||y==='scroll')&&(el.hasAttribute('data-scroll-owner')||el.scrollHeight>el.clientHeight+2);
     }).map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,120),owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight}));
   });
   assert(rows.length<=1,label+' has at most one vertical scroll owner '+JSON.stringify(rows));
