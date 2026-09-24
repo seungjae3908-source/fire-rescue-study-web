@@ -9,7 +9,7 @@ function observe(page){const errors=[];page.on('pageerror',e=>errors.push('pagee
 
 const browser=await chromium.launch({headless:true});
 try{
-  for(const vp of [{width:390,height:844,isMobile:true},{width:1440,height:900,isMobile:false}]){
+  for(const vp of [{width:360,height:800,isMobile:true},{width:390,height:844,isMobile:true},{width:412,height:915,isMobile:true},{width:768,height:1024,isMobile:false},{width:1024,height:1366,isMobile:false},{width:1440,height:900,isMobile:false}]){
     const ctx=await browser.newContext({viewport:{width:vp.width,height:vp.height},isMobile:vp.isMobile});
     const page=await ctx.newPage(),errors=observe(page);
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
@@ -25,6 +25,15 @@ try{
     assert(runtime.sha===expected,'runtime head matches '+expected);
     await noX(page,'home '+vp.width);
 
+    const routes=['home','study','notes','bank','exam','wrong','stats','resources','settings'];
+    for(const route of routes){
+      await page.evaluate(route=>window.AITUTOR_V9.App.go(route),route);
+      await page.waitForFunction(route=>window.AITUTOR_V9.Store.state.page===route,route);
+      await page.waitForSelector('.page',{state:'visible',timeout:30000});
+      assert((await page.locator('.page').innerText()).trim().length>0,'route '+route+' renders visible content '+vp.width);
+      await noX(page,'route '+route+' '+vp.width);
+    }
+
     await page.evaluate(()=>window.AITUTOR_V9.App.go('study'));
     await page.waitForSelector('.workspace',{timeout:30000});
     const tabCount=vp.isMobile?await page.locator('.book-jumpbar button').count():await page.locator('.tabbar button').count();
@@ -32,6 +41,20 @@ try{
     await noX(page,'study '+vp.width);
 
     if(vp.isMobile){
+      const studyScroller=await page.locator('.study-body-mobile').boundingBox(),mobileNav=await page.locator('.mobile-nav').boundingBox();
+      assert(studyScroller&&mobileNav&&studyScroller.y+studyScroller.height<=mobileNav.y+2,'mobile study scroller stays above bottom navigation '+vp.width);
+      const navHeights=await page.locator('.mobile-nav button').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none').map(n=>n.getBoundingClientRect().height));
+      assert(navHeights.length===5&&navHeights.every(h=>h>=44),'mobile primary navigation keeps >=44px touch targets '+vp.width);
+      await page.evaluate(()=>window.AITUTOR_V9.App.go('stats'));
+      await page.waitForSelector('.stats-v61',{timeout:30000});
+      const statsTargets=await page.locator('.stats-next-action .toolbar .btn').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none').map(n=>n.getBoundingClientRect().height));
+      assert(statsTargets.length>=2&&statsTargets.every(h=>h>=44),'mobile V61 next-action buttons keep >=44px touch targets '+vp.width);
+      await noX(page,'stats touch layout '+vp.width);
+      await page.evaluate(()=>window.AITUTOR_V9.App.go('study'));
+      await page.waitForSelector('.workspace',{timeout:30000});
+    }
+
+    if(vp.width===390){
       await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
       await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
       await page.locator('.study-body-mobile .book-jumpbar [data-study-tab="detail"]').click();

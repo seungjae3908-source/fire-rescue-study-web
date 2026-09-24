@@ -85,6 +85,8 @@ jobs:
           node --check v9/official-monitor-live-probe.mjs
           node --check v9/suggestions-production-public-e2e.mjs
           node --check v9/suggestions-production-authenticated-e2e.mjs
+          node --check v9/live-student-ux-smoke.mjs
+          node --check v9/v62-production-multidevice-audit.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -131,6 +133,8 @@ jobs:
         run: node v9/v60-source-reviewed-promotion-audit.mjs
       - name: V61 performance + weakness analytics audit
         run: node v9/v61-performance-weakness-audit.mjs
+      - name: V62 Production multi-device UX gate contract
+        run: node v9/v62-production-multidevice-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
       - name: V28 183-concept depth + verified-question quality audit
