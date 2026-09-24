@@ -248,6 +248,10 @@ jobs:
           done
           cat /tmp/aitutor-v9-http.log
           exit 1
+      - name: V66 Production real-interaction scroll diagnostic
+        env:
+          STUDY_119_V66_URL: https://fire-rescue-study-web.vercel.app/v9/
+        run: node v9/v66-real-interaction-scroll-e2e.mjs
       - name: Phase A remaining official-PDF evidence audit
         run: node v9/phase-a-source-audit.mjs
       - name: Phase B EMS official-PDF evidence audit
@@ -294,10 +298,6 @@ jobs:
         run: node v9/v64-correction-loop-e2e.mjs
       - name: V65 page-by-page single-scroll browser QA
         run: node v9/v65-single-scroll-owner-e2e.mjs
-      - name: V66 Production real-interaction scroll diagnostic
-        env:
-          STUDY_119_V66_URL: https://fire-rescue-study-web.vercel.app/v9/
-        run: node v9/v66-real-interaction-scroll-e2e.mjs
       - name: Official monitor offline/cache fallback QA
         run: node v9/official-monitor-browser-e2e.mjs
       - name: Keyboard and accessibility semantic smoke QA
