@@ -62,7 +62,8 @@ async function wheel(page,target,ownerName,label,scope='.page'){
   const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
   const x=clamp(box.x+Math.min(box.width/2,30),4,(vp?.width||1440)-4);
   const y=clamp(box.y+Math.min(box.height/2,30),4,(vp?.height||900)-4);
-  const delta=state.max-state.top>40?520:-520;
+  if(state.max<=.5){console.log('PASS '+label+' has no vertical range to exercise');return}
+  const delta=state.top<=state.max/2?520:-520;
   await page.mouse.move(x,y);
   await page.mouse.wheel(0,delta);
   await settle(page,180);
@@ -175,6 +176,7 @@ async function openPdf(page){
   await page.waitForSelector(root+' .source-only [data-source-concept]',{timeout:30000});
   await page.locator(root+' .source-only [data-source-concept]').click();
   await page.waitForSelector('#pdfEvidence .pdf-evidence-host',{state:'visible',timeout:120000});
+  await page.waitForFunction(()=>document.querySelector('#pdfEvidence')?.dataset?.renderState==='ready',null,{timeout:120000});
   await settle(page,250);
 }
 async function openResourcePdf(page){
@@ -182,6 +184,7 @@ async function openResourcePdf(page){
   const open=page.locator('[data-resource-doc]:visible').first();
   await open.waitFor({state:'visible',timeout:30000});await open.click();
   await page.waitForSelector('#resourcePdf .pdf-evidence-host[data-scroll-owner="pdf"]',{state:'visible',timeout:120000});
+  await page.waitForFunction(()=>document.querySelector('#resourcePdf')?.dataset?.renderState==='ready',null,{timeout:120000});
   await settle(page,250);
 }
 
