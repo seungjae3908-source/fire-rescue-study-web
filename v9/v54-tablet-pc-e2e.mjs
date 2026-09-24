@@ -42,6 +42,23 @@ try{
 
     const nav=await page.locator('.page-study .concept-nav').evaluate(el=>{const r=el.getBoundingClientRect();return{height:r.height,bottom:r.bottom,vh:innerHeight}});
     assert(nav.height<=66&&nav.bottom<=nav.vh+1,vp.label+' previous/contents/next bar stays compact and inside viewport');
+
+    if(vp.width<=1180){
+      await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='home';V.Store.save();V.App.render()});
+      await page.waitForSelector('.page-home .dashboard-home');
+      const home=await page.locator('.page-home .dashboard-home').evaluate(root=>{
+        const main=root.querySelector('.home-main')?.getBoundingClientRect(),side=root.querySelector('.home-side')?.getBoundingClientRect();
+        return{scrollWidth:root.scrollWidth,clientWidth:root.clientWidth,mainBottom:main?.bottom||0,sideTop:side?.top||0,sideDisplay:root.querySelector('.home-side')?getComputedStyle(root.querySelector('.home-side')).display:'none'};
+      });
+      assert(home.scrollWidth<=home.clientWidth+2,vp.label+' home dashboard has no horizontal overflow');
+      assert(home.sideDisplay!=='none',vp.label+' keeps schedule/motivation visible instead of hiding tablet content');
+      assert(home.sideTop>=home.mainBottom-2,vp.label+' stacks tablet dashboard secondary cards below the main learning column');
+
+      await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='exam';V.Store.save();V.App.render()});
+      await page.waitForSelector('.page-exam .exam-landing');
+      const examCols=await page.locator('.page-exam .exam-landing').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length);
+      assert(examCols===1,vp.label+' stacks the exam landing instead of squeezing two desktop columns');
+    }
     await ctx.close();
   }
 
