@@ -194,6 +194,8 @@
 @media(min-width:721px) and (max-width:860px){
   .page-study .concept-visual .visual-flow:not(.vertical-org){grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .page-study .concept-class-grid{grid-template-columns:1fr!important}
-  .pdf-evidence-modal .pdf-modal-head{grid-template-columns:minmax(0,1fr) repeat(2,auto)!important}
-  .pdf-evidence-modal .pdf-modal-head [data-source-back]{display:none}
+  .pdf-evidence-modal .pdf-modal-head{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .pdf-evidence-modal .pdf-modal-head>div:first-child{grid-column:1/-1!important}
+  .pdf-evidence-modal .pdf-modal-head>.spacer{display:none!important}
+  .pdf-evidence-modal .pdf-modal-head .btn{width:100%!important;min-width:0!important}
 }
