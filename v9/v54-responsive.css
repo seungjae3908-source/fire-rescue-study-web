@@ -1,6 +1,17 @@
 /* V54 tablet-PC and medium-desktop study layout.
    The learner study DOM is intentionally single-pane; never reserve the legacy empty rail column. */
 .page-study .workspace.study-workspace-single{grid-template-columns:minmax(0,1fr)!important}
+@media (min-width:721px) and (max-width:1180px){
+  .page-home .dashboard-home{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;align-content:start!important;overflow-y:auto!important;overflow-x:hidden!important}
+  .page-home .dashboard-home .home-main,.page-home .dashboard-home .home-side{overflow:visible!important}
+  .page-home .dashboard-home .home-side{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .page-exam .exam-landing{grid-template-columns:minmax(0,1fr)!important}
+}
+@media (min-width:721px) and (max-width:860px){
+  :root{--nav:136px}
+  .page-home .dashboard-home .home-side{grid-template-columns:minmax(0,1fr)!important}
+}
+
 @media (min-width:721px) and (max-width:1439px){
   .page-study .workspace{grid-template-columns:minmax(0,1fr)!important}
   .page-study .study-rail{display:none!important}
