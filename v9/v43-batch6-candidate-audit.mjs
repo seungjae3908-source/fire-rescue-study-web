@@ -12,9 +12,10 @@ const promotedExpected={
   'E19-C04':'119-factory-e19-c04-detail-a'
 };
 const result={promoted:{}};
+const historicalVerified=q=>(q.grade==='A'||q.grade==='B')&&q.v60Promoted!==true;
 
 for(const[id,qid]of Object.entries(promotedExpected)){
-  const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B'),q=qs.find(x=>x.id===qid);
+  const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(historicalVerified),q=qs.find(x=>x.id===qid);
   if(verified.length<3)throw new Error('V43_BATCH6_VERIFIED_COUNT_REGRESSION '+id+' '+verified.length+' expected_at_least 3');
   if(!q||q.grade!=='B'||q.generatedPractice!==false||q.pageVerified!==true||q.reviewStatus!=='source-reviewed'||q.pastExamClaim===true)throw new Error('V43_BATCH6_PROMOTION_CONTRACT '+id);
   const pos=[0,0,0,0];for(const x of verified)pos[x.a]=(pos[x.a]||0)+1;
@@ -24,13 +25,14 @@ for(const[id,qid]of Object.entries(promotedExpected)){
   result.promoted[id]={title:concept?.title||'',promoted:q.id,verified:verified.map(x=>({id:x.id,a:x.a,q:x.q,source:x.source})),source:pack?.source||'',sourceRanges:concept?.sourceRanges||[]};
 }
 
+// V43 is a historical regression gate; later V60 promotions are checked separately.
 const conceptRows=V.curriculum.concepts.map(c=>{
-  const verified=V.questions.filter(q=>q.conceptId===c.id&&(q.grade==='A'||q.grade==='B')),pos=[0,0,0,0];
+  const verified=V.questions.filter(q=>q.conceptId===c.id&&historicalVerified(q)),pos=[0,0,0,0];
   for(const q of verified)pos[q.a]=(pos[q.a]||0)+1;
   const kinds=pos.filter(Boolean).length,max=verified.length?Math.max(...pos)/verified.length:0;
   return{id:c.id,verified:verified.length,answerPositionKinds:kinds,maxAnswerShare:max};
 });
-const totalVerified=V.questions.filter(q=>q.grade==='A'||q.grade==='B').length;
+const totalVerified=V.questions.filter(historicalVerified).length;
 const under3=conceptRows.filter(x=>x.verified<3).length;
 const under4=conceptRows.filter(x=>x.verified<4).length;
 const concentrated=conceptRows.filter(x=>x.verified>=3&&(x.answerPositionKinds<2||x.maxAnswerShare>=0.8));

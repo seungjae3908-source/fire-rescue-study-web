@@ -11,9 +11,10 @@ const promotedExpected={
 };
 const blockerExpected={'E21-C02':2,'E21-C05':2};
 const result={promoted:{},blockers:{}};
+const historicalVerified=q=>(q.grade==='A'||q.grade==='B')&&q.v60Promoted!==true;
 
 for(const[id,qid]of Object.entries(promotedExpected)){
-  const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B'),q=qs.find(x=>x.id===qid);
+  const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(historicalVerified),q=qs.find(x=>x.id===qid);
   if(verified.length<3)throw new Error('V45_BATCH8_VERIFIED_COUNT_REGRESSION '+id+' '+verified.length+' expected_at_least 3');
   if(!q||q.grade!=='B'||q.generatedPractice!==false||q.pageVerified!==true||q.reviewStatus!=='source-reviewed'||q.pastExamClaim===true)throw new Error('V45_BATCH8_PROMOTION_CONTRACT '+id);
   const pos=[0,0,0,0];for(const x of verified)pos[x.a]=(pos[x.a]||0)+1;
@@ -24,14 +25,15 @@ for(const[id,qid]of Object.entries(promotedExpected)){
 }
 const promotedIds=new Set(V.V29ReviewedPromotions119?.promoted||[]);
 for(const[id,count]of Object.entries(blockerExpected)){
-  const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B');
+  const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(historicalVerified);
   if(verified.length<count)throw new Error('V45_BATCH8_BLOCKER_COUNT_REGRESSION '+id+' '+verified.length+' expected_at_least '+count);
   if(qs.some(q=>promotedIds.has(q.id)))throw new Error('V45_BATCH8_BLOCKER_WAS_PROMOTED '+id);
   result.blockers[id]={verified:verified.map(q=>({id:q.id,a:q.a,q:q.q,source:q.source})),practice:qs.filter(q=>q.grade==='P').map(q=>({id:q.id,a:q.a,q:q.q,source:q.source})),sourceRanges:(V.curriculum.byId?.[id]||{}).sourceRanges||[]};
 }
 
-const rows=V.curriculum.concepts.map(c=>{const verified=V.questions.filter(q=>q.conceptId===c.id&&(q.grade==='A'||q.grade==='B')),pos=[0,0,0,0];for(const q of verified)pos[q.a]=(pos[q.a]||0)+1;return{id:c.id,verified:verified.length,kinds:pos.filter(Boolean).length,max:verified.length?Math.max(...pos)/verified.length:0}});
-const totalVerified=V.questions.filter(q=>q.grade==='A'||q.grade==='B').length;
+// V45 is a historical regression gate; later V60 promotions are checked separately.
+const rows=V.curriculum.concepts.map(c=>{const verified=V.questions.filter(q=>q.conceptId===c.id&&historicalVerified(q)),pos=[0,0,0,0];for(const q of verified)pos[q.a]=(pos[q.a]||0)+1;return{id:c.id,verified:verified.length,kinds:pos.filter(Boolean).length,max:verified.length?Math.max(...pos)/verified.length:0}});
+const totalVerified=V.questions.filter(historicalVerified).length;
 const under3=rows.filter(x=>x.verified<3).length;
 const under4=rows.filter(x=>x.verified<4).length;
 const concentrated=rows.filter(x=>x.verified>=3&&(x.kinds<2||x.max>=0.8));
