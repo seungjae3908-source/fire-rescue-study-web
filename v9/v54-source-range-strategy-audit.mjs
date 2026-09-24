@@ -8,6 +8,7 @@ assert(src.includes("proxyRange=!staticRange&&!!catalog?.proxyPdf"),'proxy-only 
 assert(src.includes("disableStream:proxyRange"),'proxy range path disables full streaming and prefers byte ranges');
 assert(src.includes("official-proxy-full-cache-fallback"),'full-cache proxy remains an explicit fallback');
 assert(/officialPdfMirrorDocs:\['fire1','fire2','ems'\]/.test(cfg),'three known static mirrors stay unchanged');
-assert(css.includes('max-width:1439px')&&css.includes('.page-study .study-rail{display:none!important}'),'tablet-PC/small-PC hides the persistent study rail');
+assert(css.includes('.workspace.study-workspace-single{grid-template-columns:minmax(0,1fr)!important}')&&css.includes('max-width:1439px'),'study stays truly single-pane instead of reserving a legacy empty grid column');
+assert(css.includes('.page-home .dashboard-home')&&css.includes('.page-exam .exam-landing'),'tablet dashboard and exam landing use dedicated stacked composition');
 assert(sw.includes('./v54-responsive.css')&&sw.includes('v54-tablet-pc-pdf-range'),'service worker ships the V54 responsive asset with a fresh cache generation');
 console.log('V54_SOURCE_RANGE_STRATEGY_AUDIT_SUCCESS');
