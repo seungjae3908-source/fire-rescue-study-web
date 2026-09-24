@@ -123,6 +123,8 @@ jobs:
         run: node v9/highyield-semantic-profile-report.mjs
       - name: 119 exam-style question contract coverage report
         run: node v9/question-contract-audit.mjs
+      - name: V58 5000-question expansion + mock boundary audit
+        run: node v9/v58-question-bank-expansion-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
       - name: V28 183-concept depth + verified-question quality audit
