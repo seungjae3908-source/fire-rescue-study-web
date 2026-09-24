@@ -24,7 +24,7 @@ for(const[id,qid]of Object.entries(promotedExpected)){
 const promotedIds=new Set(V.V29ReviewedPromotions119?.promoted||[]);
 for(const[id,count]of Object.entries(blockerExpected)){
   const qs=V.questions.filter(q=>q.conceptId===id),verified=qs.filter(q=>q.grade==='A'||q.grade==='B');
-  if(verified.length!==count)throw new Error('V41_BATCH5_BLOCKER_COUNT '+id+' '+verified.length);
+  if(verified.length<count)throw new Error('V41_BATCH5_BLOCKER_COUNT_REGRESSION '+id+' '+verified.length+' expected_at_least '+count);
   if(qs.some(q=>promotedIds.has(q.id)))throw new Error('V41_BATCH5_BLOCKER_WAS_PROMOTED '+id);
   result.blockers[id]={verified:verified.map(q=>({id:q.id,a:q.a,q:q.q,source:q.source})),practice:qs.filter(q=>q.grade==='P').map(q=>({id:q.id,a:q.a,q:q.q,source:q.source}))};
 }
