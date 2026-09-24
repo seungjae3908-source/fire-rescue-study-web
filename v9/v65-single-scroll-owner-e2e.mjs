@@ -12,6 +12,7 @@ async function owners(page,label){
       return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;
     };
     return [root,...root.querySelectorAll('*')].filter(visible).filter(el=>{
+      if(el.matches('textarea,input,select,[contenteditable="true"]'))return false;
       const y=getComputedStyle(el).overflowY;
       return y==='auto'||y==='scroll';
     }).map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,120),owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight}));
