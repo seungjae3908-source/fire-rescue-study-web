@@ -793,6 +793,11 @@ function interactionScrollOwner(target){
     if(target.closest('.study-body,.outline,.backdrop'))return null;
     return [...studyPage.querySelectorAll('.study-body[data-scroll-owner]')].find(el=>el.offsetParent!==null)||null;
   }
+  const examPage=target.closest('.page-exam.exam-active');
+  if(examPage){
+    if(target.closest('.exam-body'))return null;
+    return examPage.querySelector('.exam-body[data-scroll-owner="exam-active"]');
+  }
   return null;
 }
 function moveInteractionScroll(owner,delta){
