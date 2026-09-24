@@ -19,11 +19,12 @@ try{
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const before=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{
     const body=el.closest('.study-body');
-    el.scrollTop=Math.max(1,el.scrollHeight-el.clientHeight-140);
-    if(body&&body.scrollHeight>body.clientHeight+40)body.scrollTop=Math.max(0,body.scrollHeight-body.clientHeight-80);
-    return{chatTop:el.scrollTop,bodyTop:body?.scrollTop||0,gap:el.scrollHeight-el.clientHeight-el.scrollTop};
+    if(body&&body.scrollHeight>body.clientHeight+80)body.scrollTop=Math.max(0,body.scrollHeight-body.clientHeight-140);
+    const chatStyle=getComputedStyle(el);
+    return{chatTop:el.scrollTop,bodyTop:body?.scrollTop||0,bodyGap:(body?.scrollHeight||0)-(body?.clientHeight||0)-(body?.scrollTop||0),chatOverflow:chatStyle.overflowY};
   });
-  assert(before.gap>24,'history-scroll fixture is intentionally away from newest message');
+  assert(before.bodyGap>24,'history-scroll fixture is intentionally away from newest message in the single study-body owner');
+  assert(!['auto','scroll'].includes(before.chatOverflow)&&before.chatTop===0,'AI chat itself is not a vertical scroll owner');
   await page.evaluate(()=>{
     const V=window.AITUTOR_V9,c=V.curriculum.byId['F04-C01'],s=V.Store.state;
     s.chat.push({id:'intent-incoming',role:'assistant',conceptId:c.id,at:Date.now()+100,text:'새 AI 답변이 도착했지만 사용자는 과거 대화를 읽고 있습니다. '.repeat(5)});
@@ -32,9 +33,9 @@ try{
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const after=await page.locator('.study-body-mobile .study-ai-chat').evaluate((el,before)=>{
     const body=el.closest('.study-body');
-    return{chatTop:el.scrollTop,bodyTop:body?.scrollTop||0,gap:el.scrollHeight-el.clientHeight-el.scrollTop,chatStable:Math.abs(el.scrollTop-before.chatTop)<=2,bodyStable:Math.abs((body?.scrollTop||0)-before.bodyTop)<=2};
+    return{chatTop:el.scrollTop,bodyTop:body?.scrollTop||0,bodyGap:(body?.scrollHeight||0)-(body?.clientHeight||0)-(body?.scrollTop||0),chatStable:Math.abs(el.scrollTop-before.chatTop)<=2,bodyStable:Math.abs((body?.scrollTop||0)-before.bodyTop)<=2,chatOverflow:getComputedStyle(el).overflowY};
   },before);
-  assert(after.gap>24&&after.chatStable&&after.bodyStable,'incoming AI render preserves intentional past-conversation reading position');
+  assert(after.bodyGap>24&&after.chatStable&&after.bodyStable&&!['auto','scroll'].includes(after.chatOverflow),'incoming AI render preserves intentional reading position in the single study-body scroll owner');
   assert(errors.length===0,'history-scroll acceptance has zero browser runtime errors');
   console.log('CHAT_SCROLL_INTENT_E2E_COMPLETE');
   await ctx.close();
