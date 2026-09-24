@@ -1,0 +1,37 @@
+/* V54 tablet-PC and medium-desktop study layout.
+   The learner study DOM is intentionally single-pane; never reserve the legacy empty rail column. */
+.page-study .workspace.study-workspace-single{grid-template-columns:minmax(0,1fr)!important}
+@media (min-width:721px) and (max-width:1180px){
+  .page-home .dashboard-home{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;align-content:start!important;overflow-y:auto!important;overflow-x:hidden!important}
+  .page-home .dashboard-home .home-main,.page-home .dashboard-home .home-side{overflow:visible!important}
+  .page-home .dashboard-home .home-side{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .page-exam .exam-landing{grid-template-columns:minmax(0,1fr)!important}
+}
+@media (min-width:721px) and (max-width:860px){
+  :root{--nav:136px}
+  .page-home .dashboard-home .home-side{grid-template-columns:minmax(0,1fr)!important}
+}
+
+@media (min-width:721px) and (max-width:1439px){
+  .page-study .workspace{grid-template-columns:minmax(0,1fr)!important}
+  .page-study .study-rail{display:none!important}
+  .page-study .study-body-desktop>.lesson,
+  .page-study .detail-view{width:100%;max-width:980px!important}
+  .page-study .concept-nav{min-height:52px!important}
+  .page-study .concept-nav .btn{min-height:44px!important}
+}
+@media (min-width:1181px) and (max-width:1439px){
+  :root{--action-h:56px}
+  .page-study .page{padding:10px 12px 0!important}
+  .page-study .concept-head{padding:13px 18px 10px!important}
+  .page-study .concept-head h2{font-size:27px!important;line-height:1.25!important}
+  .page-study .concept-head .tabbar button{min-height:42px!important;font-size:13px!important}
+  .page-study .study-body-desktop{padding:16px 20px 20px!important}
+  .page-study .lesson p,.page-study .lesson li{font-size:15px!important;line-height:1.72!important}
+  .page-study .detail-copy>p{font-size:16px!important;line-height:1.78!important}
+  .page-study .detail-plain-list li{font-size:15px!important;line-height:1.7!important}
+  .page-study .concept-visual .visual-flow:not(.vertical-org){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;overflow:visible!important}
+  .page-study .concept-visual .visual-flow:not(.vertical-org)>i{display:none!important}
+  .page-study .concept-visual .visual-flow:not(.vertical-org)>.visual-node{min-width:0!important;width:auto!important;min-height:84px!important}
+  .page-study .concept-visual .visual-node b{font-size:15px!important;line-height:1.45!important;white-space:normal!important;overflow-wrap:anywhere!important}
+}

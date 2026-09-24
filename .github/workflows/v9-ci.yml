@@ -105,6 +105,8 @@ jobs:
         run: node v9/store-quota-audit.mjs
       - name: Static runtime performance budget gate
         run: node v9/performance-budget-audit.mjs
+      - name: V54 official PDF range-first strategy gate
+        run: node v9/v54-source-range-strategy-audit.mjs
       - name: Official notice monitor contract gate
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
@@ -253,6 +255,8 @@ jobs:
         run: node v9/e2e.mjs
       - name: V53 tablet usability + bounded official-source loading QA
         run: node v9/v53-tablet-ux-e2e.mjs
+      - name: V54 tablet-PC + medium desktop + PDF range QA
+        run: node v9/v54-tablet-pc-e2e.mjs
       - name: Official monitor offline/cache fallback QA
         run: node v9/official-monitor-browser-e2e.mjs
       - name: Keyboard and accessibility semantic smoke QA

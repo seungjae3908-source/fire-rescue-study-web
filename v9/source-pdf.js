@@ -61,12 +61,13 @@ function queryTokens(queries){const out=[];for(const q of queries||[]){for(const
 async function pdfjs(){if(V.RuntimeDeps?.loadPdfJs)return V.RuntimeDeps.loadPdfJs();const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p}
 async function clearPdfCache(key){const hit=pdfCache.get(key);pdfCache.delete(key);if(hit?.task)await hit.task.destroy?.().catch?.(()=>{});else if(hit?.pdf)await hit.pdf.destroy?.().catch?.(()=>{})}
 function waitPdfTask(task,timeoutMs){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('SOURCE_PDF_PARSE_TIMEOUT')),timeoutMs);task.promise.then(v=>{clearTimeout(timer);resolve(v)},e=>{clearTimeout(timer);reject(e)})})}
-async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCache.get(key);if(cached?.pdf)return cached;const p=await pdfjs(),local=await get(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static'&&!!catalog?.mirrorPdf;let task,name,origin;
+async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCache.get(key);if(cached?.pdf)return cached;const p=await pdfjs(),local=await get(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static'&&!!catalog?.mirrorPdf,proxyRange=!staticRange&&!!catalog?.proxyPdf;let task,name,origin;
   if(local?.blob){task=p.getDocument({data:await local.blob.arrayBuffer()});name=local.name||key;origin='local-cache'}
-  else if(staticRange){
-    task=p.getDocument({url:catalog.mirrorPdf,withCredentials:false,disableRange:false,disableStream:false,disableAutoFetch:true,rangeChunkSize:65536});name=catalog.expectedNames?.[0]||catalog.label||key;origin='official-static-range';
-    try{const pdf=await waitPdfTask(task,Math.min(7000,timeoutMs)),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}
-    catch{await task.destroy?.().catch?.(()=>{});onProgress?.({fallback:true,transport:'proxy'});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-7000),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin='official-proxy-fallback'}
+  else if(staticRange||proxyRange){
+    const fastUrl=staticRange?catalog.mirrorPdf:catalog.proxyPdf,fastTransport=staticRange?'mirror':'proxy-range',fastOrigin=staticRange?'official-static-range':'official-proxy-range',fastTimeout=Math.min(staticRange?7000:8000,timeoutMs);
+    task=p.getDocument({url:fastUrl,withCredentials:false,disableRange:false,disableStream:proxyRange,disableAutoFetch:true,rangeChunkSize:65536});name=catalog.expectedNames?.[0]||catalog.label||key;origin=fastOrigin;
+    try{const pdf=await waitPdfTask(task,fastTimeout),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);onProgress?.({ready:true,transport:fastTransport});return entry}
+    catch{await task.destroy?.().catch?.(()=>{});onProgress?.({fallback:true,transport:fastTransport});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=staticRange?'official-proxy-fallback':'official-proxy-full-cache-fallback'}
   }else{const row=await resolveRow(key,{timeoutMs,onProgress});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=row.origin||'local-cache'}
   try{const pdf=await waitPdfTask(task,Math.min(timeoutMs,25000)),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await task.destroy?.().catch?.(()=>{});throw err}
 }

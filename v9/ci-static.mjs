@@ -727,7 +727,7 @@ ok(sourcePdf.includes('devicePixelRatio')&&sourcePdf.includes('outputScale'),'of
 ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs are never server-uploaded and remain unmodified');
 ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialRemotePreferred:true'),'PDF evidence prefers official remote sources and never requires user upload');
 ok(sourcePdf.includes('SOURCE_REMOTE_UNRESOLVED'),'unresolved direct PDFs fail closed to official-page fallback');
-ok(sourcePdf.includes('preferProxy')&&sourcePdf.includes("origin='official-proxy-fallback'")&&sourcePdf.includes('Math.min(7000,timeoutMs)'),'official PDF viewer abandons a stalled mirror quickly and retries through the dedicated proxy');
+ok(sourcePdf.includes('preferProxy')&&sourcePdf.includes("origin=staticRange?'official-proxy-fallback':'official-proxy-full-cache-fallback'")&&sourcePdf.includes('fastTimeout=Math.min(staticRange?7000:8000,timeoutMs)')&&sourcePdf.includes('disableStream:proxyRange'),'official PDF viewer bounds mirror/proxy range attempts and preserves the dedicated full-cache fallback');
 ok(sourcePdf.includes('opts.zoom')&&sourcePdf.includes('fitScale')&&sourcePdf.includes('Math.min(3'),'official PDF renderer supports fit-width user zoom while preserving up to 3x device-pixel sharpness');
 const appSource=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const appStyles=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
