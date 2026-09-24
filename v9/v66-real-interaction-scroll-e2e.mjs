@@ -110,13 +110,50 @@ async function horizontalTouchSafe(page,target,ownerName,label,scope='.page'){
   const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
   check(after===before,label+' trusted horizontal touch does not hijack '+ownerName+' '+JSON.stringify({before,after}));
 }
+async function diagonalTrackpad(page,target,ownerName,label,scope='.page'){
+  await makeScrollable(page,ownerName,scope);
+  const loc=page.locator(target).filter({visible:true}).first();await loc.waitFor({state:'visible',timeout:30000});
+  await loc.scrollIntoViewIfNeeded().catch(()=>{});await settle(page,60);
+  const box=await loc.boundingBox();assert(!!box,label+' diagonal trackpad target visible');
+  const before=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);if(!owner)return -1;owner.scrollTop=Math.min(240,Math.max(0,owner.scrollHeight-owner.clientHeight-40));return owner.scrollTop},ownerName);
+  const vp=page.viewportSize(),x=Math.max(5,Math.min((vp?.width||1440)-5,box.x+Math.min(box.width/2,28))),y=Math.max(5,Math.min((vp?.height||900)-5,box.y+Math.min(box.height/2,28)));
+  await page.mouse.move(x,y);await page.mouse.wheel(42,280);await settle(page,150);
+  const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
+  check(after!==before,label+' diagonal trackpad keeps vertical intent on '+ownerName+' '+JSON.stringify({before,after}));
+}
+async function horizontalWheelSafe(page,target,ownerName,label,scope='.page'){
+  await makeScrollable(page,ownerName,scope);
+  const loc=page.locator(target).filter({visible:true}).first();await loc.waitFor({state:'visible',timeout:30000});
+  await loc.scrollIntoViewIfNeeded().catch(()=>{});await settle(page,60);
+  const box=await loc.boundingBox();assert(!!box,label+' horizontal trackpad target visible');
+  const before=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);if(!owner)return -1;owner.scrollTop=Math.min(500,Math.max(0,owner.scrollHeight-owner.clientHeight-40));return owner.scrollTop},ownerName);
+  const vp=page.viewportSize(),x=Math.max(5,Math.min((vp?.width||1440)-5,box.x+Math.min(box.width/2,28))),y=Math.max(5,Math.min((vp?.height||900)-5,box.y+Math.min(box.height/2,28)));
+  await page.mouse.move(x,y);await page.mouse.wheel(300,8);await settle(page,120);
+  const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
+  check(after===before,label+' horizontal trackpad does not hijack '+ownerName+' '+JSON.stringify({before,after}));
+}
+async function boundaryWheelSafe(page,target,ownerName,label,scope='.page'){
+  await makeScrollable(page,ownerName,scope);
+  const loc=page.locator(target).filter({visible:true}).first();await loc.waitFor({state:'visible',timeout:30000});
+  const box=await loc.boundingBox();assert(!!box,label+' boundary target visible');
+  const vp=page.viewportSize(),x=Math.max(5,Math.min((vp?.width||1440)-5,box.x+Math.min(box.width/2,28))),y=Math.max(5,Math.min((vp?.height||900)-5,box.y+Math.min(box.height/2,28)));
+  const setEdge=async edge=>page.locator(scope).evaluate((root,{ownerName,edge})=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);if(!owner)return{top:-1,max:-1};const max=Math.max(0,owner.scrollHeight-owner.clientHeight);owner.scrollTop=edge==='bottom'?max:0;return{top:owner.scrollTop,max}}, {ownerName,edge});
+  const docTop=()=>page.evaluate(()=>document.scrollingElement?.scrollTop||0);
+  await page.mouse.move(x,y);
+  const bottom=await setEdge('bottom'),docBottom=await docTop();await page.mouse.wheel(0,520);await settle(page,120);
+  const bottomAfter=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
+  check(Math.abs(bottomAfter-bottom.max)<1&&(await docTop())===docBottom,label+' bottom does not chain into document '+JSON.stringify({before:bottom.top,after:bottomAfter,max:bottom.max}));
+  const top=await setEdge('top'),docTopBefore=await docTop();await page.mouse.wheel(0,-520);await settle(page,120);
+  const topAfter=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
+  check(Math.abs(topAfter)<1&&(await docTop())===docTopBefore,label+' top does not chain into document '+JSON.stringify({before:top.top,after:topAfter}));
+}
 async function seed(page){
   await page.evaluate(async()=>{
     const V=window.AITUTOR_V9;await V.Lazy119.ensureQuestions();
     const q=V.questions.find(x=>V.QuestionQuality119?.isExamStyle?.(x)!==false);
     if(q){
       V.Store.state.conceptId=q.conceptId;V.Store.state.subject=q.subject;V.Store.state.scopeId=q.scopeId;
-      V.Store.state.chat=Array.from({length:36},(_,i)=>({id:'v66-chat-'+i,role:'assistant',conceptId:q.conceptId,text:'V66 실제 스크롤 상호작용 검증 '+i+' '+('충분히 긴 AI 답변 본문입니다. '.repeat(8)),at:Date.now()+i}));
+      V.Store.state.chat=Array.from({length:36},(_,i)=>({id:'v66-chat-'+i,role:'assistant',conceptId:q.conceptId,text:i===35?'V66 표 스크롤 검증\\n| 매우 긴 구분 열 | 매우 긴 핵심 차이 설명 열 | 매우 긴 시험 포인트 열 | 매우 긴 추가 확인 열 |\\n| --- | --- | --- | --- |\\n| A | 세로 제스처는 본문 owner로 전달 | 가로 제스처는 표에 남음 | 트랙패드 혼합입력 보호 |':'V66 실제 스크롤 상호작용 검증 '+i+' '+('충분히 긴 AI 답변 본문입니다. '.repeat(8)),at:Date.now()+i}));
       V.Store.state.wrongs=[{id:'v66-w',questionId:q.id,masterQuestionId:q.masterQuestionId||q.id,familyId:q.familyId||q.id,conceptId:q.conceptId,scopeId:q.scopeId,confidence:'sure',due:Date.now()-1,resolved:false,wrongCount:2,recoveryCorrect:0,lastWrongAt:Date.now()}];
       V.Store.state.answerEvents=[{eventId:'v66-e',questionId:q.id,masterQuestionId:q.masterQuestionId||q.id,familyId:q.familyId||q.id,conceptId:q.conceptId,scopeId:q.scopeId,subject:q.subject,correct:false,confidence:'sure',at:Date.now()}];
     }
@@ -135,6 +172,13 @@ async function openPdf(page){
   await page.waitForSelector(root+' .source-only [data-source-concept]',{timeout:30000});
   await page.locator(root+' .source-only [data-source-concept]').click();
   await page.waitForSelector('#pdfEvidence .pdf-evidence-host',{state:'visible',timeout:120000});
+  await settle(page,250);
+}
+async function openResourcePdf(page){
+  await go(page,'resources');
+  const open=page.locator('[data-resource-doc]:visible').first();
+  await open.waitFor({state:'visible',timeout:30000});await open.click();
+  await page.waitForSelector('#resourcePdf .pdf-evidence-host[data-scroll-owner="pdf"]',{state:'visible',timeout:120000});
   await settle(page,250);
 }
 
@@ -157,6 +201,8 @@ try{
     await go(page,'home');
     await assertSingleEffectiveOwner(page,'home','home '+vp.width);
     await wheel(page,'.top','home','global top bar home '+vp.width);
+    await diagonalTrackpad(page,'.top','home','global top bar home '+vp.width);
+    await boundaryWheelSafe(page,'.top','home','global top bar home '+vp.width);
     if(vp.isMobile)await touchBridge(page,'.top','home','global top bar home touch '+vp.width);
     await wheel(page,'.home-main','home','home main '+vp.width);
     const homeSide=page.locator('.home-side:visible');
@@ -169,7 +215,9 @@ try{
       await wheel(page,'.concept-head',owner,'study '+tab+' header '+vp.width);
       if(tab==='core'){
         await wheel(page,'.study-toolbar',owner,'study toolbar '+vp.width);
-        const conceptNav=page.locator('.concept-nav:visible');if(await conceptNav.count())await wheel(page,'.concept-nav',owner,'study actionbar '+vp.width);
+        await diagonalTrackpad(page,'.concept-head',owner,'study header '+vp.width);
+        const tabbar=page.locator('.tabbar:visible');if(await tabbar.count())await horizontalWheelSafe(page,'.tabbar',owner,'study tabbar '+vp.width);
+        const conceptNav=page.locator('.concept-nav:visible');if(await conceptNav.count()){await wheel(page,'.concept-nav',owner,'study actionbar '+vp.width);await boundaryWheelSafe(page,'.concept-nav',owner,'study actionbar '+vp.width)}
       }
       if(vp.isMobile){
         await touchBridge(page,'.concept-head',owner,'study '+tab+' header touch '+vp.width);
@@ -185,6 +233,8 @@ try{
         if(await ai.count())await wheel(page,'.study-ai-chat',owner,'study AI messages '+vp.width);
         const compose=page.locator('.tutor-compose:visible');
         if(await compose.count())await wheel(page,'.tutor-compose',owner,'study AI compose '+vp.width);
+        const aiTable=page.locator('.tutor-ai-table-wrap:visible');
+        if(await aiTable.count()){await diagonalTrackpad(page,'.tutor-ai-table-wrap',owner,'study AI table '+vp.width);await horizontalWheelSafe(page,'.tutor-ai-table-wrap',owner,'study AI table '+vp.width)}
       }
     }
 
@@ -205,7 +255,7 @@ try{
     const examHead=page.locator('.exam-head-clean:visible');if(await examHead.count())await wheel(page,'.exam-head-clean','exam-active','exam header '+vp.width);
     const nav=page.locator('.exam-navigator:visible');if(await nav.count())await wheel(page,'.exam-navigator','exam-active','exam navigator '+vp.width);
     const side=page.locator('.exam-side:visible');if(await side.count())await wheel(page,'.exam-side','exam-active','exam side '+vp.width);
-    const examFooter=page.locator('.exam-footer:visible');if(await examFooter.count())await wheel(page,'.exam-footer','exam-active','exam footer '+vp.width);
+    const examFooter=page.locator('.exam-footer:visible');if(await examFooter.count()){await wheel(page,'.exam-footer','exam-active','exam footer '+vp.width);await diagonalTrackpad(page,'.exam-footer','exam-active','exam footer '+vp.width);await boundaryWheelSafe(page,'.exam-footer','exam-active','exam footer '+vp.width)}
     if(vp.isMobile&&await examFooter.count())await touchBridge(page,'.exam-footer','exam-active','exam footer touch '+vp.width);
 
     await openPdf(page);
@@ -214,9 +264,25 @@ try{
     const zoom=page.locator('#pdfEvidence .pdf-zoombar:visible');if(await zoom.count())await wheel(page,'#pdfEvidence .pdf-zoombar','pdf','pdf zoombar '+vp.width,'#pdfEvidence');
     await wheel(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar '+vp.width,'#pdfEvidence');
     await wheel(page,'#pdfEvidence .pdf-evidence-host','pdf','pdf canvas host '+vp.width,'#pdfEvidence');
+    await horizontalWheelSafe(page,'#pdfEvidence .pdf-evidence-host','pdf','pdf canvas host '+vp.width,'#pdfEvidence');
+    await diagonalTrackpad(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
+    await boundaryWheelSafe(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
     const pager=page.locator('#pdfEvidence .pdf-pager:visible');if(await pager.count())await wheel(page,'#pdfEvidence .pdf-pager','pdf','pdf pager '+vp.width,'#pdfEvidence');
     if(vp.isMobile){await touchBridge(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header touch '+vp.width,'#pdfEvidence');await touchBridge(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar touch '+vp.width,'#pdfEvidence')}
     await page.locator('#pdfEvidence [data-pdf-close]').click();
+
+    await openResourcePdf(page);
+    await assertSingleEffectiveOwner(page,'pdf','resource PDF modal '+vp.width,'#resourcePdf');
+    await wheel(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
+    const resourceZoom=page.locator('#resourcePdf .pdf-zoombar:visible');if(await resourceZoom.count())await wheel(page,'#resourcePdf .pdf-zoombar','pdf','resource pdf zoombar '+vp.width,'#resourcePdf');
+    await wheel(page,'#resourcePdf .pdf-findbar','pdf','resource pdf findbar '+vp.width,'#resourcePdf');
+    await wheel(page,'#resourcePdf .pdf-evidence-host','pdf','resource pdf canvas host '+vp.width,'#resourcePdf');
+    await horizontalWheelSafe(page,'#resourcePdf .pdf-evidence-host','pdf','resource pdf canvas host '+vp.width,'#resourcePdf');
+    await diagonalTrackpad(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
+    await boundaryWheelSafe(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
+    const resourcePager=page.locator('#resourcePdf .pdf-pager:visible');if(await resourcePager.count())await wheel(page,'#resourcePdf .pdf-pager','pdf','resource pdf pager '+vp.width,'#resourcePdf');
+    if(vp.isMobile)await touchBridge(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header touch '+vp.width,'#resourcePdf');
+    await page.locator('#resourcePdf [data-resource-pdf-close]').click();
 
     for(const [route,owner] of [['notes','notes'],['wrong','wrong'],['stats','stats'],['resources','resources'],['suggestions','suggestions'],['settings','settings']]){
       await go(page,route);
