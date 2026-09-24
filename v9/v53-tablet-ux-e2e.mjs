@@ -34,12 +34,20 @@ try{
 
     await page.evaluate(()=>{const V=window.AITUTOR_V9,s=V.Store.state,c=V.curriculum.byId['F07-C14'];s.conceptId=c.id;s.scopeId=c.scopeId;s.studyTab='core';V.Store.save();V.App.render()});
     await page.waitForSelector('.page-study .study-body-desktop .core-view');
-    const nums=await page.locator('.page-study .study-body-desktop .study-numbers li').allInnerTexts();
-    const norm=nums.map(x=>x.toLowerCase().replace(/[^0-9a-z가-힣]/g,''));
-    assert(norm.length===new Set(norm).size,vp.width+' core numeric criteria contain no repeated rows');
+    const coreRows=await page.locator('.page-study .study-body-desktop .core-view').evaluate(root=>({
+      nums:[...root.querySelectorAll('.study-numbers li')].map(x=>x.innerText.trim()),
+      essentials:[...root.querySelectorAll('.study-core-essentials li')].map(x=>x.innerText.trim())
+    }));
+    const norm=coreRows.nums.map(x=>x.toLowerCase().replace(/[^0-9a-z가-힣]/g,''));
+    assert(norm.length===new Set(norm).size,vp.width+' core numeric criteria contain no exact repeated rows');
+    const nt=s=>(String(s).match(/\d+(?:\.\d+)?/g)||[]).join('|'),clean=s=>String(s).toLowerCase().replace(/[^0-9a-z가-힣]/g,''),dice=(a,b)=>{a=clean(a);b=clean(b);if(a.length<4||b.length<4)return 0;const grams=s=>{const m=new Map;for(let i=0;i<s.length-1;i++){const g=s.slice(i,i+2);m.set(g,(m.get(g)||0)+1)}return m},A=grams(a),B=grams(b);let hit=0,total=0;for(const n of A.values())total+=n;for(const n of B.values())total+=n;for(const [g,n] of A)hit+=Math.min(n,B.get(g)||0);return total?2*hit/total:0};
+    const crossDup=coreRows.essentials.flatMap(a=>coreRows.nums.filter(b=>nt(a)&&nt(a)===nt(b)&&dice(a,b)>=.46).map(b=>[a,b]));
+    assert(crossDup.length===0,vp.width+' core essentials do not paraphrase-repeat the numeric criteria block');
 
     const printCss=await page.evaluate(()=>window.AITUTOR_V9.PassNote.printDocument('fire'));
     assert(/\.c\{break-inside:auto/.test(printCss)&&/@media screen and \(min-width:721px\) and \(max-width:1180px\)/.test(printCss),vp.width+' summary export uses tablet-readable screen CSS and non-wasteful print page breaks');
+    const conceptSections=(printCss.match(/<section class="c">/g)||[]).length,featureCaps=(printCss.match(/<h3>핵심 특징<\/h3>/g)||[]).length;
+    assert(conceptSections>=70&&featureCaps<=conceptSections,vp.width+' fire PDF remains full-syllabus but uses compact per-concept summary content');
 
     await page.evaluate(()=>{const V=window.AITUTOR_V9,s=V.Store.state;s.studyTab='source';V.Store.save();V.App.render()});
     await page.locator('.page-study .concept-head [data-study-tab="source"]').click().catch(()=>{});
