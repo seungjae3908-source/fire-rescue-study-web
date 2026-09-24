@@ -32,12 +32,12 @@ try{
     const detail=await page.locator('.page-study .study-body-desktop .detail-view').evaluate(root=>{
       const V=window.AITUTOR_V9,id=V.Store.state.conceptId,type=V.ConceptArchitecture119.typeOf(id);
       const headings=[...root.querySelectorAll('.detail-section h3,.detail-compare h3,.detail-criteria h3,.detail-exam-points h3')].map(x=>x.textContent.trim()).filter(Boolean);
-      const select=root.querySelector('[data-detail-jump-select]');
+      const jumps=[...root.querySelectorAll('[data-detail-jump]')];
       return{
         type,
         toc:!!root.querySelector('.detail-toc'),
         sourceButton:!!root.querySelector('[data-source-concept]'),
-        options:select?[...select.options].filter(x=>x.value).length:0,
+        options:jumps.length,
         definition:root.querySelectorAll('[data-detail-section="definition"]').length,
         headings,
         generic:headings.some(x=>/^상세\s*설명$/.test(x)),
@@ -74,7 +74,7 @@ try{
 
   await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.studyTab='detail';V.Store.save();V.App.render()});
   await page.waitForSelector('.page-study .study-body-desktop .detail-view');
-  const waterDetail=await page.locator('.page-study .study-body-desktop .detail-view').evaluate(root=>({toc:[...root.querySelector('[data-detail-jump-select]').options].map(x=>x.textContent.trim()),criteria:root.querySelectorAll('.detail-criteria li').length,compare:root.querySelectorAll('.detail-compare .concept-class-card').length,text:root.innerText}));
+  const waterDetail=await page.locator('.page-study .study-body-desktop .detail-view').evaluate(root=>({toc:[...root.querySelectorAll('[data-detail-jump]')].map(x=>x.textContent.trim()),criteria:root.querySelectorAll('.detail-criteria li').length,compare:root.querySelectorAll('.detail-compare .concept-class-card').length,text:root.innerText}));
   assert(waterDetail.toc.some(x=>x.includes('수치'))&&waterDetail.toc.some(x=>x.includes('비교')),'dense detail exposes direct jumps to comparison and numeric criteria');
   assert(waterDetail.criteria>=4&&waterDetail.compare>=4,'water-supply detail keeps the precise numeric and distinction depth');
 
@@ -84,8 +84,8 @@ try{
   const m=await mobile.newPage();await m.goto(base,{waitUntil:'domcontentloaded'});await m.waitForFunction(()=>!!window.AITUTOR_V9?.App);
   await m.evaluate(()=>{const V=window.AITUTOR_V9,c=V.curriculum.byId['F03-C06'],s=V.Store.state;s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=c.id;s.studyTab='detail';s.outline=false;V.Store.save();V.App.render()});
   await m.waitForSelector('.page-study .study-body-mobile .detail-view .detail-toc');
-  const mobileToc=await m.locator('.page-study .study-body-mobile .detail-view .detail-toc').evaluate(el=>{const r=el.getBoundingClientRect();return{w:r.width,vw:innerWidth,position:getComputedStyle(el).position,select:!!el.querySelector('select'),source:!!el.querySelector('[data-source-concept]')}});
-  assert(mobileToc.w<=mobileToc.vw&&mobileToc.select&&mobileToc.source,'mobile detail quick navigation and source action fit inside the viewport');
+  const mobileToc=await m.locator('.page-study .study-body-mobile .detail-view .detail-toc').evaluate(el=>{const r=el.getBoundingClientRect();return{w:r.width,vw:innerWidth,position:getComputedStyle(el).position,jumps:el.querySelectorAll('[data-detail-jump]').length,source:!!el.querySelector('[data-source-concept]')}});
+  assert(mobileToc.w<=mobileToc.vw&&mobileToc.jumps>=2&&mobileToc.source,'mobile detail quick navigation and source action fit inside the viewport');
   await mobile.close();
 
   console.log('V55_CORE_DETAIL_PRECISION_ACCEPTANCE_SUCCESS');
