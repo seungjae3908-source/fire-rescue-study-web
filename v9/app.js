@@ -670,16 +670,26 @@ function evidenceQueries(c,p){const q=p?.studySchema||{};return[...sourceAnchorQ
 function hasAnchorEvidence(r,a){const l=(r?.evidenceLines||[]).map(studyNorm),t=(a||[]).map(studyNorm).filter(x=>x.length>=2);return t.some(x=>l.some(y=>y.includes(x)))}
 function sourceModal(id){return openPdfEvidence(id)}
 async function downloadOfficialPdf(key){if(!key||!V.SourcePDF?.download)return toast('다운로드할 PDF가 없습니다.');try{const r=await V.SourcePDF.download(key,{timeoutMs:120000});toast(`PDF 다운로드 시작 · ${r?.name||key}`)}catch(err){toast('PDF 다운로드 실패 · '+String(err?.message||err).slice(0,46))}}
-const sourceOverlay=()=>document.querySelector('#pdfEvidence,#resourcePdf,#sourceModal');function sourceOpen(){history.pushState({...history.state,sourceView:1},'')}function sourceClose(pop=false){const x=sourceOverlay();if(!x)return false;x.remove();if(!pop&&history.state?.sourceView)history.back();return true}addEventListener('popstate',()=>sourceClose(true));addEventListener('keydown',e=>{if(e.key==='Escape'&&sourceOverlay()){e.preventDefault();sourceClose()}})
+const sourceOverlay=()=>document.querySelector('#pdfEvidence,#resourcePdf,#sourceModal');function sourceOpen(){history.pushState({...history.state,sourceView:1},'')}function sourceClose(pop=false){const x=sourceOverlay();if(!x)return false;x.remove();if(!pop&&history.state?.sourceView)history.back();return true}
+function requestedPdfPage(key,raw){
+const n=Math.floor(Number(raw)||0);if(n<1)return 0;
+return Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOffsets||{},key)?(V.SourcePDF.pdfPage?.(key,n)||n):n
+}
+async function locatePdfText(key,query){
+const q=String(query||'').trim();if(q.length<2)return{query:q,error:'SEARCH_QUERY_SHORT'};
+try{const hit=await V.SourcePDF.locate(key,[q]);return hit?.score>0?{query:q,...hit}:{query:q,error:'SEARCH_NOT_FOUND'}}catch(err){return{query:q,error:String(err?.message||err)}}
+}
+addEventListener('popstate',()=>sourceClose(true));addEventListener('keydown',e=>{if(e.key==='Escape'&&sourceOverlay()){e.preventDefault();sourceClose()}})
 async function renderResourcePdf(key,pageOverride=1){
 const root=document.querySelector('#resourcePdf');if(!root)return;
-const host=root.querySelector('#resourcePdfHost'),badge=root.querySelector('[data-resource-page-label]'),catalog=V.SourceCatalog119?.get?.(key),official=catalog?.officialPage||V.SourcePDF?.sourcePage?.(key)||'';
+root.dataset.renderState='loading';
+const host=root.querySelector('#resourcePdfHost'),badge=root.querySelector('[data-resource-page-label]'),catalog=V.SourceCatalog119?.get?.(key),official=catalog?.officialPage||V.SourcePDF?.sourcePage?.(key)||'',searchQuery=String(root.dataset.searchQuery||'').trim();
 if(!catalog||!V.SourcePDF){host.innerHTML='<div class="empty">연결된 원문이 없습니다.</div>';return}
 host.innerHTML='<div class="pdf-loading"><b>공식 교재 여는 중…</b><small>필요한 페이지만 불러옵니다.</small><div class="progressbar"><i style="width:35%"></i></div></div>';
 try{
-const result=await V.SourcePDF.render(key,Number(pageOverride)||1,host,[],{timeoutMs:30000,zoom:Number(root.dataset.zoom)||1});
-root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);const zl=root.querySelector('[data-resource-zoom-label]');if(zl)zl.textContent=Math.round((result.zoom||1)*100)+'%';
-badge.textContent=result.bookPage?`교재 ${result.bookPage}쪽`:`PDF ${result.page}/${result.pages}쪽`;
+const qs=searchQuery?[searchQuery]:[],result=await V.SourcePDF.render(key,Number(pageOverride)||1,host,qs,{timeoutMs:30000,zoom:Number(root.dataset.zoom)||1,anchorTerms:qs});
+root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);root.dataset.renderState='ready';const zl=root.querySelector('[data-resource-zoom-label]');if(zl)zl.textContent=Math.round((result.zoom||1)*100)+'%';
+badge.textContent=(result.bookPage?`교재 ${result.bookPage}쪽`:`PDF ${result.page}/${result.pages}쪽`)+(searchQuery?' · 검색 결과':'');
 const prev=root.querySelector('[data-resource-pdf-page="-1"]'),next=root.querySelector('[data-resource-pdf-page="1"]');
 if(prev)prev.disabled=result.page<=1;if(next)next.disabled=result.page>=result.pages;
 root.querySelector('.pdf-pager')?.classList.remove('hidden');
@@ -692,14 +702,15 @@ root.querySelector('.pdf-pager')?.classList.add('hidden');
 }
 async function openResourcePdf(key){
 const row=V.SourceCatalog119?.get?.(key);if(!row)return;
+const mapped=Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOffsets||{},key),pageLabel=mapped?'교재 쪽':'PDF 쪽';
 document.querySelector('#resourcePdf')?.remove();
-document.body.insertAdjacentHTML('beforeend',`<div class="modal-wrap" id="resourcePdf" data-resource-pdf-backdrop data-doc-key="${esc(key)}" data-page="1" data-zoom="1"><div class="modal pdf-evidence-modal"><div class="toolbar pdf-modal-head"><div><span class="eyebrow">공식 자료</span><h2>${esc(row.label)}</h2><small data-resource-page-label class="muted">PDF 여는 중</small></div><span class="spacer"></span><button class="btn small ghost" data-source-back>← 뒤로</button><button class="btn small" data-resource-download="${esc(key)}">다운로드</button><button class="btn small ghost pdf-close-btn" data-resource-pdf-close>닫기 ✕</button></div><div class="toolbar pdf-zoombar"><button class="btn small ghost" data-resource-pdf-zoom="-0.25">−</button><span class="pill" data-resource-zoom-label>100%</span><button class="btn small ghost" data-resource-pdf-zoom="0.25">＋</button><button class="btn small ghost" data-resource-pdf-fit>폭 맞춤</button></div><div id="resourcePdfHost" class="pdf-evidence-host"><div class="empty">공식 교재 확인 중…</div></div><div class="toolbar pdf-pager hidden"><button class="btn ghost" data-resource-pdf-page="-1">← 이전 페이지</button><button class="btn ghost" data-resource-pdf-page="1">다음 페이지 →</button></div></div></div>`);sourceOpen();
+document.body.insertAdjacentHTML('beforeend',`<div class="modal-wrap" id="resourcePdf" data-resource-pdf-backdrop data-doc-key="${esc(key)}" data-page="1" data-zoom="1"><div class="modal pdf-evidence-modal"><div class="toolbar pdf-modal-head"><div><span class="eyebrow">공식 자료</span><h2>${esc(row.label)}</h2><small data-resource-page-label class="muted">PDF 여는 중</small></div><span class="spacer"></span><button class="btn small ghost" data-source-back>← 뒤로</button><button class="btn small" data-resource-download="${esc(key)}">다운로드</button><button class="btn small ghost pdf-close-btn" data-resource-pdf-close>닫기 ✕</button></div><div class="toolbar pdf-zoombar"><button class="btn small ghost" data-resource-pdf-zoom="-0.25">−</button><span class="pill" data-resource-zoom-label>100%</span><button class="btn small ghost" data-resource-pdf-zoom="0.25">＋</button><button class="btn small ghost" data-resource-pdf-fit>폭 맞춤</button></div><div class="pdf-findbar"><div class="pdf-jump-control"><input class="input" type="number" min="1" inputmode="numeric" data-resource-pdf-jump-input placeholder="${pageLabel}" aria-label="${pageLabel} 이동"><button class="btn small" data-resource-pdf-jump>이동</button></div><div class="pdf-search-control"><input class="input" type="search" data-resource-pdf-search-input placeholder="원문 안에서 검색" aria-label="PDF 원문 검색"><button class="btn small primary" data-resource-pdf-search>검색</button></div></div><div id="resourcePdfHost" class="pdf-evidence-host"><div class="empty">공식 교재 확인 중…</div></div><div class="toolbar pdf-pager hidden"><button class="btn ghost" data-resource-pdf-page="-1">← 이전 페이지</button><button class="btn ghost" data-resource-pdf-page="1">다음 페이지 →</button></div></div></div>`);sourceOpen();
 await renderResourcePdf(key,1);
 }
 async function renderPdfEvidence(id,pageOverride=null){
 const root=document.querySelector('#pdfEvidence');if(!root)return;
 root.dataset.renderState='loading';delete root.dataset.anchorVerified;
-const c=V.curriculum.byId[id],p=V.contentPacks.get(id),range=(c?.sourceRanges||[])[0],key=range?.doc||'',host=root.querySelector('#pdfEvidenceHost'),badge=root.querySelector('[data-pdf-page-label]'),anchorQueries=sourceAnchorQueries(c,p),queries=evidenceQueries(c,p);
+const c=V.curriculum.byId[id],p=V.contentPacks.get(id),range=(c?.sourceRanges||[])[0],key=range?.doc||'',host=root.querySelector('#pdfEvidenceHost'),badge=root.querySelector('[data-pdf-page-label]'),anchorQueries=sourceAnchorQueries(c,p),queries=evidenceQueries(c,p),manualQuery=String(root.dataset.searchQuery||'').trim(),renderQueries=manualQuery?[manualQuery,...queries]:queries,renderAnchors=manualQuery?[manualQuery]:anchorQueries;
 if(!key||!V.SourcePDF){host.innerHTML='<div class="empty">연결된 원문이 없습니다.</div>';return}
 const availability=await V.SourcePDF.availability(key),catalog=V.SourceCatalog119?.get?.(key),official=availability.officialPage||catalog?.officialPage||V.SourcePDF.sourcePage(key)||'',staticRange=catalog?.transport==='range-static';
 if(!availability.local&&!availability.direct){badge.textContent='공식 원문';host.innerHTML=`<div class="source-connect official-fallback"><b>원문을 바로 불러올 수 없습니다.</b>${official?`<a class="btn primary block" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div>`;root.querySelector('.pdf-pager')?.classList.add('hidden');return}
@@ -710,13 +721,12 @@ host.innerHTML=staticRange
 try{
 const bookFrom=Number(range?.from)||0,initialPdfPage=bookFrom?(V.SourcePDF.pdfPage?.(key,bookFrom)||bookFrom):0;
 let page=Number(pageOverride)||Number(root.dataset.page)||initialPdfPage||0;
-const progress=({loaded,total,percent})=>{const bar=root.querySelector('[data-pdf-progress]'),label=root.querySelector('[data-pdf-progress-label]');if(bar&&percent!=null)bar.style.width=Math.max(4,percent)+'%';if(label)label.textContent=percent!=null?`원문 준비 중`:`원문 준비 중`};
+const progress=({percent})=>{const bar=root.querySelector('[data-pdf-progress]'),label=root.querySelector('[data-pdf-progress-label]');if(bar&&percent!=null)bar.style.width=Math.max(4,percent)+'%';if(label)label.textContent='원문 준비 중'};
 if(!page){badge.textContent='근거 위치 찾는 중…';const located=await V.SourcePDF.locate(key,queries);page=located.page;root.dataset.autoLocated='true'}
-badge.textContent=staticRange?'공식 교재 여는 중…':(availability.local?'공식 원문 여는 중…':'공식 원문 여는 중…');
-let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:18000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
-if(pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
-const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key);
-const candidates=[];
+badge.textContent=manualQuery?'검색 결과 여는 중…':(staticRange?'공식 교재 여는 중…':'공식 원문 여는 중…');
+let result=await V.SourcePDF.render(key,page,host,renderQueries,{timeoutMs:18000,onProgress:progress,anchorTerms:renderAnchors,zoom:Number(root.dataset.zoom)||1});
+if(!manualQuery&&pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
+const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key),candidates=[];
 const mappedHit=await V.SourcePDF.locate(key,queries,{bookRanges:mapped}).catch(()=>null);
 if(mappedHit?.page&&mappedHit.score>0)candidates.push({...mappedHit,scope:'mapped'});
 const broadHit=await Promise.race([V.SourcePDF.locate(key,queries).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),6000))]);if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'});
@@ -725,10 +735,10 @@ const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeo
 if(hasAnchorEvidence(anchorResult,anchorQueries)||anchorResult.hits>=2){result=anchorResult;root.dataset.autoLocated='true';root.dataset.searchScope=located.scope;break}
 }
 }
-const anchorVerified=hasAnchorEvidence(result,anchorQueries)||result.hits>=2;root.dataset.highlightCount=String(result.hits||0);
+const anchorVerified=!manualQuery&&(hasAnchorEvidence(result,anchorQueries)||result.hits>=2);root.dataset.highlightCount=String(result.hits||0);
 root.dataset.anchorVerified=anchorVerified?'true':'false';
 root.dataset.page=String(result.page);root.dataset.pages=String(result.pages);root.dataset.renderState='ready';const zl=root.querySelector('[data-pdf-zoom-label]');if(zl)zl.textContent=Math.round((result.zoom||1)*100)+'%';
-const truthLabel=anchorVerified?'공식 근거':'근거 위치 확인 필요';
+const truthLabel=manualQuery?'검색 결과':anchorVerified?'공식 근거':'근거 위치 확인 필요';
 badge.textContent=result.bookPage?`교재 ${result.bookPage}쪽 · ${truthLabel}`:`PDF ${result.page}/${result.pages}쪽 · ${truthLabel}`;
 const prev=root.querySelector('[data-pdf-page="-1"]'),next=root.querySelector('[data-pdf-page="1"]');if(prev)prev.disabled=result.page<=1;if(next)next.disabled=result.page>=result.pages;
 root.querySelector('.pdf-pager')?.classList.remove('hidden')
@@ -746,7 +756,7 @@ if(!links.length){toast('연결된 공식 원문이 없습니다.');return}
 document.body.insertAdjacentHTML('beforeend',`<div class="modal-wrap" id="sourceModal" data-source-backdrop><div class="modal source-modal"><div class="toolbar pdf-modal-head"><div><span class="eyebrow">공식 웹 근거</span><h2>${esc(c?.title||id)}</h2></div><span class="spacer"></span><button class="btn small ghost" data-source-back>← 뒤로</button><button class="btn small ghost pdf-close-btn" data-source-close>닫기 ✕</button></div><p class="lead">${esc(pack?.source||'공식 근거')}</p><div class="source-law-links">${links.map(x=>`<a class="source-law-link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label||'공식 원문')} <span aria-hidden="true">↗</span></a>`).join('')}</div></div></div>`);sourceOpen();
 return
 }
-const hasMappedBookPage=Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOffsets||{},key),initialPdf=bookFrom?(V.SourcePDF.pdfPage?.(key,bookFrom)||bookFrom):0;document.querySelector('#sourceModal')?.remove();document.querySelector('#pdfEvidence')?.remove();document.body.insertAdjacentHTML('beforeend',`<div class="modal-wrap" id="pdfEvidence" data-pdf-backdrop data-concept-id="${esc(id)}" data-doc-key="${esc(key)}" data-page="${initialPdf||''}" data-zoom="1"><div class="modal pdf-evidence-modal"><div class="toolbar pdf-modal-head"><div><span class="eyebrow">공식 근거</span><h2>${esc(c?.title||id)}</h2><small data-pdf-page-label class="muted">${bookFrom?(hasMappedBookPage?`교재 ${bookFrom}쪽`:`PDF ${bookFrom}쪽`):'근거 위치 찾기'}</small></div><span class="spacer"></span><button class="btn small ghost" data-source-back>← 뒤로</button><button class="btn small" data-pdf-download>다운로드</button><button class="btn small ghost pdf-close-btn" data-pdf-close>닫기 ✕</button></div><div class="toolbar pdf-zoombar"><button class="btn small ghost" data-pdf-zoom="-0.25">−</button><span class="pill" data-pdf-zoom-label>100%</span><button class="btn small ghost" data-pdf-zoom="0.25">＋</button><button class="btn small ghost" data-pdf-fit>폭 맞춤</button></div><div id="pdfEvidenceHost" class="pdf-evidence-host"><div class="empty">공식 원문 여는 중…</div></div><div class="toolbar pdf-pager hidden"><button class="btn ghost" data-pdf-page="-1">← 이전 페이지</button><button class="btn ghost" data-pdf-page="1">다음 페이지 →</button></div></div></div>`);sourceOpen();await renderPdfEvidence(id)}
+const hasMappedBookPage=Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOffsets||{},key),initialPdf=bookFrom?(V.SourcePDF.pdfPage?.(key,bookFrom)||bookFrom):0;document.querySelector('#sourceModal')?.remove();document.querySelector('#pdfEvidence')?.remove();document.body.insertAdjacentHTML('beforeend',`<div class="modal-wrap" id="pdfEvidence" data-pdf-backdrop data-concept-id="${esc(id)}" data-doc-key="${esc(key)}" data-page="${initialPdf||''}" data-zoom="1"><div class="modal pdf-evidence-modal"><div class="toolbar pdf-modal-head"><div><span class="eyebrow">공식 근거</span><h2>${esc(c?.title||id)}</h2><small data-pdf-page-label class="muted">${bookFrom?(hasMappedBookPage?`교재 ${bookFrom}쪽`:`PDF ${bookFrom}쪽`):'근거 위치 찾기'}</small></div><span class="spacer"></span><button class="btn small ghost" data-source-back>← 뒤로</button><button class="btn small" data-pdf-download>다운로드</button><button class="btn small ghost pdf-close-btn" data-pdf-close>닫기 ✕</button></div><div class="toolbar pdf-zoombar"><button class="btn small ghost" data-pdf-zoom="-0.25">−</button><span class="pill" data-pdf-zoom-label>100%</span><button class="btn small ghost" data-pdf-zoom="0.25">＋</button><button class="btn small ghost" data-pdf-fit>폭 맞춤</button></div><div class="pdf-findbar"><div class="pdf-jump-control"><input class="input" type="number" min="1" inputmode="numeric" data-pdf-jump-input placeholder="${hasMappedBookPage?'교재 쪽':'PDF 쪽'}" aria-label="원문 쪽 이동"><button class="btn small" data-pdf-jump>이동</button></div><div class="pdf-search-control"><input class="input" type="search" data-pdf-search-input placeholder="원문 안에서 검색" aria-label="원문 검색"><button class="btn small primary" data-pdf-search>검색</button></div></div><div id="pdfEvidenceHost" class="pdf-evidence-host"><div class="empty">공식 원문 여는 중…</div></div><div class="toolbar pdf-pager hidden"><button class="btn ghost" data-pdf-page="-1">← 이전 페이지</button><button class="btn ghost" data-pdf-page="1">다음 페이지 →</button></div></div></div>`);sourceOpen();await renderPdfEvidence(id)}
 document.addEventListener('click',async e=>{const t=e.target instanceof Element?e.target:null;if(!t)return;if(t.matches('[data-backdrop-close-more]')){runtime.more=false;return render()}if(t.matches('[data-backdrop-close-account]')){runtime.account=false;return render()}if(t.matches('[data-source-backdrop],[data-resource-pdf-backdrop],[data-pdf-backdrop]')){sourceClose();return}const b=t.closest('button,[data-outline-close]');if(!b)return;if(b.dataset.detailJump!==undefined){const key=String(b.dataset.detailJump||''),root=b.closest('.study-body')||document,target=root.querySelector(`[data-detail-section="${CSS.escape(key)}"]`);target?.scrollIntoView({behavior:'smooth',block:'start'});return}if('sourceBack'in b.dataset){sourceClose();return}if('resourcePdfClose'in b.dataset){sourceClose();return}
 if(b.dataset.resourceDoc){await openResourcePdf(b.dataset.resourceDoc);return}
 if(b.dataset.resourceDownload){await downloadOfficialPdf(b.dataset.resourceDownload);return}
