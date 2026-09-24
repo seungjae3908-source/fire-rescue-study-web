@@ -780,6 +780,53 @@ function hasAnchorEvidence(r,a){const l=(r?.evidenceLines||[]).map(studyNorm),t=
 function sourceModal(id){return openPdfEvidence(id)}
 async function downloadOfficialPdf(key){if(!key||!V.SourcePDF?.download)return toast('다운로드할 PDF가 없습니다.');try{const r=await V.SourcePDF.download(key,{timeoutMs:120000});toast(`PDF 다운로드 시작 · ${r?.name||key}`)}catch(err){toast('PDF 다운로드 실패 · '+String(err?.message||err).slice(0,46))}}
 const sourceOverlay=()=>document.querySelector('#pdfEvidence,#resourcePdf,#sourceModal');function sourceOpen(){history.pushState({...history.state,sourceView:1},'')}function sourceClose(pop=false){const x=sourceOverlay();if(!x)return false;x.remove();if(!pop&&history.state?.sourceView)history.back();return true}
+/* V66 real interaction scroll bridge: keep one owner while eliminating fixed-chrome wheel/touch dead zones. */
+function interactionScrollOwner(target){
+  if(!(target instanceof Element))return null;
+  const pdfModal=target.closest('.pdf-evidence-modal');
+  if(pdfModal){
+    if(target.closest('.pdf-evidence-host'))return null;
+    return pdfModal.querySelector('.pdf-evidence-host[data-scroll-owner="pdf"]');
+  }
+  const studyPage=target.closest('.page-study');
+  if(studyPage){
+    if(target.closest('.study-body,.outline,.backdrop'))return null;
+    return [...studyPage.querySelectorAll('.study-body[data-scroll-owner]')].find(el=>el.offsetParent!==null)||null;
+  }
+  return null;
+}
+function moveInteractionScroll(owner,delta){
+  if(!owner||!owner.isConnected||!Number.isFinite(delta)||Math.abs(delta)<.01)return false;
+  const max=Math.max(0,owner.scrollHeight-owner.clientHeight),before=owner.scrollTop;
+  if(max<=0)return false;
+  owner.scrollTop=Math.max(0,Math.min(max,before+delta));
+  return Math.abs(owner.scrollTop-before)>.5;
+}
+document.addEventListener('wheel',e=>{
+  if(e.ctrlKey||Math.abs(e.deltaY)<=Math.abs(e.deltaX))return;
+  const owner=interactionScrollOwner(e.target);if(!owner)return;
+  const unit=e.deltaMode===1?16:e.deltaMode===2?Math.max(1,owner.clientHeight):1;
+  if(moveInteractionScroll(owner,e.deltaY*unit))e.preventDefault();
+},{passive:false,capture:true});
+let interactionTouch=null;
+document.addEventListener('touchstart',e=>{
+  if(e.touches?.length!==1){interactionTouch=null;return}
+  const owner=interactionScrollOwner(e.target);if(!owner){interactionTouch=null;return}
+  const t=e.touches[0];
+  interactionTouch={owner,startX:t.clientX,startY:t.clientY,lastX:t.clientX,lastY:t.clientY,decided:false,vertical:false};
+},{passive:true,capture:true});
+document.addEventListener('touchmove',e=>{
+  const s=interactionTouch;if(!s||!s.owner?.isConnected||e.touches?.length!==1)return;
+  const t=e.touches[0],totalX=t.clientX-s.startX,totalY=t.clientY-s.startY;
+  if(!s.decided&&(Math.abs(totalX)>7||Math.abs(totalY)>7)){s.decided=true;s.vertical=Math.abs(totalY)>Math.abs(totalX)}
+  const delta=s.lastY-t.clientY;s.lastX=t.clientX;s.lastY=t.clientY;
+  if(!s.decided||!s.vertical)return;
+  if(moveInteractionScroll(s.owner,delta))e.preventDefault();
+},{passive:false,capture:true});
+const clearInteractionTouch=()=>{interactionTouch=null};
+document.addEventListener('touchend',clearInteractionTouch,{passive:true,capture:true});
+document.addEventListener('touchcancel',clearInteractionTouch,{passive:true,capture:true});
+
 function requestedPdfPage(key,raw){
 const n=Math.floor(Number(raw)||0);if(n<1)return 0;
 return Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOffsets||{},key)?(V.SourcePDF.pdfPage?.(key,n)||n):n
