@@ -20,6 +20,19 @@ function ageMs(value){
   const n=Date.parse(String(value||''));
   return Number.isFinite(n)?Math.max(0,Date.now()-n):Number.POSITIVE_INFINITY;
 }
+function isPublishableMonitorRow(row){
+  if(row?.sourceId!=='nfsa-notice')return true;
+  try{
+    const url=new URL(String(row?.url||''));
+    const mode=String(url.searchParams.get('mode')||'').toLowerCase();
+    const hasStablePostId=['cntId','cntid','nttId','nttid'].some(key=>url.searchParams.has(key));
+    return mode==='view'||hasStablePostId;
+  }catch{return false}
+}
+function filterNavigationRows(snapshot){
+  const before=Array.isArray(snapshot?.items)?snapshot.items:[];
+  return{...snapshot,items:before.filter(isPublishableMonitorRow)};
+}
 function healthFromSnapshot(x){
   const items=Array.isArray(x?.items)?x.items:[];
   const healthy=x?.healthy===true;
@@ -49,7 +62,7 @@ async function fetchSnapshot(){return await fetchJson(SNAPSHOT,valid)}
 async function fetchHealth(){return await fetchJson(HEALTH,validHealth)}
 async function fetchLive(){
   const mod=await import('../official-monitor-lib.mjs');
-  const x=await mod.collectOfficialNotices(fetch,new Date());
+  const x=filterNavigationRows(await mod.collectOfficialNotices(fetch,new Date()));
   if(!valid(x))throw new Error('INVALID_LIVE');
   return x;
 }
@@ -90,4 +103,5 @@ async function handler(req,res){
 }
 
 handler.healthFromSnapshot=healthFromSnapshot;
+handler.filterNavigationRows=filterNavigationRows;
 module.exports=handler;
