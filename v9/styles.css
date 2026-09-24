@@ -519,3 +519,110 @@
   .exam-round-state{justify-content:flex-start}
   .exam-round-state>span:not(.tag){white-space:normal}
 }
+
+
+/* V61 performance + weakness analytics center */
+.stats-v61 small{font-size:12px!important;line-height:1.45}
+.stats-v61{display:grid;gap:12px}
+.stats-v61-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.stats-v61-hero h2{margin:4px 0 6px;font-size:22px}
+.stats-v61-metrics .metric small{display:block;margin-top:4px;color:var(--muted);font-size:11px}
+.stats-next-action .toolbar{align-items:flex-start;gap:8px;flex-wrap:wrap}
+.stats-priority-grid{display:grid;gap:7px;margin-top:10px}
+.stats-priority-item{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) auto;
+  gap:9px;
+  align-items:center;
+  padding:9px 10px;
+  border:1px solid rgba(148,170,194,.14);
+  border-radius:11px;
+  background:rgba(8,21,36,.45)
+}
+.stats-priority-item>span{
+  display:grid;
+  place-items:center;
+  width:28px;height:28px;
+  border-radius:999px;
+  background:rgba(111,182,255,.12);
+  font-size:12px;font-weight:800
+}
+.stats-priority-item div{display:grid;gap:2px;min-width:0}
+.stats-priority-item small{color:var(--muted);font-size:11px}
+.stats-v61-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stats-analysis-list{display:grid;gap:9px;margin-top:10px}
+.stats-analysis-row{display:grid;gap:5px;min-width:0}
+.stats-analysis-row.warning{padding:8px;border:1px solid rgba(238,120,120,.35);border-radius:10px;background:rgba(238,120,120,.055)}
+.stats-analysis-head{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.stats-analysis-head b{min-width:0;font-size:13px}
+.stats-analysis-head span{font-size:12px;font-weight:800}
+.stats-analysis-row small{font-size:10px;color:var(--muted)}
+.stats-analysis-bar,.stats-trend-bar{
+  position:relative;
+  height:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(148,170,194,.12)
+}
+.stats-analysis-bar i,.stats-trend-bar i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:currentColor;
+  opacity:.7
+}
+.stats-weak-table{display:grid;gap:7px;margin-top:10px}
+.stats-weak-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:9px;
+  align-items:center;
+  width:100%;
+  padding:9px 10px;
+  border:1px solid rgba(148,170,194,.14);
+  border-radius:10px;
+  background:rgba(8,21,36,.45);
+  color:inherit;
+  text-align:left;
+  cursor:pointer
+}
+.stats-weak-row>span:first-child{display:grid;gap:2px;min-width:0}
+.stats-weak-row b{overflow-wrap:anywhere}
+.stats-weak-row small{color:var(--muted);font-size:10px}
+.stats-weak-row>span:last-child{font-weight:800;font-size:12px;white-space:nowrap}
+.stats-weak-score{font-size:10px!important;color:var(--muted);white-space:nowrap}
+.stats-skill-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center}
+.stats-trend-list{display:grid;gap:8px;margin-top:10px}
+.stats-trend-row{
+  display:grid;
+  grid-template-columns:120px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  padding:7px 0;
+  border-bottom:1px solid rgba(148,170,194,.09)
+}
+.stats-trend-row:last-child{border-bottom:0}
+.stats-trend-row>div:first-child{display:grid;gap:2px}
+.stats-trend-row>div:first-child small{color:var(--muted);font-size:10px}
+.stats-readiness-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stats-readiness-strip>div{display:grid;gap:3px;padding:8px 10px;border:1px solid rgba(148,170,194,.12);border-radius:10px}
+.stats-readiness-strip span{font-size:10px;color:var(--muted)}
+.stats-readiness-strip b{font-size:18px}
+@media(max-width:900px){
+  .stats-v61-columns{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  .stats-v61{padding-bottom:74px}
+  .stats-v61-hero{display:grid}
+  .stats-v61-hero h2{font-size:20px}
+  .stats-next-action .toolbar .btn{min-height:42px}
+  .stats-priority-item{grid-template-columns:28px minmax(0,1fr)}
+  .stats-priority-item>.btn{grid-column:2}
+  .stats-weak-row{grid-template-columns:minmax(0,1fr) auto}
+  .stats-weak-score{grid-column:1;justify-self:start}
+  .stats-skill-row{grid-template-columns:1fr}
+  .stats-skill-row .btn{justify-self:start;min-height:40px}
+  .stats-trend-row{grid-template-columns:88px minmax(0,1fr)}
+  .stats-trend-row>.btn{grid-column:1/-1;justify-self:start}
+  .stats-readiness-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

@@ -43,6 +43,8 @@ const officialMonitorApi=fs.readFileSync(new URL('./api/official-monitor.js',imp
 const officialMonitorApiTest=fs.readFileSync(new URL('./official-monitor-api-test.mjs',import.meta.url),'utf8');
 const officialMonitorBrowserTest=fs.readFileSync(new URL('./official-monitor-browser-e2e.mjs',import.meta.url),'utf8');
 const accessibilitySmoke=fs.readFileSync(new URL('./accessibility-smoke.mjs',import.meta.url),'utf8');
+const analyticsV61=fs.readFileSync(new URL('./analytics-v61-119.js',import.meta.url),'utf8');
+const analyticsV61E2E=fs.readFileSync(new URL('./v61-performance-weakness-e2e.mjs',import.meta.url),'utf8');
 const performanceBudget=fs.readFileSync(new URL('./performance-budget-audit.mjs',import.meta.url),'utf8');
 const officialMonitorRootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.url),'utf8');
 const authE2E=fs.readFileSync(new URL('./auth-session-e2e.mjs',import.meta.url),'utf8');
@@ -77,6 +79,7 @@ const checks={
   officialNoticeMonitorRuntimeTests:workflow.includes('Official monitor root API handler gate')&&workflow.includes('Official monitor offline/cache fallback QA')&&officialMonitorApiTest.includes('OFFICIAL_MONITOR_API_TEST_COMPLETE')&&officialMonitorBrowserTest.includes('OFFICIAL_MONITOR_BROWSER_FALLBACK_COMPLETE'),
   accessibilitySmokeContract:workflow.includes('Keyboard and accessibility semantic smoke QA')&&accessibilitySmoke.includes('ACCESSIBILITY_SMOKE_COMPLETE')&&app.includes('aria-current="page"')&&app.includes('aria-live="polite"'),
   activeExamRecoveryContract:((examSession.includes("version:'119-active-exam-v1'")&&examSession.includes('questionIdsOnly:true'))||(examSession.includes("version:'119-active-exam-v2'")&&examSession.includes('variantSnapshots:true')&&examSession.includes('questionSnapshots')))&&app.includes('persistActiveExam()')&&app.includes('data-exam-timer')&&app.includes('data-exam-abandon')&&workflow.includes('Active exam reload recovery and timer QA')&&examSessionE2E.includes('EXAM_SESSION_RECOVERY_E2E_COMPLETE'),
+  performanceWeaknessV61Contract:workflow.includes('V61 performance + weakness analytics audit')&&workflow.includes('V61 performance center + adaptive training QA')&&analyticsV61.includes("version:'119-v61-performance-weakness-center-v1'")&&analyticsV61.includes('localOnly:true')&&analyticsV61.includes('realMockUnchanged:true')&&app.includes('data-stats-weak-train')&&analyticsV61E2E.includes('V61_PERFORMANCE_WEAKNESS_E2E_SUCCESS'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{

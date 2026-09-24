@@ -129,6 +129,8 @@ jobs:
         run: node v9/v59-seeded-variant-audit.mjs
       - name: V60 source-reviewed B-pool promotion audit
         run: node v9/v60-source-reviewed-promotion-audit.mjs
+      - name: V61 performance + weakness analytics audit
+        run: node v9/v61-performance-weakness-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
       - name: V28 183-concept depth + verified-question quality audit
@@ -271,6 +273,8 @@ jobs:
         run: node v9/v57-daily-study-ux-e2e.mjs
       - name: V59 seeded round + variant persistence QA
         run: node v9/v59-seeded-round-variant-e2e.mjs
+      - name: V61 performance center + adaptive training QA
+        run: node v9/v61-performance-weakness-e2e.mjs
       - name: Official monitor offline/cache fallback QA
         run: node v9/official-monitor-browser-e2e.mjs
       - name: Keyboard and accessibility semantic smoke QA

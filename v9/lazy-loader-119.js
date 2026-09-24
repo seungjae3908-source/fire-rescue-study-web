@@ -20,7 +20,8 @@ const QUESTION_FILES=[
   'question-variant-engine-119.js',
   'mock-exam-quality-119.js',
   'v29-reviewed-promotions-119.js',
-  'v60-source-reviewed-promotions-119.js'
+  'v60-source-reviewed-promotions-119.js',
+  'analytics-v61-119.js'
 ];
 let questionsPromise=null,questionsReady=false;
 
