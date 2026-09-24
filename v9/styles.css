@@ -199,3 +199,102 @@
   .pdf-evidence-modal .pdf-modal-head>.spacer{display:none!important}
   .pdf-evidence-modal .pdf-modal-head .btn{width:100%!important;min-width:0!important}
 }
+
+
+/* V55 core/detail precision: concise core, real underline, navigable textbook detail */
+.study-key-emphasis{
+  background:transparent!important;
+  font-weight:850!important;
+  text-decoration-line:underline!important;
+  text-decoration-thickness:2px!important;
+  text-underline-offset:4px!important;
+  text-decoration-skip-ink:auto!important
+}
+.study-key-term{color:inherit!important;text-decoration-color:rgba(111,182,255,.9)!important}
+.study-key-number{color:#f2ca7e!important;text-decoration-color:#f2ca7e!important}
+.study-quick .lead{max-width:78ch}
+.study-core-compare{
+  margin:10px 0;
+  padding:13px 14px;
+  border:1px solid rgba(111,182,255,.22);
+  border-radius:13px;
+  background:rgba(111,182,255,.035)
+}
+.study-core-compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px}
+.study-core-compare-row{min-width:0;display:grid;grid-template-columns:minmax(88px,.8fr) minmax(0,1.4fr);gap:9px;align-items:start;padding:9px 10px;border:1px solid rgba(148,170,194,.14);border-radius:10px;background:#081524}
+.study-core-compare-row b{font-size:13px;line-height:1.45;color:#eef5fc;word-break:keep-all}
+.study-core-compare-row span{font-size:13px;line-height:1.58;color:#cbd8e5;word-break:keep-all;overflow-wrap:break-word}
+.study-numbers .study-key-text{font-weight:650}
+
+.detail-toc{
+  position:sticky;
+  top:0;
+  z-index:7;
+  margin:0 0 10px;
+  border:1px solid rgba(111,182,255,.25);
+  background:rgba(8,21,36,.97);
+  backdrop-filter:blur(10px);
+  border-radius:12px;
+  padding:8px 9px
+}
+.detail-toc-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.detail-toc label{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;gap:8px!important;align-items:center!important}
+.detail-toc label>b{font-size:12px;white-space:nowrap;color:#dce9f5}
+.detail-toc-select{height:38px!important;font-size:13px!important;padding-block:6px!important}
+.detail-source-button{min-height:38px!important;white-space:nowrap}
+.detail-definition{border-left:3px solid rgba(111,182,255,.65)!important;padding-left:13px!important}
+.detail-definition .detail-copy>p{font-weight:610;color:#e5edf6!important}
+.detail-view .detail-section[data-detail-section] h3{letter-spacing:-.01em}
+.detail-criteria{background:rgba(242,202,126,.035)!important;border:1px solid rgba(242,202,126,.18)!important;border-radius:12px!important;padding:14px!important}
+.detail-criteria ul{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px!important;padding:0!important;list-style:none!important}
+.detail-criteria li{margin:0!important;padding:9px 10px;border:1px solid rgba(242,202,126,.14);border-radius:9px;background:#081524;line-height:1.6!important}
+.detail-exam-points{border-left:3px solid rgba(235,160,108,.62)!important;padding-left:14px!important}
+.detail-exam-points h3{color:#f0cfaa!important}
+.detail-compare-cards .concept-class-grid{gap:8px}
+.detail-compare-cards .concept-class-card.static{min-height:78px;align-content:start}
+.detail-compare-cards .concept-class-card.static>b{font-size:15px!important}
+.detail-compare-cards .concept-class-card.static>p{font-size:14px!important;line-height:1.62!important}
+
+@media(max-width:720px){
+  .study-core-compare{padding:12px;margin:9px 0}
+  .study-core-compare-grid{grid-template-columns:1fr}
+  .study-core-compare-row{grid-template-columns:minmax(92px,.85fr) minmax(0,1.35fr);padding:9px}
+  .study-core-compare-row b,.study-core-compare-row span{font-size:14px}
+  .page-study .detail-view .detail-toc{position:sticky!important;top:0!important;margin:0 0 10px!important;padding:7px!important;border-radius:11px!important}
+  .detail-toc-row{grid-template-columns:1fr}
+  .detail-toc label{grid-template-columns:1fr!important;gap:4px!important}
+  .detail-toc label>b{font-size:11px}
+  .detail-toc-select{height:42px!important;font-size:14px!important}
+  .detail-source-button{width:100%;min-height:40px!important}
+  .detail-criteria ul{grid-template-columns:1fr!important}
+  .detail-criteria li{font-size:15px!important}
+}
+
+
+/* V55 detail navigation: keep the textbook page continuous; use light jump chips, not a section selector. */
+.detail-toc-row{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;gap:8px!important;align-items:center!important}
+.detail-toc-label{font-size:12px;white-space:nowrap;color:#dce9f5}
+.detail-toc-chips{min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px}
+.detail-toc-chips::-webkit-scrollbar{display:none}
+.detail-toc-chip{flex:0 0 auto;min-height:34px;border:1px solid rgba(148,170,194,.18);border-radius:999px;background:#0b1b2d;color:#cdd9e6;padding:6px 9px;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer}
+.detail-toc-chip:hover,.detail-toc-chip:focus-visible{border-color:#4a729c;color:#fff;outline:none}
+@media(max-width:720px){
+  .page-study .detail-view .detail-toc{position:sticky!important;top:0!important}
+  .detail-toc-row{grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important}
+  .detail-toc-label{grid-column:1/-1;font-size:11px}
+  .detail-toc-chips{grid-column:1;grid-row:2}
+  .detail-source-button{grid-column:2;grid-row:2;width:auto!important;min-width:88px}
+  .detail-toc-chip{min-height:38px;font-size:13px;padding:7px 10px}
+}
+
+@media(max-width:720px){
+  .detail-toc-chips{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;overflow:visible!important}
+  .detail-toc-chip{min-width:0!important;width:100%!important;min-height:36px!important;padding:5px 4px!important;font-size:12px!important;line-height:1.2!important;white-space:normal!important;word-break:keep-all!important;overflow-wrap:anywhere!important}
+  .detail-toc-chip:nth-child(n+5){display:none!important}
+}
+
+@media(min-width:721px) and (max-width:1180px){
+  .detail-toc-chips{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important;overflow:visible!important}
+  .detail-toc-chip{min-width:0!important;width:100%!important;min-height:34px!important;padding:5px 5px!important;white-space:normal!important;word-break:keep-all!important;overflow-wrap:anywhere!important;line-height:1.2!important}
+  .detail-toc-chip:nth-child(n+5){display:none!important}
+}
