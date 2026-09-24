@@ -680,6 +680,6 @@
   .app .top .btn,
   .app .mobile-nav button,
   .app .modal .btn{
-    min-height:44px
+    min-height:44px!important
   }
 }
