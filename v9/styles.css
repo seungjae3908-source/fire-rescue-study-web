@@ -722,3 +722,119 @@
   .correction-v64-row>.btn{justify-self:start}
   .correction-v64-main{min-height:44px}
 }
+
+
+/* V65 single vertical scroll owner */
+.screen-scroll{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+}
+
+/* Home + stats: the outer route owns vertical scrolling. */
+.page-home .dashboard-home,
+.page-stats .stats-page{
+  min-height:0!important;
+  height:100%!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+  scrollbar-gutter:stable;
+}
+.page-home .dashboard-home .home-main,
+.page-home .dashboard-home .home-side,
+.page-stats .stats-page .home-main,
+.page-stats .stats-page .home-side{
+  min-height:auto!important;
+  overflow:visible!important;
+}
+
+/* Study: only the visible study-body owns vertical scrolling. */
+.page-study .study-ai-chat{
+  max-height:none!important;
+  overflow-y:visible!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:auto!important;
+}
+.page-study .study-ai .tutor-compose{
+  position:static!important;
+}
+.table-scroll,
+.compare-wrap,
+.tutor-ai-table-wrap,
+.tutor-compare-wrap{
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  overscroll-behavior-x:contain!important;
+}
+
+/* Question bank: one route-level scroller, not a fixed filter + inner question scroller. */
+.page-bank .bank-page{
+  display:block!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+  scrollbar-gutter:stable;
+  padding-bottom:8px;
+}
+.page-bank .bank-page>.study-toolbar,
+.page-bank .bank-page>.question-filter-bar,
+.page-bank .bank-page>.calc-filter-wrap{
+  position:static!important;
+}
+.page-bank .bank-workspace{
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+  display:grid!important;
+  grid-template-rows:auto 56px!important;
+}
+.page-bank .bank-workspace .bank-question-body{
+  min-height:0!important;
+  overflow:visible!important;
+}
+.page-bank .bank-workspace .actionbar{
+  position:sticky;
+  bottom:0;
+  z-index:8;
+}
+
+/* Active exam: exam-body is the only vertical owner. */
+.page-exam.exam-active .exam-body{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+}
+.page-exam.exam-active .exam-navigator{
+  grid-template-columns:repeat(10,minmax(0,1fr))!important;
+  max-height:none!important;
+  overflow-y:visible!important;
+  overflow-x:hidden!important;
+}
+.page-exam.exam-active .exam-side{
+  max-height:none!important;
+}
+
+/* PDF/source overlays: modal shell never scrolls; only the PDF host does. */
+.modal.pdf-evidence-modal{
+  overflow:hidden!important;
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr) auto!important;
+  max-height:94dvh!important;
+}
+.modal.pdf-evidence-modal .pdf-evidence-host{
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:auto!important;
+  overscroll-behavior:contain!important;
+}
+
+/* Horizontal helper regions must never become accidental vertical scroll owners. */
+.detail-toc-chips,
+.tabbar,
+.exam-mini-navigator{
+  overflow-y:hidden!important;
+}
