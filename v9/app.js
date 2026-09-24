@@ -657,7 +657,7 @@ const root=document.querySelector('#pdfEvidence');if(!root)return;
 root.dataset.renderState='loading';delete root.dataset.anchorVerified;
 const c=V.curriculum.byId[id],p=V.contentPacks.get(id),range=(c?.sourceRanges||[])[0],key=range?.doc||'',host=root.querySelector('#pdfEvidenceHost'),badge=root.querySelector('[data-pdf-page-label]'),anchorQueries=sourceAnchorQueries(c,p),queries=evidenceQueries(c,p);
 if(!key||!V.SourcePDF){host.innerHTML='<div class="empty">연결된 원문이 없습니다.</div>';return}
-const availability=await V.SourcePDF.availability(key),official=availability.officialPage||V.SourcePDF.sourcePage(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static';
+const availability=await V.SourcePDF.availability(key),catalog=V.SourceCatalog119?.get?.(key),official=availability.officialPage||catalog?.officialPage||V.SourcePDF.sourcePage(key)||'',staticRange=catalog?.transport==='range-static';
 if(!availability.local&&!availability.direct){badge.textContent='공식 원문';host.innerHTML=`<div class="source-connect official-fallback"><b>원문을 바로 불러올 수 없습니다.</b>${official?`<a class="btn primary block" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div>`;root.querySelector('.pdf-pager')?.classList.add('hidden');return}
 const loadingActions=`<div class="pdf-loading-actions">${official?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(official)}">공식 사이트에서 열기</a>`:''}<button class="btn ghost" data-source-close>닫기</button></div>`;
 host.innerHTML=staticRange
