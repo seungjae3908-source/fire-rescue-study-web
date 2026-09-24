@@ -136,6 +136,8 @@ try{
     await seed(page);
 
     await go(page,'home');
+    await wheel(page,'.top','home','global top bar home '+vp.width);
+    if(vp.isMobile)await touchBridge(page,'.top','home','global top bar home touch '+vp.width);
     await wheel(page,'.home-main','home','home main '+vp.width);
     const homeSide=page.locator('.home-side:visible');
     if(await homeSide.count())await wheel(page,'.home-side','home','home side '+vp.width);
