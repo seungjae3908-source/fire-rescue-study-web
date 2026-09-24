@@ -40,15 +40,18 @@ for(const id of Object.keys(blockers)){
   const qs=V.questions.filter(q=>q.conceptId===id);
   if(qs.some(q=>promotedIds.has(q.id)))throw new Error('V40_BATCH4_BLOCKER_WAS_PROMOTED '+id);
 }
+// V40 is a historical regression gate. Later verified-pool expansions (for example V60)
+// are validated by their own audits and must not rewrite V40's frozen distribution baseline.
+const v40Verified=q=>(q.grade==='A'||q.grade==='B')&&q.v60Promoted!==true;
 const conceptRows=V.curriculum.concepts.map(c=>{
-  const verified=V.questions.filter(q=>q.conceptId===c.id&&(q.grade==='A'||q.grade==='B')),pos=[0,0,0,0];
+  const verified=V.questions.filter(q=>q.conceptId===c.id&&v40Verified(q)),pos=[0,0,0,0];
   for(const q of verified)pos[q.a]=(pos[q.a]||0)+1;
   const kinds=pos.filter(Boolean).length,max=verified.length?Math.max(...pos)/verified.length:0;
   return{id:c.id,verified:verified.length,answerPositionKinds:kinds,maxAnswerShare:max};
 });
 const under3=conceptRows.filter(x=>x.verified<3).length;
 const concentrated=conceptRows.filter(x=>x.verified>=3&&(x.answerPositionKinds<2||x.maxAnswerShare>=0.8));
-const totalVerified=V.questions.filter(q=>q.grade==='A'||q.grade==='B').length;
+const totalVerified=V.questions.filter(v40Verified).length;
 if(totalVerified<677)throw new Error('V40_BATCH4_TOTAL_VERIFIED_REGRESSION '+totalVerified);
 if(under3>53)throw new Error('V40_BATCH4_UNDER3_REGRESSION '+under3);
 if(concentrated.length!==0)throw new Error('V40_BATCH4_CONCENTRATION '+JSON.stringify(concentrated));
