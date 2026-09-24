@@ -321,7 +321,7 @@ jobs:
           done
           cat /tmp/study119-typography-http.log
           exit 1
-      - name: Audit every concept tab at 360/390/412/768/1440 plus active exam
+      - name: Audit every concept tab at 360/390/412/768/1024/1440 plus active exam
         run: node v9/global-typography-audit.mjs
 
 
