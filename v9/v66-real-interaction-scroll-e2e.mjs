@@ -177,8 +177,11 @@ try{
     await start.waitFor({state:'visible',timeout:30000});await start.click();
     await page.waitForSelector('.exam-run-workspace',{timeout:30000});await settle(page);
     await wheel(page,'.exam-body','exam-active','exam content '+vp.width);
+    const examHead=page.locator('.exam-head-clean:visible');if(await examHead.count())await wheel(page,'.exam-head-clean','exam-active','exam header '+vp.width);
     const nav=page.locator('.exam-navigator:visible');if(await nav.count())await wheel(page,'.exam-navigator','exam-active','exam navigator '+vp.width);
     const side=page.locator('.exam-side:visible');if(await side.count())await wheel(page,'.exam-side','exam-active','exam side '+vp.width);
+    const examFooter=page.locator('.exam-footer:visible');if(await examFooter.count())await wheel(page,'.exam-footer','exam-active','exam footer '+vp.width);
+    if(vp.isMobile&&await examFooter.count())await touchBridge(page,'.exam-footer','exam-active','exam footer touch '+vp.width);
 
     await openPdf(page);
     await wheel(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
