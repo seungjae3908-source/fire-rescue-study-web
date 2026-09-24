@@ -3,7 +3,7 @@
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored;if(!P)return;
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
 const uniq=rows=>{const out=[],seen=new Set;for(const row of rows||[]){const x=norm(row),k=x.toLowerCase();if(!x||seen.has(k))continue;seen.add(k);out.push(x)}return out};
-const uniqCompare=rows=>{const out=[],seen=new Set;for(const row of rows||[]){if(!Array.isArray(row)||!row[0]||!row[1])continue;const a=norm(row[0]),b=norm(row[1]),k=(a+'|'+b).toLowerCase();if(seen.has(k))continue;seen.add(k);out.push([a,b])}return out};
+const uniqCompare=rows=>{const out=[],seen=new Set;for(const row of rows||[]){if(!Array.isArray(row)||!row[0]||!row[1])continue;const a=norm(row[0]),b=norm(row[1]),k=a.toLowerCase().replace(/[^0-9a-z가-힣]/g,'');if(!k||seen.has(k))continue;seen.add(k);out.push([a,b])}return out};
 const uniqSections=rows=>{const out=[],seen=new Set;for(const row of rows||[]){if(!row?.title||!row?.body)continue;const k=(norm(row.title)+'|'+norm(row.body)).toLowerCase();if(seen.has(k))continue;seen.add(k);out.push({...row,title:norm(row.title),body:norm(row.body),bullets:uniq(row.bullets||[])})}return out};
 function refine(id,x){
   const p=P[id];if(!p||p.status!=='verified')return false;
