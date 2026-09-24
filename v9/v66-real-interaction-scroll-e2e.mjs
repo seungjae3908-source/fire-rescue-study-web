@@ -118,7 +118,8 @@ try{
 
     await go(page,'home');
     await wheel(page,'.home-main','home','home main '+vp.width);
-    await wheel(page,'.home-side','home','home side '+vp.width);
+    const homeSide=page.locator('.home-side:visible');
+    if(await homeSide.count())await wheel(page,'.home-side','home','home side '+vp.width);
     if(vp.isMobile)await swipe(page,'.home-main','home','home mobile '+vp.width);
 
     for(const tab of ['core','detail','quiz','source','ai']){
