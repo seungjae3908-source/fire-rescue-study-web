@@ -117,13 +117,7 @@ return[...new Set(a.map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).
 function studyHighlight(v,pack){
 const t=studentStudyText(v),a=coreHighlightTerms(pack).filter(x=>t.includes(x)).slice(0,2),n=(t.match(/\d+(?:\.\d+)?(?:\s*(?:~|–|-)\s*\d+(?:\.\d+)?)?\s*(?:초|분|시간|cm|mm|m|kg|L|%|J\/kg)?/g)||[]).slice(0,1),terms=[...new Set([...a,...n].filter(Boolean))].slice(0,3).sort((x,y)=>y.length-x.length);
 if(!terms.length)return esc(t);
-const escaped=terms.map(x=>x.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\function studyHighlight(v,pack){
-const t=studentStudyText(v),a=coreHighlightTerms(pack).filter(x=>t.includes(x)).slice(0,2),n=(t.match(/\d+(?:\.\d+)?(?:\s*(?:~|–|-)\s*\d+(?:\.\d+)?)?\s*(?:초|분|시간|cm|mm|m|kg|L|%|J\/kg)?/g)||[]).slice(0,1),terms=[...new Set([...a,...n].filter(Boolean))].slice(0,3).sort((x,y)=>y.length-x.length);
-if(!terms.length)return esc(t);
 const escaped=terms.map(x=>x.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&')),re=new RegExp('('+escaped.join('|')+')','g');
-return t.split(re).map((x,i)=>i%2?`<span class="study-key-emphasis ${/\d/.test(x)?'study-key-number':'study-key-term'}">${esc(x)}</span>`:esc(x)).join('')
-}
-')),re=new RegExp('('+escaped.join('|')+')','g');
 return t.split(re).map((x,i)=>i%2?`<span class="study-key-emphasis ${/\d/.test(x)?'study-key-number':'study-key-term'}">${esc(x)}</span>`:esc(x)).join('')
 }
 function numberHighlight(v){
