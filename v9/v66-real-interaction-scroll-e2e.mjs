@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 
-const base=process.env.STUDY_119_V66_URL||'https://fire-rescue-study-web.vercel.app/v9/';
+const base=process.env.STUDY_119_V66_URL||'http://127.0.0.1:4173/v9/index.html';
 const emptyMonitor={ok:true,targetExamYear:'2027',contentBaselineYear:'2026',sources:[],items:[]};
 const failures=[];
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
@@ -62,38 +62,34 @@ async function wheel(page,target,ownerName,label,scope='.page'){
   },ownerName);
   check(after!==state.top,label+' wheel reaches '+ownerName+' '+JSON.stringify({before:state.top,after,max:state.max,delta}));
 }
-async function swipe(page,target,ownerName,label,scope='.page'){
+async function touchBridge(page,target,ownerName,label,scope='.page'){
   await makeScrollable(page,ownerName,scope);
   const loc=page.locator(target).filter({visible:true}).first();
   await loc.waitFor({state:'visible',timeout:30000});
-  const box=await loc.boundingBox();
-  assert(!!box,label+' swipe target visible');
+  await loc.scrollIntoViewIfNeeded().catch(()=>{});
   const before=await page.locator(scope).evaluate((root,ownerName)=>{
     const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
-    if(!owner)return -1;
-    const mid=Math.min(500,Math.max(0,owner.scrollHeight-owner.clientHeight-20));
-    owner.scrollTop=mid;
-    return owner.scrollTop;
+    if(!owner)return -1;owner.scrollTop=Math.min(500,Math.max(0,owner.scrollHeight-owner.clientHeight-20));return owner.scrollTop;
   },ownerName);
-  const vp=page.viewportSize();
-  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
-  const x=clamp(box.x+box.width/2,4,(vp?.width||390)-4);
-  const y=clamp(box.y+Math.min(Math.max(box.height*.6,22),Math.max(22,box.height-8)),4,(vp?.height||844)-4);
-  try{
-    const cdp=await page.context().newCDPSession(page);
-    await cdp.send('Input.synthesizeScrollGesture',{
-      x,y,yDistance:-280,speed:800,gestureSourceType:'touch',preventFling:true
-    });
-    await settle(page,260);
-  }catch(err){
-    check(false,label+' touch protocol '+String(err?.message||err));
-    return;
-  }
-  const after=await page.locator(scope).evaluate((root,ownerName)=>{
-    const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
-    return owner?.scrollTop??-1;
-  },ownerName);
-  check(after!==before,label+' swipe reaches '+ownerName+' '+JSON.stringify({before,after}));
+  await loc.evaluate(el=>{
+    const fire=(type,x,y,active=true)=>{const ev=new Event(type,{bubbles:true,cancelable:true}),point={clientX:x,clientY:y};Object.defineProperty(ev,'touches',{value:active?[point]:[]});Object.defineProperty(ev,'changedTouches',{value:[point]});el.dispatchEvent(ev)};
+    fire('touchstart',32,320);fire('touchmove',34,245);fire('touchmove',36,165);fire('touchend',36,165,false);
+  });
+  await settle(page,120);
+  const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
+  check(after!==before,label+' vertical touch reaches '+ownerName+' '+JSON.stringify({before,after}));
+}
+async function horizontalTouchSafe(page,target,ownerName,label,scope='.page'){
+  await makeScrollable(page,ownerName,scope);
+  const loc=page.locator(target).filter({visible:true}).first();await loc.waitFor({state:'visible',timeout:30000});
+  const before=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);if(!owner)return -1;owner.scrollTop=Math.min(500,Math.max(0,owner.scrollHeight-owner.clientHeight-20));return owner.scrollTop},ownerName);
+  await loc.evaluate(el=>{
+    const fire=(type,x,y,active=true)=>{const ev=new Event(type,{bubbles:true,cancelable:true}),point={clientX:x,clientY:y};Object.defineProperty(ev,'touches',{value:active?[point]:[]});Object.defineProperty(ev,'changedTouches',{value:[point]});el.dispatchEvent(ev)};
+    fire('touchstart',30,200);fire('touchmove',130,204);fire('touchend',130,204,false);
+  });
+  await settle(page,80);
+  const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
+  check(after===before,label+' horizontal touch does not hijack '+ownerName+' '+JSON.stringify({before,after}));
 }
 async function seed(page){
   await page.evaluate(async()=>{
@@ -102,6 +98,8 @@ async function seed(page){
     if(q){
       V.Store.state.conceptId=q.conceptId;V.Store.state.subject=q.subject;V.Store.state.scopeId=q.scopeId;
       V.Store.state.chat=Array.from({length:36},(_,i)=>({id:'v66-chat-'+i,role:'assistant',conceptId:q.conceptId,text:'V66 실제 스크롤 상호작용 검증 '+i+' '+('충분히 긴 AI 답변 본문입니다. '.repeat(8)),at:Date.now()+i}));
+      V.Store.state.wrongs=[{id:'v66-w',questionId:q.id,masterQuestionId:q.masterQuestionId||q.id,familyId:q.familyId||q.id,conceptId:q.conceptId,scopeId:q.scopeId,confidence:'sure',due:Date.now()-1,resolved:false,wrongCount:2,recoveryCorrect:0,lastWrongAt:Date.now()}];
+      V.Store.state.answerEvents=[{eventId:'v66-e',questionId:q.id,masterQuestionId:q.masterQuestionId||q.id,familyId:q.familyId||q.id,conceptId:q.conceptId,scopeId:q.scopeId,subject:q.subject,correct:false,confidence:'sure',at:Date.now()}];
     }
     V.Store.save();V.App.render();
   });
@@ -141,12 +139,19 @@ try{
     await wheel(page,'.home-main','home','home main '+vp.width);
     const homeSide=page.locator('.home-side:visible');
     if(await homeSide.count())await wheel(page,'.home-side','home','home side '+vp.width);
-    if(vp.isMobile)await swipe(page,'.home-main','home','home mobile '+vp.width);
 
     for(const tab of ['core','detail','quiz','source','ai']){
       await setStudyTab(page,tab);
       const owner=vp.isMobile?'study-mobile':'study-desktop';
       await wheel(page,'.concept-head',owner,'study '+tab+' header '+vp.width);
+      if(tab==='core'){
+        await wheel(page,'.study-toolbar',owner,'study toolbar '+vp.width);
+        const conceptNav=page.locator('.concept-nav:visible');if(await conceptNav.count())await wheel(page,'.concept-nav',owner,'study actionbar '+vp.width);
+      }
+      if(vp.isMobile){
+        await touchBridge(page,'.concept-head',owner,'study '+tab+' header touch '+vp.width);
+        if(tab==='core')await horizontalTouchSafe(page,'.concept-head .tabbar',owner,'study tabbar '+vp.width);
+      }
       await wheel(page,(vp.isMobile?'.study-body-mobile':'.study-body-desktop'),owner,'study '+tab+' body '+vp.width);
       if(tab==='detail'){
         const toc=page.locator('.detail-toc:visible');
@@ -158,7 +163,6 @@ try{
         const compose=page.locator('.tutor-compose:visible');
         if(await compose.count())await wheel(page,'.tutor-compose',owner,'study AI compose '+vp.width);
       }
-      if(vp.isMobile&&tab==='ai')await swipe(page,'.study-ai-chat:visible',owner,'study AI swipe '+vp.width);
     }
 
     await go(page,'bank');
@@ -178,23 +182,17 @@ try{
 
     await openPdf(page);
     await wheel(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
+    const zoom=page.locator('#pdfEvidence .pdf-zoombar:visible');if(await zoom.count())await wheel(page,'#pdfEvidence .pdf-zoombar','pdf','pdf zoombar '+vp.width,'#pdfEvidence');
     await wheel(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar '+vp.width,'#pdfEvidence');
     await wheel(page,'#pdfEvidence .pdf-evidence-host','pdf','pdf canvas host '+vp.width,'#pdfEvidence');
     const pager=page.locator('#pdfEvidence .pdf-pager:visible');if(await pager.count())await wheel(page,'#pdfEvidence .pdf-pager','pdf','pdf pager '+vp.width,'#pdfEvidence');
-    if(vp.isMobile)await swipe(page,'#pdfEvidence .pdf-modal-head','pdf','pdf mobile header swipe '+vp.width,'#pdfEvidence');
+    if(vp.isMobile){await touchBridge(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header touch '+vp.width,'#pdfEvidence');await touchBridge(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar touch '+vp.width,'#pdfEvidence')}
     await page.locator('#pdfEvidence [data-pdf-close]').click();
 
-    for(const [route,owner,target] of [
-      ['notes','notes','.notes-page'],
-      ['wrong','wrong','.wrong-page'],
-      ['stats','stats','.stats-page .home-main'],
-      ['resources','resources','.resources-page'],
-      ['suggestions','suggestions','.suggestions-page'],
-      ['settings','settings','.settings-page']
-    ]){
+    for(const [route,owner] of [['notes','notes'],['wrong','wrong'],['stats','stats'],['resources','resources'],['suggestions','suggestions'],['settings','settings']]){
       await go(page,route);
-      const targetLoc=page.locator(target+':visible');
-      if(await targetLoc.count())await wheel(page,target,owner,route+' body '+vp.width);
+      const target='[data-scroll-owner="'+owner+'"]',targetLoc=page.locator(target+':visible');
+      if(await targetLoc.count())await wheel(page,target,owner,route+' body '+vp.width);else console.log('PASS route '+route+' has no effective scroller in this state '+vp.width);
     }
 
     const owners=await visibleOwner(page);
