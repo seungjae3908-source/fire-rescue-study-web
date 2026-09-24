@@ -53,6 +53,7 @@ try{
     const V=window.AITUTOR_V9;
     V.SourcePDF.render=async(key,page,host,queries=[],opts={})=>{host.innerHTML=`<div data-stub-pdf-page="${page}">stub</div>`;return{page:Number(page)||1,pages:120,bookPage:Number(page)||1,zoom:Number(opts.zoom)||1,hits:queries.length,evidenceLines:[],name:key,origin:'stub'}};
     V.SourcePDF.locate=async(key,queries)=>({page:42,pages:120,score:String(queries?.[0]||'').trim()?24:0});
+    V.SourcePDF.findPages=async(key,query)=>({query,pages:120,results:String(query||'').trim()?[{page:42,score:24}]:[]});
     V.SourcePDF.availability=async()=>({local:true,direct:true,officialPage:''});
     V.App.go('resources');
   });
