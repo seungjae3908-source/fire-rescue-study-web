@@ -1,3 +1,4 @@
+// V60 Ready gate refresh: fresh full-CI trigger only.
 import fs from 'node:fs';
 import vm from 'node:vm';
 
