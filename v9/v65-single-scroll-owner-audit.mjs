@@ -10,11 +10,11 @@ assert(css.includes('/* V65 single vertical scroll owner */'),'V65 single-scroll
 assert(css.includes('.page-home .dashboard-home')&&css.includes('.page-stats .stats-page .home-main'),'home route and stats main expose one vertical owner each');
 assert(css.includes('.page-home .dashboard-home .home-main')&&css.includes('overflow:visible!important'),'home nested columns no longer own vertical scrolling');
 assert(app.includes('home-main stats-v61" data-scroll-owner="stats')||app.includes('home-main" data-scroll-owner="stats'),'stats marks the full-width main column as its single scroll owner');
-assert(css.includes('.page-study .study-ai-chat')&&css.includes('overflow-y:visible!important'),'AI chat no longer owns a second vertical scrollbar');
+assert(css.includes('.page-study .study-ai-chat')&&css.includes('overflow:visible!important'),'AI chat no longer owns a second vertical scrollbar');
 assert(app.includes("b.scrollTop=b.scrollHeight")&&!app.includes("x.scrollTop=x.scrollHeight"),'AI scroll restoration targets only the study-body owner');
 assert(app.includes('study bank-page screen-scroll')&&app.includes('bank-workspace'),'question bank uses route-level vertical owner');
 assert(css.includes('.page-bank .bank-workspace .bank-question-body')&&css.includes('overflow:visible!important'),'question bank inner body no longer scrolls independently');
-assert(css.includes('.page-exam.exam-active .exam-navigator')&&css.includes('max-height:none!important'),'desktop exam navigator no longer owns a capped vertical scroller');
+assert(css.includes('.page-exam.exam-active .exam-navigator')&&css.includes('max-height:none!important')&&css.includes('overflow:visible!important'),'desktop exam navigator no longer owns a capped vertical scroller');
 assert(css.includes('.modal.pdf-evidence-modal')&&css.includes('overflow:hidden!important'),'PDF modal shell cannot become a second vertical owner');
 assert(css.includes('.modal.pdf-evidence-modal .pdf-evidence-host')&&css.includes('overflow-y:auto!important'),'PDF host remains the single modal vertical owner');
 for(const key of ['home','study-desktop','study-mobile','bank','exam-landing','exam-active','wrong','notes','stats','resources','suggestions','settings','pdf'])assert(app.includes('data-scroll-owner="'+key+'"'),'explicit scroll owner marker '+key);
