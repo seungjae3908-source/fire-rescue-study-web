@@ -86,13 +86,30 @@ async function auditVisible(page,meta){
         }
       }
     }
-    return{problems,small,overlaps,chromeOverlap,nestedScroll,density};
+    const readability=[],touchTargets=[];
+    const microSelector='.page small,.page .tiny,.page .tag,.page .pill,.page .eyebrow,.page .scope-label,.page .metric span,.page .hero p';
+    for(const el of document.querySelectorAll(microSelector)){
+      if(!visible(el))continue;
+      const fs=parseFloat(getComputedStyle(el).fontSize)||0,txt=(el.textContent||'').replace(/\s+/g,' ').trim().slice(0,100);
+      if(txt&&fs<12)readability.push({type:'microcopy-under-12px',cls:String(el.className||'').slice(0,80),txt,fs});
+    }
+    if(innerWidth<=1024){
+      const touchSelector='.page .btn,.page .seg button,.page .confidence button,.page .book-jumpbar button,.page .tabbar button,.page .choice,.page .weak-chip,.page .detail-toc-chip,.top .btn,.mobile-nav button,.modal .btn';
+      for(const el of document.querySelectorAll(touchSelector)){
+        if(!visible(el)||el.disabled)continue;
+        const r=el.getBoundingClientRect(),txt=(el.textContent||'').replace(/\s+/g,' ').trim().slice(0,100);
+        if(r.height<43.5)touchTargets.push({type:'touch-target-under-44px',cls:String(el.className||'').slice(0,80),txt,height:Math.round(r.height*10)/10});
+      }
+    }
+    return{problems,small,overlaps,chromeOverlap,nestedScroll,density,readability,touchTargets};
   });
   for(const p of result.problems)pushIssue({...meta,...p});
   for(const p of result.overlaps)pushIssue({...meta,...p});
   if(result.chromeOverlap)pushIssue({...meta,...result.chromeOverlap});
   for(const p of result.nestedScroll||[])pushIssue({...meta,...p});
   for(const p of result.density||[])pushIssue({...meta,...p});
+  for(const p of result.readability||[])pushIssue({...meta,...p});
+  for(const p of result.touchTargets||[])pushIssue({...meta,...p});
   if(result.small.length)warnings.push({...meta,type:'small-font',count:result.small.length,samples:result.small.slice(0,4)});
 }
 async function auditLearnerFraming(page,{id,tab,width}){
@@ -236,5 +253,5 @@ try{
     if(issues.length)console.error('GLOBAL_TYPOGRAPHY_AUDIT_ISSUES',JSON.stringify(issues,null,2));
     throw new Error('GLOBAL_TYPOGRAPHY_AUDIT_FAILED '+JSON.stringify({issues:issues.length,smallTextGroups:warnings.length}));
   }
-  assert(true,'all concept tabs, primary app routes and active exam pass global typography/layout audit with no source-framing/meta-study leakage, clipping, nested mobile study scroll, excessive study padding, nested panels or sub-11px student controls');
+  assert(true,'all concept tabs, primary app routes and active exam pass global typography/layout audit with no source-framing/meta-study leakage, clipping, nested mobile study scroll, excessive study padding, nested panels, under-12px student microcopy or under-44px primary touch targets');
 }finally{await browser.close()}
