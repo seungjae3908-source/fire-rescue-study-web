@@ -51,6 +51,18 @@ const partialLive={...snapshot,coverageComplete:false,sourceStatus:sourceStatus.
 const derivedPartial=handler.healthFromSnapshot(partialLive);
 assert(derivedPartial.healthy===true&&derivedPartial.coverageComplete===false&&derivedPartial.degraded===true,'healthy live fallback still reports supplemental-source degradation consistently');
 
+const liveFallbackRows=handler.filterNavigationRows({...snapshot,items:[
+  snapshot.items[0],
+  {id:'nfsa-real-cnt',sourceId:'nfsa-notice',title:'2027년 소방공무원 채용시험 공고',url:'https://www.nfa.go.kr/nfsa/news/0011/job/?boardId=bbs_0000000000000012&mode=view&cntId=12345'},
+  {id:'nfsa-real-ntt',sourceId:'nfsa-notice',title:'소방공무원 시험일정 안내',url:'https://www.nfa.go.kr/nfsa/news/notice/?nttId=67890'},
+  {id:'nfsa-nav-news',sourceId:'nfsa-notice',title:'소방학교 소식',url:'https://www.nfa.go.kr/nfsa/news'},
+  {id:'nfsa-nav-law',sourceId:'nfsa-notice',title:'중앙소방학교 훈령·예규',url:'https://www.nfa.go.kr/nfsa/releaseinformation/legalinformation/instruction;jsessionid=test'},
+  {id:'nfsa-material',sourceId:'nfsa-materials',title:'2026년 공통교재 [소방전술1]',url:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?mode=view&cntId=106809'}
+]});
+assert(liveFallbackRows.items.some(x=>x.id==='nfsa-real-cnt')&&liveFallbackRows.items.some(x=>x.id==='nfsa-real-ntt'),'live fallback keeps NFSA detail rows with mode=view or stable post id');
+assert(!liveFallbackRows.items.some(x=>x.id==='nfsa-nav-news'||x.id==='nfsa-nav-law'),'live fallback filters NFSA navigation and sessionized menu rows');
+assert(liveFallbackRows.items.some(x=>x.id==='api-test-2027')&&liveFallbackRows.items.some(x=>x.id==='nfsa-material'),'live fallback navigation filter leaves gosi and textbook sources unchanged');
+
 let currentSnapshot=snapshot;
 let currentHealth=healthyState;
 let fetchCalls=[];
