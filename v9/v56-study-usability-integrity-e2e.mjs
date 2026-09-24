@@ -91,7 +91,7 @@ try{
   const nav=await m.locator('.study-body-mobile .mobile-study-nav').evaluate(el=>{const r=el.getBoundingClientRect();return{display:getComputedStyle(el).display,width:r.width,vw:innerWidth,buttons:el.querySelectorAll('button').length}});
   assert(nav.display==='grid'&&nav.buttons===3&&nav.width<=nav.vw,'mobile study shows compact previous/contents/next navigation inside the viewport');
   const before=await m.evaluate(()=>window.AITUTOR_V9.Store.state.conceptId);
-  await m.locator('.study-body-mobile .mobile-study-nav [data-study-next]').click();
+  await m.locator('.study-body-mobile .mobile-study-nav [data-mobile-study-next]').click();
   const after=await m.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
   assert(after.id!==before&&after.tab==='detail','mobile next concept preserves the active study tab');
   await mobile.close();
