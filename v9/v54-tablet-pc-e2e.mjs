@@ -25,12 +25,8 @@ try{
       const r=rail?.getBoundingClientRect(),m=main?.getBoundingClientRect();
       return{workspace:rr.width,railDisplay:rail?getComputedStyle(rail).display:'none',railWidth:r?.width||0,mainWidth:m?.width||0};
     });
-    if(vp.width<=1439){
-      assert(layout.railDisplay==='none'||layout.railWidth<2,vp.label+' hides persistent study rail to protect reading width');
-      assert(layout.mainWidth>=layout.workspace-3,vp.label+' gives the study pane the full workspace width');
-    }else{
-      assert(layout.railDisplay!=='none'&&layout.railWidth>=250,vp.label+' keeps the context rail when wide desktop space is available');
-    }
+    assert(layout.railDisplay==='none'||layout.railWidth<2,vp.label+' does not render an obsolete persistent study rail');
+    assert(layout.mainWidth>=layout.workspace-3,vp.label+' gives the single study pane the full workspace width without an empty legacy column');
 
     const tabs=await page.locator('.page-study .concept-head .tabbar').evaluate(root=>({scrollWidth:root.scrollWidth,clientWidth:root.clientWidth,visible:[...root.querySelectorAll('button')].filter(x=>getComputedStyle(x).display!=='none').length}));
     assert(tabs.visible===5,vp.label+' shows all five study tabs');
