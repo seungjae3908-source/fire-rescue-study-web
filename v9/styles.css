@@ -298,3 +298,78 @@
   .detail-toc-chip{min-width:0!important;width:100%!important;min-height:34px!important;padding:5px 5px!important;white-space:normal!important;word-break:keep-all!important;overflow-wrap:anywhere!important;line-height:1.2!important}
   .detail-toc-chip:nth-child(n+5){display:none!important}
 }
+
+
+/* V56 study usability + answer/PDF integrity */
+.outline-search-wrap{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px;
+  padding:8px 10px 4px
+}
+.outline-search{min-width:0;height:42px!important}
+.outline-search-count{display:block;padding:0 12px 6px;color:var(--muted);font-size:11px}
+.outline-empty{margin:12px;min-height:72px!important;height:auto!important}
+
+.mobile-study-nav{display:none}
+
+.confidence-before-answer{
+  margin:10px 0 12px!important;
+  padding:9px 10px!important;
+  border:1px solid rgba(111,182,255,.18);
+  border-radius:11px;
+  background:rgba(111,182,255,.035)
+}
+.question-card.answered .confidence-before-answer{opacity:.82}
+.choice:disabled{cursor:default!important;opacity:1!important}
+.confidence button:disabled{cursor:default!important;opacity:.82!important}
+
+.pdf-findbar{
+  display:grid;
+  grid-template-columns:minmax(180px,.7fr) minmax(260px,1.3fr);
+  gap:8px;
+  padding:8px 0 10px
+}
+.pdf-jump-control,.pdf-search-control{display:grid;gap:6px;min-width:0}
+.pdf-jump-control{grid-template-columns:minmax(0,1fr) auto}
+.pdf-search-control{grid-template-columns:minmax(0,1fr) auto}
+.pdf-findbar .input{height:40px!important;min-width:0;font-size:13px!important}
+.pdf-findbar .btn{min-height:40px!important;white-space:nowrap}
+
+@media(max-width:720px){
+  .outline-search-wrap{padding:8px 12px 5px}
+  .outline-search{height:44px!important;font-size:15px!important}
+  .outline-search-count{padding-inline:14px;font-size:12px}
+
+  .page-study .study-body-mobile{padding-bottom:0!important}
+  .book-mobile{min-height:100%;display:flex;flex-direction:column}
+  .book-section{flex:1 0 auto}
+  .mobile-study-nav{
+    display:grid;
+    grid-template-columns:1fr .85fr 1fr;
+    gap:7px;
+    position:sticky;
+    bottom:0;
+    z-index:16;
+    padding:8px 2px calc(8px + env(safe-area-inset-bottom));
+    margin:12px 0 0;
+    background:linear-gradient(180deg,rgba(7,19,33,.2),#071321 24%);
+    border-top:1px solid rgba(148,170,194,.16)
+  }
+  .mobile-study-nav .btn{min-height:44px!important;padding:9px 8px!important;font-size:13px!important}
+
+  .confidence-before-answer{
+    display:grid!important;
+    grid-template-columns:1fr repeat(3,minmax(0,1fr))!important;
+    gap:6px!important;
+    align-items:center!important;
+    padding:9px!important
+  }
+  .confidence-before-answer>span{grid-column:1/-1;font-size:12px!important}
+  .confidence-before-answer button{min-height:42px!important;font-size:13px!important}
+
+  .pdf-findbar{grid-template-columns:1fr;gap:7px;padding:7px 0 9px}
+  .pdf-jump-control,.pdf-search-control{grid-template-columns:minmax(0,1fr) auto}
+  .pdf-findbar .input{height:44px!important;font-size:14px!important}
+  .pdf-findbar .btn{min-height:44px!important}
+}
