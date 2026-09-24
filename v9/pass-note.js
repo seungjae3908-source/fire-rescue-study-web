@@ -99,7 +99,7 @@ function numericRows(p){return emphasis().numberRows(p,10)}
 function conceptHtml(c,compact=false){
   const p=V.contentPacks?.get?.(c.id);if(!p)return'';
   const E=emphasis(),features=E.featureRows(p),must=E.mustRows(p),allNums=E.numberRows(p,10),traps=E.trapRows(p);
-  const main=compact?must.slice(0,5):must,featureRows=compact?features.slice(0,4):features,nums=compact?allNums.slice(0,6):allNums;
+  const main=compact?must.slice(0,3):must,featureRows=compact?features.slice(0,2):features,nums=compact?allNums.slice(0,4):allNums;
   return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${featureRows.length?'<h3>핵심 특징</h3><ul class="important">'+featureRows.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${main.length?'<h3>시험 필수</h3><ul class="important">'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자 · 단위 · 기준</h3><ul class="numbers">'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>자주 틀리는 포인트</h3><ul class="traps">'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
 }
 function notesHtml(rows){return rows.map(n=>`<section class="c"><h2>${esc(n.title||'합격노트')}</h2><div class="note">${esc(n.body||'').replace(/\n/g,'<br>')}</div></section>`).join('')}
