@@ -2,7 +2,9 @@ import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_V66_URL||'https://fire-rescue-study-web.vercel.app/v9/';
 const emptyMonitor={ok:true,targetExamYear:'2027',contentBaselineYear:'2026',sources:[],items:[]};
+const failures=[];
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
+function check(v,m){if(v)console.log('PASS',m);else{failures.push(m);console.error('V66_FAIL',m)}return v}
 async function settle(page,ms=120){await page.waitForTimeout(ms);await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))}
 async function go(page,route){
   await page.evaluate(route=>window.AITUTOR_V9.App.go(route),route);
@@ -50,7 +52,7 @@ async function wheel(page,target,ownerName,label,scope='.page'){
     const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
     return owner?.scrollTop??-1;
   },ownerName);
-  assert(after>before+2,label+' wheel reaches '+ownerName+' '+JSON.stringify({before,after}));
+  check(after>before+2,label+' wheel reaches '+ownerName+' '+JSON.stringify({before,after}));
 }
 async function swipe(page,target,ownerName,label,scope='.page'){
   await makeScrollable(page,ownerName,scope);
@@ -68,7 +70,7 @@ async function swipe(page,target,ownerName,label,scope='.page'){
     const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
     return owner?.scrollTop??-1;
   },ownerName);
-  assert(after>2,label+' swipe reaches '+ownerName+' '+after);
+  check(after>2,label+' swipe reaches '+ownerName+' '+after);
 }
 async function seed(page){
   await page.evaluate(async()=>{
@@ -173,9 +175,10 @@ try{
     }
 
     const owners=await visibleOwner(page);
-    assert(owners.length<=1,'final visible page has <=1 effective owner '+vp.width+' '+JSON.stringify(owners));
-    assert(errors.length===0,'no runtime errors '+vp.width+' '+errors.join(' | '));
+    check(owners.length<=1,'final visible page has <=1 effective owner '+vp.width+' '+JSON.stringify(owners));
+    check(errors.length===0,'no runtime errors '+vp.width+' '+errors.join(' | '));
     await ctx.close();
   }
+  if(failures.length)throw new Error('V66_INTERACTION_FAILURES '+JSON.stringify(failures));
   console.log('V66_REAL_INTERACTION_SCROLL_AUDIT_SUCCESS');
 }finally{await browser.close()}
