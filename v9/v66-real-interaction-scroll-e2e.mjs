@@ -150,7 +150,7 @@ try{
       }
       if(vp.isMobile){
         await touchBridge(page,'.concept-head',owner,'study '+tab+' header touch '+vp.width);
-        if(tab==='core')await horizontalTouchSafe(page,'.concept-head .tabbar',owner,'study tabbar '+vp.width);
+        if(tab==='core')await horizontalTouchSafe(page,'.book-jumpbar',owner,'study mobile tabbar '+vp.width);
       }
       await wheel(page,(vp.isMobile?'.study-body-mobile':'.study-body-desktop'),owner,'study '+tab+' body '+vp.width);
       if(tab==='detail'){
