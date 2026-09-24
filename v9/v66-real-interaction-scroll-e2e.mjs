@@ -128,9 +128,12 @@ async function horizontalWheelSafe(page,target,ownerName,label,scope='.page'){
   const box=await loc.boundingBox();assert(!!box,label+' horizontal trackpad target visible');
   const before=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);if(!owner)return -1;owner.scrollTop=Math.min(500,Math.max(0,owner.scrollHeight-owner.clientHeight-40));return owner.scrollTop},ownerName);
   const vp=page.viewportSize(),x=Math.max(5,Math.min((vp?.width||1440)-5,box.x+Math.min(box.width/2,28))),y=Math.max(5,Math.min((vp?.height||900)-5,box.y+Math.min(box.height/2,28)));
-  await page.mouse.move(x,y);await page.mouse.wheel(300,8);await settle(page,120);
-  const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
-  check(after===before,label+' horizontal trackpad does not hijack '+ownerName+' '+JSON.stringify({before,after}));
+  await page.mouse.move(x,y);await page.mouse.wheel(300,0);await settle(page,100);
+  const pureAfter=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
+  check(pureAfter===before,label+' pure horizontal trackpad does not move '+ownerName+' vertically '+JSON.stringify({before,after:pureAfter}));
+  await page.mouse.wheel(300,8);await settle(page,100);
+  const diagonalAfter=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
+  check(Math.abs(diagonalAfter-pureAfter)<=10,label+' horizontal-dominant trackpad preserves only native vertical component '+ownerName+' '+JSON.stringify({before:pureAfter,after:diagonalAfter,allowedDrift:10}));
 }
 async function boundaryWheelSafe(page,target,ownerName,label,scope='.page'){
   await makeScrollable(page,ownerName,scope);
