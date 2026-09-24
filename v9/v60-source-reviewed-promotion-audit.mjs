@@ -26,6 +26,8 @@ assert(unreviewedV58.every(q=>q.grade==='P'&&q.generatedPractice===true&&q.realM
 const verified=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B'),bySubject={fire:verified.filter(q=>q.subject==='fire').length,ems:verified.filter(q=>q.subject==='ems').length};
 assert(verified.length>=850,'verified pool grows materially beyond pre-V60 baseline',{verified:verified.length,bySubject});
 assert(bySubject.fire>=390&&bySubject.ems>=470,'verified pool grows across fire and EMS',{bySubject});
+const concentratedConcepts=V.curriculum.concepts.map(concept=>{const qs=verified.filter(q=>q.conceptId===concept.id),pos=[0,0,0,0];for(const q of qs)pos[q.a]=(pos[q.a]||0)+1;const total=qs.length,kinds=pos.filter(Boolean).length,maxShare=total?Math.max(...pos)/total:0;return{id:concept.id,total,kinds,maxShare:Number(maxShare.toFixed(3)),pos}}).filter(x=>x.total>=3&&(x.kinds<2||x.maxShare>=0.8));
+assert(concentratedConcepts.length===0,'verified per-concept answer positions stay non-concentrated',{concentratedConcepts:concentratedConcepts.slice(0,12)});
 
 const ans=[0,0,0,0],diff={low:0,mid:0,high:0};for(const q of promoted){ans[q.a]++;diff[q.difficulty]=(diff[q.difficulty]||0)+1}
 const shares=ans.map(n=>n/Math.max(1,promoted.length));
@@ -55,6 +57,7 @@ const summary={
  verifiedBySubject:bySubject,
  answerPosition:ans,
  difficulty:diff,
+ concentratedConcepts:concentratedConcepts.length,
  realMockSimulations:120,
  realMockV60Selections:promotedSelections,
  unreviewedV58RealLeak:unreviewedLeak,
