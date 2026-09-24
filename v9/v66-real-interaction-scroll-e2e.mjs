@@ -39,20 +39,28 @@ async function wheel(page,target,ownerName,label,scope='.page'){
   await makeScrollable(page,ownerName,scope);
   const loc=page.locator(target).filter({visible:true}).first();
   await loc.waitFor({state:'visible',timeout:30000});
+  await loc.scrollIntoViewIfNeeded().catch(()=>{});
+  await settle(page,80);
   const box=await loc.boundingBox();
   assert(!!box,label+' target visible');
-  const before=await page.locator(scope).evaluate((root,ownerName)=>{
+  const state=await page.locator(scope).evaluate((root,ownerName)=>{
     const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
-    return owner?.scrollTop??-1;
+    if(!owner)return{top:-1,max:-1};
+    return{top:owner.scrollTop,max:Math.max(0,owner.scrollHeight-owner.clientHeight)};
   },ownerName);
-  await page.mouse.move(box.x+Math.min(box.width/2,30),box.y+Math.min(box.height/2,30));
-  await page.mouse.wheel(0,520);
+  const vp=page.viewportSize();
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const x=clamp(box.x+Math.min(box.width/2,30),4,(vp?.width||1440)-4);
+  const y=clamp(box.y+Math.min(box.height/2,30),4,(vp?.height||900)-4);
+  const delta=state.max-state.top>40?520:-520;
+  await page.mouse.move(x,y);
+  await page.mouse.wheel(0,delta);
   await settle(page,180);
   const after=await page.locator(scope).evaluate((root,ownerName)=>{
     const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
     return owner?.scrollTop??-1;
   },ownerName);
-  check(after>before+2,label+' wheel reaches '+ownerName+' '+JSON.stringify({before,after}));
+  check(after!==state.top,label+' wheel reaches '+ownerName+' '+JSON.stringify({before:state.top,after,max:state.max,delta}));
 }
 async function swipe(page,target,ownerName,label,scope='.page'){
   await makeScrollable(page,ownerName,scope);
@@ -106,7 +114,7 @@ async function openPdf(page){
   await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
   const mobile=await page.locator('.study-body-mobile').evaluate(el=>el.offsetParent!==null);
   const root=mobile?'.study-body-mobile':'.study-body-desktop';
-  await page.locator(root+' [data-study-tab="source"]').click();
+  await page.locator('[data-study-tab="source"]:visible').first().click();
   await page.waitForSelector(root+' .source-only [data-source-concept]',{timeout:30000});
   await page.locator(root+' .source-only [data-source-concept]').click();
   await page.waitForSelector('#pdfEvidence .pdf-evidence-host',{state:'visible',timeout:120000});
@@ -164,7 +172,7 @@ try{
     const start=page.locator('[data-training-start="fire50"]');
     await start.waitFor({state:'visible',timeout:30000});await start.click();
     await page.waitForSelector('.exam-run-workspace',{timeout:30000});await settle(page);
-    await wheel(page,'.exam-run-workspace','exam-active','exam content '+vp.width);
+    await wheel(page,'.exam-body','exam-active','exam content '+vp.width);
     const nav=page.locator('.exam-navigator:visible');if(await nav.count())await wheel(page,'.exam-navigator','exam-active','exam navigator '+vp.width);
     const side=page.locator('.exam-side:visible');if(await side.count())await wheel(page,'.exam-side','exam-active','exam side '+vp.width);
 
