@@ -49,6 +49,9 @@ const productionCurrentMainWorkflow=fs.readFileSync(new URL('../.github/workflow
 const productionLiveStudentSmoke=fs.readFileSync(new URL('./live-student-ux-smoke.mjs',import.meta.url),'utf8');
 const productionMultiDeviceV62Audit=fs.readFileSync(new URL('./v62-production-multidevice-audit.mjs',import.meta.url),'utf8');
 const readabilityTouchV63Audit=fs.readFileSync(new URL('./v63-readability-touch-audit.mjs',import.meta.url),'utf8');
+const correctionV64=fs.readFileSync(new URL('./correction-loop-v64-119.js',import.meta.url),'utf8');
+const correctionV64Audit=fs.readFileSync(new URL('./v64-correction-loop-audit.mjs',import.meta.url),'utf8');
+const correctionV64E2E=fs.readFileSync(new URL('./v64-correction-loop-e2e.mjs',import.meta.url),'utf8');
 const stylesCss=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 const performanceBudget=fs.readFileSync(new URL('./performance-budget-audit.mjs',import.meta.url),'utf8');
 const officialMonitorRootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.url),'utf8');
@@ -87,6 +90,7 @@ const checks={
   performanceWeaknessV61Contract:workflow.includes('V61 performance + weakness analytics audit')&&workflow.includes('V61 performance center + adaptive training QA')&&analyticsV61.includes("version:'119-v61-performance-weakness-center-v1'")&&analyticsV61.includes('localOnly:true')&&analyticsV61.includes('realMockUnchanged:true')&&app.includes('data-stats-weak-train')&&analyticsV61E2E.includes('V61_PERFORMANCE_WEAKNESS_E2E_SUCCESS'),
   productionMultiDeviceV62Contract:workflow.includes('V62 Production multi-device UX gate contract')&&productionCurrentMainWorkflow.includes('node v9/live-student-ux-smoke.mjs')&&productionLiveStudentSmoke.includes('width:360')&&productionLiveStudentSmoke.includes('width:412')&&productionLiveStudentSmoke.includes('width:768')&&productionLiveStudentSmoke.includes('width:1024')&&productionLiveStudentSmoke.includes('width:1440')&&productionLiveStudentSmoke.includes('stats touch layout')&&productionLiveStudentSmoke.includes('h>=44')&&productionMultiDeviceV62Audit.includes('V62_PRODUCTION_MULTIDEVICE_COMPLETE'),
   readabilityTouchV63Contract:workflow.includes('V63 whole-app readability + touch-target contract')&&readabilityTouchV63Audit.includes('V63_READABILITY_TOUCH_COMPLETE')&&stylesCss.includes('/* V63 whole-app readability and touch-target hardening */')&&productionLiveStudentSmoke.includes('keeps student microcopy >=12px')&&productionLiveStudentSmoke.includes('keeps primary touch targets >=44px'),
+  correctionLoopV64Contract:workflow.includes('V64 weakness correction closed-loop audit')&&workflow.includes('V64 correction closed-loop + today-goal QA')&&correctionV64.includes("version:'119-v64-weakness-correction-loop-v1'")&&correctionV64.includes('realMockUnchanged:true')&&correctionV64.includes('passCorrect:4')&&correctionV64.includes('passSureCorrect:3')&&app.includes('data-v64-train')&&app.includes("buildCorrectionTraining")&&correctionV64Audit.includes('V64_CORRECTION_LOOP_AUDIT_SUCCESS')&&correctionV64E2E.includes('V64_CORRECTION_LOOP_E2E_SUCCESS'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
