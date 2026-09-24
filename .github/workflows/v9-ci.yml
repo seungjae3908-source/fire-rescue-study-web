@@ -90,6 +90,8 @@ jobs:
           node --check v9/v63-readability-touch-audit.mjs
           node --check v9/v64-correction-loop-audit.mjs
           node --check v9/v64-correction-loop-e2e.mjs
+          node --check v9/v65-single-scroll-owner-audit.mjs
+          node --check v9/v65-single-scroll-owner-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -142,6 +144,8 @@ jobs:
         run: node v9/v63-readability-touch-audit.mjs
       - name: V64 weakness correction closed-loop audit
         run: node v9/v64-correction-loop-audit.mjs
+      - name: V65 single vertical scroll owner audit
+        run: node v9/v65-single-scroll-owner-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
       - name: V28 183-concept depth + verified-question quality audit
@@ -288,6 +292,8 @@ jobs:
         run: node v9/v61-performance-weakness-e2e.mjs
       - name: V64 correction closed-loop + today-goal QA
         run: node v9/v64-correction-loop-e2e.mjs
+      - name: V65 page-by-page single-scroll browser QA
+        run: node v9/v65-single-scroll-owner-e2e.mjs
       - name: Official monitor offline/cache fallback QA
         run: node v9/official-monitor-browser-e2e.mjs
       - name: Keyboard and accessibility semantic smoke QA
