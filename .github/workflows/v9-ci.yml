@@ -149,6 +149,8 @@ jobs:
         run: node v9/v51-full-content-question-audit.mjs
       - name: V52 low-verified fire breadth audit
         run: node v9/v52-verified-fire-breadth-audit.mjs
+      - name: V52 remaining verified breadth batch2 audit
+        run: node v9/v52-verified-breadth-batch2-audit.mjs
       - name: 390-run real mock exam composition quality audit
         run: node v9/mock-exam-quality-audit.mjs
       - name: A/B verified question coverage gap report
