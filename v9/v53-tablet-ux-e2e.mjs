@@ -53,9 +53,9 @@ try{
     await page.locator('.page-study .concept-head [data-study-tab="source"]').click().catch(()=>{});
     await page.waitForSelector('.page-study .study-body-desktop [data-source-concept]');
     await page.locator('.page-study .study-body-desktop [data-source-concept]').click();
-    await page.waitForSelector('#pdfEvidence .pdf-loading-actions',{timeout:10000});
-    const loading=await page.locator('#pdfEvidence').evaluate(root=>({official:!!root.querySelector('.pdf-loading-actions a[href]'),close:!!root.querySelector('.pdf-loading-actions [data-source-close]'),modalWidth:root.querySelector('.pdf-evidence-modal')?.getBoundingClientRect().width||0,vw:innerWidth}));
-    assert(loading.official&&loading.close,vp.width+' source loading immediately offers official-site fallback and close');
+    await page.waitForSelector('#pdfEvidence .pdf-loading-actions, #pdfEvidence .official-fallback',{timeout:10000});
+    const loading=await page.locator('#pdfEvidence').evaluate(root=>{const actionRoot=root.querySelector('.pdf-loading-actions')||root.querySelector('.official-fallback');return{state:root.querySelector('.official-fallback')?'fallback':'loading',official:!!actionRoot?.querySelector('a[href]'),close:!!actionRoot?.querySelector('[data-source-close]'),modalWidth:root.querySelector('.pdf-evidence-modal')?.getBoundingClientRect().width||0,vw:innerWidth}});
+    assert(loading.official&&loading.close,vp.width+' source loading/failure state always offers official-site fallback and close');
     assert(loading.modalWidth<=loading.vw*.98,vp.width+' source modal fits tablet viewport');
 
     await page.waitForSelector('#pdfEvidence .official-fallback',{timeout:30000});
