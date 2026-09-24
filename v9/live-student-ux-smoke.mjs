@@ -5,6 +5,18 @@ const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
 if(!/^[0-9a-f]{40}$/i.test(expected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
+async function singleVerticalOwner(page,label){
+  const rows=await page.locator('.page').evaluate(root=>{
+    const visible=el=>{
+      if(el.closest('.outline,.modal-wrap,.backdrop'))return false;
+      const cs=getComputedStyle(el),r=el.getBoundingClientRect();
+      return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;
+    };
+    return [root,...root.querySelectorAll('*')].filter(visible).filter(el=>['auto','scroll'].includes(getComputedStyle(el).overflowY)).map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,120),owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight}));
+  });
+  assert(rows.length<=1,label+' single vertical scroll owner '+JSON.stringify(rows));
+  return rows;
+}
 function observe(page){const errors=[];page.on('pageerror',e=>errors.push('pageerror:'+e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('console:'+m.text())});page.on('requestfailed',r=>errors.push('requestfailed:'+r.url()+' '+(r.failure()?.errorText||'')));return errors}
 
 const browser=await chromium.launch({headless:true});
@@ -32,6 +44,7 @@ try{
       await page.waitForSelector('.page',{state:'visible',timeout:30000});
       assert((await page.locator('.page').innerText()).trim().length>0,'route '+route+' renders visible content '+vp.width);
       await noX(page,'route '+route+' '+vp.width);
+      await singleVerticalOwner(page,'route '+route+' '+vp.width);
       const micro=await page.locator('.page small,.page .tiny,.page .tag,.page .pill,.page .eyebrow,.page .scope-label,.page .metric span,.page .hero p').evaluateAll(nodes=>nodes.filter(n=>{const cs=getComputedStyle(n),r=n.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0}).map(n=>({text:(n.textContent||'').trim().slice(0,60),fs:parseFloat(getComputedStyle(n).fontSize)||0})).filter(x=>x.text&&x.fs<12));
       assert(micro.length===0,'route '+route+' keeps student microcopy >=12px '+vp.width+' '+JSON.stringify(micro.slice(0,4)));
       if(vp.width<=1024){
@@ -45,6 +58,7 @@ try{
     const tabCount=vp.isMobile?await page.locator('.book-jumpbar button').count():await page.locator('.tabbar button').count();
     assert(tabCount===5,'study exposes five learning tabs '+vp.width);
     await noX(page,'study '+vp.width);
+    await singleVerticalOwner(page,'study '+vp.width);
 
     if(vp.isMobile){
       const studyScroller=await page.locator('.study-body-mobile').boundingBox(),mobileNav=await page.locator('.mobile-nav').boundingBox();
@@ -126,6 +140,8 @@ try{
         await page.locator('.study-body-mobile .book-jumpbar [data-study-tab="source"]').click();
         await page.locator('.study-body-mobile .source-only [data-source-concept]').click();
         await page.waitForSelector('#pdfEvidence canvas',{timeout:45000});
+        const pdfOwners=await page.locator('#pdfEvidence').evaluate(root=>[root,...root.querySelectorAll('*')].filter(el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0&&['auto','scroll'].includes(cs.overflowY)}).map(el=>({cls:String(el.className||''),owner:el.getAttribute('data-scroll-owner')||''})));
+        assert(pdfOwners.length===1&&pdfOwners[0].owner==='pdf','Production PDF keeps one vertical scroll owner '+JSON.stringify(pdfOwners));
         const info=await page.evaluate(async()=>{const V=window.AITUTOR_V9,id=V.Store.state.conceptId,key=V.curriculum.byId[id].sourceRanges[0].doc,p=await V.SourcePDF.openPdf(key),cat=V.SourceCatalog119.get(key);return{key,origin:p.origin,transport:cat.transport,url:cat.directPdf}});
         assert(info.key===doc&&info.transport==='range-static'&&info.origin==='official-static-range','mirrored '+doc+' textbook opens from static range source');
         await page.locator('#pdfEvidence [data-pdf-close]').click();
