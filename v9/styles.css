@@ -626,3 +626,23 @@
   .stats-trend-row>.btn{grid-column:1/-1;justify-self:start}
   .stats-readiness-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* V62 production multi-device usability hardening */
+.stats-weak-score,
+.stats-readiness-strip span{font-size:12px!important;line-height:1.45}
+.stats-weak-row{min-height:44px}
+@media(max-width:720px){
+  .stats-next-action .toolbar .btn,
+  .stats-priority-item>.btn,
+  .stats-skill-row .btn,
+  .stats-trend-row>.btn{min-height:44px!important}
+}
+@media(min-width:721px) and (max-width:1024px){
+  .stats-v61{min-width:0}
+  .stats-v61-hero{flex-wrap:wrap}
+  .stats-priority-item,
+  .stats-weak-row,
+  .stats-analysis-row,
+  .stats-trend-row{min-width:0}
+}
