@@ -48,6 +48,8 @@ const analyticsV61E2E=fs.readFileSync(new URL('./v61-performance-weakness-e2e.mj
 const productionCurrentMainWorkflow=fs.readFileSync(new URL('../.github/workflows/production-current-main-acceptance.yml',import.meta.url),'utf8');
 const productionLiveStudentSmoke=fs.readFileSync(new URL('./live-student-ux-smoke.mjs',import.meta.url),'utf8');
 const productionMultiDeviceV62Audit=fs.readFileSync(new URL('./v62-production-multidevice-audit.mjs',import.meta.url),'utf8');
+const readabilityTouchV63Audit=fs.readFileSync(new URL('./v63-readability-touch-audit.mjs',import.meta.url),'utf8');
+const stylesCss=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 const performanceBudget=fs.readFileSync(new URL('./performance-budget-audit.mjs',import.meta.url),'utf8');
 const officialMonitorRootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.url),'utf8');
 const authE2E=fs.readFileSync(new URL('./auth-session-e2e.mjs',import.meta.url),'utf8');
@@ -84,6 +86,7 @@ const checks={
   activeExamRecoveryContract:((examSession.includes("version:'119-active-exam-v1'")&&examSession.includes('questionIdsOnly:true'))||(examSession.includes("version:'119-active-exam-v2'")&&examSession.includes('variantSnapshots:true')&&examSession.includes('questionSnapshots')))&&app.includes('persistActiveExam()')&&app.includes('data-exam-timer')&&app.includes('data-exam-abandon')&&workflow.includes('Active exam reload recovery and timer QA')&&examSessionE2E.includes('EXAM_SESSION_RECOVERY_E2E_COMPLETE'),
   performanceWeaknessV61Contract:workflow.includes('V61 performance + weakness analytics audit')&&workflow.includes('V61 performance center + adaptive training QA')&&analyticsV61.includes("version:'119-v61-performance-weakness-center-v1'")&&analyticsV61.includes('localOnly:true')&&analyticsV61.includes('realMockUnchanged:true')&&app.includes('data-stats-weak-train')&&analyticsV61E2E.includes('V61_PERFORMANCE_WEAKNESS_E2E_SUCCESS'),
   productionMultiDeviceV62Contract:workflow.includes('V62 Production multi-device UX gate contract')&&productionCurrentMainWorkflow.includes('node v9/live-student-ux-smoke.mjs')&&productionLiveStudentSmoke.includes('width:360')&&productionLiveStudentSmoke.includes('width:412')&&productionLiveStudentSmoke.includes('width:768')&&productionLiveStudentSmoke.includes('width:1024')&&productionLiveStudentSmoke.includes('width:1440')&&productionLiveStudentSmoke.includes('stats touch layout')&&productionLiveStudentSmoke.includes('h>=44')&&productionMultiDeviceV62Audit.includes('V62_PRODUCTION_MULTIDEVICE_COMPLETE'),
+  readabilityTouchV63Contract:workflow.includes('V63 whole-app readability + touch-target contract')&&readabilityTouchV63Audit.includes('V63_READABILITY_TOUCH_COMPLETE')&&stylesCss.includes('/* V63 whole-app readability and touch-target hardening */')&&productionLiveStudentSmoke.includes('keeps student microcopy >=12px')&&productionLiveStudentSmoke.includes('keeps primary touch targets >=44px'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
