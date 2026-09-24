@@ -756,9 +756,6 @@
   overflow-x:hidden!important;
   overscroll-behavior:auto!important;
 }
-.page-study .study-ai .tutor-compose{
-  position:static!important;
-}
 .table-scroll,
 .compare-wrap,
 .tutor-ai-table-wrap,
@@ -820,11 +817,19 @@
 /* PDF/source overlays: modal shell never scrolls; only the PDF host does. */
 .modal.pdf-evidence-modal{
   overflow:hidden!important;
-  display:grid!important;
-  grid-template-rows:auto auto minmax(0,1fr) auto!important;
+  display:flex!important;
+  flex-direction:column!important;
   max-height:94dvh!important;
 }
+.modal.pdf-evidence-modal>.pdf-modal-head,
+.modal.pdf-evidence-modal>.pdf-zoombar,
+.modal.pdf-evidence-modal>.pdf-findbar,
+.modal.pdf-evidence-modal>.pdf-search-results,
+.modal.pdf-evidence-modal>.pdf-pager{
+  flex:0 0 auto;
+}
 .modal.pdf-evidence-modal .pdf-evidence-host{
+  flex:1 1 auto!important;
   min-height:0!important;
   max-height:none!important;
   overflow-y:auto!important;
