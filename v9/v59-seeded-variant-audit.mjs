@@ -1,3 +1,4 @@
+// V59 fresh full-CI gate: rerun after Ready-for-review.
 import fs from 'node:fs';
 import vm from 'node:vm';
 
