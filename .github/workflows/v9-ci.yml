@@ -257,6 +257,8 @@ jobs:
         run: node v9/v53-tablet-ux-e2e.mjs
       - name: V54 tablet-PC + medium desktop + PDF range QA
         run: node v9/v54-tablet-pc-e2e.mjs
+      - name: V55 core/detail precision + navigation QA
+        run: node v9/v55-core-detail-precision-e2e.mjs
       - name: Official monitor offline/cache fallback QA
         run: node v9/official-monitor-browser-e2e.mjs
       - name: Keyboard and accessibility semantic smoke QA
