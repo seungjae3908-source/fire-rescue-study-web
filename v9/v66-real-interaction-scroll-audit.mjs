@@ -13,6 +13,8 @@ assert(app.includes("document.addEventListener('wheel'")&&app.includes('passive:
 assert(app.includes("document.addEventListener('touchstart'")&&app.includes("document.addEventListener('touchmove'")&&app.includes('Math.abs(totalY)>Math.abs(totalX)'),'vertical touch bridge preserves horizontal gesture intent');
 assert(e2e.includes('global top bar')&&e2e.includes('study toolbar')&&e2e.includes('study actionbar')&&e2e.includes('exam header')&&e2e.includes('exam footer')&&e2e.includes('pdf zoombar')&&e2e.includes('pdf pager'),'browser audit covers global, study, exam and PDF fixed chrome');
 assert(e2e.includes('touchBridge')&&e2e.includes('horizontalTouchSafe'),'browser audit covers touch forwarding and horizontal safety');
+assert(e2e.includes('effectiveVerticalOwners')&&e2e.includes("querySelectorAll('*')"),'browser audit scans all effective vertical scrollers, not only owner markers');
+assert(e2e.includes('Input.dispatchTouchEvent')&&e2e.includes('newCDPSession'),'mobile audit uses Chromium trusted touch input');
 assert(ci.includes('V66 fixed-chrome interaction scroll audit'),'deterministic V66 audit is wired to development CI');
 assert(ci.includes('V66 branch real-interaction scroll QA')&&ci.includes('http://127.0.0.1:4173/v9/index.html'),'branch browser gate targets exact branch runtime');
 assert(prod.includes('Production V66 real-interaction scroll acceptance'),'V66 is wired to exact-main Production acceptance');
