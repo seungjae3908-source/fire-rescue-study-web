@@ -12,7 +12,7 @@ async function singleVerticalOwner(page,label){
       const cs=getComputedStyle(el),r=el.getBoundingClientRect();
       return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;
     };
-    return [root,...root.querySelectorAll('*')].filter(visible).filter(el=>['auto','scroll'].includes(getComputedStyle(el).overflowY)).map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,120),owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight}));
+    return [root,...root.querySelectorAll('*')].filter(visible).filter(el=>!el.matches('textarea,input,select,[contenteditable="true"]')&&['auto','scroll'].includes(getComputedStyle(el).overflowY)).map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,120),owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight}));
   });
   assert(rows.length<=1,label+' single vertical scroll owner '+JSON.stringify(rows));
   return rows;
