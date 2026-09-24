@@ -14,7 +14,7 @@ if(q.examStyle<5000)issues.push({type:'EXAM_STYLE_BELOW_5000',n:q.examStyle});
 if(generated.length<1500)issues.push({type:'V58_ADDED_TOO_SMALL',n:generated.length});
 if(q.duplicateTexts.length)issues.push({type:'DUPLICATE_STEMS',n:q.duplicateTexts.length});
 if(under.length)issues.push({type:'PER_CONCEPT_TARGET_SHORTFALL',n:under.length,first:under.slice(0,10)});
-if(generated.some(x=>x.grade!=='P'||x.generatedPractice!==true||x.realMockCredit!==false||x.practiceMockCredit!==true))issues.push({type:'V58_TRUTH_FLAGS'});
+if(generated.some(x=>x.v60Promoted?!(x.grade==='B'&&x.generatedPractice===false&&x.pageVerified===true&&x.realMockCredit===true&&x.practiceMockCredit===true&&x.reviewStatus==='source-rule-reviewed-v60'):(x.grade!=='P'||x.generatedPractice!==true||x.realMockCredit!==false||x.practiceMockCredit!==true)))issues.push({type:'V58_TRUTH_FLAGS'});
 if(generated.some(x=>!Array.isArray(x.choiceExplanations)||x.choiceExplanations.length!==4))issues.push({type:'CHOICE_EXPLANATION_CONTRACT'});
 
 vm.runInThisContext(fs.readFileSync(new URL('./mock-exam-quality-119.js',import.meta.url),'utf8'),{filename:'mock-exam-quality-119.js'});
@@ -22,7 +22,7 @@ const realRuns=[],practiceRuns=[];let realHistory=[],practiceHistory=[],v58Pract
 for(let i=0;i<12;i++){
   const real=V.MockExam119.build({mode:'real',level:'mid',history:realHistory});
   if(real.length!==65)issues.push({type:'REAL_MOCK_LENGTH',i,n:real.length});
-  if(real.some(x=>x.generatedBy==='119-v58-precision-expansion'))issues.push({type:'V58_LEAKED_INTO_REAL',i});
+  if(real.some(x=>x.generatedBy==='119-v58-precision-expansion'&&!x.v60Promoted))issues.push({type:'UNREVIEWED_V58_LEAKED_INTO_REAL',i});
   realHistory.push({questionIds:real.map(x=>x.id)});
   realRuns.push(real.length);
   const practice=V.MockExam119.build({mode:'practice',level:'mid',history:practiceHistory});
@@ -40,6 +40,7 @@ const summary={
   examStyle:q.examStyle,
   foundationDrill:q.foundationDrill,
   v58Added:generated.length,
+  v60PromotedFromV58:generated.filter(x=>x.v60Promoted).length,
   v58BySubject:bySubject,
   equivalent65QuestionSets:Math.floor(q.examStyle/65),
   perConceptMinimum:{general:26,highYield:40},
