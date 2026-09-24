@@ -732,8 +732,7 @@
 }
 
 /* Home + stats: the outer route owns vertical scrolling. */
-.page-home .dashboard-home,
-.page-stats .stats-page{
+.page-home .dashboard-home{
   min-height:0!important;
   height:100%!important;
   overflow-y:auto!important;
@@ -742,10 +741,23 @@
   scrollbar-gutter:stable;
 }
 .page-home .dashboard-home .home-main,
-.page-home .dashboard-home .home-side,
-.page-stats .stats-page .home-main,
-.page-stats .stats-page .home-side{
+.page-home .dashboard-home .home-side{
   min-height:auto!important;
+  overflow:visible!important;
+}
+.page-stats .stats-page{
+  min-height:0!important;
+  height:100%!important;
+  overflow:hidden!important;
+}
+.page-stats .stats-page .home-main{
+  min-height:0!important;
+  height:100%!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+}
+.page-stats .stats-page .home-side{
   overflow:visible!important;
 }
 
