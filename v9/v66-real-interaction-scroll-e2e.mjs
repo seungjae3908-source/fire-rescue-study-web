@@ -60,17 +60,32 @@ async function swipe(page,target,ownerName,label,scope='.page'){
   await loc.waitFor({state:'visible',timeout:30000});
   const box=await loc.boundingBox();
   assert(!!box,label+' swipe target visible');
-  const x=box.x+Math.min(box.width/2,30), y=box.y+Math.min(Math.max(box.height*.72,22),box.height-8);
-  const cdp=await page.context().newCDPSession(page);
-  await cdp.send('Input.synthesizeScrollGesture',{
-    x,y,yDistance:-320,speed:800,gestureSourceType:'touch',preventFling:true
-  });
-  await settle(page,260);
+  const before=await page.locator(scope).evaluate((root,ownerName)=>{
+    const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
+    if(!owner)return -1;
+    const mid=Math.min(500,Math.max(0,owner.scrollHeight-owner.clientHeight-20));
+    owner.scrollTop=mid;
+    return owner.scrollTop;
+  },ownerName);
+  const vp=page.viewportSize();
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const x=clamp(box.x+box.width/2,4,(vp?.width||390)-4);
+  const y=clamp(box.y+Math.min(Math.max(box.height*.6,22),Math.max(22,box.height-8)),4,(vp?.height||844)-4);
+  try{
+    const cdp=await page.context().newCDPSession(page);
+    await cdp.send('Input.synthesizeScrollGesture',{
+      x,y,yDistance:-280,speed:800,gestureSourceType:'touch',preventFling:true
+    });
+    await settle(page,260);
+  }catch(err){
+    check(false,label+' touch protocol '+String(err?.message||err));
+    return;
+  }
   const after=await page.locator(scope).evaluate((root,ownerName)=>{
     const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
     return owner?.scrollTop??-1;
   },ownerName);
-  check(after>2,label+' swipe reaches '+ownerName+' '+after);
+  check(after!==before,label+' swipe reaches '+ownerName+' '+JSON.stringify({before,after}));
 }
 async function seed(page){
   await page.evaluate(async()=>{
