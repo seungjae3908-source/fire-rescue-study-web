@@ -32,6 +32,12 @@ try{
       await page.waitForSelector('.page',{state:'visible',timeout:30000});
       assert((await page.locator('.page').innerText()).trim().length>0,'route '+route+' renders visible content '+vp.width);
       await noX(page,'route '+route+' '+vp.width);
+      const micro=await page.locator('.page small,.page .tiny,.page .tag,.page .pill,.page .eyebrow,.page .scope-label,.page .metric span,.page .hero p').evaluateAll(nodes=>nodes.filter(n=>{const cs=getComputedStyle(n),r=n.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0}).map(n=>({text:(n.textContent||'').trim().slice(0,60),fs:parseFloat(getComputedStyle(n).fontSize)||0})).filter(x=>x.text&&x.fs<12));
+      assert(micro.length===0,'route '+route+' keeps student microcopy >=12px '+vp.width+' '+JSON.stringify(micro.slice(0,4)));
+      if(vp.width<=1024){
+        const touch=await page.locator('.page .btn,.page .seg button,.page .confidence button,.page .book-jumpbar button,.page .tabbar button,.page .choice,.page .weak-chip,.page .detail-toc-chip,.top .btn,.mobile-nav button,.modal .btn').evaluateAll(nodes=>nodes.filter(n=>{const cs=getComputedStyle(n),r=n.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0&&!n.disabled}).map(n=>({text:(n.textContent||'').trim().slice(0,60),h:n.getBoundingClientRect().height})).filter(x=>x.h<43.5));
+        assert(touch.length===0,'route '+route+' keeps primary touch targets >=44px '+vp.width+' '+JSON.stringify(touch.slice(0,4)));
+      }
     }
 
     await page.evaluate(()=>window.AITUTOR_V9.App.go('study'));
