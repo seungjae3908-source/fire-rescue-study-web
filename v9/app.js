@@ -798,6 +798,10 @@ function interactionScrollOwner(target){
     if(target.closest('.exam-body'))return null;
     return examPage.querySelector('.exam-body[data-scroll-owner="exam-active"]');
   }
+  if(target.closest('.top')){
+    const page=document.querySelector('.page');
+    return page?[...page.querySelectorAll('[data-scroll-owner]')].find(el=>el.offsetParent!==null)||null:null;
+  }
   return null;
 }
 function moveInteractionScroll(owner,delta){
