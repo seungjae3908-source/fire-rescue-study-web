@@ -24,8 +24,8 @@ if(law){const lv=A.materialize(law,9981,1);assert(lv.variantKind==='choice-order
 const past=exam.find(q=>q.officialPastExam===true);
 if(past)assert(A.materialize(past,777,0)===past,'official past-exam items are never transformed');
 
-const calc=exam.find(q=>q.type==='계산형'&&(q.calcFamily||/산소통|Parkland|지정수량|점적|포수용액|감열|공기량/.test(String(q.q||''))));
-assert(!!calc,'a calculation master exists for parameterized variant QA');
+const calc=exam.find(q=>q.type==='계산형'&&A.supportsCalculation?.(q));
+assert(!!calc,'a supported calculation master exists for parameterized variant QA');
 if(calc){
   const vars=Array.from({length:20},(_,i)=>A.materialize(calc,1000+i,i));
   assert(vars.every(q=>q.variantKind==='parameterized-calculation'&&q.answerTruth==='programmatic-formula'&&q.calculationTruth),'calculation variants use formula-bounded parameters with explicit truth');
@@ -41,7 +41,7 @@ assert(r1.map(q=>q.id).join('|')!==r2.map(q=>q.id).join('|'),'different real-moc
 
 const pBase=M.build({mode:'practice',level:'mid',history:[],seed:515151}),pVar=A.materializePracticeSet(pBase,515151);
 assert(pBase.length===65&&pVar.length===65,'practice mock creates a complete 65-question variant set');
-assert(pVar.filter(q=>q.variantGenerated).length>=55,'practice mock materially uses safe variants');
+assert(pVar.filter(q=>q.variantGenerated).length>=60,'practice mock materially uses safe variants');
 assert(pVar.filter(q=>q.variantGenerated).every(q=>q.grade==='P'&&q.realMockCredit===false&&q.practiceMockCredit===true),'all transformed questions are truthfully marked practice-only');
 assert(pVar.every(q=>q.officialPastExam!==true||q.variantGenerated!==true),'official past-exam claim never survives on a transformed question');
 
