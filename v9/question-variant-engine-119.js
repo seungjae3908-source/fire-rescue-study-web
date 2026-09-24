@@ -9,7 +9,7 @@ const rng=seed=>{let a=(Number(seed)>>>0)||0x9e3779b9;return()=>{a=(a+0x6D2B79F5
 const seedFor=(...parts)=>hash32(parts.join('|'));
 const fmt=n=>Number.isInteger(Number(n))?String(Number(n)):String(Number(Number(n).toFixed(1)));
 const calcFamily=q=>q?.calcFamily||(/haz|지정수량|위험물/i.test(String(q?.id||'')+' '+String(q?.q||''))?'hazmat':/oxygen|산소통/i.test(String(q?.id||'')+' '+String(q?.q||''))?'oxygen':/Parkland|화상/i.test(String(q?.id||'')+' '+String(q?.q||''))?'burn':/gtt|점적|수액/i.test(String(q?.id||'')+' '+String(q?.q||''))?'iv':/포수용액|포원액|팽창비/i.test(String(q?.q||''))?'foam':/감열|비열|Q\s*=\s*m/i.test(String(q?.q||''))?'heat':/산소량|공기량|공기비/i.test(String(q?.q||''))?'combustion':'');
-const baseFamily=q=>q?.familyId||((q?.type==='계산형'||calcFamily(q))&&calcFamily(q)?`calc:${q.conceptId}:${calcFamily(q)}`:`master:${q.masterQuestionId||q.id}`);
+const baseFamily=q=>q?.familyId||((q?.type==='계산형'||q?.calcFamily)&&calcFamily(q)?`calc:${q.conceptId}:${calcFamily(q)}`:`master:${q.masterQuestionId||q.id}`);
 
 function annotateQuestion(q){
   if(!q)return q;
@@ -94,7 +94,7 @@ function calcQuestion(base,seed,index=0){
 function materialize(base,seed,index=0){
   annotateQuestion(base);
   if(base.officialPastExam===true)return base;
-  const cq=(base.type==='계산형'||calcFamily(base))?calcQuestion(base,seed,index):null;
+  const cq=(base.type==='계산형'||base.calcFamily)?calcQuestion(base,seed,index):null;
   return cq||surfaceVariant(base,seed,index)
 }
 function materializePracticeSet(qs,seed){
