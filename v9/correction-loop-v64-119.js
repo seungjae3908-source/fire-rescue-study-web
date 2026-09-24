@@ -20,15 +20,15 @@ function conceptEvents(state,id){
 function unresolvedFor(state,id){
   return (state?.wrongs||[]).filter(x=>!x?.resolved&&x?.conceptId===id);
 }
-function rowFor(state,id,{now=Date.now()}={}){
+function rowFor(state,id,{now=Date.now(),analytics=null}={}){
   const concept=V.curriculum?.byId?.[id];if(!concept)return null;
   const events=conceptEvents(state,id),last10=events.slice(-10),last5=events.slice(-POLICY.targetQuestions),unresolved=unresolvedFor(state,id);
   const attempts=last10.length,correct=last10.filter(x=>x.correct===true).length,sureWrong=last10.filter(x=>x.correct!==true&&x.confidence==='sure').length;
   const recentCorrect=last5.filter(x=>x.correct===true).length,sureCorrect=last5.filter(x=>x.correct===true&&x.confidence==='sure').length;
   const repeat=unresolved.filter(x=>Number(x.wrongCount||1)>=2).length,overdue=unresolved.filter(x=>Number(x.due||0)<=now).length;
   const fallbackWeakness=clamp(Math.round((100-pct(correct,attempts))*.55+sureWrong*8+unresolved.length*12+repeat*8+overdue*6));
-  const analytics=V.AnalyticsV61?.analyze?.(state,{now});
-  const analyticsRow=analytics?.concepts?.find?.(x=>x.conceptId===id);
+  const report=analytics??V.AnalyticsV61?.analyze?.(state,{now});
+  const analyticsRow=report?.concepts?.find?.(x=>x.conceptId===id);
   const weakness=analyticsRow?.weakness??fallbackWeakness;
   const completed=last5.length>=POLICY.targetQuestions&&recentCorrect>=POLICY.passCorrect&&sureCorrect>=POLICY.passSureCorrect&&unresolved.length===0;
   const candidate=unresolved.length>0||sureWrong>0||(attempts>=2&&pct(correct,attempts)<75)||(analyticsRow?.weakness||0)>=25;
@@ -47,7 +47,8 @@ function rows(state=V.Store?.state,{now=Date.now(),includeCompleted=true}={}){
   const ids=new Set;
   for(const w of state?.wrongs||[])if(w?.conceptId)ids.add(w.conceptId);
   for(const e of state?.answerEvents||[])if(e?.conceptId)ids.add(e.conceptId);
-  const list=[...ids].map(id=>rowFor(state,id,{now})).filter(Boolean).filter(x=>x.active||(includeCompleted&&x.completed));
+  const analytics=V.AnalyticsV61?.analyze?.(state,{now})||null;
+  const list=[...ids].map(id=>rowFor(state,id,{now,analytics})).filter(Boolean).filter(x=>x.active||(includeCompleted&&x.completed));
   return list.sort((a,b)=>Number(b.active)-Number(a.active)||b.priority-a.priority||b.weakness-a.weakness||a.conceptId.localeCompare(b.conceptId));
 }
 function activeRows(state=V.Store?.state,opts={}){return rows(state,{...opts,includeCompleted:false}).filter(x=>x.active)}
