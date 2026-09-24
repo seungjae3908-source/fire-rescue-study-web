@@ -646,3 +646,40 @@
   .stats-analysis-row,
   .stats-trend-row{min-width:0}
 }
+
+
+/* V63 whole-app readability and touch-target hardening */
+.app .page small,
+.app .page .tiny,
+.app .page .tag,
+.app .page .pill,
+.app .page .eyebrow,
+.app .page .scope-label,
+.app .page .metric span,
+.app .page .hero p{
+  font-size:12px!important;
+  line-height:1.45
+}
+.app .page .btn.small,
+.app .top .btn.small,
+.app .modal .btn.small{
+  font-size:12px!important;
+  line-height:1.2;
+  min-height:36px;
+  padding:8px 10px
+}
+@media(max-width:1024px){
+  .app .page .btn,
+  .app .page .seg button,
+  .app .page .confidence button,
+  .app .page .book-jumpbar button,
+  .app .page .tabbar button,
+  .app .page .choice,
+  .app .page .weak-chip,
+  .app .page .detail-toc-chip,
+  .app .top .btn,
+  .app .mobile-nav button,
+  .app .modal .btn{
+    min-height:44px
+  }
+}
