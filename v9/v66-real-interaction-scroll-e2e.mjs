@@ -16,15 +16,25 @@ async function setStudyTab(page,tab){
   await page.waitForFunction(tab=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.studyTab===tab,tab);
   await settle(page);
 }
-async function visibleOwner(page,scope='.page'){
-  return page.locator(scope).evaluate(root=>{
-    const visible=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0};
-    const rows=[root,...root.querySelectorAll('[data-scroll-owner]')].filter(visible).filter(el=>{
+async function effectiveVerticalOwners(page,scope='.page'){
+  return page.locator(scope).evaluate((root,scope)=>{
+    const visible=el=>{
+      if(scope==='.page'&&el.closest('.outline,.backdrop'))return false;
+      const cs=getComputedStyle(el),r=el.getBoundingClientRect();
+      return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0&&r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight;
+    };
+    return [root,...root.querySelectorAll('*')].filter(visible).filter(el=>{
+      if(el.matches('textarea,input,select,[contenteditable="true"]'))return false;
       const y=getComputedStyle(el).overflowY;
       return ['auto','scroll'].includes(y)&&el.scrollHeight>el.clientHeight+2;
-    }).map(el=>({owner:el.getAttribute('data-scroll-owner')||'',cls:String(el.className||''),top:el.scrollTop,sh:el.scrollHeight,ch:el.clientHeight}));
-    return rows;
-  });
+    }).map(el=>({owner:el.getAttribute('data-scroll-owner')||'',tag:el.tagName,cls:String(el.className||'').slice(0,120),top:el.scrollTop,sh:el.scrollHeight,ch:el.clientHeight}));
+  },scope);
+}
+async function assertSingleEffectiveOwner(page,expected,label,scope='.page'){
+  const rows=await effectiveVerticalOwners(page,scope);
+  check(rows.length<=1,label+' has <=1 effective vertical scroller '+JSON.stringify(rows));
+  if(rows.length===1&&expected)check(rows[0].owner===expected,label+' effective scroller is '+expected+' '+JSON.stringify(rows[0]));
+  return rows;
 }
 async function makeScrollable(page,ownerName,scope='.page'){
   await page.locator(scope).evaluate((root,ownerName)=>{
@@ -67,29 +77,38 @@ async function touchBridge(page,target,ownerName,label,scope='.page'){
   const loc=page.locator(target).filter({visible:true}).first();
   await loc.waitFor({state:'visible',timeout:30000});
   await loc.scrollIntoViewIfNeeded().catch(()=>{});
+  const box=await loc.boundingBox();assert(!!box,label+' touch target visible');
   const before=await page.locator(scope).evaluate((root,ownerName)=>{
     const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);
     if(!owner)return -1;owner.scrollTop=Math.min(500,Math.max(0,owner.scrollHeight-owner.clientHeight-20));return owner.scrollTop;
   },ownerName);
-  await loc.evaluate(el=>{
-    const fire=(type,x,y,active=true)=>{const ev=new Event(type,{bubbles:true,cancelable:true}),point={clientX:x,clientY:y};Object.defineProperty(ev,'touches',{value:active?[point]:[]});Object.defineProperty(ev,'changedTouches',{value:[point]});el.dispatchEvent(ev)};
-    fire('touchstart',32,320);fire('touchmove',34,245);fire('touchmove',36,165);fire('touchend',36,165,false);
-  });
-  await settle(page,120);
+  const vp=page.viewportSize(),x=Math.max(6,Math.min((vp?.width||390)-6,box.x+Math.min(box.width/2,28))),startY=Math.max(30,Math.min((vp?.height||844)-20,box.y+Math.min(box.height/2,30)));
+  const cdp=await page.context().newCDPSession(page);
+  try{
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y:startY,radiusX:1,radiusY:1,force:1}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+1,y:Math.max(8,startY-45),radiusX:1,radiusY:1,force:1}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+2,y:Math.max(8,startY-90),radiusX:1,radiusY:1,force:1}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  }finally{await cdp.detach().catch(()=>{})}
+  await settle(page,160);
   const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
-  check(after!==before,label+' vertical touch reaches '+ownerName+' '+JSON.stringify({before,after}));
+  check(after!==before,label+' trusted vertical touch reaches '+ownerName+' '+JSON.stringify({before,after}));
 }
 async function horizontalTouchSafe(page,target,ownerName,label,scope='.page'){
   await makeScrollable(page,ownerName,scope);
   const loc=page.locator(target).filter({visible:true}).first();await loc.waitFor({state:'visible',timeout:30000});
+  const box=await loc.boundingBox();assert(!!box,label+' horizontal touch target visible');
   const before=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);if(!owner)return -1;owner.scrollTop=Math.min(500,Math.max(0,owner.scrollHeight-owner.clientHeight-20));return owner.scrollTop},ownerName);
-  await loc.evaluate(el=>{
-    const fire=(type,x,y,active=true)=>{const ev=new Event(type,{bubbles:true,cancelable:true}),point={clientX:x,clientY:y};Object.defineProperty(ev,'touches',{value:active?[point]:[]});Object.defineProperty(ev,'changedTouches',{value:[point]});el.dispatchEvent(ev)};
-    fire('touchstart',30,200);fire('touchmove',130,204);fire('touchend',130,204,false);
-  });
-  await settle(page,80);
+  const vp=page.viewportSize(),x=Math.max(10,Math.min((vp?.width||390)-130,box.x+12)),y=Math.max(12,Math.min((vp?.height||844)-12,box.y+Math.min(box.height/2,24)));
+  const cdp=await page.context().newCDPSession(page);
+  try{
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,radiusX:1,radiusY:1,force:1}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+90,y:y+2,radiusX:1,radiusY:1,force:1}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  }finally{await cdp.detach().catch(()=>{})}
+  await settle(page,100);
   const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
-  check(after===before,label+' horizontal touch does not hijack '+ownerName+' '+JSON.stringify({before,after}));
+  check(after===before,label+' trusted horizontal touch does not hijack '+ownerName+' '+JSON.stringify({before,after}));
 }
 async function seed(page){
   await page.evaluate(async()=>{
@@ -136,6 +155,7 @@ try{
     await seed(page);
 
     await go(page,'home');
+    await assertSingleEffectiveOwner(page,'home','home '+vp.width);
     await wheel(page,'.top','home','global top bar home '+vp.width);
     if(vp.isMobile)await touchBridge(page,'.top','home','global top bar home touch '+vp.width);
     await wheel(page,'.home-main','home','home main '+vp.width);
@@ -145,6 +165,7 @@ try{
     for(const tab of ['core','detail','quiz','source','ai']){
       await setStudyTab(page,tab);
       const owner=vp.isMobile?'study-mobile':'study-desktop';
+      await assertSingleEffectiveOwner(page,owner,'study '+tab+' '+vp.width);
       await wheel(page,'.concept-head',owner,'study '+tab+' header '+vp.width);
       if(tab==='core'){
         await wheel(page,'.study-toolbar',owner,'study toolbar '+vp.width);
@@ -168,6 +189,7 @@ try{
     }
 
     await go(page,'bank');
+    await assertSingleEffectiveOwner(page,'bank','bank '+vp.width);
     await wheel(page,'.question-filter-bar','bank','bank filters '+vp.width);
     const bankBody=page.locator('.bank-question-body:visible');
     if(await bankBody.count())await wheel(page,'.bank-question-body','bank','bank body '+vp.width);
@@ -178,6 +200,7 @@ try{
     const start=page.locator('[data-training-start="fire50"]');
     await start.waitFor({state:'visible',timeout:30000});await start.click();
     await page.waitForSelector('.exam-run-workspace',{timeout:30000});await settle(page);
+    await assertSingleEffectiveOwner(page,'exam-active','active exam '+vp.width);
     await wheel(page,'.exam-body','exam-active','exam content '+vp.width);
     const examHead=page.locator('.exam-head-clean:visible');if(await examHead.count())await wheel(page,'.exam-head-clean','exam-active','exam header '+vp.width);
     const nav=page.locator('.exam-navigator:visible');if(await nav.count())await wheel(page,'.exam-navigator','exam-active','exam navigator '+vp.width);
@@ -186,6 +209,7 @@ try{
     if(vp.isMobile&&await examFooter.count())await touchBridge(page,'.exam-footer','exam-active','exam footer touch '+vp.width);
 
     await openPdf(page);
+    await assertSingleEffectiveOwner(page,'pdf','PDF modal '+vp.width,'#pdfEvidence');
     await wheel(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
     const zoom=page.locator('#pdfEvidence .pdf-zoombar:visible');if(await zoom.count())await wheel(page,'#pdfEvidence .pdf-zoombar','pdf','pdf zoombar '+vp.width,'#pdfEvidence');
     await wheel(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar '+vp.width,'#pdfEvidence');
@@ -197,11 +221,12 @@ try{
     for(const [route,owner] of [['notes','notes'],['wrong','wrong'],['stats','stats'],['resources','resources'],['suggestions','suggestions'],['settings','settings']]){
       await go(page,route);
       const target='[data-scroll-owner="'+owner+'"]',targetLoc=page.locator(target+':visible');
+      await assertSingleEffectiveOwner(page,owner,route+' '+vp.width);
       if(await targetLoc.count())await wheel(page,target,owner,route+' body '+vp.width);else console.log('PASS route '+route+' has no effective scroller in this state '+vp.width);
     }
 
-    const owners=await visibleOwner(page);
-    check(owners.length<=1,'final visible page has <=1 effective owner '+vp.width+' '+JSON.stringify(owners));
+    const owners=await effectiveVerticalOwners(page);
+    check(owners.length<=1,'final visible page has <=1 effective vertical scroller '+vp.width+' '+JSON.stringify(owners));
     check(errors.length===0,'no runtime errors '+vp.width+' '+errors.join(' | '));
     await ctx.close();
   }
