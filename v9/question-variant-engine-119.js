@@ -32,9 +32,17 @@ function permute(q,seed,index=0){
   return{choices,choiceExplanations,a,order}
 }
 function arranged(correct,wrongs,seed){
-  const clean=[...new Set([String(correct),...(wrongs||[]).map(String)])];if(clean.length<4)return null;
-  const wrong=clean.filter(x=>x!==String(correct)).slice(0,3),position=seedFor(seed,'answer-position')%4,items=wrong.map(text=>({text,correct:false}));
-  items.splice(position,0,{text:String(correct),correct:true});
+  const right=String(correct),wrong=[...new Set((wrongs||[]).map(String))].filter(x=>x!==right);
+  if(wrong.length<3){
+    const m=right.match(/^\s*(-?\d+(?:\.\d+)?)\s*(.*)$/),n=Number(m?.[1]),unit=m?.[2]||'';
+    if(Number.isFinite(n)){
+      const extras=[n*.5,n*1.5,n+1,n+5,n+10,n*2].map(x=>fmt(Math.max(0,x))+unit);
+      for(const x of extras)if(x!==right&&!wrong.includes(x))wrong.push(x);
+    }
+  }
+  if(wrong.length<3)return null;
+  const position=seedFor(seed,'answer-position')%4,items=wrong.slice(0,3).map(text=>({text,correct:false}));
+  items.splice(position,0,{text:right,correct:true});
   return{choices:items.map(x=>x.text),a:position}
 }
 function variantMeta(base,seed,index,kind){
