@@ -292,3 +292,9 @@
   .detail-toc-chip{min-width:0!important;width:100%!important;min-height:36px!important;padding:5px 4px!important;font-size:12px!important;line-height:1.2!important;white-space:normal!important;word-break:keep-all!important;overflow-wrap:anywhere!important}
   .detail-toc-chip:nth-child(n+5){display:none!important}
 }
+
+@media(min-width:721px) and (max-width:1180px){
+  .detail-toc-chips{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important;overflow:visible!important}
+  .detail-toc-chip{min-width:0!important;width:100%!important;min-height:34px!important;padding:5px 5px!important;white-space:normal!important;word-break:keep-all!important;overflow-wrap:anywhere!important;line-height:1.2!important}
+  .detail-toc-chip:nth-child(n+5){display:none!important}
+}
