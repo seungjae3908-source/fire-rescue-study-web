@@ -84,7 +84,11 @@ function studentStudyText(v){return String(v||'')
 function studentQuestionText(v){return studentStudyText(v).replace(/([“\"]?)\s*(?:교재|공식\s*교재|공식\s*근거|원문)\s*(?:에서는?|에\s*따르면|에서)?\s*/gi,'$1').replace(/\s{2,}/g,' ').trim()}
 function studyNorm(v){return String(v||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'')}
 function sameStudyText(a,b){const x=studyNorm(a),y=studyNorm(b);if(!x||!y)return false;if(x===y)return true;const min=Math.min(x.length,y.length),max=Math.max(x.length,y.length);return min>=24&&min/max>=.82&&(x.includes(y)||y.includes(x))}
+function numericTokens(v){return (studentStudyText(v).match(/\d+(?:\.\d+)?/g)||[]).join('|')}
+function studyGramDice(a,b){const x=studyNorm(a),y=studyNorm(b);if(x.length<4||y.length<4)return 0;const grams=s=>{const m=new Map;for(let i=0;i<s.length-1;i++){const g=s.slice(i,i+2);m.set(g,(m.get(g)||0)+1)}return m},A=grams(x),B=grams(y);let hit=0,total=0;for(const n of A.values())total+=n;for(const n of B.values())total+=n;for(const [g,n] of A)hit+=Math.min(n,B.get(g)||0);return total?2*hit/total:0}
+function sameCriterionFact(a,b){const na=numericTokens(a),nb=numericTokens(b);return !!na&&na===nb&&studyGramDice(a,b)>=.46}
 function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(!row||sameStudyText(row,seed)||out.some(x=>sameStudyText(x,row)))continue;out.push(row)}return out}
+function uniqueCriterionRows(rows=[]){const out=[];for(const row of rows){if(!row||out.some(x=>sameStudyText(x,row)||sameCriterionFact(x,row)))continue;out.push(row)}return out}
 const DETAIL_META_SECTION_RE=/^(?:개념\s*구조와\s*읽는\s*순서|핵심\s*포인트\s*연결|문제\s*적용과\s*난이도\s*대응|공식\s*원문으로\s*복귀하는\s*기준|회상\s*루프)$/;
 function uniqueSections(rows=[]){const out=[];for(const row of rows){if(!row?.body||DETAIL_META_SECTION_RE.test(String(row.title||'').trim()))continue;if(out.some(x=>sameStudyText(x.body,row.body)))continue;out.push(row)}return out}
 function coreEssentialRows(pack){
@@ -95,7 +99,7 @@ const candidates=[
 ],rows=[];
 for(const row of candidates){
 const text=studentStudyText(row.text);
-if(!text||sameStudyText(text,quick)||numbers.some(n=>sameStudyText(text,n))||rows.some(x=>sameStudyText(x.text,text)))continue;
+if(!text||sameStudyText(text,quick)||numbers.some(n=>sameStudyText(text,n)||sameCriterionFact(text,n))||rows.some(x=>sameStudyText(x.text,text)||sameCriterionFact(x.text,text)))continue;
 rows.push({...row,text});if(rows.length>=5)break
 }
 return rows
@@ -199,7 +203,7 @@ return rows.map((x,i)=>`<section class="calc-lab" data-calculation-index="${i}">
 }
 function quickCoreBlock(c,pack){const text=pack?.studySchema?.quick30||pack?.summary||'';if(!text)return'';const key=V.PassNote?.conceptCoreKey?.(c.id)||'',saved=key&&V.PassNote?.has?.(key);return `<section class="study-quick"><div class="study-quick-title"><span>핵심</span><div class="study-quick-actions"><button class="study-core-save ${saved?'on':''}" data-pass-core="${esc(c.id)}" aria-label="${saved?'합격노트에서 삭제':'합격노트에 추가'}">합격노트 ${saved?'★':'☆'}</button></div></div><p class="lead">${studyHighlight(text,pack)}</p></section>`}
 function coreEssentialBlock(c,pack){const rows=coreEssentialRows(pack);if(!rows.length)return'';return `<section class="study-core-essentials"><div class="study-core-title"><span>시험 직전 핵심</span></div><ul>${rows.map(x=>`<li><span>${esc(x.text)}</span></li>`).join('')}</ul></section>`}
-function numberBlock(c,pack){const rows=uniqueTextRows((V.StudyEmphasis119?.numberRows?.(pack,12)||[]).map(studentStudyText).filter(Boolean)).slice(0,10);if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title"><span>숫자 · 단위 · 기준</span></div><ul>${rows.map(x=>`<li><span class="study-key-text">${esc(x)}</span></li>`).join('')}</ul></section>`}
+function numberBlock(c,pack){const rows=uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,12)||[]).map(studentStudyText).filter(Boolean)).slice(0,10);if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title"><span>숫자 · 단위 · 기준</span></div><ul>${rows.map(x=>`<li><span class="study-key-text">${esc(x)}</span></li>`).join('')}</ul></section>`}
 function trapBlock(pack){
 const rows=(V.StudyEmphasis119?.trapRows?.(pack)||[]).map(studentStudyText).filter(Boolean);if(!rows.length)return'';
 return `<section class="study-traps"><div class="study-traps-title">자주 틀리는 포인트</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
