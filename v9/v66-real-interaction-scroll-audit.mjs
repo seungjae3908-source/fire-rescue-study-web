@@ -8,9 +8,10 @@ assert(app.includes('function interactionScrollOwner(target)'),'V66 interaction 
 assert(app.includes("target.closest('.pdf-evidence-modal')")&&app.includes('data-scroll-owner="pdf"'),'PDF fixed chrome delegates to PDF owner');
 assert(app.includes("target.closest('.page-study')")&&app.includes("target.closest('.study-body,.outline,.backdrop')"),'study fixed chrome delegates without hijacking body or outline');
 assert(app.includes("target.closest('.page-exam.exam-active')")&&app.includes('data-scroll-owner="exam-active"'),'active exam fixed chrome delegates to exam owner');
+assert(app.includes("target.closest('.top')")&&app.includes("document.querySelector('.page')"),'global top bar delegates to the active page owner');
 assert(app.includes("document.addEventListener('wheel'")&&app.includes('passive:false,capture:true'),'wheel bridge is non-passive and capture-safe');
 assert(app.includes("document.addEventListener('touchstart'")&&app.includes("document.addEventListener('touchmove'")&&app.includes('Math.abs(totalY)>Math.abs(totalX)'),'vertical touch bridge preserves horizontal gesture intent');
-assert(e2e.includes('study toolbar')&&e2e.includes('study actionbar')&&e2e.includes('exam header')&&e2e.includes('exam footer')&&e2e.includes('pdf zoombar')&&e2e.includes('pdf pager'),'browser audit covers fixed study, exam and PDF chrome');
+assert(e2e.includes('global top bar')&&e2e.includes('study toolbar')&&e2e.includes('study actionbar')&&e2e.includes('exam header')&&e2e.includes('exam footer')&&e2e.includes('pdf zoombar')&&e2e.includes('pdf pager'),'browser audit covers global, study, exam and PDF fixed chrome');
 assert(e2e.includes('touchBridge')&&e2e.includes('horizontalTouchSafe'),'browser audit covers touch forwarding and horizontal safety');
 assert(ci.includes('V66 fixed-chrome interaction scroll audit'),'deterministic V66 audit is wired to development CI');
 assert(ci.includes('V66 branch real-interaction scroll QA')&&ci.includes('http://127.0.0.1:4173/v9/index.html'),'branch browser gate targets exact branch runtime');
