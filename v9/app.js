@@ -84,7 +84,11 @@ function studentStudyText(v){return String(v||'')
 function studentQuestionText(v){return studentStudyText(v).replace(/([“\"]?)\s*(?:교재|공식\s*교재|공식\s*근거|원문)\s*(?:에서는?|에\s*따르면|에서)?\s*/gi,'$1').replace(/\s{2,}/g,' ').trim()}
 function studyNorm(v){return String(v||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'')}
 function sameStudyText(a,b){const x=studyNorm(a),y=studyNorm(b);if(!x||!y)return false;if(x===y)return true;const min=Math.min(x.length,y.length),max=Math.max(x.length,y.length);return min>=24&&min/max>=.82&&(x.includes(y)||y.includes(x))}
+function numericTokens(v){return (studentStudyText(v).match(/\d+(?:\.\d+)?/g)||[]).join('|')}
+function studyGramDice(a,b){const x=studyNorm(a),y=studyNorm(b);if(x.length<4||y.length<4)return 0;const grams=s=>{const m=new Map;for(let i=0;i<s.length-1;i++){const g=s.slice(i,i+2);m.set(g,(m.get(g)||0)+1)}return m},A=grams(x),B=grams(y);let hit=0,total=0;for(const n of A.values())total+=n;for(const n of B.values())total+=n;for(const [g,n] of A)hit+=Math.min(n,B.get(g)||0);return total?2*hit/total:0}
+function sameCriterionFact(a,b){const na=numericTokens(a),nb=numericTokens(b);return !!na&&na===nb&&studyGramDice(a,b)>=.46}
 function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(!row||sameStudyText(row,seed)||out.some(x=>sameStudyText(x,row)))continue;out.push(row)}return out}
+function uniqueCriterionRows(rows=[]){const out=[];for(const row of rows){if(!row||out.some(x=>sameStudyText(x,row)||sameCriterionFact(x,row)))continue;out.push(row)}return out}
 const DETAIL_META_SECTION_RE=/^(?:개념\s*구조와\s*읽는\s*순서|핵심\s*포인트\s*연결|문제\s*적용과\s*난이도\s*대응|공식\s*원문으로\s*복귀하는\s*기준|회상\s*루프)$/;
 function uniqueSections(rows=[]){const out=[];for(const row of rows){if(!row?.body||DETAIL_META_SECTION_RE.test(String(row.title||'').trim()))continue;if(out.some(x=>sameStudyText(x.body,row.body)))continue;out.push(row)}return out}
 function coreEssentialRows(pack){
@@ -95,7 +99,7 @@ const candidates=[
 ],rows=[];
 for(const row of candidates){
 const text=studentStudyText(row.text);
-if(!text||sameStudyText(text,quick)||numbers.some(n=>sameStudyText(text,n))||rows.some(x=>sameStudyText(x.text,text)))continue;
+if(!text||sameStudyText(text,quick)||numbers.some(n=>sameStudyText(text,n)||sameCriterionFact(text,n))||rows.some(x=>sameStudyText(x.text,text)||sameCriterionFact(x.text,text)))continue;
 rows.push({...row,text});if(rows.length>=5)break
 }
 return rows
@@ -199,7 +203,7 @@ return rows.map((x,i)=>`<section class="calc-lab" data-calculation-index="${i}">
 }
 function quickCoreBlock(c,pack){const text=pack?.studySchema?.quick30||pack?.summary||'';if(!text)return'';const key=V.PassNote?.conceptCoreKey?.(c.id)||'',saved=key&&V.PassNote?.has?.(key);return `<section class="study-quick"><div class="study-quick-title"><span>핵심</span><div class="study-quick-actions"><button class="study-core-save ${saved?'on':''}" data-pass-core="${esc(c.id)}" aria-label="${saved?'합격노트에서 삭제':'합격노트에 추가'}">합격노트 ${saved?'★':'☆'}</button></div></div><p class="lead">${studyHighlight(text,pack)}</p></section>`}
 function coreEssentialBlock(c,pack){const rows=coreEssentialRows(pack);if(!rows.length)return'';return `<section class="study-core-essentials"><div class="study-core-title"><span>시험 직전 핵심</span></div><ul>${rows.map(x=>`<li><span>${esc(x.text)}</span></li>`).join('')}</ul></section>`}
-function numberBlock(c,pack){const rows=(V.StudyEmphasis119?.numberRows?.(pack,12)||[]).map(studentStudyText).filter(Boolean);if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title"><span>숫자 · 단위 · 기준</span></div><ul>${rows.map(x=>`<li><span class="study-key-text">${esc(x)}</span></li>`).join('')}</ul></section>`}
+function numberBlock(c,pack){const rows=uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,12)||[]).map(studentStudyText).filter(Boolean)).slice(0,10);if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title"><span>숫자 · 단위 · 기준</span></div><ul>${rows.map(x=>`<li><span class="study-key-text">${esc(x)}</span></li>`).join('')}</ul></section>`}
 function trapBlock(pack){
 const rows=(V.StudyEmphasis119?.trapRows?.(pack)||[]).map(studentStudyText).filter(Boolean);if(!rows.length)return'';
 return `<section class="study-traps"><div class="study-traps-title">자주 틀리는 포인트</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
@@ -653,18 +657,19 @@ const root=document.querySelector('#pdfEvidence');if(!root)return;
 root.dataset.renderState='loading';delete root.dataset.anchorVerified;
 const c=V.curriculum.byId[id],p=V.contentPacks.get(id),range=(c?.sourceRanges||[])[0],key=range?.doc||'',host=root.querySelector('#pdfEvidenceHost'),badge=root.querySelector('[data-pdf-page-label]'),anchorQueries=sourceAnchorQueries(c,p),queries=evidenceQueries(c,p);
 if(!key||!V.SourcePDF){host.innerHTML='<div class="empty">연결된 원문이 없습니다.</div>';return}
-const availability=await V.SourcePDF.availability(key),official=availability.officialPage||V.SourcePDF.sourcePage(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static';
+const availability=await V.SourcePDF.availability(key),catalog=V.SourceCatalog119?.get?.(key),official=availability.officialPage||catalog?.officialPage||V.SourcePDF.sourcePage(key)||'',staticRange=catalog?.transport==='range-static';
 if(!availability.local&&!availability.direct){badge.textContent='공식 원문';host.innerHTML=`<div class="source-connect official-fallback"><b>원문을 바로 불러올 수 없습니다.</b>${official?`<a class="btn primary block" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div>`;root.querySelector('.pdf-pager')?.classList.add('hidden');return}
+const loadingActions=`<div class="pdf-loading-actions">${official?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(official)}">공식 사이트에서 열기</a>`:''}<button class="btn ghost" data-source-close>닫기</button></div>`;
 host.innerHTML=staticRange
-?'<div class="pdf-loading"><b>공식 교재 여는 중…</b><small>필요한 페이지만 빠르게 불러옵니다.</small><div class="progressbar"><i style="width:35%"></i></div><span>원문 준비 중</span></div>'
-:`<div class="pdf-loading"><b>${availability.local?'공식 원문 여는 중…':'공식 원문 여는 중…'}</b><small>연결된 공식 PDF의 해당 페이지를 여는 중입니다.</small><div class="progressbar"><i data-pdf-progress style="width:${availability.local?100:4}%"></i></div><span data-pdf-progress-label>${availability.local?'교재 확인 중':'원문 준비 중'}</span></div>`;
+?`<div class="pdf-loading"><b>공식 교재 여는 중…</b><small>필요한 페이지만 불러옵니다. 약 18초 안에 열리지 않으면 자동으로 재시도 화면으로 전환합니다.</small><div class="progressbar"><i style="width:35%"></i></div><span>원문 준비 중</span>${loadingActions}</div>`
+:`<div class="pdf-loading"><b>공식 원문 여는 중…</b><small>연결된 공식 PDF의 해당 페이지를 불러옵니다. 약 18초 안에 열리지 않으면 자동으로 재시도 화면으로 전환합니다.</small><div class="progressbar"><i data-pdf-progress style="width:${availability.local?100:4}%"></i></div><span data-pdf-progress-label>${availability.local?'교재 확인 중':'원문 준비 중'}</span>${loadingActions}</div>`;
 try{
 const bookFrom=Number(range?.from)||0,initialPdfPage=bookFrom?(V.SourcePDF.pdfPage?.(key,bookFrom)||bookFrom):0;
 let page=Number(pageOverride)||Number(root.dataset.page)||initialPdfPage||0;
 const progress=({loaded,total,percent})=>{const bar=root.querySelector('[data-pdf-progress]'),label=root.querySelector('[data-pdf-progress-label]');if(bar&&percent!=null)bar.style.width=Math.max(4,percent)+'%';if(label)label.textContent=percent!=null?`원문 준비 중`:`원문 준비 중`};
 if(!page){badge.textContent='근거 위치 찾는 중…';const located=await V.SourcePDF.locate(key,queries);page=located.page;root.dataset.autoLocated='true'}
 badge.textContent=staticRange?'공식 교재 여는 중…':(availability.local?'공식 원문 여는 중…':'공식 원문 여는 중…');
-let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:30000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
+let result=await V.SourcePDF.render(key,page,host,queries,{timeoutMs:18000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
 if(pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
 const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key);
 const candidates=[];
@@ -672,7 +677,7 @@ const mappedHit=await V.SourcePDF.locate(key,queries,{bookRanges:mapped}).catch(
 if(mappedHit?.page&&mappedHit.score>0)candidates.push({...mappedHit,scope:'mapped'});
 const broadHit=await Promise.race([V.SourcePDF.locate(key,queries).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),6000))]);if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'});
 for(const located of candidates){
-const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:30000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
+const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:18000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
 if(hasAnchorEvidence(anchorResult,anchorQueries)||anchorResult.hits>=2){result=anchorResult;root.dataset.autoLocated='true';root.dataset.searchScope=located.scope;break}
 }
 }
@@ -685,7 +690,7 @@ const prev=root.querySelector('[data-pdf-page="-1"]'),next=root.querySelector('[
 root.querySelector('.pdf-pager')?.classList.remove('hidden')
 }catch(err){
 badge.textContent='원문을 불러오지 못했습니다';
-host.innerHTML=`<div class="source-connect official-fallback"><b>교재를 불러오지 못했습니다.</b><p>네트워크 상태를 확인한 뒤 다시 시도하세요.</p><div class="toolbar"><button class="btn primary" data-pdf-retry>다시 시도</button>${official?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(official)}">공식 원문 열기</a>`:''}</div></div>`;
+host.innerHTML=`<div class="source-connect official-fallback"><b>교재를 불러오지 못했습니다.</b><p>연결이 지연되거나 중단되었습니다. 다시 시도하거나 공식 사이트에서 바로 확인할 수 있습니다.</p><div class="toolbar"><button class="btn primary" data-pdf-retry>다시 시도</button>${official?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(official)}">공식 사이트에서 열기</a>`:''}<button class="btn ghost" data-source-close>닫기</button></div></div>`;
 root.querySelector('.pdf-pager')?.classList.add('hidden')
 }
 }

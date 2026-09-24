@@ -251,6 +251,8 @@ jobs:
         run: node v9/image-ocr-e2e.mjs
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
         run: node v9/e2e.mjs
+      - name: V53 tablet usability + bounded official-source loading QA
+        run: node v9/v53-tablet-ux-e2e.mjs
       - name: Official monitor offline/cache fallback QA
         run: node v9/official-monitor-browser-e2e.mjs
       - name: Keyboard and accessibility semantic smoke QA
@@ -319,7 +321,7 @@ jobs:
           done
           cat /tmp/study119-typography-http.log
           exit 1
-      - name: Audit every concept tab at 360/390/412/768/1440 plus active exam
+      - name: Audit every concept tab at 360/390/412/768/1024/1440 plus active exam
         run: node v9/global-typography-audit.mjs
 
 
