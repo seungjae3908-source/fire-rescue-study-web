@@ -80,6 +80,11 @@ jobs:
           STUDY_119_V66_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
         run: node v9/v66-real-interaction-scroll-e2e.mjs
 
+      - name: Production V67 whole-app real UX acceptance
+        env:
+          STUDY_119_V67_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
+        run: node v9/v67-whole-app-real-ux-e2e.mjs
+
       - name: Production suggestion guest + anon Data API acceptance
         env:
           STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
