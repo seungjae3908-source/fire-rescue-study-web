@@ -22,3 +22,5 @@ assert(ci.includes('V66 fixed-chrome interaction scroll audit'),'deterministic V
 assert(ci.includes('V66 branch real-interaction scroll QA')&&ci.includes('http://127.0.0.1:4173/v9/index.html'),'branch browser gate targets exact branch runtime');
 assert(prod.includes('Production V66 real-interaction scroll acceptance'),'V66 is wired to exact-main Production acceptance');
 console.log('V66_INTERACTION_SCROLL_AUDIT_SUCCESS');
+
+// V66 Ready gate refresh: exact-head CI only; no runtime behavior change.
