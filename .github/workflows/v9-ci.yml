@@ -769,32 +769,45 @@ jobs:
     timeout-minutes: 15
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+      VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+      VERCEL_PRODUCTION_DEPLOY_HOOK: ${{ secrets.VERCEL_PRODUCTION_DEPLOY_HOOK }}
+      VERCEL_PROD_DEPLOY_HOOK: ${{ secrets.VERCEL_PROD_DEPLOY_HOOK }}
       VERCEL_SCOPE: seungjae3908-4607s-projects
       SOURCE_DEPLOYMENT: fire-rescue-study-ktgm5ykbd-seungjae3908-4607s-projects.vercel.app
       EXPECTED_SHA: c6465faf7255976cefd13d5c64eb60d794e406cf
     steps:
-      - name: Require Vercel deployment credential
+      - name: Redeploy exact-main Production using available credential
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${VERCEL_TOKEN:-}" ]; then
-            echo "VERCEL_TOKEN_MISSING"
+          if [ -n "${VERCEL_TOKEN:-}" ]; then
+            echo "DEPLOY_METHOD=VERCEL_TOKEN"
+            npx --yes vercel@latest redeploy "https://$SOURCE_DEPLOYMENT" \
+              --target=production \
+              --scope "$VERCEL_SCOPE" \
+              --token "$VERCEL_TOKEN" \
+              --no-wait
+            exit 0
+          fi
+
+          hook=""
+          method=""
+          if [ -n "${VERCEL_DEPLOY_HOOK:-}" ]; then hook="$VERCEL_DEPLOY_HOOK"; method="VERCEL_DEPLOY_HOOK"; fi
+          if [ -z "$hook" ] && [ -n "${VERCEL_DEPLOY_HOOK_URL:-}" ]; then hook="$VERCEL_DEPLOY_HOOK_URL"; method="VERCEL_DEPLOY_HOOK_URL"; fi
+          if [ -z "$hook" ] && [ -n "${VERCEL_PRODUCTION_DEPLOY_HOOK:-}" ]; then hook="$VERCEL_PRODUCTION_DEPLOY_HOOK"; method="VERCEL_PRODUCTION_DEPLOY_HOOK"; fi
+          if [ -z "$hook" ] && [ -n "${VERCEL_PROD_DEPLOY_HOOK:-}" ]; then hook="$VERCEL_PROD_DEPLOY_HOOK"; method="VERCEL_PROD_DEPLOY_HOOK"; fi
+
+          if [ -z "$hook" ]; then
+            echo "VERCEL_DEPLOY_CREDENTIAL_MISSING"
             exit 1
           fi
-          echo "VERCEL_TOKEN_PRESENT"
 
-      - name: Redeploy exact-main Git deployment to Production
-        shell: bash
-        run: |
-          set -euo pipefail
-          npx --yes vercel@latest redeploy "https://$SOURCE_DEPLOYMENT" \
-            --target=production \
-            --scope "$VERCEL_SCOPE" \
-            --token "$VERCEL_TOKEN" \
-            --no-wait
+          echo "DEPLOY_METHOD=$method"
+          curl --fail --silent --show-error --max-time 30 -X POST "$hook" >/tmp/v66-deploy-hook-response.json
+          echo "DEPLOY_HOOK_TRIGGERED"
 
       - name: Record immutable intent
         run: |
           echo "EXPECTED_SHA=$EXPECTED_SHA"
-          echo "SOURCE_DEPLOYMENT=$SOURCE_DEPLOYMENT"
           echo "TARGET=production"
