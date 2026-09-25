@@ -856,7 +856,9 @@
 
 
 /* V67 whole-app real UX hardening */
-.page-home p,
+.app .main.page-home .page .dashboard-hero p,
+.app .main.page-home .page .dashboard-schedule p,
+.app .main.page-home .page .motivation-card p,
 .exam-quality-note,
 .main.page-settings p.tiny.muted,
 .page-study .tutor-answer-text,
