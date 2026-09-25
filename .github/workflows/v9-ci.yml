@@ -94,6 +94,8 @@ jobs:
           node --check v9/v65-single-scroll-owner-e2e.mjs
           node --check v9/v66-real-interaction-scroll-audit.mjs
           node --check v9/v66-real-interaction-scroll-e2e.mjs
+          node --check v9/v67-whole-app-real-ux-audit.mjs
+          node --check v9/v67-whole-app-real-ux-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -150,6 +152,8 @@ jobs:
         run: node v9/v65-single-scroll-owner-audit.mjs
       - name: V66 fixed-chrome interaction scroll audit
         run: node v9/v66-real-interaction-scroll-audit.mjs
+      - name: V67 whole-app real UX contract
+        run: node v9/v67-whole-app-real-ux-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
       - name: V28 183-concept depth + verified-question quality audit
@@ -232,7 +236,7 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
@@ -256,6 +260,10 @@ jobs:
         env:
           STUDY_119_V66_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v66-real-interaction-scroll-e2e.mjs
+      - name: V67 whole-app real UX + layout audit
+        env:
+          STUDY_119_V67_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v67-whole-app-real-ux-e2e.mjs
       - name: Phase A remaining official-PDF evidence audit
         run: node v9/phase-a-source-audit.mjs
       - name: Phase B EMS official-PDF evidence audit
