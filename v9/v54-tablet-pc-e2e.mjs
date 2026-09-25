@@ -67,11 +67,17 @@ try{
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF?.openPdf&&!!window.AITUTOR_V9?.SourceCatalog119);
   const strategy=await page.evaluate(()=>{
     const V=window.AITUTOR_V9,src=String(V.SourcePDF.openPdf),audit=V.SourceCatalog119.audit();
-    return{total:audit.total,rangeProxy:src.includes('official-proxy-range'),streamGuard:src.includes('disableStream:proxyRange'),fallback:src.includes('official-proxy-full-cache-fallback')};
+    return{
+      total:audit.total,
+      staticRange:src.includes("origin='official-static-range'")&&src.includes('rangeChunkSize:65536'),
+      proxyFull:src.includes("origin='official-proxy-full-cache'")&&src.includes('else if(catalog?.proxyPdf)'),
+      fallback:src.includes("origin='official-proxy-fallback'")
+    };
   });
   assert(strategy.total===10,'all ten official textbooks remain catalogued');
-  assert(strategy.rangeProxy&&strategy.streamGuard,'non-mirrored official PDFs use range-first proxy loading');
-  assert(strategy.fallback,'range-first loading retains full-cache fallback');
+  assert(strategy.staticRange,'mirrored official PDFs keep range-first static loading');
+  assert(strategy.proxyFull,'non-mirrored official PDFs use reliable full-cache proxy loading');
+  assert(strategy.fallback,'static mirror failure retains official proxy fallback');
   await ctx.close();
   console.log('V54_TABLET_PC_PDF_RANGE_ACCEPTANCE_SUCCESS');
 }finally{await browser.close()}
