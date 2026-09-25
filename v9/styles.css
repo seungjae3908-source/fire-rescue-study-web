@@ -924,3 +924,5 @@
     height:44px!important
   }
 }
+
+.page-home .official-date-readonly p,.page-home .dashboard-schedule p,.page-home .motivation-card p{font-size:14px!important;line-height:1.68!important}
