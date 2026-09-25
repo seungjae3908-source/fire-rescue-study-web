@@ -25,7 +25,7 @@ try{
   const chip=page.locator('[data-detail-jump="comparison"]:visible').first();
   await chip.waitFor({state:'visible',timeout:15000});
   await chip.click();
-  await page.waitForFunction(()=>document.querySelector('[data-detail-jump="comparison"]:visible')?.classList.contains('on'));
+  await page.waitForFunction(()=>[...document.querySelectorAll('[data-detail-jump="comparison"]')].some(el=>el.offsetParent!==null&&el.classList.contains('on')));
   const activeSection=page.locator('[data-detail-section="comparison"]:visible').first();
   await activeSection.waitFor({state:'visible'});
   if(!(await activeSection.evaluate(el=>el.classList.contains('detail-section-active'))))throw new Error('DETAIL_SECTION_NOT_ACTIVE');
