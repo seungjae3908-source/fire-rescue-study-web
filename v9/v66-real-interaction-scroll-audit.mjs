@@ -1,0 +1,26 @@
+import fs from 'node:fs';
+function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const e2e=fs.readFileSync(new URL('./v66-real-interaction-scroll-e2e.mjs',import.meta.url),'utf8');
+const ci=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
+const prod=fs.readFileSync(new URL('../.github/workflows/production-current-main-acceptance.yml',import.meta.url),'utf8');
+assert(app.includes('function interactionScrollOwner(target)'),'V66 interaction owner resolver exists');
+assert(app.includes("target.closest('.pdf-evidence-modal')")&&app.includes('data-scroll-owner="pdf"'),'PDF fixed chrome delegates to PDF owner');
+assert(app.includes("target.closest('.page-study')")&&app.includes("target.closest('.study-body,.outline,.backdrop')"),'study fixed chrome delegates without hijacking body or outline');
+assert(app.includes("target.closest('.page-exam.exam-active')")&&app.includes('data-scroll-owner="exam-active"'),'active exam fixed chrome delegates to exam owner');
+assert(app.includes("target.closest('.top')")&&app.includes("document.querySelector('.page')"),'global top bar delegates to the active page owner');
+assert(app.includes("document.addEventListener('wheel'")&&app.includes('passive:false,capture:true'),'wheel bridge is non-passive and capture-safe');
+assert(app.includes("document.addEventListener('touchstart'")&&app.includes("document.addEventListener('touchmove'")&&app.includes('Math.abs(totalY)>Math.abs(totalX)'),'vertical touch bridge preserves horizontal gesture intent');
+assert(e2e.includes('global top bar')&&e2e.includes('study toolbar')&&e2e.includes('study actionbar')&&e2e.includes('exam header')&&e2e.includes('exam footer')&&e2e.includes('pdf zoombar')&&e2e.includes('pdf pager'),'browser audit covers global, study, exam and PDF fixed chrome');
+assert(e2e.includes('touchBridge')&&e2e.includes('horizontalTouchSafe'),'browser audit covers touch forwarding and horizontal safety');
+assert(e2e.includes('diagonalTrackpad')&&e2e.includes('horizontalWheelSafe'),'browser audit covers diagonal and horizontal trackpad intent');
+assert(e2e.includes('boundaryWheelSafe')&&e2e.includes('does not chain into document'),'browser audit covers top/bottom scroll chaining boundaries');
+assert(e2e.includes('openResourcePdf')&&e2e.includes('resource PDF modal'),'browser audit covers both concept evidence and resource-library PDF viewers');
+assert(e2e.includes('effectiveVerticalOwners')&&e2e.includes("querySelectorAll('*')"),'browser audit scans all effective vertical scrollers, not only owner markers');
+assert(e2e.includes('Input.dispatchTouchEvent')&&e2e.includes('newCDPSession'),'mobile audit uses Chromium trusted touch input');
+assert(ci.includes('V66 fixed-chrome interaction scroll audit'),'deterministic V66 audit is wired to development CI');
+assert(ci.includes('V66 branch real-interaction scroll QA')&&ci.includes('http://127.0.0.1:4173/v9/index.html'),'branch browser gate targets exact branch runtime');
+assert(prod.includes('Production V66 real-interaction scroll acceptance'),'V66 is wired to exact-main Production acceptance');
+console.log('V66_INTERACTION_SCROLL_AUDIT_SUCCESS');
+
+// V66 Ready gate refresh: exact-head CI only; no runtime behavior change.

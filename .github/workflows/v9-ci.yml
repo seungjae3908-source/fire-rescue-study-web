@@ -92,6 +92,8 @@ jobs:
           node --check v9/v64-correction-loop-e2e.mjs
           node --check v9/v65-single-scroll-owner-audit.mjs
           node --check v9/v65-single-scroll-owner-e2e.mjs
+          node --check v9/v66-real-interaction-scroll-audit.mjs
+          node --check v9/v66-real-interaction-scroll-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -146,6 +148,8 @@ jobs:
         run: node v9/v64-correction-loop-audit.mjs
       - name: V65 single vertical scroll owner audit
         run: node v9/v65-single-scroll-owner-audit.mjs
+      - name: V66 fixed-chrome interaction scroll audit
+        run: node v9/v66-real-interaction-scroll-audit.mjs
       - name: A/B verified question quality + source consistency audit
         run: node v9/verified-question-quality-audit.mjs
       - name: V28 183-concept depth + verified-question quality audit
@@ -248,6 +252,10 @@ jobs:
           done
           cat /tmp/aitutor-v9-http.log
           exit 1
+      - name: V66 branch real-interaction scroll QA
+        env:
+          STUDY_119_V66_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v66-real-interaction-scroll-e2e.mjs
       - name: Phase A remaining official-PDF evidence audit
         run: node v9/phase-a-source-audit.mjs
       - name: Phase B EMS official-PDF evidence audit
