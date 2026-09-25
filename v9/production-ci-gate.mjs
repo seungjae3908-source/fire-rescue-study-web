@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 const REPO='seungjae3908-source/fire-rescue-study-web';
 const WORKFLOW='V9 Development CI';
 const POLL_MS=30_000;
-const TIMEOUT_MS=12*60_000;
+const TIMEOUT_MS=20*60_000;
 const NON_MAIN_CONFIRMATIONS_REQUIRED=2;
 
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
