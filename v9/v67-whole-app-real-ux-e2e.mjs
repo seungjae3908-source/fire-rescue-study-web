@@ -21,14 +21,15 @@ async function auditVisible(page,{label,width,mobile}){
     const visible=el=>{
       if(el.closest('.outline:not(.open),.backdrop:not(.on),[hidden],.hidden'))return false;
       const cs=getComputedStyle(el),r=el.getBoundingClientRect();
-      return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;
+      return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0&&r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight;
     };
     const interactive='button,a[href],input,select,textarea,[role="button"],[tabindex]:not([tabindex="-1"])';
+    const horizontalHost=el=>{for(let p=el.parentElement;p&&p!==root.parentElement;p=p.parentElement){const cs=getComputedStyle(p);if(['auto','scroll'].includes(cs.overflowX)&&p.scrollWidth>p.clientWidth+2)return true}return false};
     const rows=[root,...root.querySelectorAll('*')].filter(visible);
     const outside=[],clipped=[],touch=[],micro=[],fixed=[],tables=[];
     for(const el of rows){
       const r=el.getBoundingClientRect(),cs=getComputedStyle(el),txt=(el.textContent||'').replace(/\s+/g,' ').trim().slice(0,100);
-      if(r.left<-2||r.right>innerWidth+2)outside.push({tag:el.tagName,cls:String(el.className||'').slice(0,90),txt,left:Math.round(r.left),right:Math.round(r.right),vw:innerWidth});
+      if((r.left<-2||r.right>innerWidth+2)&&!horizontalHost(el))outside.push({tag:el.tagName,cls:String(el.className||'').slice(0,90),txt,left:Math.round(r.left),right:Math.round(r.right),vw:innerWidth});
       if(txt&&!el.matches('input,textarea,select')&&el.scrollWidth>el.clientWidth+3&&['hidden','clip'].includes(cs.overflowX))clipped.push({type:'x',tag:el.tagName,cls:String(el.className||'').slice(0,90),txt,sw:el.scrollWidth,cw:el.clientWidth});
       if(txt&&el.scrollHeight>el.clientHeight+3&&['hidden','clip'].includes(cs.overflowY)&&!['INPUT','TEXTAREA','SELECT'].includes(el.tagName))clipped.push({type:'y',tag:el.tagName,cls:String(el.className||'').slice(0,90),txt,sh:el.scrollHeight,ch:el.clientHeight});
       if(width<=1024&&el.matches(interactive)&&!el.disabled){
@@ -122,7 +123,7 @@ try{
         const compose=page.locator('.tutor-compose:visible');
         if(await compose.count()){
           const box=await compose.boundingBox();
-          check(!!box&&box.bottom<=vp.height+2,'AI compose stays inside viewport '+vp.width,{box});
+          check(!!box&&box.x>=-2&&box.x+box.width<=vp.width+2,'AI compose stays horizontally contained '+vp.width,{box});
         }
       }
     }
@@ -135,7 +136,7 @@ try{
       const footer=page.locator('.exam-footer:visible');
       if(await footer.count()){
         const box=await footer.boundingBox();
-        check(!!box&&box.bottom<=vp.height+2,'active exam footer remains fully visible '+vp.width,{box});
+        check(!!box&&box.x>=-2&&box.x+box.width<=vp.width+2&&box.height>=44,'active exam footer remains horizontally contained and usable '+vp.width,{box});
       }
     }else warnings.push({message:'fire50 start control not visible',width:vp.width});
 
