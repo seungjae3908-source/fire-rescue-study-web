@@ -3,6 +3,8 @@ function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 const e2e=fs.readFileSync(new URL('./v67-whole-app-real-ux-e2e.mjs',import.meta.url),'utf8');
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
 const production=fs.readFileSync(new URL('../.github/workflows/production-current-main-acceptance.yml',import.meta.url),'utf8');
+const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
+const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 assert(['390','768','1024','1440'].every(x=>e2e.includes('width:'+x)),'V67 covers 390/768/1024/1440');
 assert(e2e.includes("['home','notes','bank','exam','wrong','stats','resources','suggestions','settings']"),'V67 covers all primary routes');
 assert(e2e.includes("['core','detail','quiz','source','ai']"),'V67 covers all five study tabs');
@@ -12,6 +14,9 @@ assert(e2e.includes('fixed/sticky UI stays inside viewport')&&e2e.includes('bott
 assert(e2e.includes('wide tables have an explicit horizontal-scroll host')&&e2e.includes('cards do not create large empty vertical dead zones'),'V67 checks table containment and dead zones');
 assert(e2e.includes('active exam footer remains fully visible'),'V67 checks active exam chrome');
 assert(e2e.includes('V67_WHOLE_APP_REAL_UX_AUDIT_SUCCESS'),'V67 success marker exists');
+assert(css.includes('/* V67 whole-app real UX hardening */')&&css.includes('.study-quiz-jumps button')&&css.includes('.exam-mini-navigator button'),'V67 CSS hardens learner controls and number navigation');
+assert(css.includes('.page-study .tutor-answer-text')&&css.includes('.exam-quality-note'),'V67 CSS raises AI and exam guidance readability');
+assert(sw.includes('v67-real-ux'),'V67 PWA cache generation ships the new UX CSS');
 assert(workflow.includes('V67 whole-app real UX + layout audit')&&workflow.includes('node v9/v67-whole-app-real-ux-e2e.mjs'),'branch CI runs V67 browser audit');
 assert(production.includes('Production V67 whole-app real UX acceptance')&&production.includes('node v9/v67-whole-app-real-ux-e2e.mjs'),'Production acceptance runs V67 after deploy');
 console.log('V67_WHOLE_APP_REAL_UX_CONTRACT_SUCCESS');
