@@ -60,7 +60,8 @@ console.log('VERIFIED_QUESTION_EXPLANATION_DRIFT');console.table(exDrift);
 console.log('VERIFIED_QUESTION_ABSURD_DISTRACTORS');console.table(silly);
 console.log('VERIFIED_QUESTION_NEAR_DUPLICATES');console.table(near);
 console.log('VERIFIED_QUESTION_ANSWER_CUE_REVIEW');console.table(answerCue.slice(0,80));
-console.log('VERIFIED_QUESTION_DERIVED_BINDING_BROKEN');console.table(brokenDerived.map(q=>({id:q.id,base:q.evidenceDerivedFrom,conceptId:q.conceptId,source:q.source})));\nconsole.log('VERIFIED_QUESTION_SOURCE_RANGE_MISMATCH');console.table(sourceRangeMismatch.map(q=>({id:q.id,conceptId:q.conceptId,source:q.source})));
+console.log('VERIFIED_QUESTION_DERIVED_BINDING_BROKEN');console.table(brokenDerived.map(q=>({id:q.id,base:q.evidenceDerivedFrom,conceptId:q.conceptId,source:q.source})));
+console.log('VERIFIED_QUESTION_SOURCE_RANGE_MISMATCH');console.table(sourceRangeMismatch.map(q=>({id:q.id,conceptId:q.conceptId,source:q.source})));
 
 const answerBalance=shares.every(x=>x>=.18&&x<=.32);
 const difficultyBalance=['low','mid','high'].every(k=>(diffShares[k]||0)>=.05);
