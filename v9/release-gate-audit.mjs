@@ -54,6 +54,8 @@ const correctionV64Audit=fs.readFileSync(new URL('./v64-correction-loop-audit.mj
 const correctionV64E2E=fs.readFileSync(new URL('./v64-correction-loop-e2e.mjs',import.meta.url),'utf8');
 const singleScrollV65Audit=fs.readFileSync(new URL('./v65-single-scroll-owner-audit.mjs',import.meta.url),'utf8');
 const singleScrollV65E2E=fs.readFileSync(new URL('./v65-single-scroll-owner-e2e.mjs',import.meta.url),'utf8');
+const wholeAppUxV67Audit=fs.readFileSync(new URL('./v67-whole-app-real-ux-audit.mjs',import.meta.url),'utf8');
+const wholeAppUxV67E2E=fs.readFileSync(new URL('./v67-whole-app-real-ux-e2e.mjs',import.meta.url),'utf8');
 const stylesCss=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 const performanceBudget=fs.readFileSync(new URL('./performance-budget-audit.mjs',import.meta.url),'utf8');
 const officialMonitorRootApi=fs.readFileSync(new URL('../api/official-monitor.js',import.meta.url),'utf8');
@@ -94,6 +96,7 @@ const checks={
   readabilityTouchV63Contract:workflow.includes('V63 whole-app readability + touch-target contract')&&readabilityTouchV63Audit.includes('V63_READABILITY_TOUCH_COMPLETE')&&stylesCss.includes('/* V63 whole-app readability and touch-target hardening */')&&productionLiveStudentSmoke.includes('keeps student microcopy >=12px')&&productionLiveStudentSmoke.includes('keeps primary touch targets >=44px'),
   correctionLoopV64Contract:workflow.includes('V64 weakness correction closed-loop audit')&&workflow.includes('V64 correction closed-loop + today-goal QA')&&correctionV64.includes("version:'119-v64-weakness-correction-loop-v1'")&&correctionV64.includes('realMockUnchanged:true')&&correctionV64.includes('passCorrect:4')&&correctionV64.includes('passSureCorrect:3')&&app.includes('data-v64-train')&&app.includes("buildCorrectionTraining")&&correctionV64Audit.includes('V64_CORRECTION_LOOP_AUDIT_SUCCESS')&&correctionV64E2E.includes('V64_CORRECTION_LOOP_E2E_SUCCESS'),
   singleVerticalScrollV65Contract:workflow.includes('V65 single vertical scroll owner audit')&&workflow.includes('V65 page-by-page single-scroll browser QA')&&stylesCss.includes('/* V65 single vertical scroll owner */')&&app.includes('data-scroll-owner="home"')&&app.includes('data-scroll-owner="bank"')&&app.includes('data-scroll-owner="exam-active"')&&app.includes('data-scroll-owner="pdf"')&&singleScrollV65Audit.includes('V65_SINGLE_SCROLL_OWNER_AUDIT_SUCCESS')&&singleScrollV65E2E.includes('V65_SINGLE_SCROLL_OWNER_E2E_SUCCESS')&&productionLiveStudentSmoke.includes('single vertical scroll owner'),
+  wholeAppRealUxV67Contract:workflow.includes('V67 whole-app real UX contract')&&workflow.includes('V67 whole-app real UX + layout audit')&&productionCurrentMainWorkflow.includes('Production V67 whole-app real UX acceptance')&&wholeAppUxV67Audit.includes('V67_WHOLE_APP_REAL_UX_CONTRACT_SUCCESS')&&wholeAppUxV67E2E.includes('V67_WHOLE_APP_REAL_UX_AUDIT_SUCCESS'),
   liveRlsSqlSafe:sql.includes('__liveqa_')&&sql.includes("execute 'set local role authenticated'")&&sql.includes('B_CAN_READ_A_PROGRESS')&&sql.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),
 };
 const gitBlobSha=path=>{
