@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
+const e2e=fs.readFileSync(new URL('./v67-whole-app-real-ux-e2e.mjs',import.meta.url),'utf8');
+const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
+const production=fs.readFileSync(new URL('../.github/workflows/production-current-main-acceptance.yml',import.meta.url),'utf8');
+assert(['390','768','1024','1440'].every(x=>e2e.includes('width:'+x)),'V67 covers 390/768/1024/1440');
+assert(e2e.includes("['home','notes','bank','exam','wrong','stats','resources','suggestions','settings']"),'V67 covers all primary routes');
+assert(e2e.includes("['core','detail','quiz','source','ai']"),'V67 covers all five study tabs');
+assert(e2e.includes('visible content stays inside viewport')&&e2e.includes('visible learner text is not clipped'),'V67 checks viewport escape and text clipping');
+assert(e2e.includes('primary visible controls keep >=44px height')&&e2e.includes('learner body copy keeps >=14px class'),'V67 checks touch targets and body readability');
+assert(e2e.includes('fixed/sticky UI stays inside viewport')&&e2e.includes('bottom navigation does not cover page owner'),'V67 checks fixed chrome and bottom-nav overlap');
+assert(e2e.includes('wide tables have an explicit horizontal-scroll host')&&e2e.includes('cards do not create large empty vertical dead zones'),'V67 checks table containment and dead zones');
+assert(e2e.includes('active exam footer remains fully visible'),'V67 checks active exam chrome');
+assert(e2e.includes('V67_WHOLE_APP_REAL_UX_AUDIT_SUCCESS'),'V67 success marker exists');
+assert(workflow.includes('V67 whole-app real UX + layout audit')&&workflow.includes('node v9/v67-whole-app-real-ux-e2e.mjs'),'branch CI runs V67 browser audit');
+assert(production.includes('Production V67 whole-app real UX acceptance')&&production.includes('node v9/v67-whole-app-real-ux-e2e.mjs'),'Production acceptance runs V67 after deploy');
+console.log('V67_WHOLE_APP_REAL_UX_CONTRACT_SUCCESS');
