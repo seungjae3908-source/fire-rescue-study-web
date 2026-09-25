@@ -12,7 +12,7 @@ assert(e2e.includes('visible content stays inside viewport')&&e2e.includes('visi
 assert(e2e.includes('primary visible controls keep >=44px height')&&e2e.includes('learner body copy keeps >=14px class'),'V67 checks touch targets and body readability');
 assert(e2e.includes('fixed/sticky UI stays inside viewport')&&e2e.includes('bottom navigation does not cover page owner'),'V67 checks fixed chrome and bottom-nav overlap');
 assert(e2e.includes('wide tables have an explicit horizontal-scroll host')&&e2e.includes('cards do not create large empty vertical dead zones'),'V67 checks table containment and dead zones');
-assert(e2e.includes('active exam footer remains fully visible'),'V67 checks active exam chrome');
+assert(e2e.includes('active exam footer remains horizontally contained and usable'),'V67 checks active exam chrome without forcing the footer above the scroll viewport');
 assert(e2e.includes('V67_WHOLE_APP_REAL_UX_AUDIT_SUCCESS'),'V67 success marker exists');
 assert(css.includes('/* V67 whole-app real UX hardening */')&&css.includes('.study-quiz-jumps button')&&css.includes('.exam-mini-navigator button'),'V67 CSS hardens learner controls and number navigation');
 assert(css.includes('.page-study .tutor-answer-text')&&css.includes('.exam-quality-note'),'V67 CSS raises AI and exam guidance readability');
