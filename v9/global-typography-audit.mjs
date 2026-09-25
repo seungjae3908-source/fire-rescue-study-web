@@ -42,13 +42,20 @@ async function auditVisible(page,meta){
     const excSmall=el=>el.matches('.tiny,.muted,.eyebrow,.scope-label,.tag,.pill,.exam-answer-count small,.study-quiz-progress small,.pdf-render-meta');
     const selector='h1,h2,h3,p,li,b,strong,small,button,a,td,th,.visual-node,.hazmat-class-card,.choice,.pill,.tag,.source-law-link';
     const problems=[],small=[];
+    const horizontalHost=el=>{
+      for(let p=el.parentElement;p&&p!==document.body;p=p.parentElement){
+        const pcs=getComputedStyle(p);
+        if(['auto','scroll'].includes(pcs.overflowX)&&p.scrollWidth>p.clientWidth+2)return true;
+      }
+      return false;
+    };
     for(const el of document.querySelectorAll(selector)){
       if(!visible(el))continue;
       const r=el.getBoundingClientRect(),cs=getComputedStyle(el),txt=(el.textContent||'').replace(/\s+/g,' ').trim().slice(0,120);
       const ox=cs.overflowX,oy=cs.overflowY;
       const clipX=el.scrollWidth>el.clientWidth+2&&!['auto','scroll'].includes(ox);
       const clipY=el.scrollHeight>el.clientHeight+2&&['hidden','clip'].includes(oy);
-      const outsideX=r.left<-1||r.right>innerWidth+1;
+      const outsideX=(r.left<-1||r.right>innerWidth+1)&&!horizontalHost(el);
       if((clipX||clipY||outsideX)&&txt)problems.push({type:clipX?'clip-x':clipY?'clip-y':'viewport-x',tag:el.tagName,cls:String(el.className||'').slice(0,80),txt,sw:el.scrollWidth,cw:el.clientWidth,sh:el.scrollHeight,ch:el.clientHeight,left:Math.round(r.left),right:Math.round(r.right),vw:innerWidth});
       const fs=parseFloat(cs.fontSize)||0;
       if(!excSmall(el)&&fs>0&&fs<11&&txt)small.push({tag:el.tagName,cls:String(el.className||'').slice(0,80),txt,fs});

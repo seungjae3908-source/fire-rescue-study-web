@@ -853,3 +853,76 @@
 .exam-mini-navigator{
   overflow-y:hidden!important;
 }
+
+
+/* V67 whole-app real UX hardening */
+.app .main.page-home .page .dashboard-hero p,
+.app .main.page-home .page .dashboard-schedule p,
+.app .main.page-home .page .motivation-card p,
+.exam-quality-note,
+.main.page-settings p.tiny.muted,
+.page-study .tutor-answer-text,
+.page-study .detail-exam-points li,
+.page-study .detail-plain-list li{
+  font-size:14px!important;
+  line-height:1.68!important
+}
+.official-past-exam-card>a{
+  display:flex;
+  align-items:center;
+  min-height:44px;
+  font-size:13px!important;
+  line-height:1.45
+}
+@media(max-width:1024px){
+  .app .page .input,
+  .app .page .select,
+  .app .page input.input,
+  .app .page select.select{
+    min-height:44px!important
+  }
+  .note-filter-chip{
+    min-height:44px!important;
+    padding:9px 10px!important;
+    font-size:12px!important
+  }
+  .study-core-save{
+    min-height:44px!important;
+    padding:8px 10px!important;
+    font-size:12px!important
+  }
+  .study-quiz-jumps{
+    display:flex!important;
+    gap:6px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    flex-wrap:nowrap!important;
+    padding:4px 1px 9px!important;
+    scrollbar-width:none;
+    overscroll-behavior-inline:contain
+  }
+  .study-quiz-jumps::-webkit-scrollbar{display:none}
+  .study-quiz-jumps button{
+    flex:0 0 44px!important;
+    width:44px!important;
+    min-width:44px!important;
+    height:44px!important;
+    min-height:44px!important
+  }
+  .exam-mini-navigator button{
+    flex:0 0 44px!important;
+    width:44px!important;
+    min-width:44px!important;
+    height:44px!important;
+    min-height:44px!important
+  }
+  .question-filter-grid .select,
+  .wrong-filter-grid .select,
+  .question-filter-search .input,
+  .note-search .input,
+  .note-search .select{
+    height:44px!important
+  }
+}
+
+.page-home .official-date-readonly p,.page-home .dashboard-schedule p,.page-home .motivation-card p{font-size:14px!important;line-height:1.68!important}
