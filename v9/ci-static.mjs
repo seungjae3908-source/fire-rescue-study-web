@@ -550,10 +550,10 @@ const brandFiles=[
   fs.readFileSync(new URL('./selftest.js',import.meta.url),'utf8')
 ].join('\n');
 ok(!brandFiles.includes('AI과외'),'legacy AI과외 brand is absent from v9 runtime surfaces');
-ok(brandFiles.includes('119'),'119 brand is present in v9 runtime surfaces');
+ok(brandFiles.includes('소방합격'),'소방합격 brand is present in v9 runtime surfaces');
 const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url),'utf8'));
 ok(manifest.start_url==='./'&&manifest.scope==='./','v9 PWA manifest is subpath-scoped');
-ok(manifest.name==='119'&&manifest.short_name==='119','PWA install name is unified as 119');
+ok(manifest.name==='소방합격'&&manifest.short_name==='소방합격','PWA install name is unified as 소방합격');
 const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 ok(sw.includes("const PREFIX='ai-tutor-v9-'"),'v9 service worker uses a dedicated cache prefix');
 ok(!sw.includes('ai-tutor-v8'),'v9 service worker never targets v8 cache names');
