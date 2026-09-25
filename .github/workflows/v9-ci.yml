@@ -760,3 +760,41 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify exact deployed preview SHA on mobile and desktop
         run: node v9/live-student-ux-smoke.mjs
+
+
+  v66_production_redeploy_once:
+    name: v66_production_redeploy_once
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'ci/v66-redeploy-c646-20260925' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_SCOPE: seungjae3908-4607s-projects
+      SOURCE_DEPLOYMENT: fire-rescue-study-ktgm5ykbd-seungjae3908-4607s-projects.vercel.app
+      EXPECTED_SHA: c6465faf7255976cefd13d5c64eb60d794e406cf
+    steps:
+      - name: Require Vercel deployment credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "VERCEL_TOKEN_MISSING"
+            exit 1
+          fi
+          echo "VERCEL_TOKEN_PRESENT"
+
+      - name: Redeploy exact-main Git deployment to Production
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes vercel@latest redeploy "https://$SOURCE_DEPLOYMENT" \
+            --target=production \
+            --scope "$VERCEL_SCOPE" \
+            --token "$VERCEL_TOKEN" \
+            --no-wait
+
+      - name: Record immutable intent
+        run: |
+          echo "EXPECTED_SHA=$EXPECTED_SHA"
+          echo "SOURCE_DEPLOYMENT=$SOURCE_DEPLOYMENT"
+          echo "TARGET=production"
