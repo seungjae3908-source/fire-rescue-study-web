@@ -33,6 +33,13 @@ const shares=answerPos.map(n=>Number((n/Math.max(1,verified.length)).toFixed(3))
 const diffShares=Object.fromEntries(Object.entries(byDifficulty).map(([k,n])=>[k,Number((n/Math.max(1,verified.length)).toFixed(3))]));
 const byFamily={};for(const q of verified){const k=V.QuestionType119.classify(q)?.key||'recall';byFamily[k]=(byFamily[k]||0)+1}
 const family={byFamily,activeFamilies:Object.values(byFamily).filter(n=>n>0).length};
+const conceptById=Object.fromEntries((V.curriculum?.concepts||[]).map(c=>[c.id,c]));
+const pageNumber=s=>Number((String(s||'').match(/(\d{1,4})(?:\s*[·~\-–]\s*\d{1,4})*\s*쪽/)||[])[1]||0);
+const sourceRangeMismatch=verified.filter(q=>{
+  if(q.pageVerified!==true)return false;
+  const p=pageNumber(q.source),ranges=conceptById[q.conceptId]?.sourceRanges||[];
+  return p>0&&!ranges.some(r=>p>=Number(r.from)&&p<=Number(r.to));
+});
 const derived=verified.filter(q=>q.evidenceDerivedFrom),byId=Object.fromEntries(verified.map(q=>[q.id,q]));
 const brokenDerived=derived.filter(q=>{const b=byId[q.evidenceDerivedFrom];return !b||b.conceptId!==q.conceptId||String(b.source||'')!==String(q.source||'')});
 const summary={
@@ -45,7 +52,7 @@ const summary={
   absurdDistractors:silly.length,
   nearDuplicatePairs:near.length,
   answerCueReview:answerCue.length,
-  derivedBindings:{total:derived.length,broken:brokenDerived.length}
+  derivedBindings:{total:derived.length,broken:brokenDerived.length},sourceRangeMismatch:sourceRangeMismatch.length
 };
 console.log('VERIFIED_QUESTION_QUALITY_SUMMARY',JSON.stringify(summary,null,2));
 console.log('VERIFIED_QUESTION_BAD_SOURCE');console.table(badSource);
@@ -53,14 +60,14 @@ console.log('VERIFIED_QUESTION_EXPLANATION_DRIFT');console.table(exDrift);
 console.log('VERIFIED_QUESTION_ABSURD_DISTRACTORS');console.table(silly);
 console.log('VERIFIED_QUESTION_NEAR_DUPLICATES');console.table(near);
 console.log('VERIFIED_QUESTION_ANSWER_CUE_REVIEW');console.table(answerCue.slice(0,80));
-console.log('VERIFIED_QUESTION_DERIVED_BINDING_BROKEN');console.table(brokenDerived.map(q=>({id:q.id,base:q.evidenceDerivedFrom,conceptId:q.conceptId,source:q.source})));
+console.log('VERIFIED_QUESTION_DERIVED_BINDING_BROKEN');console.table(brokenDerived.map(q=>({id:q.id,base:q.evidenceDerivedFrom,conceptId:q.conceptId,source:q.source})));\nconsole.log('VERIFIED_QUESTION_SOURCE_RANGE_MISMATCH');console.table(sourceRangeMismatch.map(q=>({id:q.id,conceptId:q.conceptId,source:q.source})));
 
 const answerBalance=shares.every(x=>x>=.18&&x<=.32);
 const difficultyBalance=['low','mid','high'].every(k=>(diffShares[k]||0)>=.05);
-if(verified.length<600||badSource.length||exDrift.length||silly.length||near.length||answerCue.length||brokenDerived.length||!answerBalance||!difficultyBalance||family.activeFamilies<6){
+if(verified.length<600||badSource.length||exDrift.length||silly.length||near.length||answerCue.length||brokenDerived.length||sourceRangeMismatch.length||!answerBalance||!difficultyBalance||family.activeFamilies<6){
   throw new Error('VERIFIED_QUESTION_QUALITY_FAILED '+JSON.stringify({
     verified:verified.length,badSource:badSource.length,explanationDrift:exDrift.length,absurdDistractors:silly.length,
-    nearDuplicatePairs:near.length,answerCueReview:answerCue.length,brokenDerived:brokenDerived.length,answerBalance,difficultyBalance,activeFamilies:family.activeFamilies,answerShares:shares,difficultyShares:diffShares
+    nearDuplicatePairs:near.length,answerCueReview:answerCue.length,brokenDerived:brokenDerived.length,sourceRangeMismatch:sourceRangeMismatch.length,answerBalance,difficultyBalance,activeFamilies:family.activeFamilies,answerShares:shares,difficultyShares:diffShares
   }));
 }
 console.log('VERIFIED_QUESTION_QUALITY_AUDIT_COMPLETE');
