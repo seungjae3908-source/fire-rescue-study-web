@@ -913,8 +913,8 @@ const availability=await V.SourcePDF.availability(key),catalog=V.SourceCatalog11
 if(!availability.local&&!availability.direct){badge.textContent='공식 원문';host.innerHTML=`<div class="source-connect official-fallback"><b>원문을 바로 불러올 수 없습니다.</b>${official?`<a class="btn primary block" target="_blank" rel="noopener" href="${esc(official)}">중앙소방학교 원문 열기</a>`:''}</div>`;root.querySelector('.pdf-pager')?.classList.add('hidden');return}
 const loadingActions=`<div class="pdf-loading-actions">${official?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(official)}">공식 사이트에서 열기</a>`:''}<button class="btn ghost" data-source-close>닫기</button></div>`;
 host.innerHTML=staticRange
-?`<div class="pdf-loading"><b>공식 교재 여는 중…</b><small>필요한 페이지만 불러옵니다. 약 18초 안에 열리지 않으면 자동으로 재시도 화면으로 전환합니다.</small><div class="progressbar"><i style="width:35%"></i></div><span>원문 준비 중</span>${loadingActions}</div>`
-:`<div class="pdf-loading"><b>공식 원문 여는 중…</b><small>연결된 공식 PDF의 해당 페이지를 불러옵니다. 약 18초 안에 열리지 않으면 자동으로 재시도 화면으로 전환합니다.</small><div class="progressbar"><i data-pdf-progress style="width:${availability.local?100:4}%"></i></div><span data-pdf-progress-label>${availability.local?'교재 확인 중':'원문 준비 중'}</span>${loadingActions}</div>`;
+?`<div class="pdf-loading"><b>공식 교재 여는 중…</b><small>필요한 페이지만 불러옵니다. 원문 연결 상태를 확인하며 불러옵니다.</small><div class="progressbar"><i style="width:35%"></i></div><span>원문 준비 중</span>${loadingActions}</div>`
+:`<div class="pdf-loading"><b>공식 원문 여는 중…</b><small>연결된 공식 PDF의 해당 페이지를 불러옵니다. 원문 연결 상태를 확인하며 불러옵니다.</small><div class="progressbar"><i data-pdf-progress style="width:${availability.local?100:4}%"></i></div><span data-pdf-progress-label>${availability.local?'교재 확인 중':'원문 준비 중'}</span>${loadingActions}</div>`;
 try{
 const bookFrom=Number(range?.from)||0,initialPdfPage=bookFrom?(V.SourcePDF.pdfPage?.(key,bookFrom)||bookFrom):0;
 let page=Number(pageOverride)||Number(root.dataset.page)||initialPdfPage||0;
