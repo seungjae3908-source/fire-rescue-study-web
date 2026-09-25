@@ -37,6 +37,7 @@ const checks={
   productionIgnoreGatePushMainOnly:productionIgnoreGate.includes("x?.head_branch==='main'")&&productionIgnoreGate.includes("x?.event==='push'"),
   productionIgnoreGateWorkflow:productionIgnoreGate.includes("const WORKFLOW='V9 Development CI'")&&productionIgnoreGate.includes("run.conclusion==='success'"),
   productionIgnoreGateFailClosed:productionIgnoreGate.includes('TIMEOUT_WAITING_FOR_EXACT_MAIN_CI')&&productionIgnoreGate.includes('INVALID_MAIN_REF')&&productionIgnoreGate.includes("ignore('EXACT_MAIN_CI_NOT_SUCCESS'")&&productionIgnoreGate.includes("ignore('TIMEOUT_WAITING_FOR_EXACT_MAIN_CI'"),
+  productionCiGateWaitBudget:productionIgnoreGate.includes('const TIMEOUT_MS=30*60_000')&&productionCiGate.includes('const TIMEOUT_MS=30*60_000'),
   legacyGateStillEnvIndependent:productionCiGate.includes("execFileSync('git',['rev-parse','HEAD']")&&!productionCiGate.includes("if(!isVercel)")&&!productionCiGate.includes('MISSING_GIT_REF'),
   node22Runtime:packageJson.engines?.node==='22.x',
   officialMonitorSeoulRegion:inRegion('api/official-monitor.js','icn1'),
@@ -67,7 +68,9 @@ const checks={
   requiredRecruitmentSource:monitorLib.includes('https://gongmuwon.gosi.kr/spcsv/indexMain3.do')
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
-const summary={version:'119-v27-production-release-gate-v19',checks,blockers,ready:blockers.length===0};
+const summary={version:'119-v66-production-release-gate-v21',checks,blockers,ready:blockers.length===0};
 console.log('PRODUCTION_RELEASE_GATE_119',JSON.stringify(summary,null,2));
 if(blockers.length)throw Error('PRODUCTION_RELEASE_GATE_FAILED '+JSON.stringify(blockers));
 console.log('PRODUCTION_RELEASE_GATE_COMPLETE');
+
+// V66 Ready exact-head refresh: CI synchronization only; no runtime behavior change.
