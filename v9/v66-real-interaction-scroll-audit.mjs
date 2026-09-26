@@ -6,7 +6,7 @@ const ci=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.ur
 const prod=fs.readFileSync(new URL('../.github/workflows/production-current-main-acceptance.yml',import.meta.url),'utf8');
 assert(app.includes('function interactionScrollOwner(target)'),'V66 interaction owner resolver exists');
 assert(app.includes("target.closest('.pdf-evidence-modal')")&&app.includes('data-scroll-owner="pdf"'),'PDF fixed chrome delegates to PDF owner');
-assert(app.includes("target.closest('.page-study')")&&app.includes("target.closest('.study-body,.outline,.backdrop')"),'study fixed chrome delegates without hijacking body or outline');
+assert(app.includes("target.closest('.page-study')")&&app.includes("study[data-scroll-owner=\"study\"]")&&app.includes("target.closest('.outline,.backdrop')"),'study uses native route scrolling while preserving outline isolation');
 assert(app.includes("target.closest('.page-exam.exam-active')")&&app.includes('data-scroll-owner="exam-active"'),'active exam fixed chrome delegates to exam owner');
 assert(app.includes("target.closest('.top')")&&app.includes("document.querySelector('.page')"),'global top bar delegates to the active page owner');
 assert(app.includes("document.addEventListener('wheel'")&&app.includes('passive:false,capture:true'),'wheel bridge is non-passive and capture-safe');
