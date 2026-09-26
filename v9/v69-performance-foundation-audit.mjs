@@ -16,7 +16,7 @@ const localAi=fs.readFileSync(new URL('./local-ai.js',import.meta.url),'utf8');
 
 const external=[...index.matchAll(/<script\b[^>]*\bsrc="\.\/([^"]+\.js)"[^>]*>/g)];
 const blocking=external.filter(x=>!/(?:^|\s)(?:defer|async)(?:\s|=|>)/i.test(x[0])).map(x=>x[1]);
-assert(external.length>=80,'large legacy bootstrap is still fully enumerated for dependency safety');
+assert(external.length===11&&external.every(x=>/boot-v69-/.test(x[1])),'initial runtime loads exactly 11 V69 bootstrap bundles');
 assert(blocking.length===0,'all initial external scripts are non-parser-blocking');
 assert(lazy.includes('Promise.all(QUESTION_FILES.map(loadScript))'),'deferred question packs are inserted together for parallel network fetch');
 assert(!lazy.includes('for(const file of QUESTION_FILES)await loadScript(file)'),'question packs are no longer inserted one-by-one');
@@ -28,7 +28,7 @@ assert(pdf.includes('disableRange:false')&&pdf.includes('disableStream:false')&&
 assert(pdf.includes("official-proxy-full-cache-fallback"),'full PDF blob download remains a bounded fallback instead of the primary proxy path');
 assert(proxy.includes("const clientRange=(req.headers&&req.headers.range)||''")&&proxy.includes("res.setHeader('Access-Control-Allow-Headers','Range, If-Range, Content-Type')"),'official proxy forwards browser byte-range requests');
 assert(/officialPdfMirrorDocs:\['fire1','fire2','ems'\]/.test(config),'known fast static mirrors remain unchanged');
-assert(perf.includes('noParserBlockingScripts:parserBlockingScripts.length===0'),'performance budget prevents parser-blocking bootstrap regression');
+assert(perf.includes('noParserBlockingScripts:parserBlockingScripts.length===0')&&perf.includes('jsCount:16'),'performance budget prevents parser-blocking and high-request bootstrap regression');
 const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 assert(!app.includes('<span>오늘 목표</span><b>\${goal.done}/\${goal.total}</b>'),'home metrics no longer duplicate the full daily-goal card');
