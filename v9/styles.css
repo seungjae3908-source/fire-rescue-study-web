@@ -942,3 +942,32 @@
 .detail-view [data-detail-section].detail-section-active h3{
   color:#ffb15b!important
 }
+
+
+/* V69 wide desktop + compact dashboard/resources */
+.dashboard-quick{display:grid;gap:10px}
+.dashboard-quick-grid{display:grid;grid-template-columns:1fr;gap:7px}
+.dashboard-quick-grid .btn{width:100%;min-height:42px}
+.resource-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}
+.resource-section-head h2{margin:0}
+.resource-section-head p{margin:4px 0 0;font-size:11px}
+.resource-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
+.resource-row.compact{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
+.resource-row.compact>b{font-size:13px;line-height:1.45;word-break:keep-all;overflow-wrap:break-word}
+.resource-row.compact .resource-actions{display:flex;gap:6px;flex-wrap:nowrap}
+@media(min-width:1600px){
+  .page-study .study-body-desktop>.lesson{max-width:1240px!important}
+  .page-study .study-body-desktop{padding-left:clamp(28px,3.2vw,64px)!important;padding-right:clamp(28px,3.2vw,64px)!important}
+  .page-bank .question-card{max-width:1180px!important}
+  .settings-page,.notes-page,.suggestions-page{max-width:1320px!important}
+  .page-wrong .screen-scroll{max-width:1320px!important;margin-left:auto!important;margin-right:auto!important}
+  .page-stats .home-grid{max-width:1320px!important}
+  .resources-119{max-width:1400px!important}
+  .detail-criteria ul{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:720px){
+  .resource-grid{grid-template-columns:1fr!important}
+  .resource-row.compact{grid-template-columns:1fr!important;gap:8px}
+  .resource-row.compact .resource-actions{display:grid;grid-template-columns:1fr 1fr}
+  .resource-row.compact .resource-actions .btn{width:100%;min-width:0}
+}
