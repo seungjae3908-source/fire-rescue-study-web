@@ -3,9 +3,11 @@
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const base='https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/';
 const cfg=window.AITUTOR_V9_CONFIG||{};
-const proxyBase=String(cfg.officialPdfProxyBase||'').replace(/\/$/,'');
-const mirrorBase=String(cfg.officialPdfMirrorBase||'').replace(/\/$/,'');
-const mirrorDocs=new Set(Array.isArray(cfg.officialPdfMirrorDocs)?cfg.officialPdfMirrorDocs:[]);
+const host=typeof location!=='undefined'?String(location.hostname||''):'';
+const sameOriginProduction=/^fire-rescue-study-web(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(host);
+const proxyBase=String(sameOriginProduction?(location.origin||''):(cfg.officialPdfProxyBase||'')).replace(/\/$/,'');
+const mirrorBase=String(sameOriginProduction?'':(cfg.officialPdfMirrorBase||'')).replace(/\/$/,'');
+const mirrorDocs=new Set(sameOriginProduction?[]:(Array.isArray(cfg.officialPdfMirrorDocs)?cfg.officialPdfMirrorDocs:[]));
 const mirrored=doc=>!!mirrorBase&&mirrorDocs.has(doc);
 const proxyPdf=doc=>`${proxyBase}/api/official-pdf?doc=${encodeURIComponent(doc)}`;
 const mirrorPdf=doc=>mirrored(doc)?`${mirrorBase}/${encodeURIComponent(doc)}.pdf`:'';

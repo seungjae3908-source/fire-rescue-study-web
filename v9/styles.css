@@ -926,3 +926,19 @@
 }
 
 .page-home .official-date-readonly p,.page-home .dashboard-schedule p,.page-home .motivation-card p{font-size:14px!important;line-height:1.68!important}
+
+
+/* V68 active detail location */
+.detail-toc-chip.on,
+.detail-toc-chip[aria-current="location"]{
+  color:#fff!important;
+  background:#173f67!important;
+  border-color:#6fb6ff!important;
+  box-shadow:0 0 0 1px rgba(111,182,255,.18) inset,0 0 14px rgba(111,182,255,.12)
+}
+.detail-view [data-detail-section].detail-section-active{
+  border-left-color:var(--orange)!important
+}
+.detail-view [data-detail-section].detail-section-active h3{
+  color:#ffb15b!important
+}
