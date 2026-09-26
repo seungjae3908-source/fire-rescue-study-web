@@ -40,8 +40,10 @@ try{
   check(questionFetch.startSpread<700,'twenty deferred question prefetches start concurrently '+Math.round(questionFetch.startSpread)+'ms spread');
   const b0=Date.now();await page.evaluate(()=>window.AITUTOR_V9.App.go('bank'));
   await page.waitForSelector('.bank-page .question-card',{state:'visible',timeout:10000});
-  const bankMs=Date.now()-b0;check(bankMs<1500,'bank opens from prefetched cache '+bankMs+'ms');
+  const bankMs=Date.now()-b0;check(bankMs<1500,'bank opens from prefetched precomputed cache '+bankMs+'ms');
   check(await page.evaluate(()=>window.AITUTOR_V9.Lazy119.contentReady&&window.AITUTOR_V9.Lazy119.questionsReady),'bank entry executes both deferred lanes exactly when needed');
+  const precomputed=await page.evaluate(()=>window.AITUTOR_V9.PrecomputedQuestionFactoriesV69||null);
+  check(precomputed?.count===4946&&precomputed?.runtimeGeneration===false,'bank uses 4,946 precomputed generated questions with runtime generation disabled');
   check(await page.locator('script[data-lazy-119="content-core-v69.js"]').count()===1&&await page.locator('script[data-lazy-119="question-core-v69.js"]').count()===1,'content and question core execute lazily exactly once');
   const qWidth=(await page.locator('.bank-page .question-card').boundingBox())?.width||0;
   check(qWidth>=1000,'1920 desktop question card uses wider workspace '+qWidth);

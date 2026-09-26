@@ -27,6 +27,8 @@ const QUESTION_FILES=[
 ];
 const CONTENT_FILE='content-core-v69.js';
 const QUESTION_CORE_FILE='question-core-v69.js';
+const PRECOMPUTED_FILES=["questions-precomputed-v69-1.js","questions-precomputed-v69-2.js","questions-precomputed-v69-3.js","questions-precomputed-v69-4.js","questions-precomputed-v69-5.js","questions-precomputed-v69-6.js"];
+const QUESTION_POST_FILE='question-post-v69.js';
 let prefetchPromise=null,contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
 
 // V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
@@ -69,7 +71,7 @@ function loadScript(file){
     document.head.appendChild(s);
   })
 }
-function deferredAssets(){return [CONTENT_FILE,QUESTION_CORE_FILE,...QUESTION_FILES]}
+function deferredAssets(){return [CONTENT_FILE,QUESTION_CORE_FILE,...PRECOMPUTED_FILES,QUESTION_POST_FILE,...QUESTION_FILES]}
 function prefetch(){
   if(prefetchPromise)return prefetchPromise;
   const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
@@ -117,8 +119,10 @@ async function ensureQuestions({background=false}={}){
   if(!background)document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
     await ensureContent({background:true});
-    // Core + expansion requests start together; async=false preserves deterministic classic-script execution order.
-    await Promise.all([loadScript(QUESTION_CORE_FILE),...QUESTION_FILES.map(loadScript)]);
+    await loadScript(QUESTION_CORE_FILE);
+    for(const file of PRECOMPUTED_FILES)await loadScript(file);
+    await loadScript(QUESTION_POST_FILE);
+    await Promise.all(QUESTION_FILES.map(loadScript));
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
     V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
@@ -161,8 +165,8 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v5-prefetch-only',
-  contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,questionFiles:[...QUESTION_FILES],
+  version:'119-lazy-runtime-v6-precomputed-factories',
+  contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,precomputedFiles:[...PRECOMPUTED_FILES],questionPostFile:QUESTION_POST_FILE,questionFiles:[...QUESTION_FILES],
   deferredAssets,prefetch,ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
   get prefetched(){return document.documentElement.dataset.deferredPrefetch==='ready'},
   get contentReady(){return contentReady},
