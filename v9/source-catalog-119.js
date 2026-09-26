@@ -7,10 +7,12 @@ const host=typeof location!=='undefined'?String(location.hostname||''):'';
 const sameOriginProduction=/^fire-rescue-study-web(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(host);
 const proxyBase=String(sameOriginProduction?(location.origin||''):(cfg.officialPdfProxyBase||'')).replace(/\/$/,'');
 const mirrorBase=String(cfg.officialPdfMirrorBase||'').replace(/\/$/,'');
+const pagesMirrorBase=String(cfg.officialPdfPagesMirrorBase||'').replace(/\/$/,'');
 const mirrorDocs=new Set(Array.isArray(cfg.officialPdfMirrorDocs)?cfg.officialPdfMirrorDocs:[]);
-const mirrored=doc=>!!mirrorBase&&mirrorDocs.has(doc);
+const pagesMirrorDocs=new Set(Array.isArray(cfg.officialPdfPagesMirrorDocs)?cfg.officialPdfPagesMirrorDocs:[]);
+const mirrored=doc=>(!!mirrorBase&&mirrorDocs.has(doc))||(!!pagesMirrorBase&&pagesMirrorDocs.has(doc));
 const proxyPdf=doc=>`${proxyBase}/api/official-pdf?doc=${encodeURIComponent(doc)}`;
-const mirrorPdf=doc=>mirrored(doc)?`${mirrorBase}/${encodeURIComponent(doc)}.pdf`:'';
+const mirrorPdf=doc=>mirrorBase&&mirrorDocs.has(doc)?`${mirrorBase}/${encodeURIComponent(doc)}.pdf`:pagesMirrorBase&&pagesMirrorDocs.has(doc)?`${pagesMirrorBase}/${encodeURIComponent(doc)}.pdf`:'';
 const directPdf=doc=>mirrorPdf(doc)||proxyPdf(doc);
 const transport=doc=>mirrored(doc)?'range-static':'range-proxy';
 const C={
@@ -45,5 +47,5 @@ function resolveForConcept(id){const c=V.curriculum?.byId?.[id],r=c?.sourceRange
 function canDirect(key){return !!get(key)?.directPdf}
 function withDirect(key,url,meta={}){if(!C[key])return false;C[key]={...C[key],directPdf:url||'',...meta};return true}
 function audit(){const rows=Object.values(C);return{total:rows.length,direct:rows.filter(x=>x.directPdf).length,fallback:rows.filter(x=>!x.directPdf).length,licenseOk:rows.every(x=>x.license==='KOGL-1'),rows}}
-V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true,sameOriginProxy:!proxyBase,crossOriginProxy:!!proxyBase,arbitraryUrlProxy:false,allCatalogDocsProxyable:true,staticMirrorEnabled:!!mirrorBase,staticMirrorDocs:[...mirrorDocs]}};
+V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true,sameOriginProxy:!proxyBase,crossOriginProxy:!!proxyBase,arbitraryUrlProxy:false,allCatalogDocsProxyable:true,staticMirrorEnabled:!!mirrorBase||!!pagesMirrorBase,staticMirrorDocs:[...new Set([...mirrorDocs,...pagesMirrorDocs])]}};
 })();
