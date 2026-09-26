@@ -16,7 +16,8 @@ assert(e2e.includes('active exam footer remains horizontally contained and usabl
 assert(e2e.includes('V67_WHOLE_APP_REAL_UX_AUDIT_SUCCESS'),'V67 success marker exists');
 assert(css.includes('/* V67 whole-app real UX hardening */')&&css.includes('.study-quiz-jumps button')&&css.includes('.exam-mini-navigator button'),'V67 CSS hardens learner controls and number navigation');
 assert(css.includes('.page-study .tutor-answer-text')&&css.includes('.exam-quality-note'),'V67 CSS raises AI and exam guidance readability');
-assert(sw.includes('v67-real-ux'),'V67 PWA cache generation ships the new UX CSS');
+const cacheGeneration=Number(sw.match(/ai-tutor-v9-shell-\d{8}-v(\d+)-/)?.[1]||0);
+assert(cacheGeneration>=67,'V67-or-newer PWA cache generation ships the UX CSS');
 assert(workflow.includes('V67 whole-app real UX + layout audit')&&workflow.includes('node v9/v67-whole-app-real-ux-e2e.mjs'),'branch CI runs V67 browser audit');
 assert(production.includes('Production V67 whole-app real UX acceptance')&&production.includes('node v9/v67-whole-app-real-ux-e2e.mjs'),'Production acceptance runs V67 after deploy');
 console.log('V67_WHOLE_APP_REAL_UX_CONTRACT_SUCCESS');
