@@ -80,3 +80,4 @@ try{
   }
   console.log('V69_PERFORMANCE_LAYOUT_E2E_SUCCESS');
 }finally{await browser.close()}
+// V69 JSON-precomputed exact-head CI trigger.
