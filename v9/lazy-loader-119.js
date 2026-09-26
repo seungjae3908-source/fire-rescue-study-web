@@ -65,11 +65,11 @@ function loadScript(file){
     document.head.appendChild(s);
   })
 }
-async function ensureQuestions(){
+async function ensureQuestions({background=false}={}){
   if(questionsReady)return V.questions||[];
   if(questionsPromise)return questionsPromise;
   document.documentElement.dataset.questionLane='loading';
-  document.body?.setAttribute('aria-busy','true');
+  if(!background)document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
     for(const file of QUESTION_FILES)await loadScript(file);
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
@@ -85,7 +85,7 @@ async function ensureQuestions(){
     }
     questionsReady=true;
     document.documentElement.dataset.questionLane='ready';
-    document.body?.removeAttribute('aria-busy');
+    if(!background)document.body?.removeAttribute('aria-busy');
     window.dispatchEvent(new CustomEvent('aitutor-question-lane-ready',{detail:{
       count:(V.questions||[]).length,
       sourceImpact:sourceImpact?{
@@ -99,13 +99,13 @@ async function ensureQuestions(){
   })().catch(err=>{
     questionsPromise=null;
     document.documentElement.dataset.questionLane='error';
-    document.body?.removeAttribute('aria-busy');
+    if(!background)document.body?.removeAttribute('aria-busy');
     throw err
   });
   return questionsPromise
 }
 function needsQuestions(page,studyTab){
-  return ['bank','exam','wrong','stats','notes'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
+  return ['bank','exam','wrong','stats'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
 }
 function needsQuestionsForCurrentState(){
   const state=V.Store?.state||{};
