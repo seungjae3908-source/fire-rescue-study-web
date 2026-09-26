@@ -226,11 +226,29 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Check current Production availability
+        id: production_state
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          code="$(curl -sS --max-time 15 -o "$body" -w '%{http_code}' -H 'Cache-Control: no-cache' "${STUDY_119_PREVIEW_URL%/}/api/runtime-head" 2>/dev/null || true)"
+          text="$(cat "$body" 2>/dev/null || true)"
+          rm -f "$body"
+          if [[ "$code" == "402" && "$text" == *"DEPLOYMENT_DISABLED"* ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "CURRENT_PRODUCTION_DISABLED_EXTERNAL"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "CURRENT_PRODUCTION_AVAILABLE_OR_DIAGNOSABLE code=$code"
+          fi
       - name: Install Production suggestion browser QA
+        if: ${{ steps.production_state.outputs.enabled == 'true' }}
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Verify current Production suggestion guest + anon guards
+        if: ${{ steps.production_state.outputs.enabled == 'true' }}
         run: node v9/suggestions-production-public-e2e.mjs
 
 
