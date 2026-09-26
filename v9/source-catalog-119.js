@@ -12,7 +12,7 @@ const mirrored=doc=>!!mirrorBase&&mirrorDocs.has(doc);
 const proxyPdf=doc=>`${proxyBase}/api/official-pdf?doc=${encodeURIComponent(doc)}`;
 const mirrorPdf=doc=>mirrored(doc)?`${mirrorBase}/${encodeURIComponent(doc)}.pdf`:'';
 const directPdf=doc=>mirrorPdf(doc)||proxyPdf(doc);
-const transport=doc=>mirrored(doc)?'range-static':'full-cache-proxy';
+const transport=doc=>mirrored(doc)?'range-static':'range-proxy';
 const C={
   ems:{
     key:'ems',label:'2026 소방전술3(구급)',officialPage:base+'?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view&pageIdx=&searchCondition=&searchKeyword=',
