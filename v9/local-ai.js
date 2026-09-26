@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
-let engine=null,loading=null,status='대기';
+let engine=null,loading=null,status='대기',modelId='';
 const emit=(text,cb)=>{status=String(text||status);try{cb?.(status)}catch{}};
 const numTokens=s=>[...String(s||'').matchAll(/(?:\d+(?:[.,]\d+)?)(?:\s*(?:%|℃|°C|kg|g|mg|L|mL|ml|mmHg|cm|mm|m|km|초|분|시간|회|배|명|쪽))?/g)].map(x=>x[0].replace(/\s+/g,'').toLowerCase());
 const hangulRatio=s=>{const t=String(s||'').replace(/\s/g,'');if(!t)return 0;return (t.match(/[가-힣0-9A-Za-z]/g)||[]).length/t.length};
@@ -15,16 +15,31 @@ function textQuality(s){
 function numbersPreserved(source,out){
   const a=numTokens(source);if(!a.length)return true;const b=new Set(numTokens(out));return a.every(x=>b.has(x));
 }
+function chooseModel(list=[]){
+  const rows=[...list].filter(x=>x?.model_id),instruct=rows.filter(x=>/Instruct/i.test(x.model_id));
+  const smallest=(instruct.length?instruct:rows).slice().sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0]||null;
+  const half=instruct.find(x=>/0\.5B.*Instruct/i.test(x.model_id))||smallest;
+  const memory=Number(navigator.deviceMemory||0),cores=Number(navigator.hardwareConcurrency||0),mobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'');
+  const capable=!mobile&&((memory>=8)||(memory===0&&cores>=8));
+  if(!capable)return half;
+  const quality=instruct.filter(x=>/(?:1\.5B|1\.7B|1B|1\.0B).*Instruct/i.test(x.model_id)).sort((a,b)=>{
+    const ar=/1\.[57]B/i.test(a.model_id)?0:1,br=/1\.[57]B/i.test(b.model_id)?0:1;
+    return ar-br||(a.vram_required_MB||99999)-(b.vram_required_MB||99999)
+  })[0];
+  return quality||half
+}
 async function ensure({onProgress}={}){
   if(engine)return engine;if(loading)return loading;
   if(!navigator.gpu)throw Error('WEBGPU_UNAVAILABLE');
   loading=(async()=>{
     emit('로컬 AI 엔진 불러오는 중',onProgress);
     const m=V.RuntimeDeps?.loadWebLLM?await V.RuntimeDeps.loadWebLLM():await import('https://esm.run/@mlc-ai/web-llm@0.2.85'),list=m.prebuiltAppConfig?.model_list||[];
-    const model=list.find(x=>/0\.5B.*Instruct/i.test(x.model_id))||list.filter(x=>/Instruct/i.test(x.model_id)).sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0]||list.sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0];
+    const model=chooseModel(list);
     if(!model)throw Error('LOCAL_AI_MODEL_UNAVAILABLE');
-    engine=await m.CreateMLCEngine(model.model_id,{initProgressCallback:p=>emit(p.text||'AI 모델 준비 중',onProgress)});
-    emit('로컬 AI 준비됨',onProgress);return engine;
+    modelId=model.model_id;
+    emit('AI 모델 선택 · '+modelId,onProgress);
+    engine=await m.CreateMLCEngine(modelId,{initProgressCallback:p=>emit(p.text||'AI 모델 준비 중',onProgress)});
+    emit('로컬 AI 준비됨 · '+modelId,onProgress);return engine;
   })().catch(err=>{engine=null;emit('로컬 AI 사용 불가',onProgress);throw err}).finally(()=>loading=null);
   return loading;
 }
@@ -93,6 +108,7 @@ V.LocalAI={
   ensure,chat,correctExtractedText,studyDigest,textQuality,numTokens,numbersPreserved,
   get ready(){return !!engine},
   get status(){return status},
-  get engine(){return engine}
+  get engine(){return engine},
+  get modelId(){return modelId}
 };
 })();

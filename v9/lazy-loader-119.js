@@ -71,7 +71,7 @@ async function ensureQuestions(){
   document.documentElement.dataset.questionLane='loading';
   document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
-    for(const file of QUESTION_FILES)await loadScript(file);
+    await Promise.all(QUESTION_FILES.map(loadScript));
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
     V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
@@ -112,7 +112,7 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v2-source-impact',
+  version:'119-lazy-runtime-v3-parallel-fetch-source-impact',
   questionFiles:[...QUESTION_FILES],
   ensureQuestions,needsQuestions,needsQuestionsForCurrentState,
   get questionsReady(){return questionsReady},

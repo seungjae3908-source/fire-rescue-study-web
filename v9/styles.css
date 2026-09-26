@@ -942,3 +942,109 @@
 .detail-view [data-detail-section].detail-section-active h3{
   color:#ffb15b!important
 }
+
+
+/* V69 wide desktop + compact dashboard/resources */
+.dashboard-quick{display:grid;gap:10px}
+.dashboard-quick-grid{display:grid;grid-template-columns:1fr;gap:7px}
+.dashboard-quick-grid .btn{width:100%;min-height:42px}
+.resource-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}
+.resource-section-head h2{margin:0}
+.resource-section-head p{margin:4px 0 0;font-size:14px;line-height:1.5}
+.resource-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
+.resource-row.compact{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
+.resource-row.compact>b{font-size:13px;line-height:1.45;word-break:keep-all;overflow-wrap:break-word}
+.resource-row.compact .resource-actions{display:flex;gap:6px;flex-wrap:nowrap}
+@media(min-width:1600px){
+  .page-study .study-body-desktop>.lesson{max-width:1240px!important}
+  .page-study .study-body-desktop{padding-left:clamp(28px,3.2vw,64px)!important;padding-right:clamp(28px,3.2vw,64px)!important}
+  .page-bank .question-card{max-width:1180px!important}
+  .settings-page,.notes-page,.suggestions-page{max-width:1320px!important}
+  .page-wrong .screen-scroll{max-width:1320px!important;margin-left:auto!important;margin-right:auto!important}
+  .page-stats .home-grid{max-width:1320px!important}
+  .resources-119{max-width:1400px!important}
+  .detail-criteria ul{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:720px){
+  .resource-grid{grid-template-columns:1fr!important}
+  .resource-row.compact{grid-template-columns:1fr!important;gap:8px}
+  .resource-row.compact .resource-actions{display:grid;grid-template-columns:1fr 1fr}
+  .resource-row.compact .resource-actions .btn{width:100%;min-width:0}
+}
+
+
+/* V69 study route scroll owner: no short inner reading viewport */
+.page-study .study{
+  height:100%!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+  scrollbar-gutter:stable;
+  scroll-padding-top:8px;
+}
+.page-study .workspace{
+  overflow:visible!important;
+}
+.page-study .study-mainpane{
+  height:auto!important;
+  min-height:100%!important;
+  grid-template-rows:auto auto var(--action-h)!important;
+}
+.page-study .study-body{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  overscroll-behavior:auto!important;
+}
+.page-study .concept-nav{
+  position:sticky!important;
+  bottom:0!important;
+  z-index:10!important;
+}
+@media(max-width:720px){
+  .page-study .study{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .page-study .study-mainpane{grid-template-rows:auto auto!important}
+  .page-study .study-body-mobile{overflow:visible!important;max-height:none!important}
+}
+
+
+/* V69 structured detail folding */
+.detail-fold{
+  display:block!important;
+  padding:0!important;
+  overflow:hidden;
+}
+.detail-fold-summary{
+  min-height:54px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px 15px;
+  cursor:pointer;
+  list-style:none;
+  background:#0a1829;
+}
+.detail-fold-summary::-webkit-details-marker{display:none}
+.detail-fold-summary h3{flex:1;min-width:0;margin:0!important;font-size:15px!important;line-height:1.4}
+.detail-fold-summary span{flex:0 0 auto;font-size:10px;color:var(--muted);font-weight:800}
+.detail-fold-summary::before{
+  content:'＋';
+  flex:0 0 auto;
+  width:24px;height:24px;
+  display:grid;place-items:center;
+  border-radius:999px;
+  background:#173151;
+  color:var(--blue);
+  font-weight:900;
+}
+.detail-fold[open]>.detail-fold-summary{border-bottom:1px solid var(--line)}
+.detail-fold[open]>.detail-fold-summary::before{content:'−'}
+.detail-fold[open]>.detail-fold-summary span{font-size:0}
+.detail-fold[open]>.detail-fold-summary span::after{content:'접기';font-size:10px}
+.detail-fold>.detail-copy{padding:15px 17px 17px}
+@media(max-width:720px){
+  .detail-fold-summary{min-height:52px;padding:12px}
+  .detail-fold>.detail-copy{padding:13px 12px 16px}
+}
