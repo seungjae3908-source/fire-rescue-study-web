@@ -15,6 +15,7 @@ window.AITUTOR_V9_CONFIG={
   study119:true
 };
 
+
 ;
 /* ---- curriculum.js ---- */
 'use strict';
