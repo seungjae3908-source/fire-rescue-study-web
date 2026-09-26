@@ -59,7 +59,7 @@ function loadScript(file){
     if(existing?.dataset.loaded==='true')return resolve();
     if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('LAZY_119_LOAD_FAILED '+file)),{once:true});return}
     const s=document.createElement('script');
-    s.src='./'+file;s.async=false;s.dataset.lazy119=file;
+    s.src='./'+file;s.async=false;s.setAttribute('data-lazy-119',file);
     s.addEventListener('load',()=>{s.dataset.loaded='true';resolve()},{once:true});
     s.addEventListener('error',()=>{s.remove();reject(new Error('LAZY_119_LOAD_FAILED '+file))},{once:true});
     document.head.appendChild(s);
