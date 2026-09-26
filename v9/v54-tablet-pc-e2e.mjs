@@ -70,13 +70,13 @@ try{
     return{
       total:audit.total,
       staticRange:src.includes("origin='official-static-range'")&&src.includes('rangeChunkSize:65536'),
-      proxyFull:src.includes("origin='official-proxy-full-cache'")&&src.includes('else if(catalog?.proxyPdf)'),
+      proxyRange:src.includes("origin='official-proxy-range'")&&src.includes('disableStream:true')&&src.includes("origin='official-proxy-full-cache-fallback'"),
       fallback:src.includes("origin='official-proxy-fallback'")
     };
   });
   assert(strategy.total===10,'all ten official textbooks remain catalogued');
   assert(strategy.staticRange,'mirrored official PDFs keep range-first static loading');
-  assert(strategy.proxyFull,'non-mirrored official PDFs use reliable full-cache proxy loading');
+  assert(strategy.proxyRange,'non-mirrored official PDFs use range-first proxy loading with reliable full-cache fallback');
   assert(strategy.fallback,'static mirror failure retains official proxy fallback');
   await ctx.close();
   console.log('V54_TABLET_PC_PDF_RANGE_ACCEPTANCE_SUCCESS');
