@@ -40,6 +40,7 @@ assert(app.includes('class="study" data-scroll-owner="study"')&&!app.includes('d
 assert(css.includes('/* V69 study route scroll owner: no short inner reading viewport */')&&css.includes('max-height:none!important')&&css.includes('overflow:visible!important'),'study content is no longer trapped in the former short inner reading viewport');
 assert(app.includes("closest('.study[data-scroll-owner=\"study\"]')"),'AI and detail runtime target the route-level study owner');
 assert(app.includes('<details class="detail-section detail-fold"')&&app.includes('detailSectionShouldOpen')&&app.includes('/비교|구분|분석|시험|함정|주의|예외|수치|기준|금기|변형|오염/'),'first and high-priority exam-distinction detail sections stay expanded by default');
+assert(app.includes('function detailTrapPriority')&&app.includes('b.score-a.score||a.index-b.index'),'detail exam points prioritize numeric, sequence, and timing traps before the four-row cap');
 assert(app.includes("target?.tagName==='DETAILS')target.open=true"),'detail TOC opens a folded section before scrolling to it');
 assert(css.includes('/* V69 structured detail folding */')&&css.includes('.detail-fold-summary'),'long detail content is structured as accessible collapsible sections');
 assert(localAi.includes('function chooseModel(list=[])')&&localAi.includes('memory>=8')&&localAi.includes('cores>=8'),'local AI model choice is device-aware');
