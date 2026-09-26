@@ -11,7 +11,7 @@ try{
   const appReadyMs=Date.now()-appStarted;
   check(appReadyMs<5000,'first App ready stays under 5s on local branch '+appReadyMs+'ms');
   const staticScripts=await page.locator('script[src]:not([data-lazy-119])').count();
-  check(staticScripts===18,'only eighteen eager script requests are declared');
+  check(staticScripts===8,'only eight eager script requests are declared');
 
   await page.evaluate(()=>window.AITUTOR_V9.App.go('home'));
   const n0=Date.now();await page.evaluate(()=>window.AITUTOR_V9.App.go('notes'));
@@ -20,6 +20,8 @@ try{
   const notesMs=Date.now()-n0;check(notesMs<900,'notes opens without waiting for question lane '+notesMs+'ms');
 
   await page.waitForFunction(()=>window.AITUTOR_V9.Lazy119.questionsReady,{timeout:15000});
+  check(await page.evaluate(()=>window.AITUTOR_V9.Lazy119.contentReady===true),'content core is ready before the full question lane');
+  check(await page.locator('script[data-lazy-119="content-core-v69.js"]').count()===1&&await page.locator('script[data-lazy-119="question-core-v69.js"]').count()===1,'content and question core load lazily exactly once');
   const questionFetch=await page.evaluate(()=>{
     const files=new Set(window.AITUTOR_V9.Lazy119.questionFiles||[]);
     const rows=performance.getEntriesByType('resource').filter(x=>files.has(String(x.name).split('/').pop().split('?')[0])).map(x=>({name:String(x.name).split('/').pop().split('?')[0],start:x.startTime,duration:x.duration}));
@@ -61,7 +63,7 @@ try{
     await page.waitForFunction(()=>[...document.querySelectorAll('.tutor-message.me')].some(x=>x.textContent.includes('소방본부는 지역에 몇개씩 있어?')),{timeout:10000});
     await page.waitForTimeout(250);
     const answer=await page.locator('.tutor-message.assistant:visible,.tutor-message.ai:visible').last().innerText().catch(()=> '');
-    check(/확인할 수 없습니다|추정하지 않습니다|\\d/.test(answer),'numeric fallback either cites a grounded number or explicitly refuses to invent one');
+    check(/확인할 수 없습니다|추정하지 않습니다|\d/.test(answer),'numeric fallback either cites a grounded number or explicitly refuses to invent one');
   }
   console.log('V69_PERFORMANCE_LAYOUT_E2E_SUCCESS');
 }finally{await browser.close()}

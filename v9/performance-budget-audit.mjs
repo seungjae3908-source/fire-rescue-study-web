@@ -16,14 +16,17 @@ const lazyMatch=lazySource.match(/const QUESTION_FILES=\[([\s\S]*?)\];/);
 const lazyQuestionAssets=[...(lazyMatch?.[1]||'').matchAll(/'([^']+\.js)'/g)].map(m=>m[1]);
 const lazyRows=lazyQuestionAssets.map(asset=>({asset,size:fs.statSync(new URL('./'+asset,root)).size}));
 const lazyQuestionBytes=lazyRows.reduce((a,x)=>a+x.size,0);
-const combinedRuntimeBytes=totalBytes+lazyQuestionBytes;
+const lazyCoreAssets=[...(lazySource.match(/const CONTENT_FILE='([^']+)'/)?.slice(1)||[]),...(lazySource.match(/const QUESTION_CORE_FILE='([^']+)'/)?.slice(1)||[])];
+const lazyCoreRows=lazyCoreAssets.map(asset=>({asset,size:fs.statSync(new URL('./'+asset,root)).size}));
+const lazyCoreBytes=lazyCoreRows.reduce((a,x)=>a+x.size,0);
+const combinedRuntimeBytes=totalBytes+lazyQuestionBytes+lazyCoreBytes;
 const jsCount=rows.filter(x=>x.asset.endsWith('.js')).length;
 const cssCount=rows.filter(x=>x.asset.endsWith('.css')).length;
 const largest=rows.slice().sort((a,b)=>b.size-a.size)[0]||{asset:'',size:0};
 const limits={
-  totalBytes:1850000,
+  totalBytes:850000,
   assetCount:110,
-  jsCount:109,
+  jsCount:12,
   largestSingleAsset:250000
 };
 const checks={
@@ -31,6 +34,8 @@ const checks={
   totalPayload:totalBytes<=limits.totalBytes,
   lazyQuestionManifest:lazyQuestionAssets.length>=10&&lazyQuestionBytes>250000,
   lazyQuestionNotEager:lazyQuestionAssets.every(asset=>!unique.includes(asset)),
+  lazyCoreManifest:lazyCoreAssets.length===2&&lazyCoreBytes>500000,
+  lazyCoreNotEager:lazyCoreAssets.every(asset=>!unique.includes(asset)),
   assetCount:rows.length<=limits.assetCount,
   jsCount:jsCount<=limits.jsCount,
   largestSingleAsset:largest.size<=limits.largestSingleAsset,
@@ -38,11 +43,13 @@ const checks={
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
 const result={
-  version:'119-performance-budget-v2',
+  version:'119-performance-budget-v3-startup-split',
   totalBytes,
   totalKiB:Math.round(totalBytes/1024),
   lazyQuestionBytes,
   lazyQuestionKiB:Math.round(lazyQuestionBytes/1024),
+  lazyCoreBytes,
+  lazyCoreKiB:Math.round(lazyCoreBytes/1024),
   combinedRuntimeBytes,
   initialHeadroomBytes:limits.totalBytes-totalBytes,
   lazyQuestionAssets:lazyQuestionAssets.length,

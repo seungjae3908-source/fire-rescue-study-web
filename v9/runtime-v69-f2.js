@@ -276,7 +276,9 @@ const QUESTION_FILES=[
   'v60-source-reviewed-promotions-119.js',
   'analytics-v61-119.js'
 ];
-let questionsPromise=null,questionsReady=false;
+const CONTENT_FILE='content-core-v69.js';
+const QUESTION_CORE_FILE='question-core-v69.js';
+let contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
 
 // V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
 // tokens as real learner-facing underlines as well as marker emphasis so the core
@@ -318,14 +320,32 @@ function loadScript(file){
     document.head.appendChild(s);
   })
 }
+async function ensureContent({background=false}={}){
+  if(contentReady)return true;
+  if(contentPromise)return contentPromise;
+  document.documentElement.dataset.contentLane='loading';
+  if(!background)document.body?.setAttribute('aria-busy','true');
+  contentPromise=loadScript(CONTENT_FILE).then(()=>{
+    contentReady=true;
+    document.documentElement.dataset.contentLane='ready';
+    window.dispatchEvent(new CustomEvent('aitutor-content-lane-ready',{detail:{file:CONTENT_FILE}}));
+    return true
+  }).catch(err=>{
+    contentPromise=null;
+    document.documentElement.dataset.contentLane='error';
+    throw err
+  }).finally(()=>{if(!background)document.body?.removeAttribute('aria-busy')});
+  return contentPromise
+}
 async function ensureQuestions({background=false}={}){
   if(questionsReady)return V.questions||[];
   if(questionsPromise)return questionsPromise;
   document.documentElement.dataset.questionLane='loading';
   if(!background)document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
-    // Start all deferred question requests together. Because each dynamic classic script has async=false, browser execution order remains insertion order.
-    await Promise.all(QUESTION_FILES.map(loadScript));
+    await ensureContent({background:true});
+    // Core + expansion requests start together; async=false preserves deterministic classic-script execution order.
+    await Promise.all([loadScript(QUESTION_CORE_FILE),...QUESTION_FILES.map(loadScript)]);
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
     V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
@@ -358,6 +378,8 @@ async function ensureQuestions({background=false}={}){
   });
   return questionsPromise
 }
+function needsContent(page,studyTab){return String(page||'')==='study'}
+function needsContentForCurrentState(){const state=V.Store?.state||{};return needsContent(state.page,state.studyTab)}
 function needsQuestions(page,studyTab){
   return ['bank','exam','wrong','stats'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
 }
@@ -366,9 +388,11 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v3-parallel-source-impact',
-  questionFiles:[...QUESTION_FILES],
-  ensureQuestions,needsQuestions,needsQuestionsForCurrentState,
+  version:'119-lazy-runtime-v4-startup-split',
+  contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,questionFiles:[...QUESTION_FILES],
+  ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
+  get contentReady(){return contentReady},
+  get contentLoading(){return !!contentPromise&&!contentReady},
   get questionsReady(){return questionsReady},
   get questionsLoading(){return !!questionsPromise&&!questionsReady}
 };
@@ -423,8 +447,15 @@ if(c?.subject===subject){state().subject=subject;state().scopeId=c.scopeId;state
 const sc=(subject==='fire'?V.curriculum.fire:V.curriculum.ems)[0];state().subject=subject;state().scopeId=sc.id;state().conceptId=`${sc.id}-C01`;state().studyTab='core';return V.curriculum.byId[state().conceptId]
 }
 async function ensurePageData(page,tab=state().studyTab){
-if(!V.Lazy119?.needsQuestions?.(page,tab)||V.Lazy119.questionsReady)return true;
-try{document.body?.setAttribute('aria-busy','true');await V.Lazy119.ensureQuestions();return true}catch(err){console.error(err);toast('문제은행을 불러오지 못했습니다. 다시 시도해주세요.');return false}finally{document.body?.removeAttribute('aria-busy')}
+const needContent=!!V.Lazy119?.needsContent?.(page,tab),needQuestions=!!V.Lazy119?.needsQuestions?.(page,tab);
+if((!needContent||V.Lazy119.contentReady)&&(!needQuestions||V.Lazy119.questionsReady))return true;
+try{
+  document.body?.setAttribute('aria-busy','true');
+  if(needContent&&!V.Lazy119.contentReady)await V.Lazy119.ensureContent();
+  if(needQuestions&&!V.Lazy119.questionsReady)await V.Lazy119.ensureQuestions();
+  return true
+}catch(err){console.error(err);toast('학습 데이터를 불러오지 못했습니다. 다시 시도해주세요.');return false}
+finally{document.body?.removeAttribute('aria-busy')}
 }
 async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render()}
 function chooseConcept(id,{keepTab=false}={}){const c=V.curriculum.byId[id];if(!c)return;state().conceptId=id;state().scopeId=c.scopeId;state().subject=c.subject;if(!keepTab)state().studyTab='core';state().outline=false;rememberStudyPosition(c.subject);S.save();go('study')}
@@ -1419,9 +1450,17 @@ const run=()=>V.Lazy119.ensureQuestions({background:true}).catch(err=>console.wa
 if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:2500});else setTimeout(run,1200)
 }
 async function boot(){
-let questionLaneReady=true;
-if(V.Lazy119?.needsQuestionsForCurrentState?.()){try{await V.Lazy119.ensureQuestions()}catch(err){questionLaneReady=false;console.error(err);if(V.ExamSession119?.has?.(S.ownerId)||V.Lazy119?.needsQuestions?.(state().page,state().studyTab)){state().page='home';state().studyTab='core';S.save();runtime.authNotice='문제은행 로딩에 실패해 홈으로 이동했습니다. 네트워크 연결 후 다시 시도해주세요.'}}}
-const restoredActiveExam=questionLaneReady?restoreActiveExam():false;
+let dataLaneReady=true;
+try{
+  if(V.Lazy119?.needsContentForCurrentState?.())await V.Lazy119.ensureContent();
+  if(V.Lazy119?.needsQuestionsForCurrentState?.())await V.Lazy119.ensureQuestions();
+}catch(err){
+  dataLaneReady=false;console.error(err);
+  if(V.ExamSession119?.has?.(S.ownerId)||V.Lazy119?.needsContent?.(state().page,state().studyTab)||V.Lazy119?.needsQuestions?.(state().page,state().studyTab)){
+    state().page='home';state().studyTab='core';S.save();runtime.authNotice='학습 데이터 로딩에 실패해 홈으로 이동했습니다. 네트워크 연결 후 다시 시도해주세요.'
+  }
+}
+const restoredActiveExam=dataLaneReady?restoreActiveExam():false;
 V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();else scheduleQuestionPreload()
 }
 boot();

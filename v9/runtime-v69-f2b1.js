@@ -25,7 +25,9 @@ const QUESTION_FILES=[
   'v60-source-reviewed-promotions-119.js',
   'analytics-v61-119.js'
 ];
-let questionsPromise=null,questionsReady=false;
+const CONTENT_FILE='content-core-v69.js';
+const QUESTION_CORE_FILE='question-core-v69.js';
+let contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
 
 // V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
 // tokens as real learner-facing underlines as well as marker emphasis so the core
@@ -67,14 +69,32 @@ function loadScript(file){
     document.head.appendChild(s);
   })
 }
+async function ensureContent({background=false}={}){
+  if(contentReady)return true;
+  if(contentPromise)return contentPromise;
+  document.documentElement.dataset.contentLane='loading';
+  if(!background)document.body?.setAttribute('aria-busy','true');
+  contentPromise=loadScript(CONTENT_FILE).then(()=>{
+    contentReady=true;
+    document.documentElement.dataset.contentLane='ready';
+    window.dispatchEvent(new CustomEvent('aitutor-content-lane-ready',{detail:{file:CONTENT_FILE}}));
+    return true
+  }).catch(err=>{
+    contentPromise=null;
+    document.documentElement.dataset.contentLane='error';
+    throw err
+  }).finally(()=>{if(!background)document.body?.removeAttribute('aria-busy')});
+  return contentPromise
+}
 async function ensureQuestions({background=false}={}){
   if(questionsReady)return V.questions||[];
   if(questionsPromise)return questionsPromise;
   document.documentElement.dataset.questionLane='loading';
   if(!background)document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
-    // Start all deferred question requests together. Because each dynamic classic script has async=false, browser execution order remains insertion order.
-    await Promise.all(QUESTION_FILES.map(loadScript));
+    await ensureContent({background:true});
+    // Core + expansion requests start together; async=false preserves deterministic classic-script execution order.
+    await Promise.all([loadScript(QUESTION_CORE_FILE),...QUESTION_FILES.map(loadScript)]);
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
     V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
@@ -107,6 +127,8 @@ async function ensureQuestions({background=false}={}){
   });
   return questionsPromise
 }
+function needsContent(page,studyTab){return String(page||'')==='study'}
+function needsContentForCurrentState(){const state=V.Store?.state||{};return needsContent(state.page,state.studyTab)}
 function needsQuestions(page,studyTab){
   return ['bank','exam','wrong','stats'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
 }
@@ -115,9 +137,11 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v3-parallel-source-impact',
-  questionFiles:[...QUESTION_FILES],
-  ensureQuestions,needsQuestions,needsQuestionsForCurrentState,
+  version:'119-lazy-runtime-v4-startup-split',
+  contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,questionFiles:[...QUESTION_FILES],
+  ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
+  get contentReady(){return contentReady},
+  get contentLoading(){return !!contentPromise&&!contentReady},
   get questionsReady(){return questionsReady},
   get questionsLoading(){return !!questionsPromise&&!questionsReady}
 };

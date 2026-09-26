@@ -45,8 +45,15 @@ if(c?.subject===subject){state().subject=subject;state().scopeId=c.scopeId;state
 const sc=(subject==='fire'?V.curriculum.fire:V.curriculum.ems)[0];state().subject=subject;state().scopeId=sc.id;state().conceptId=`${sc.id}-C01`;state().studyTab='core';return V.curriculum.byId[state().conceptId]
 }
 async function ensurePageData(page,tab=state().studyTab){
-if(!V.Lazy119?.needsQuestions?.(page,tab)||V.Lazy119.questionsReady)return true;
-try{document.body?.setAttribute('aria-busy','true');await V.Lazy119.ensureQuestions();return true}catch(err){console.error(err);toast('문제은행을 불러오지 못했습니다. 다시 시도해주세요.');return false}finally{document.body?.removeAttribute('aria-busy')}
+const needContent=!!V.Lazy119?.needsContent?.(page,tab),needQuestions=!!V.Lazy119?.needsQuestions?.(page,tab);
+if((!needContent||V.Lazy119.contentReady)&&(!needQuestions||V.Lazy119.questionsReady))return true;
+try{
+  document.body?.setAttribute('aria-busy','true');
+  if(needContent&&!V.Lazy119.contentReady)await V.Lazy119.ensureContent();
+  if(needQuestions&&!V.Lazy119.questionsReady)await V.Lazy119.ensureQuestions();
+  return true
+}catch(err){console.error(err);toast('학습 데이터를 불러오지 못했습니다. 다시 시도해주세요.');return false}
+finally{document.body?.removeAttribute('aria-busy')}
 }
 async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render()}
 function chooseConcept(id,{keepTab=false}={}){const c=V.curriculum.byId[id];if(!c)return;state().conceptId=id;state().scopeId=c.scopeId;state().subject=c.subject;if(!keepTab)state().studyTab='core';state().outline=false;rememberStudyPosition(c.subject);S.save();go('study')}
@@ -1041,9 +1048,17 @@ const run=()=>V.Lazy119.ensureQuestions({background:true}).catch(err=>console.wa
 if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:2500});else setTimeout(run,1200)
 }
 async function boot(){
-let questionLaneReady=true;
-if(V.Lazy119?.needsQuestionsForCurrentState?.()){try{await V.Lazy119.ensureQuestions()}catch(err){questionLaneReady=false;console.error(err);if(V.ExamSession119?.has?.(S.ownerId)||V.Lazy119?.needsQuestions?.(state().page,state().studyTab)){state().page='home';state().studyTab='core';S.save();runtime.authNotice='문제은행 로딩에 실패해 홈으로 이동했습니다. 네트워크 연결 후 다시 시도해주세요.'}}}
-const restoredActiveExam=questionLaneReady?restoreActiveExam():false;
+let dataLaneReady=true;
+try{
+  if(V.Lazy119?.needsContentForCurrentState?.())await V.Lazy119.ensureContent();
+  if(V.Lazy119?.needsQuestionsForCurrentState?.())await V.Lazy119.ensureQuestions();
+}catch(err){
+  dataLaneReady=false;console.error(err);
+  if(V.ExamSession119?.has?.(S.ownerId)||V.Lazy119?.needsContent?.(state().page,state().studyTab)||V.Lazy119?.needsQuestions?.(state().page,state().studyTab)){
+    state().page='home';state().studyTab='core';S.save();runtime.authNotice='학습 데이터 로딩에 실패해 홈으로 이동했습니다. 네트워크 연결 후 다시 시도해주세요.'
+  }
+}
+const restoredActiveExam=dataLaneReady?restoreActiveExam():false;
 V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();else scheduleQuestionPreload()
 }
 boot();
