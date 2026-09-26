@@ -210,7 +210,8 @@ if(!body)return'';
 const stem=String(c?.title||'개념').replace(/\s*(?:개론|원리|이론|기초|개요)\s*$/,'').trim()||String(c?.title||'개념'),title=stem+'의 정의';
 return `<section class="detail-section detail-definition" data-detail-section="definition"><div class="detail-copy"><h3>${esc(title)}</h3><p>${esc(body)}</p></div></section>`
 }
-function detailExamPointBlock(pack){const rows=uniqueTextRows([...(pack?.traps||[])]).map(studentStudyText).filter(Boolean).slice(0,4);if(!rows.length)return'';return `<section class="detail-exam-points" data-detail-section="traps"><h3>시험 포인트 · 함정/주의</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
+function detailTrapPriority(text,index=0){const t=String(text||'');let score=0;if(/[→←<>≈]|\d/.test(t))score+=4;if(/먼저|다음|순서|시각|시간|기준|비율|주기|분|초/.test(t))score+=5;if(/금지|않|주의|예외|구분|확인|배제|중단/.test(t))score+=2;return{score,index}}
+function detailExamPointBlock(pack){const all=uniqueTextRows([...(pack?.traps||[])]).map(studentStudyText).filter(Boolean),rows=all.map((text,index)=>({text,...detailTrapPriority(text,index)})).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,4).map(x=>x.text);if(!rows.length)return'';return `<section class="detail-exam-points" data-detail-section="traps"><h3>시험 포인트 · 함정/주의</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
 function detailCriteriaBlock(pack){
 const rows=uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,16)||[]).map(studentStudyText).filter(Boolean)).slice(0,12);
 if(!rows.length)return'';
