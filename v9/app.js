@@ -87,7 +87,7 @@ return shell(`<div class="home-grid student-home dashboard-home" data-scroll-own
 <section class="hero dashboard-hero"><span class="eyebrow">공식 일정 기반</span><h2>${esc(sched.year)} 소방공무원 시험</h2><div class="dashboard-dday">${esc(ddayText(sched.dday))}</div><p>${scheduleNote}</p><div class="toolbar dashboard-actions"><button class="btn primary" data-concept="${next?.id||'F01-C01'}">이어서 학습</button><button class="btn" data-go="exam">모의고사 시작</button></div></section>
 <div class="metric-grid dashboard-metrics"><div class="metric"><span>전체 학습 진도</span><b>${r.scopeCoverage}%</b></div><div class="metric"><span>오늘 목표</span><b>${goal.done}/${goal.total}</b></div><div class="metric"><span>최근 오답</span><b>${wrongN}</b></div><div class="metric"><span>최근 시험</span><b>${last?last.score+'점':'-'}</b></div></div>
 ${correctionHomeCard()}<section class="card daily-goal-card"><div class="toolbar daily-goal-head"><div><b>오늘의 목표</b><small class="tiny muted">${goal.remaining?'남은 '+goal.remaining+'개 · 약 '+remainingMin+'분':'오늘 목표 완료'}</small></div><span class="spacer"></span><strong>${goal.percent}%</strong><button class="btn small ghost" data-goal-editor>${runtime.goalEditor?'닫기':'편집'}</button></div><div class="daily-goal-progress" role="progressbar" aria-label="오늘 목표 진도" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${goal.percent}"><i style="width:${goal.percent}%"></i></div><div class="daily-goal-subjects"><span>소방학 <b>${goal.fire.done}/${goal.fire.total}</b></span><span>구급 <b>${goal.ems.done}/${goal.ems.total}</b></span></div>${dailyGoalEditor()}<div class="today-list daily-goal-list">${plan.length?plan.map(x=>`<div class="today-item daily-goal-item ${x.done?'done':''}"><button class="goal-check" data-goal-toggle="${esc(x.concept.id)}" aria-label="${x.done?'완료 해제':'완료 처리'}">${x.done?'✓':'○'}</button><button class="today-main" data-concept="${esc(x.concept.id)}"><div><b>${esc(x.concept.title)}</b><small>${esc(x.concept.scopeTitle||'')} · ${esc(x.reason||'학습')}</small></div><span>›</span></button><button class="goal-remove" data-goal-remove="${esc(x.concept.id)}" aria-label="오늘 목표에서 제거">×</button></div>`).join(''):'<div class="empty compact">오늘 목표가 비어 있습니다. 편집에서 단원을 추가하세요.</div>'}</div></section>
-</div><aside class="home-side"><section class="card dashboard-schedule"><b>공식 시험 일정</b><p class="tiny muted">${sched.written?`필기시험 ${esc(sched.written)}`:'아직 공식 필기일이 확인되지 않았습니다.'}</p>${sched.schedule?.applicationStart?`<small>원서접수 ${esc(sched.schedule.applicationStart)}${sched.schedule.applicationEnd?' ~ '+esc(sched.schedule.applicationEnd):''}</small>`:''}<button class="btn block ghost" data-go="resources">공식 공고 확인</button></section><section class="card motivation-card"><b>오늘 한 줄</b><p>${esc(motivation)}</p></section></aside></div>`,'홈')
+</div><aside class="home-side"><section class="card dashboard-quick"><b>빠른 이동</b><div class="dashboard-quick-actions"><button class="btn block" data-go="wrong">오답 복습</button><button class="btn block ghost" data-go="resources">공식 자료</button></div></section><section class="card motivation-card"><b>오늘 한 줄</b><p>${esc(motivation)}</p></section></aside></div>`,'홈')
 }
 function outline(){
 const subj=state().subject,scopes=subj==='fire'?V.curriculum.fire:V.curriculum.ems,q=studyNorm(runtime.outlineQuery||''),groups=[],hits=[];
@@ -567,6 +567,7 @@ function tutorMessageHtml(m){const t=cleanTutorText(m?.text||''),r=Array.isArray
 function wantsTutorDetail(prompt){return /상세|자세히|깊게|전부|원리부터|교재처럼/.test(String(prompt||''))}
 function wantsTutorCompare(prompt){return /비교|차이|뭐가\s*달|vs|구분/.test(String(prompt||'').toLowerCase())}
 function wantsTutorEvidence(prompt){return /근거만|출처만|원문만|공식\s*근거만|근거\s*위주/.test(String(prompt||''))}
+function wantsTutorNumber(prompt){return /몇\s*(?:개|명|곳|대|회|개씩|명씩)|얼마|수량|개수|몇개|몇명/.test(String(prompt||''))}
 function tutorKeywords(v){
 const stop=new Set(['그럼','그러면','그거','그건','이거','이건','뭐가있어','뭐야','무엇','어떤','알려줘','설명해줘','해줘','있어','있나','관련','대해','핵심','요약','시험','상세','자세히']);
 return [...new Set(String(v||'').toLowerCase().split(/[^0-9a-z가-힣]+/).map(x=>x.replace(/(?:들에게|에서|으로|부터|까지|하고|이랑|들은|에게|처럼|보다|은|는|이|가|을|를|의|에|도|만)$/,'')).filter(x=>x.length>=2&&!stop.has(x)))]
@@ -583,7 +584,15 @@ const score=row=>{const n=studyNorm(row.text),label=studyNorm(row.label);let z=0
 return candidates.map(x=>({...x,score:score(x)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||b.text.length-a.text.length)
 }
 function fallbackTutor(prompt,c,pack){
-const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),rows=[],general=/30초|요약|핵심\s*(?:정리|설명)?$/.test(String(prompt||''));
+const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),numberQuestion=wantsTutorNumber(prompt),rows=[],general=/30초|요약|핵심\s*(?:정리|설명)?$/.test(String(prompt||''));
+if(numberQuestion){
+  const hits=tutorRelevantRows(prompt,c,pack),numeric=hits.filter(x=>/\d/.test(x.text)).slice(0,3);
+  if(numeric.length){rows.push('답변',numeric[0].text);if(numeric.length>1)rows.push('','관련 기준',...numeric.slice(1).map(x=>'• '+x.text));rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));return cleanTutorText(rows.join('\n'))}
+  const known=hits[0]?.text||studentStudyText(pack.summary||((pack.must||[])[0])||c.title);
+  rows.push('답변','현재 연결된 공식 근거에서는 해당 수량을 숫자로 확인할 수 없습니다. 확인되지 않은 숫자는 추정하지 않습니다.');
+  if(known)rows.push('','확인되는 내용','• '+known);
+  rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));return cleanTutorText(rows.join('\n'))
+}
 if(evidenceOnly)rows.push('근거','• '+(pack.source||'공식 학습팩'));
 else if(general){rows.push('답변',studentStudyText(pack.summary||((pack.must||[])[0])||c.title));const must=(pack.must||[]).map(studentStudyText).filter(Boolean).slice(0,detail?5:3),why=uniqueTextRows([...(pack.detail||[]),...(pack.deepSections||[]).map(x=>x?.body).filter(Boolean)].map(studentStudyText)).slice(0,detail?4:2);if(must.length)rows.push('','핵심 포인트',...must.map(x=>'• '+x));if(why.length)rows.push('','왜 그런가',...why.map(x=>'• '+x))}
 else{
@@ -642,9 +651,10 @@ if(!target.allowed){
 const out=`현재 학습 항목은 「${current.title}」입니다.\n이 AI는 현재 항목과 직접 등록된 비교 내용만 설명합니다.\n「${target.detected?.title||'다른 개념'}」은 해당 개념 페이지로 이동해서 질문해 주세요.`;
 const ix=state().chat.findIndex(x=>x.id===assistant.id);if(ix>=0)state().chat[ix]={...assistant,text:out,outOfScope:true,suggestedConceptId:target.detected?.id||''};S.save();render();return
 }
-const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),compareRows=compare?(pack.compare||[]).slice(0,6):[];
+const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),numberQuestion=wantsTutorNumber(prompt),numberGrounded=!numberQuestion||tutorRelevantRows(prompt,current,pack).some(x=>/\d/.test(x.text)),compareRows=compare?(pack.compare||[]).slice(0,6):[];
 let out=fallbackTutor(prompt,current,pack),idx=state().chat.findIndex(x=>x.id===assistant.id);
 if(idx>=0)state().chat[idx]={...assistant,text:out,targetConceptId:current.id,compareRows};S.save();render();
+if(numberQuestion&&!numberGrounded){runtime.aiStatus='공식근거 확인';return}
 if(!(runtime.aiEngine||V.LocalAI?.ready)&&navigator.gpu&&V.LocalAI?.ensure){
 try{runtime.aiStatus='AI 준비 중';runtime.aiEngine=await V.LocalAI.ensure({onProgress:()=>{runtime.aiStatus='AI 준비 중'}});runtime.aiStatus='대화형 답변 준비됨'}catch{runtime.aiStatus='근거 기반 답변'}
 }
@@ -1029,7 +1039,9 @@ async function boot(){
 let questionLaneReady=true;
 if(V.Lazy119?.needsQuestionsForCurrentState?.()){try{await V.Lazy119.ensureQuestions()}catch(err){questionLaneReady=false;console.error(err);if(V.ExamSession119?.has?.(S.ownerId)||V.Lazy119?.needsQuestions?.(state().page,state().studyTab)){state().page='home';state().studyTab='core';S.save();runtime.authNotice='문제은행 로딩에 실패해 홈으로 이동했습니다. 네트워크 연결 후 다시 시도해주세요.'}}}
 const restoredActiveExam=questionLaneReady?restoreActiveExam():false;
-V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker()
+V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();
+const warmQuestions=()=>{if(!V.Lazy119?.questionsReady&&!V.Lazy119?.questionsLoading)V.Lazy119?.ensureQuestions?.().catch(()=>{})};
+if('requestIdleCallback'in window)requestIdleCallback(warmQuestions,{timeout:3000});else setTimeout(warmQuestions,1400)
 }
 boot();
 })();
