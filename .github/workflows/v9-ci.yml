@@ -283,6 +283,33 @@ jobs:
             test "$bytes" -gt 100000
           done
 
+      - name: Probe seven deployed Pages PDF mirrors
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror'
+          docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
+          for doc in "${docs[@]}"; do
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' \
+              -H 'Range: bytes=0-65535' \
+              -H 'Origin: https://fire-rescue-study-web.vercel.app' \
+              "${base}/${doc}.pdf")"
+            bytes="$(wc -c < "$body" | tr -d ' ')"
+            magic="$(head -c 5 "$body")"
+            content_range="$(grep -i '^content-range:' "$headers" | tail -1 | tr -d '\r' || true)"
+            accept_ranges="$(grep -i '^accept-ranges:' "$headers" | tail -1 | tr -d '\r' || true)"
+            acao="$(grep -i '^access-control-allow-origin:' "$headers" | tail -1 | tr -d '\r' || true)"
+            echo "V70_PAGES_PDF_RANGE_OK $doc status=$code bytes=$bytes magic=$magic $content_range $accept_ranges $acao"
+            test "$code" = "206"
+            test "$bytes" = "65536"
+            test "$magic" = "%PDF-"
+            test -n "$content_range"
+            test -n "$accept_ranges"
+            test -n "$acao"
+          done
+
       - name: Install V70 Production performance browser
         run: |
           npm install --no-save playwright@1.55.0
