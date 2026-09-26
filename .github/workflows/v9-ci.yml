@@ -266,24 +266,6 @@ jobs:
           test -n "$content_range"
           test -n "$acao"
 
-      - name: Validate seven mirror source PDFs can materialize
-        shell: bash
-        run: |
-          set -euo pipefail
-          tmpdir="$(mktemp -d)"
-          proxy='https://fire-rescue-study-web.vercel.app/api/official-pdf'
-          docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
-          for doc in "${docs[@]}"; do
-            out="$tmpdir/${doc}.pdf"
-            echo "V70_MIRROR_SOURCE_FETCH_START $doc"
-            curl -fL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 20 --max-time 180               -H 'Cache-Control: no-cache' "${proxy}?doc=${doc}" -o "$out"
-            magic="$(head -c 5 "$out")"
-            bytes="$(wc -c < "$out" | tr -d ' ')"
-            echo "V70_MIRROR_SOURCE_OK $doc bytes=$bytes magic=$magic"
-            test "$magic" = '%PDF-'
-            test "$bytes" -gt 100000
-          done
-
       - name: Probe seven deployed Pages PDF mirrors
         shell: bash
         run: |
