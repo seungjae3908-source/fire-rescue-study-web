@@ -336,10 +336,14 @@ try{
   assert(!/F\d\d-C\d\d/.test(mtoc)&&/1\.\s/.test(mtoc),'mobile TOC uses aligned numbered names without ids');
   await m.locator('.outline.open button[data-outline-close]').click();
 
-  const studyScroller=await m.locator('.study-body-mobile').boundingBox(),nav=await m.locator('.mobile-nav').boundingBox();
-  assert(studyScroller&&nav&&studyScroller.y+studyScroller.height<=nav.y+2,'learning scroller ends cleanly above the single bottom navigation');
-  const scrollState=await m.locator('.study-body-mobile').evaluate(el=>({overflow:getComputedStyle(el).overflowY,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}));
-  assert(['auto','scroll'].includes(scrollState.overflow),'mobile study uses one dedicated vertical body scroller');
+  const studyBodyBox=await m.locator('.study-body-mobile').boundingBox(),nav=await m.locator('.mobile-nav').boundingBox();
+  assert(studyBodyBox&&nav&&studyBodyBox.y+studyBodyBox.height<=nav.y+2,'learning content ends cleanly above the single bottom navigation');
+  const scrollState=await m.evaluate(()=>{
+    const route=document.querySelector('.page-study .study[data-scroll-owner="study"]'),body=document.querySelector('.page-study .study-body-mobile');
+    const visibleOwners=[...document.querySelectorAll('.page-study [data-scroll-owner]')].filter(el=>el.offsetParent!==null).map(el=>el.getAttribute('data-scroll-owner'));
+    return{routeOverflow:route?getComputedStyle(route).overflowY:'',bodyOverflow:body?getComputedStyle(body).overflowY:'',routeScrollHeight:route?.scrollHeight||0,routeClientHeight:route?.clientHeight||0,visibleOwners};
+  });
+  assert(['auto','scroll'].includes(scrollState.routeOverflow)&&!['auto','scroll'].includes(scrollState.bodyOverflow)&&scrollState.visibleOwners.length===1&&scrollState.visibleOwners[0]==='study','mobile study uses one route-level vertical scroller without a nested body scroller');
   const mobileTabPosition=await m.locator('.book-jumpbar').evaluate(el=>getComputedStyle(el).position);
   assert(mobileTabPosition==='static','mobile study tabs do not stick over or cover the learning text');
 
