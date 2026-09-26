@@ -1058,10 +1058,10 @@ return
 if(reason==='signed-in'||reason==='manual-signout')runtime.authNotice='';
 render()
 });
-function scheduleQuestionPreload(){
-if(!V.Lazy119?.ensureQuestions||V.Lazy119.questionsReady||V.Lazy119.questionsLoading)return;
-const run=()=>V.Lazy119.ensureQuestions({background:true}).catch(err=>console.warn('QUESTION_IDLE_PRELOAD_FAILED',err));
-if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:2500});else setTimeout(run,1200)
+function scheduleDeferredPrefetch(){
+if(!V.Lazy119?.prefetch||V.Lazy119.prefetched)return;
+const run=()=>V.Lazy119.prefetch().catch(err=>console.warn('DEFERRED_ASSET_PREFETCH_FAILED',err));
+if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:1800});else setTimeout(run,900)
 }
 async function boot(){
 let dataLaneReady=true;
@@ -1075,7 +1075,7 @@ try{
   }
 }
 const restoredActiveExam=dataLaneReady?restoreActiveExam():false;
-V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();else scheduleQuestionPreload()
+V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();else scheduleDeferredPrefetch()
 }
 boot();
 })();

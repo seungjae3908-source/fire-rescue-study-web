@@ -1204,7 +1204,7 @@ const QUESTION_FILES=[
 ];
 const CONTENT_FILE='content-core-v69.js';
 const QUESTION_CORE_FILE='question-core-v69.js';
-let contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
+let prefetchPromise=null,contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
 
 // V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
 // tokens as real learner-facing underlines as well as marker emphasis so the core
@@ -1245,6 +1245,30 @@ function loadScript(file){
     s.addEventListener('error',()=>{s.remove();reject(new Error('LAZY_119_LOAD_FAILED '+file))},{once:true});
     document.head.appendChild(s);
   })
+}
+function deferredAssets(){return [CONTENT_FILE,QUESTION_CORE_FILE,...QUESTION_FILES]}
+function prefetch(){
+  if(prefetchPromise)return prefetchPromise;
+  const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+  if(conn?.saveData||/^(?:slow-2g|2g)$/i.test(String(conn?.effectiveType||'')))return Promise.resolve([]);
+  const files=deferredAssets().filter(Boolean);
+  document.documentElement.dataset.deferredPrefetch='loading';
+  prefetchPromise=Promise.all(files.map(async file=>{
+    try{
+      const r=await fetch('./'+file,{cache:'force-cache',credentials:'same-origin'});
+      if(!r.ok)throw Error('PREFETCH_HTTP_'+r.status);
+      await r.arrayBuffer();
+      return file
+    }catch(err){
+      console.warn('V69_PREFETCH_FAILED',file,err);
+      return null
+    }
+  })).then(rows=>{
+    const loaded=rows.filter(Boolean);
+    document.documentElement.dataset.deferredPrefetch='ready';
+    return loaded
+  });
+  return prefetchPromise
 }
 async function ensureContent({background=false}={}){
   if(contentReady)return true;
@@ -1314,9 +1338,10 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v4-startup-split',
+  version:'119-lazy-runtime-v5-prefetch-only',
   contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,questionFiles:[...QUESTION_FILES],
-  ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
+  deferredAssets,prefetch,ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
+  get prefetched(){return document.documentElement.dataset.deferredPrefetch==='ready'},
   get contentReady(){return contentReady},
   get contentLoading(){return !!contentPromise&&!contentReady},
   get questionsReady(){return questionsReady},
@@ -2384,10 +2409,10 @@ return
 if(reason==='signed-in'||reason==='manual-signout')runtime.authNotice='';
 render()
 });
-function scheduleQuestionPreload(){
-if(!V.Lazy119?.ensureQuestions||V.Lazy119.questionsReady||V.Lazy119.questionsLoading)return;
-const run=()=>V.Lazy119.ensureQuestions({background:true}).catch(err=>console.warn('QUESTION_IDLE_PRELOAD_FAILED',err));
-if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:2500});else setTimeout(run,1200)
+function scheduleDeferredPrefetch(){
+if(!V.Lazy119?.prefetch||V.Lazy119.prefetched)return;
+const run=()=>V.Lazy119.prefetch().catch(err=>console.warn('DEFERRED_ASSET_PREFETCH_FAILED',err));
+if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:1800});else setTimeout(run,900)
 }
 async function boot(){
 let dataLaneReady=true;
@@ -2401,7 +2426,7 @@ try{
   }
 }
 const restoredActiveExam=dataLaneReady?restoreActiveExam():false;
-V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();else scheduleQuestionPreload()
+V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();else scheduleDeferredPrefetch()
 }
 boot();
 })();

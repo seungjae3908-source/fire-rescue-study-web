@@ -19,20 +19,30 @@ try{
   await page.waitForSelector('.notes-page',{state:'visible'});
   const notesMs=Date.now()-n0;check(notesMs<900,'notes opens without waiting for question lane '+notesMs+'ms');
 
-  await page.waitForFunction(()=>window.AITUTOR_V9.Lazy119.questionsReady,{timeout:15000});
-  check(await page.evaluate(()=>window.AITUTOR_V9.Lazy119.contentReady===true),'content core is ready before the full question lane');
-  check(await page.locator('script[data-lazy-119="content-core-v69.js"]').count()===1&&await page.locator('script[data-lazy-119="question-core-v69.js"]').count()===1,'content and question core load lazily exactly once');
+  const beforePrefetch=await page.evaluate(()=>({contentReady:window.AITUTOR_V9.Lazy119.contentReady,questionsReady:window.AITUTOR_V9.Lazy119.questionsReady,contentScripts:document.querySelectorAll('script[data-lazy-119="content-core-v69.js"]').length,questionCoreScripts:document.querySelectorAll('script[data-lazy-119="question-core-v69.js"]').length}));
+  check(!beforePrefetch.contentReady&&!beforePrefetch.questionsReady&&beforePrefetch.contentScripts===0&&beforePrefetch.questionCoreScripts===0,'idle warm-up has not executed deferred content or question scripts');
+  await page.evaluate(()=>window.AITUTOR_V9.Lazy119.prefetch());
+  const afterPrefetch=await page.evaluate(()=>({prefetched:window.AITUTOR_V9.Lazy119.prefetched,contentReady:window.AITUTOR_V9.Lazy119.contentReady,questionsReady:window.AITUTOR_V9.Lazy119.questionsReady}));
+  check(afterPrefetch.prefetched&&!afterPrefetch.contentReady&&!afterPrefetch.questionsReady,'prefetch warms network cache without executing deferred lanes');
   const questionFetch=await page.evaluate(()=>{
     const files=new Set(window.AITUTOR_V9.Lazy119.questionFiles||[]);
-    const rows=performance.getEntriesByType('resource').filter(x=>files.has(String(x.name).split('/').pop().split('?')[0])).map(x=>({name:String(x.name).split('/').pop().split('?')[0],start:x.startTime,duration:x.duration}));
-    const starts=rows.map(x=>x.start).sort((a,b)=>a-b);
-    return{count:rows.length,startSpread:starts.length?starts.at(-1)-starts[0]:Infinity,maxDuration:rows.length?Math.max(...rows.map(x=>x.duration)):Infinity};
+    const earliest=new Map();
+    for(const x of performance.getEntriesByType('resource')){
+      const name=String(x.name).split('/').pop().split('?')[0];
+      if(!files.has(name))continue;
+      const prev=earliest.get(name);
+      if(prev==null||x.startTime<prev)earliest.set(name,x.startTime);
+    }
+    const starts=[...earliest.values()].sort((a,b)=>a-b);
+    return{count:earliest.size,startSpread:starts.length?starts.at(-1)-starts[0]:Infinity};
   });
-  check(questionFetch.count===20,'all twenty deferred question assets are observed in browser');
-  check(questionFetch.startSpread<500,'twenty deferred question requests start concurrently '+Math.round(questionFetch.startSpread)+'ms spread');
+  check(questionFetch.count===20,'all twenty deferred question assets are prefetched');
+  check(questionFetch.startSpread<700,'twenty deferred question prefetches start concurrently '+Math.round(questionFetch.startSpread)+'ms spread');
   const b0=Date.now();await page.evaluate(()=>window.AITUTOR_V9.App.go('bank'));
   await page.waitForSelector('.bank-page .question-card',{state:'visible',timeout:10000});
-  const bankMs=Date.now()-b0;check(bankMs<900,'bank opens warm after idle preload '+bankMs+'ms');
+  const bankMs=Date.now()-b0;check(bankMs<1500,'bank opens from prefetched cache '+bankMs+'ms');
+  check(await page.evaluate(()=>window.AITUTOR_V9.Lazy119.contentReady&&window.AITUTOR_V9.Lazy119.questionsReady),'bank entry executes both deferred lanes exactly when needed');
+  check(await page.locator('script[data-lazy-119="content-core-v69.js"]').count()===1&&await page.locator('script[data-lazy-119="question-core-v69.js"]').count()===1,'content and question core execute lazily exactly once');
   const qWidth=(await page.locator('.bank-page .question-card').boundingBox())?.width||0;
   check(qWidth>=1000,'1920 desktop question card uses wider workspace '+qWidth);
 
