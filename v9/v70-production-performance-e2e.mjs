@@ -11,6 +11,11 @@ async function runtimeHead(){
   assert(r.ok,'RUNTIME_HEAD_HTTP_'+r.status);
   return r.json();
 }
+async function proxyMeta(doc){
+  const r=await fetch(new URL('/api/official-pdf?doc='+encodeURIComponent(doc)+'&meta=1',production),{headers:{'cache-control':'no-cache'}});
+  assert(r.ok,'PROXY_META_HTTP_'+doc+'_'+r.status);
+  return r.json();
+}
 async function openApp(browser,{width=1920,height=1080}={}){
   const context=await browser.newContext({viewport:{width,height}});
   const page=await context.newPage();
@@ -109,7 +114,7 @@ try{
   const widthPct=Object.fromEntries(Object.entries(widths).map(([k,v])=>[k,{viewportPct:ratio(v.width,v.viewport),availablePct:ratio(v.width,v.available),width:round(v.width)}]));
   await cold.context.close();
 
-  const [fire1,law2]=await Promise.all([measurePdf(browser,'fire1'),measurePdf(browser,'law2')]);
+  const [law2Meta,fire1,law2]=await Promise.all([proxyMeta('law2'),measurePdf(browser,'fire1'),measurePdf(browser,'law2')]);
 
   const metrics={
     exactProductionHead:runtime.sha,
@@ -122,7 +127,7 @@ try{
       canonicalInitialJs:cold.canonical.length
     },
     questions:{coldMs:round(questionCold),warmMs:round(questionWarm)},
-    pdf:{fire1,law2},
+    pdf:{law2Meta,fire1,law2},
     width1920:widthPct
   };
   console.log('V70_PRODUCTION_PERFORMANCE',JSON.stringify(metrics));
