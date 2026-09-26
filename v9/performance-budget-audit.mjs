@@ -17,7 +17,7 @@ const lazyQuestionAssets=[...(lazyMatch?.[1]||'').matchAll(/'([^']+\.js)'/g)].ma
 const lazyRows=lazyQuestionAssets.map(asset=>({asset,size:fs.statSync(new URL('./'+asset,root)).size}));
 const lazyQuestionBytes=lazyRows.reduce((a,x)=>a+x.size,0);
 const precomputedMatch=lazySource.match(/const PRECOMPUTED_FILES=\[([^\]]+)\]/);
-const precomputedAssets=[...(precomputedMatch?.[1]||'').matchAll(/'([^']+\.js)'/g)].map(m=>m[1]);
+const precomputedAssets=[...(precomputedMatch?.[1]||'').matchAll(/[\"']([^\"']+\.js)[\"']/g)].map(m=>m[1]);
 const lazyCoreAssets=[...(lazySource.match(/const CONTENT_FILE='([^']+)'/)?.slice(1)||[]),...(lazySource.match(/const QUESTION_CORE_FILE='([^']+)'/)?.slice(1)||[]),...precomputedAssets,...(lazySource.match(/const QUESTION_POST_FILE='([^']+)'/)?.slice(1)||[])];
 const lazyCoreRows=lazyCoreAssets.map(asset=>({asset,size:fs.statSync(new URL('./'+asset,root)).size}));
 const lazyCoreBytes=lazyCoreRows.reduce((a,x)=>a+x.size,0);
