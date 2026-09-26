@@ -216,7 +216,7 @@ try{
 
     for(const tab of ['core','detail','quiz','source','ai']){
       await setStudyTab(page,tab);
-      const owner=vp.isMobile?'study-mobile':'study-desktop';
+      const owner='study';
       await assertSingleEffectiveOwner(page,owner,'study '+tab+' '+vp.width);
       await wheel(page,'.concept-head',owner,'study '+tab+' header '+vp.width);
       if(tab==='core'){
