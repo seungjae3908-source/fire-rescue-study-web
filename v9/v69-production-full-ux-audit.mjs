@@ -27,7 +27,8 @@ async function studyTab(page,tab){
   return Date.now()-t;
 }
 async function layoutStats(page){
-  return page.locator('.page').evaluate(root=>{\n    const norm=s=>String(s||'').replace(/\\s+/g,' ').trim();
+  return page.locator('.page').evaluate(root=>{
+    const norm=s=>String(s||'').replace(/\\s+/g,' ').trim();
     const visible=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>1&&r.height>1&&r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight};
     const all=[root,...root.querySelectorAll('*')].filter(visible);
     const vertical=all.filter(el=>!el.matches('textarea,input,select,[contenteditable="true"]')&&['auto','scroll'].includes(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2).map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,100),owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight}));
