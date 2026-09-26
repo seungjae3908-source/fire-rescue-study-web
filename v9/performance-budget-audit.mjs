@@ -5,6 +5,8 @@ const root=new URL('./',import.meta.url);
 const html=fs.readFileSync(new URL('./index.html',root),'utf8');
 const assets=[...html.matchAll(/(?:src|href)="\.\/([^"]+\.(?:js|css))"/g)].map(m=>m[1]);
 const unique=[...new Set(assets)];
+const externalScriptTags=[...html.matchAll(/<script\b[^>]*\bsrc="\.\/([^"]+\.js)"[^>]*>/g)];
+const parserBlockingScripts=externalScriptTags.filter(x=>!/(?:^|\s)(?:defer|async)(?:\s|=|>)/i.test(x[0])).map(x=>x[1]);
 const rows=unique.map(asset=>{
   const file=new URL('./'+asset,root);
   const size=fs.statSync(file).size;
@@ -28,6 +30,7 @@ const limits={
 };
 const checks={
   noDuplicateAssetTags:assets.length===unique.length,
+  noParserBlockingScripts:parserBlockingScripts.length===0,
   totalPayload:totalBytes<=limits.totalBytes,
   lazyQuestionManifest:lazyQuestionAssets.length>=10&&lazyQuestionBytes>250000,
   lazyQuestionNotEager:lazyQuestionAssets.every(asset=>!unique.includes(asset)),
@@ -38,7 +41,7 @@ const checks={
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
 const result={
-  version:'119-performance-budget-v2',
+  version:'119-performance-budget-v3-deferred-bootstrap',
   totalBytes,
   totalKiB:Math.round(totalBytes/1024),
   lazyQuestionBytes,
@@ -46,6 +49,7 @@ const result={
   combinedRuntimeBytes,
   initialHeadroomBytes:limits.totalBytes-totalBytes,
   lazyQuestionAssets:lazyQuestionAssets.length,
+  parserBlockingScripts,
   assetCount:rows.length,
   jsCount,
   cssCount,
