@@ -270,9 +270,12 @@ async function ensure({onProgress}={}){
   loading=(async()=>{
     emit('로컬 AI 엔진 불러오는 중',onProgress);
     const m=V.RuntimeDeps?.loadWebLLM?await V.RuntimeDeps.loadWebLLM():await import('https://esm.run/@mlc-ai/web-llm@0.2.85'),list=m.prebuiltAppConfig?.model_list||[];
-    const model=list.find(x=>/0\.5B.*Instruct/i.test(x.model_id))||list.filter(x=>/Instruct/i.test(x.model_id)).sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0]||list.sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0];
+    const instruct=list.filter(x=>/Instruct/i.test(x.model_id)),small=instruct.find(x=>/0\.5B.*Instruct/i.test(x.model_id))||instruct.sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0];
+    const memory=Number(navigator.deviceMemory||0),mid=memory>=8?(instruct.find(x=>/1\.5B.*Instruct/i.test(x.model_id))||instruct.find(x=>/(?:^|[-_])1B.*Instruct/i.test(x.model_id))):null;
+    const model=mid||small||list.sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0];
     if(!model)throw Error('LOCAL_AI_MODEL_UNAVAILABLE');
-    engine=await m.CreateMLCEngine(model.model_id,{initProgressCallback:p=>emit(p.text||'AI 모델 준비 중',onProgress)});
+    try{engine=await m.CreateMLCEngine(model.model_id,{initProgressCallback:p=>emit(p.text||'AI 모델 준비 중',onProgress)})}
+    catch(err){if(!small||small.model_id===model.model_id)throw err;emit('경량 AI로 전환 중',onProgress);engine=await m.CreateMLCEngine(small.model_id,{initProgressCallback:p=>emit(p.text||'AI 모델 준비 중',onProgress)})}
     emit('로컬 AI 준비됨',onProgress);return engine;
   })().catch(err=>{engine=null;emit('로컬 AI 사용 불가',onProgress);throw err}).finally(()=>loading=null);
   return loading;
