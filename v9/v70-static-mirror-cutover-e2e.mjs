@@ -57,6 +57,33 @@ try{
   assert(result.canvasWidth>0&&result.canvasHeight>0,'LAW2_CANVAS_EMPTY');
   assert(responses.some(x=>x.status===206&&x.range&&x.acceptRanges),'LAW2_BROWSER_NO_206_RANGE_'+JSON.stringify(responses));
 
+  const coordinateTruth=await page.evaluate(()=>{
+    const S=window.AITUTOR_V9.SourcePDF;
+    return{
+      printedPrevention1Page3:S.pdfPage('prevention1',3),
+      rawPrevention2Page536:S.rangePdfPage('prevention2',536,'pdf'),
+      printedPrevention2Page3:S.rangePdfPage('prevention2',3,'book')
+    };
+  });
+  assert(coordinateTruth.printedPrevention1Page3===17,'PRINTED_PAGE_OFFSET_REGRESSION_'+JSON.stringify(coordinateTruth));
+  assert(coordinateTruth.rawPrevention2Page536===536,'EXACT_PDF_ANCHOR_OFFSET_REGRESSION_'+JSON.stringify(coordinateTruth));
+  assert(coordinateTruth.printedPrevention2Page3===15,'PRINTED_PREVENTION2_OFFSET_REGRESSION_'+JSON.stringify(coordinateTruth));
+
+  await page.evaluate(()=>{
+    const V=window.AITUTOR_V9,c=V.curriculum.byId['F07-C15'],st=V.Store.state;
+    st.page='study';st.subject='fire';st.scopeId=c.scopeId;st.conceptId=c.id;st.studyTab='source';V.Store.save();V.App.render();
+  });
+  await page.waitForSelector('[data-source-concept="F07-C15"]',{timeout:10000});
+  await page.locator('[data-source-concept="F07-C15"]').click();
+  await page.waitForSelector('#pdfEvidence[data-render-state="ready"]',{timeout:30000});
+  const anchorModal=await page.locator('#pdfEvidence').evaluate(root=>({
+    page:Number(root.dataset.page)||0,
+    space:root.dataset.anchorSpace||'',
+    label:root.querySelector('[data-pdf-page-label]')?.textContent||''
+  }));
+  assert(anchorModal.page===167&&anchorModal.space==='pdf','F07_C15_MUST_OPEN_RAW_PDF_167_'+JSON.stringify(anchorModal));
+  console.log('V70_EXACT_PDF_ANCHOR_COORDINATE_SUCCESS',JSON.stringify({coordinateTruth,anchorModal}));
+
   console.log('V70_LAW2_STATIC_CUTOVER_SUCCESS');
   await context.close();
 }finally{
