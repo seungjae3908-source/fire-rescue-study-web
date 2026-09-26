@@ -27,7 +27,7 @@ const CONTENT_FILE='content-core-v69.js';
 const QUESTION_CORE_FILE='question-core-v69.js';
 const PRECOMPUTED_FILES=["questions-precomputed-v69-1.json","questions-precomputed-v69-2.json","questions-precomputed-v69-3.json","questions-precomputed-v69-4.json","questions-precomputed-v69-5.json","questions-precomputed-v69-6.json"];
 const QUESTION_POST_FILE='question-post-v69.js';
-let prefetchPromise=null,contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
+let prefetchPromise=null,contentPromise=null,contentReady=false,questionCorePromise=null,questionCoreReady=false,questionsPromise=null,questionsReady=false;
 
 // V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
 // tokens as real learner-facing underlines as well as marker emphasis so the core
@@ -125,16 +125,37 @@ async function ensureContent({background=false}={}){
   }).finally(()=>{if(!background)document.body?.removeAttribute('aria-busy')});
   return contentPromise
 }
+async function ensureQuestionCore({background=false}={}){
+  if(questionCoreReady)return V.questions||[];
+  if(questionCorePromise)return questionCorePromise;
+  document.documentElement.dataset.questionCoreLane='loading';
+  if(!background)document.body?.setAttribute('aria-busy','true');
+  questionCorePromise=(async()=>{
+    await ensureContent({background:true});
+    await loadScript(QUESTION_CORE_FILE);
+    await appendPrecomputedQuestions();
+    await loadScript(QUESTION_POST_FILE);
+    V.QuestionDifficulty?.annotate?.(V.questions||[]);
+    V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
+    V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
+    questionCoreReady=true;
+    document.documentElement.dataset.questionCoreLane='ready';
+    window.dispatchEvent(new CustomEvent('aitutor-question-core-ready',{detail:{count:(V.questions||[]).length}}));
+    return V.questions||[]
+  })().catch(err=>{
+    questionCorePromise=null;
+    document.documentElement.dataset.questionCoreLane='error';
+    throw err
+  }).finally(()=>{if(!background)document.body?.removeAttribute('aria-busy')});
+  return questionCorePromise
+}
 async function ensureQuestions({background=false}={}){
   if(questionsReady)return V.questions||[];
   if(questionsPromise)return questionsPromise;
   document.documentElement.dataset.questionLane='loading';
   if(!background)document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
-    await ensureContent({background:true});
-    await loadScript(QUESTION_CORE_FILE);
-    await appendPrecomputedQuestions();
-    await loadScript(QUESTION_POST_FILE);
+    await ensureQuestionCore({background:true});
     await Promise.all(QUESTION_FILES.map(loadScript));
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
@@ -170,19 +191,23 @@ async function ensureQuestions({background=false}={}){
 }
 function needsContent(page,studyTab){return String(page||'')==='study'}
 function needsContentForCurrentState(){const state=V.Store?.state||{};return needsContent(state.page,state.studyTab)}
+function needsQuestionCore(page,studyTab){return String(page||'')==='bank'||needsQuestions(page,studyTab)}
+function needsQuestionCoreForCurrentState(){const state=V.Store?.state||{};return needsQuestionCore(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)}
 function needsQuestions(page,studyTab){
-  return ['bank','exam','wrong','stats'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
+  return ['exam','wrong','stats'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
 }
 function needsQuestionsForCurrentState(){
   const state=V.Store?.state||{};
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v8-idle-json-parse',
+  version:'119-lazy-runtime-v9-fast-bank-core',
   contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,precomputedFiles:[...PRECOMPUTED_FILES],questionPostFile:QUESTION_POST_FILE,questionFiles:[...QUESTION_FILES],
-  deferredAssets,prefetch,ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
+  deferredAssets,prefetch,ensureContent,ensureQuestionCore,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestionCore,needsQuestionCoreForCurrentState,needsQuestions,needsQuestionsForCurrentState,
   get prefetched(){return document.documentElement.dataset.deferredPrefetch==='ready'},
   get contentReady(){return contentReady},
+  get questionCoreReady(){return questionCoreReady},
+  get questionCoreLoading(){return !!questionCorePromise&&!questionCoreReady},
   get contentLoading(){return !!contentPromise&&!contentReady},
   get questionsReady(){return questionsReady},
   get questionsLoading(){return !!questionsPromise&&!questionsReady}

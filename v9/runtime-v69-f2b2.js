@@ -47,17 +47,18 @@ if(c?.subject===subject){state().subject=subject;state().scopeId=c.scopeId;state
 const sc=(subject==='fire'?V.curriculum.fire:V.curriculum.ems)[0];state().subject=subject;state().scopeId=sc.id;state().conceptId=`${sc.id}-C01`;state().studyTab='core';return V.curriculum.byId[state().conceptId]
 }
 async function ensurePageData(page,tab=state().studyTab){
-const needContent=!!V.Lazy119?.needsContent?.(page,tab),needQuestions=!!V.Lazy119?.needsQuestions?.(page,tab);
-if((!needContent||V.Lazy119.contentReady)&&(!needQuestions||V.Lazy119.questionsReady))return true;
+const needContent=!!V.Lazy119?.needsContent?.(page,tab),needCore=!!V.Lazy119?.needsQuestionCore?.(page,tab),needQuestions=!!V.Lazy119?.needsQuestions?.(page,tab);
+if((!needContent||V.Lazy119.contentReady)&&(!needCore||V.Lazy119.questionCoreReady)&&(!needQuestions||V.Lazy119.questionsReady))return true;
 try{
   document.body?.setAttribute('aria-busy','true');
   if(needContent&&!V.Lazy119.contentReady)await V.Lazy119.ensureContent();
+  if(needCore&&!V.Lazy119.questionCoreReady)await V.Lazy119.ensureQuestionCore();
   if(needQuestions&&!V.Lazy119.questionsReady)await V.Lazy119.ensureQuestions();
   return true
 }catch(err){console.error(err);toast('학습 데이터를 불러오지 못했습니다. 다시 시도해주세요.');return false}
 finally{document.body?.removeAttribute('aria-busy')}
 }
-async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render()}
+async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render();if(target==='bank'&&!V.Lazy119?.questionsReady&&!V.Lazy119?.questionsLoading)V.Lazy119.ensureQuestions({background:true}).then(()=>{if(state().page==='bank')render()}).catch(err=>console.warn('BANK_BACKGROUND_EXPANSION_FAILED',err))}
 function chooseConcept(id,{keepTab=false}={}){const c=V.curriculum.byId[id];if(!c)return;state().conceptId=id;state().scopeId=c.scopeId;state().subject=c.subject;if(!keepTab)state().studyTab='core';state().outline=false;rememberStudyPosition(c.subject);S.save();return go('study')}
 function navButton([id,ico,label]){const active=state().page===id;return `<button class="${active?'active':''}" ${active?'aria-current="page"':''} data-go="${id}"><span class="ico">${ico}</span><span>${label}</span></button>`}
 function shell(content,title='',crumb=''){const account=V.Auth?.user?'회원':'게스트';return `<div class="app"><aside class="side"><div class="brand"><span class="brand-mark">✓</span><div><b>소방합격</b></div></div><nav class="nav">${NAV.map(navButton).join('')}</nav><div class="side-foot"><button class="account-chip" data-account><b>${esc(account)}</b></button></div></aside><main class="main page-${state().page} ${state().page==='exam'&&runtime.exam?'exam-active':''}"><header class="top"><h1>${esc(title||NAV.find(x=>x[0]===state().page)?.[2]||'119')}</h1><span class="spacer"></span><button class="btn small ghost" data-account>${V.Auth?.isGuest?'계정':'회원'}</button></header><section class="page">${content}</section><nav class="mobile-nav" aria-label="주요 메뉴"><button class="${state().page==='home'?'active':''}" ${state().page==='home'?'aria-current="page"':''} data-go="home">홈</button><button class="${state().page==='study'?'active':''}" ${state().page==='study'?'aria-current="page"':''} data-go="study">학습</button><button class="${state().page==='exam'?'active':''}" ${state().page==='exam'?'aria-current="page"':''} data-go="exam">시험</button><button class="${state().page==='wrong'?'active':''}" ${state().page==='wrong'?'aria-current="page"':''} data-go="wrong">오답</button><button data-more>더보기</button></nav></main>${runtime.more?moreSheet():''}${runtime.account?accountModal():''}${runtime.toast?`<div class="app-toast" role="status" aria-live="polite" aria-atomic="true"><span>${esc(runtime.toast)}</span>${runtime.toastAction?`<button class="app-toast-action" data-toast-action>${esc(runtime.toastAction.label)}</button>`:''}</div>`:''}</div>`}
@@ -1067,6 +1068,7 @@ async function boot(){
 let dataLaneReady=true;
 try{
   if(V.Lazy119?.needsContentForCurrentState?.())await V.Lazy119.ensureContent();
+  if(V.Lazy119?.needsQuestionCoreForCurrentState?.())await V.Lazy119.ensureQuestionCore();
   if(V.Lazy119?.needsQuestionsForCurrentState?.())await V.Lazy119.ensureQuestions();
 }catch(err){
   dataLaneReady=false;console.error(err);
