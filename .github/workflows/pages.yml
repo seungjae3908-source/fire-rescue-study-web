@@ -29,6 +29,42 @@ jobs:
         with:
           enablement: true
 
+      - name: Restore 2026 official PDF mirror cache
+        uses: actions/cache@v4
+        with:
+          path: official-pdf-mirror
+          key: study119-official-pdf-2026-v1
+
+      - name: Materialize law and prevention static PDF mirrors
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p official-pdf-mirror
+          proxy='https://fire-rescue-study-web.vercel.app/api/official-pdf'
+          docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
+          for doc in "${docs[@]}"; do
+            out="official-pdf-mirror/${doc}.pdf"
+            if [[ -s "$out" ]] && [[ "$(head -c 5 "$out" 2>/dev/null || true)" == '%PDF-' ]]; then
+              echo "MIRROR_CACHE_HIT $doc $(wc -c < "$out" | tr -d ' ')"
+              continue
+            fi
+            tmp="${out}.tmp"
+            rm -f "$tmp"
+            echo "MIRROR_FETCH_START $doc"
+            curl -fL --retry 4 --retry-delay 2 --retry-all-errors --connect-timeout 20 --max-time 240 \
+              -H 'Cache-Control: no-cache' "${proxy}?doc=${doc}" -o "$tmp"
+            test "$(head -c 5 "$tmp")" = '%PDF-'
+            test "$(wc -c < "$tmp" | tr -d ' ')" -gt 100000
+            mv "$tmp" "$out"
+            echo "MIRROR_FETCH_DONE $doc $(wc -c < "$out" | tr -d ' ')"
+          done
+          (
+            cd official-pdf-mirror
+            sha256sum prevention1.pdf prevention2.pdf law1.pdf law2.pdf law3.pdf law4.pdf law5.pdf > SHA256SUMS.txt
+            wc -c prevention1.pdf prevention2.pdf law1.pdf law2.pdf law3.pdf law4.pdf law5.pdf > SIZES.txt
+          )
+          touch official-pdf-mirror/.nojekyll
+
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
