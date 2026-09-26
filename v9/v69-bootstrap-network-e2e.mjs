@@ -18,7 +18,8 @@ try{
 
   const boot=[...new Set(requests.filter(x=>bundles.includes(x)))];
   const source=[...new Set(requests.filter(x=>canonical.has(x)))];
-  if(JSON.stringify(boot)!==JSON.stringify(bundles))throw new Error('BOOT_REQUESTS_MISMATCH '+JSON.stringify({expected:bundles,actual:boot}));
+  const missing=bundles.filter(x=>!boot.includes(x)),extra=boot.filter(x=>!bundles.includes(x));
+  if(boot.length!==bundles.length||missing.length||extra.length)throw new Error('BOOT_REQUESTS_MISMATCH '+JSON.stringify({expected:bundles,actual:boot,missing,extra}));
   if(source.length)throw new Error('CANONICAL_SOURCE_REQUESTED '+JSON.stringify(source));
 
   const perf=await page.evaluate(()=>performance.getEntriesByType('resource').map(x=>new URL(x.name).pathname.split('/').pop()||''));
