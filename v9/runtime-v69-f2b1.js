@@ -27,7 +27,7 @@ const QUESTION_FILES=[
 ];
 const CONTENT_FILE='content-core-v69.js';
 const QUESTION_CORE_FILE='question-core-v69.js';
-const PRECOMPUTED_FILES=["questions-precomputed-v69-1.js","questions-precomputed-v69-2.js","questions-precomputed-v69-3.js","questions-precomputed-v69-4.js","questions-precomputed-v69-5.js","questions-precomputed-v69-6.js"];
+const PRECOMPUTED_FILES=["questions-precomputed-v69-1.json","questions-precomputed-v69-2.json","questions-precomputed-v69-3.json","questions-precomputed-v69-4.json","questions-precomputed-v69-5.json","questions-precomputed-v69-6.json"];
 const QUESTION_POST_FILE='question-post-v69.js';
 let prefetchPromise=null,contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
 
@@ -59,6 +59,20 @@ function installCoreUnderlineObserver(){
 }
 installCoreUnderlineObserver();
 
+const jsonPromises=new Map();
+function loadJson(file){
+  if(jsonPromises.has(file))return jsonPromises.get(file);
+  const p=fetch('./'+file,{cache:'force-cache',credentials:'same-origin'}).then(async r=>{
+    if(!r.ok)throw new Error('LAZY_119_JSON_FAILED '+file+' '+r.status);
+    return r.json()
+  }).catch(err=>{jsonPromises.delete(file);throw err});
+  jsonPromises.set(file,p);return p
+}
+async function appendPrecomputedQuestions(){
+  const chunks=await Promise.all(PRECOMPUTED_FILES.map(loadJson));
+  const ids=new Set((V.questions||[]).map(q=>q.id));
+  for(const rows of chunks)for(const q of rows||[])if(!ids.has(q.id)){V.questions.push(q);ids.add(q.id)}
+}
 function loadScript(file){
   return new Promise((resolve,reject)=>{
     const selector='script[data-lazy-119="'+file+'"]',existing=document.querySelector(selector);
@@ -120,7 +134,7 @@ async function ensureQuestions({background=false}={}){
   questionsPromise=(async()=>{
     await ensureContent({background:true});
     await loadScript(QUESTION_CORE_FILE);
-    for(const file of PRECOMPUTED_FILES)await loadScript(file);
+    await appendPrecomputedQuestions();
     await loadScript(QUESTION_POST_FILE);
     await Promise.all(QUESTION_FILES.map(loadScript));
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
@@ -165,7 +179,7 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v6-precomputed-factories',
+  version:'119-lazy-runtime-v7-json-precomputed',
   contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,precomputedFiles:[...PRECOMPUTED_FILES],questionPostFile:QUESTION_POST_FILE,questionFiles:[...QUESTION_FILES],
   deferredAssets,prefetch,ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
   get prefetched(){return document.documentElement.dataset.deferredPrefetch==='ready'},
