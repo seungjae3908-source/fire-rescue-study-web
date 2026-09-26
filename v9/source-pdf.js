@@ -69,7 +69,10 @@ async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCach
     try{const pdf=await waitPdfTask(task,fastTimeout),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);onProgress?.({ready:true,transport:'mirror'});return entry}
     catch{await task.destroy?.().catch?.(()=>{});onProgress?.({fallback:true,transport:'mirror'});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin='official-proxy-fallback'}
   }else if(catalog?.proxyPdf){
-    const row=await cacheOfficial(key,{timeoutMs,onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||catalog.expectedNames?.[0]||catalog.label||key;origin='official-proxy-full-cache'
+    const fastUrl=catalog.proxyPdf,fastTimeout=Math.min(6500,timeoutMs);
+    task=p.getDocument({url:fastUrl,withCredentials:false,disableRange:false,disableStream:true,disableAutoFetch:true,rangeChunkSize:65536});name=catalog.expectedNames?.[0]||catalog.label||key;origin='official-proxy-range';
+    try{const pdf=await waitPdfTask(task,fastTimeout),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);onProgress?.({ready:true,transport:'proxy-range'});return entry}
+    catch{await task.destroy?.().catch?.(()=>{});onProgress?.({fallback:true,transport:'proxy-range'});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||catalog.expectedNames?.[0]||catalog.label||key;origin='official-proxy-full-cache-fallback'}
   }else{const row=await resolveRow(key,{timeoutMs,onProgress});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=row.origin||'local-cache'}
   try{const pdf=await waitPdfTask(task,Math.min(timeoutMs,25000)),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await task.destroy?.().catch?.(()=>{});throw err}
 }
