@@ -99,6 +99,7 @@ jobs:
           node --check v9/v68-detail-source-brand-audit.mjs
           node --check v9/v68-detail-source-brand-e2e.mjs
           node --check v9/v69-performance-foundation-audit.mjs
+          node --check v9/v69-bootstrap-bundle-audit.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -123,6 +124,8 @@ jobs:
         run: node v9/v54-source-range-strategy-audit.mjs
       - name: V69 performance foundation gate
         run: node v9/v69-performance-foundation-audit.mjs
+      - name: V69 bootstrap bundle integrity gate
+        run: node v9/v69-bootstrap-bundle-audit.mjs
       - name: Official notice monitor contract gate
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
