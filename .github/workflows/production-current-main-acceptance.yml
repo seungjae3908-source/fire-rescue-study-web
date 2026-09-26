@@ -85,6 +85,12 @@ jobs:
           STUDY_119_V67_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
         run: node v9/v67-whole-app-real-ux-e2e.mjs
 
+      - name: Production V69 critical performance + source acceptance
+        env:
+          STUDY_119_PRODUCTION_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
+          STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
+        run: node v9/v69-production-critical-e2e.mjs
+
       - name: Production suggestion guest + anon Data API acceptance
         env:
           STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
