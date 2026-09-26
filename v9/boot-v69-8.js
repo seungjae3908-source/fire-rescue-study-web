@@ -222,6 +222,7 @@ if(!rows.length)return'';
 return `<section class="detail-criteria" data-detail-section="criteria"><h3>수치 · 기준</h3><ul>${rows.map(x=>`<li>${numberHighlight(x)}</li>`).join('')}</ul></section>`
 }
 function detailHasUniqueContent(x,seeds=[]){if(!x)return false;if(detailOnlyText(x.body,seeds))return true;return(x.bullets||[]).some(v=>detailOnlyText(v,seeds))}
+function detailSectionShouldOpen(title,index=0){return index===0||/비교|구분|분석|시험|함정|주의|예외|수치|기준|금기|변형|오염/.test(String(title||''))}
 function detailSection(c,x,index=0,coreSeeds=[]){
 if(!x)return'';
 const raw=String(x.title||'').trim();
@@ -229,7 +230,7 @@ if(/개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구
 const body=detailOnlyText(x.body,coreSeeds),bullets=uniqueTextRows((x.bullets||[]).filter(Boolean),x.body).map(studentStudyText).filter(v=>v&&!isCoreStudyText(v,coreSeeds));
 if(!body&&!bullets.length)return'';
 const title=detailSectionTitle(c,raw,body||bullets[0]||'');
-const opened=index===0?' open':'';return `<details class="detail-section detail-fold"${opened} data-detail-section="${index}"><summary class="detail-fold-summary"><h3>${esc(title)}</h3><span>${opened?'펼쳐짐':'펼쳐보기'}</span></summary><div class="detail-copy">${body?`<p>${esc(body)}</p>`:''}${bullets.length?`<ul class="detail-key-list detail-plain-list">${bullets.map(v=>`<li>${esc(v)}</li>`).join('')}</ul>`:''}</div></details>`
+const isOpen=detailSectionShouldOpen(title,index),opened=isOpen?' open':'';return `<details class="detail-section detail-fold"${opened} data-detail-section="${index}"><summary class="detail-fold-summary"><h3>${esc(title)}</h3><span>${isOpen?'펼쳐짐':'펼쳐보기'}</span></summary><div class="detail-copy">${body?`<p>${esc(body)}</p>`:''}${bullets.length?`<ul class="detail-key-list detail-plain-list">${bullets.map(v=>`<li>${esc(v)}</li>`).join('')}</ul>`:''}</div></details>`
 }
 function detailToc(c,pack,rows=[]){
 const items=[['definition','정의']];
