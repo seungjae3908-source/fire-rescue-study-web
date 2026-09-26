@@ -10,9 +10,9 @@ const failures=[];
 const ok=(v,m)=>{if(v)console.log('PASS',m);else failures.push(m)};
 
 const executable=[...index.matchAll(/<script\s+src="\.\/([^"]+)"[^>]*><\/script>/g)].map(x=>x[1]);
-const bundles=['runtime-v69-a.js','runtime-v69-b.js','runtime-v69-c.js','runtime-v69-d.js','runtime-v69-e.js','runtime-v69-f1.js','runtime-v69-f2.js'];
-ok(executable.length===8,'eager executable scripts collapse from 101 to 8');
-ok(executable[0]==='config.js'&&bundles.every(x=>executable.includes(x)),'config plus seven ordered runtime bundles are executable');
+const bundles=["runtime-v69-a1.js","runtime-v69-a2.js","runtime-v69-b1.js","runtime-v69-b2.js","runtime-v69-c1.js","runtime-v69-c2a.js","runtime-v69-c2b.js","runtime-v69-d1.js","runtime-v69-d2a.js","runtime-v69-d2b.js","runtime-v69-e1.js","runtime-v69-e2.js","runtime-v69-f1.js","runtime-v69-f2a.js","runtime-v69-f2b1.js","runtime-v69-f2b2.js"];
+ok(executable.length===17,'eager executable scripts collapse from 101 to 17');
+ok(executable[0]==='config.js'&&bundles.every(x=>executable.includes(x)),'config plus sixteen ordered runtime bundles are executable');
 ok(bundles.every(x=>fs.existsSync(new URL('./'+x,import.meta.url))),'all runtime bundles exist');
 ok(sw.includes("v69-performance")&&bundles.every(x=>sw.includes("'./"+x+"'")),'service worker precaches V69 bundles');
 ok(!/\['bank','exam','wrong','stats','notes'\]/.test(lazy)&&lazy.includes("['bank','exam','wrong','stats']"),'notes no longer blocks on question lane');
