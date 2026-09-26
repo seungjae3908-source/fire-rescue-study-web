@@ -45,6 +45,7 @@ try{
   const precomputed=await page.evaluate(()=>window.AITUTOR_V9.PrecomputedQuestionFactoriesV69||null);
   check(precomputed?.count===4946&&precomputed?.runtimeGeneration===false,'bank uses 4,946 JSON-precomputed generated questions with runtime generation disabled');
   check(await page.evaluate(()=>{const rows=window.AITUTOR_V9?.Lazy119?.precomputedFiles||[];return rows.length===6&&rows.every(x=>x.endsWith('.json'))}),'all six precomputed question chunks use JSON rather than JavaScript source parsing');
+  check(await page.evaluate(()=>window.AITUTOR_V9?.Lazy119?.bankBaseFile==='questions-bank-base-v69.json'),'bank base questions also use precomputed JSON rather than runtime script generation');
   await page.waitForFunction(()=>window.AITUTOR_V9.Lazy119.questionsReady===true,{timeout:15000});
   check(await page.evaluate(()=>window.AITUTOR_V9.Lazy119.questionsReady),'full question extensions finish in the background after bank becomes usable');
   check(await page.locator('script[data-lazy-119="content-core-v69.js"]').count()===1&&await page.locator('script[data-lazy-119="question-core-v69.js"]').count()===1,'content and question core execute lazily exactly once');
