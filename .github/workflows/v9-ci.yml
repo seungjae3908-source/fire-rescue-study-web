@@ -416,6 +416,28 @@ jobs:
         run: node v9/coverage2-audit.mjs
 
 
+  v69_production_full_ux_diagnostic:
+    name: v69_production_full_ux_diagnostic
+    if: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      STUDY_119_V69_URL: https://fire-rescue-study-web.vercel.app/
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Install V69 Production audit browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Audit Production PC tablet mobile real-use UX
+        run: node v9/v69-production-full-ux-audit.mjs
+
+
   coverage_anchor_audit:
     name: coverage_anchor_audit (manual slow audit)
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_coverage_audit }}
