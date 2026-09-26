@@ -18,7 +18,8 @@ ok(css.includes('.detail-section-active h3'),'active detail section title is hig
 ok(index.includes('<title>소방합격</title>'),'browser title is 소방합격');
 ok(index.includes('content="소방합격"'),'description is 소방합격');
 ok(manifest.name==='소방합격'&&manifest.short_name==='소방합격','PWA name is 소방합격');
-ok(catalog.includes('sameOriginProduction'),'production source catalog prefers same-origin PDF API');
+ok(catalog.includes('sameOriginProduction'),'production source catalog prefers same-origin PDF API for proxy fallback');
+ok(catalog.includes("const mirrorBase=String(cfg.officialPdfMirrorBase||'')")&&catalog.includes("const mirrorDocs=new Set(Array.isArray(cfg.officialPdfMirrorDocs)"),'production keeps verified static mirror documents enabled');
 ok(source.includes("origin='official-proxy-full-cache'"),'proxy PDF uses reliable full-cache path');
 ok(!source.includes('proxyRange=!staticRange'),'legacy proxy-range path removed');
 
