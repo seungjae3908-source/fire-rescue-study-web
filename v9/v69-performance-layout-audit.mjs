@@ -18,7 +18,7 @@ const bundles=["runtime-v69-a1.js","runtime-v69-e1.js","runtime-v69-e2.js","runt
 ok(executable.length===8,'eager executable scripts collapse from 101 to 8');
 ok(executable[0]==='config.js'&&bundles.every(x=>executable.includes(x)),'config plus seven startup runtime bundles are executable');
 ok(bundles.every(x=>fs.existsSync(new URL('./'+x,import.meta.url))),'all runtime bundles exist');
-ok(sw.includes("v69-performance")&&bundles.every(x=>sw.includes("'./"+x+"'")),'service worker precaches V69 bundles');
+ok(sw.includes("v69-startup-split")&&bundles.every(x=>sw.includes("'./"+x+"'")),'service worker precaches the seven V69 startup bundles under the startup-split cache generation');
 ok(!/\['bank','exam','wrong','stats','notes'\]/.test(lazy)&&lazy.includes("['bank','exam','wrong','stats']"),'notes no longer blocks on question lane');
 ok(lazy.includes('ensureQuestions({background=false}={})')&&app.includes('scheduleQuestionPreload')&&app.includes('ensureQuestions({background:true})'),'question lane preloads in idle without blocking first UI');
 ok(lazy.includes("CONTENT_FILE='content-core-v69.js'")&&lazy.includes("QUESTION_CORE_FILE='question-core-v69.js'")&&lazy.includes('ensureContent'),'study content and full question core are deferred behind the first usable home render');
