@@ -58,7 +58,7 @@ try{
 finally{document.body?.removeAttribute('aria-busy')}
 }
 async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render()}
-function chooseConcept(id,{keepTab=false}={}){const c=V.curriculum.byId[id];if(!c)return;state().conceptId=id;state().scopeId=c.scopeId;state().subject=c.subject;if(!keepTab)state().studyTab='core';state().outline=false;rememberStudyPosition(c.subject);S.save();go('study')}
+function chooseConcept(id,{keepTab=false}={}){const c=V.curriculum.byId[id];if(!c)return;state().conceptId=id;state().scopeId=c.scopeId;state().subject=c.subject;if(!keepTab)state().studyTab='core';state().outline=false;rememberStudyPosition(c.subject);S.save();return go('study')}
 function navButton([id,ico,label]){const active=state().page===id;return `<button class="${active?'active':''}" ${active?'aria-current="page"':''} data-go="${id}"><span class="ico">${ico}</span><span>${label}</span></button>`}
 function shell(content,title='',crumb=''){const account=V.Auth?.user?'회원':'게스트';return `<div class="app"><aside class="side"><div class="brand"><span class="brand-mark">✓</span><div><b>소방합격</b></div></div><nav class="nav">${NAV.map(navButton).join('')}</nav><div class="side-foot"><button class="account-chip" data-account><b>${esc(account)}</b></button></div></aside><main class="main page-${state().page} ${state().page==='exam'&&runtime.exam?'exam-active':''}"><header class="top"><h1>${esc(title||NAV.find(x=>x[0]===state().page)?.[2]||'119')}</h1><span class="spacer"></span><button class="btn small ghost" data-account>${V.Auth?.isGuest?'계정':'회원'}</button></header><section class="page">${content}</section><nav class="mobile-nav" aria-label="주요 메뉴"><button class="${state().page==='home'?'active':''}" ${state().page==='home'?'aria-current="page"':''} data-go="home">홈</button><button class="${state().page==='study'?'active':''}" ${state().page==='study'?'aria-current="page"':''} data-go="study">학습</button><button class="${state().page==='exam'?'active':''}" ${state().page==='exam'?'aria-current="page"':''} data-go="exam">시험</button><button class="${state().page==='wrong'?'active':''}" ${state().page==='wrong'?'aria-current="page"':''} data-go="wrong">오답</button><button data-more>더보기</button></nav></main>${runtime.more?moreSheet():''}${runtime.account?accountModal():''}${runtime.toast?`<div class="app-toast" role="status" aria-live="polite" aria-atomic="true"><span>${esc(runtime.toast)}</span>${runtime.toastAction?`<button class="app-toast-action" data-toast-action>${esc(runtime.toastAction.label)}</button>`:''}</div>`:''}</div>`}
 function moreSheet(){return `<div class="modal-wrap" data-backdrop-close-more><div class="modal menu-modal"><div class="toolbar"><h2 style="margin-right:auto">더보기</h2><button class="btn small ghost" data-close-more>닫기</button></div><div class="list menu-list">${NAV.filter(x=>!['home','study','exam','wrong'].includes(x[0])).map(x=>`<button class="row btn ghost" data-go="${x[0]}">${x[1]} ${x[2]}</button>`).join('')}</div></div></div>`}
@@ -792,7 +792,21 @@ return shell(`<div class="settings-page screen-scroll" data-scroll-owner="settin
 }
 function view(){if(state().page==='tutor'){state().page='study';state().studyTab='ai';S.save()}return({home,study,notes,bank,exam,wrong,stats,resources,suggestions,settings}[state().page]||home)()}
 function scrollTutorToBottom(s,force){requestAnimationFrame(()=>requestAnimationFrame(()=>{const x=[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent!==null);if(!x)return;const b=x.closest('.study-body');if(!b)return;if(force||!s||s[1])b.scrollTop=b.scrollHeight;else b.scrollTop=s[0];runtime.tutorForceLatest=false}))}
-function render(){const a=state().page==='study'&&state().studyTab==='ai',x=a?[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent!==null):null,b=x?.closest('.study-body'),s=b&&[b.scrollTop,b.scrollHeight-b.clientHeight-b.scrollTop<25],f=runtime.tutorForceLatest;document.querySelector('#app').innerHTML=view();if(a)scrollTutorToBottom(s,f);if(state().page==='study'&&state().studyTab==='detail')bindDetailSectionTracking()}
+let deferredStudyRender=null;
+function render(){
+const appRoot=document.querySelector('#app');
+if(state().page==='study'&&V.Lazy119?.ensureContent&&!V.Lazy119.contentReady){
+  if(!deferredStudyRender){
+    deferredStudyRender=V.Lazy119.ensureContent({background:true}).then(()=>{deferredStudyRender=null;render()}).catch(err=>{
+      deferredStudyRender=null;console.error(err);state().page='home';state().studyTab='core';S.save();runtime.authNotice='학습 자료를 불러오지 못해 홈으로 이동했습니다.';render()
+    })
+  }
+  appRoot.innerHTML=shell('<div class="empty"><div><b>학습 자료 불러오는 중…</b><p class="muted">잠시 후 현재 학습 위치로 이어집니다.</p></div></div>','학습');
+  return
+}
+const a=state().page==='study'&&state().studyTab==='ai',x=a?[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent!==null):null,b=x?.closest('.study-body'),s=b&&[b.scrollTop,b.scrollHeight-b.clientHeight-b.scrollTop<25],f=runtime.tutorForceLatest;
+appRoot.innerHTML=view();if(a)scrollTutorToBottom(s,f);if(state().page==='study'&&state().studyTab==='detail')bindDetailSectionTracking()
+}
 
 function syncDetailTocActive(root,key,{scrollChip=false,lock=false}={}){
 const view=root?.querySelector?.('.detail-view')||root?.closest?.('.detail-view')||document.querySelector('.detail-view');if(!view)return;
