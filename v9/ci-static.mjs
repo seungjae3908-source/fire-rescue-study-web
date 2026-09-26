@@ -718,7 +718,7 @@ ok(officialMonitorProbe.includes('OFFICIAL_MONITOR_SOURCE_HARD_FAILURE')&&offici
 ok(officialMonitorProbe.includes('UND_ERR_CONNECT_TIMEOUT')&&officialMonitorProbe.includes('ENOTFOUND')&&officialMonitorProbe.includes('EAI_AGAIN'),'live official-monitor probe explicitly classifies common transport-level outages');
 
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
-ok(sourcePdf.includes("pdfjs-v13-fast-range-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:h.l.text')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)'),'official PDF evidence underlines strong anchor lines plus matching explanatory context');
+ok(sourcePdf.includes("pdfjs-v14-timeout-safe-range-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:h.l.text')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)'),'official PDF evidence underlines strong anchor lines plus matching explanatory context while using timeout-safe worker fallback');
 ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
 ok(sourcePdf.includes('qn.length<3'),'official PDF evidence accepts short Korean concept anchors such as 롤오버·플래시오버 instead of dropping all queries under eight characters');
 ok(sourcePdf.includes('anchorTokens')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)')&&sourcePdf.includes('anchorTerms:opts.anchorTerms')&&sourcePdf.includes('evidenceLinesForQA:evidenceLines'),'official PDF evidence deterministically prioritizes strong concept-anchor lines and exposes the exact matcher to browser QA');
