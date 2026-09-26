@@ -101,6 +101,7 @@ jobs:
           node --check v9/v69-performance-foundation-audit.mjs
           node --check v9/v69-bootstrap-bundle-audit.mjs
           node --check v9/v69-bootstrap-network-e2e.mjs
+          node --check v9/v70-static-mirror-cutover-e2e.mjs
           node --check v9/v70-production-performance-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
@@ -401,6 +402,10 @@ jobs:
         run: node v9/v53-tablet-ux-e2e.mjs
       - name: V54 tablet-PC + medium desktop + PDF range QA
         run: node v9/v54-tablet-pc-e2e.mjs
+      - name: V70 law2 Pages static range cutover QA
+        env:
+          STUDY_119_V70_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v70-static-mirror-cutover-e2e.mjs
       - name: V55 core/detail precision + navigation QA
         run: node v9/v55-core-detail-precision-e2e.mjs
       - name: V56 study usability + answer integrity + PDF find QA
