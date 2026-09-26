@@ -8,7 +8,7 @@ try{
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.App,{timeout:60000});
   const staticScripts=await page.locator('script[src]:not([data-lazy-119])').count();
-  check(staticScripts===17,'only seventeen eager script requests are declared');
+  check(staticScripts===18,'only eighteen eager script requests are declared');
 
   await page.evaluate(()=>window.AITUTOR_V9.App.go('home'));
   const n0=Date.now();await page.evaluate(()=>window.AITUTOR_V9.App.go('notes'));
