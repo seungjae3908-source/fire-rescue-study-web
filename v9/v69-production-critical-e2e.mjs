@@ -12,7 +12,7 @@ try{
   const runtime=await page.evaluate(async()=>{const r=await fetch('/api/runtime-head',{cache:'no-store'});return r.json()});
   check(runtime.sha===expected,'Production exact V69 SHA '+expected);
   const declared=await page.locator('script[src]:not([data-lazy-119])').count();
-  check(declared===17,'Production serves seventeen eager scripts');
+  check(declared===18,'Production serves eighteen eager scripts');
 
   await page.evaluate(()=>window.AITUTOR_V9.App.go('home'));
   const n0=Date.now();await page.evaluate(()=>window.AITUTOR_V9.App.go('notes'));await page.waitForSelector('.notes-page:visible');
