@@ -105,7 +105,7 @@ async function ensureQuestions(){
   return questionsPromise
 }
 function needsQuestions(page,studyTab){
-  return ['bank','exam','wrong','stats','notes'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
+  return ['bank','exam','wrong','stats'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
 }
 function needsQuestionsForCurrentState(){
   const state=V.Store?.state||{};
