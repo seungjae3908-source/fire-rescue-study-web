@@ -971,3 +971,40 @@
   .resource-row.compact .resource-actions{display:grid;grid-template-columns:1fr 1fr}
   .resource-row.compact .resource-actions .btn{width:100%;min-width:0}
 }
+
+
+/* V69 study route scroll owner: no short inner reading viewport */
+.page-study .study{
+  height:100%!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+  scrollbar-gutter:stable;
+  scroll-padding-top:8px;
+}
+.page-study .workspace{
+  overflow:visible!important;
+}
+.page-study .study-mainpane{
+  height:auto!important;
+  min-height:100%!important;
+  grid-template-rows:auto auto var(--action-h)!important;
+}
+.page-study .study-body{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  overscroll-behavior:auto!important;
+}
+.page-study .concept-nav{
+  position:sticky!important;
+  bottom:0!important;
+  z-index:10!important;
+}
+@media(max-width:720px){
+  .page-study .study{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .page-study .study-mainpane{grid-template-rows:auto auto!important}
+  .page-study .study-body-mobile{overflow:visible!important;max-height:none!important}
+}
