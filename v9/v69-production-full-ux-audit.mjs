@@ -29,7 +29,7 @@ async function studyTab(page,tab){
 async function layoutStats(page){
   return page.locator('.page').evaluate(root=>{
     const norm=s=>String(s||'').replace(/\\s+/g,' ').trim();
-    const visible=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>1&&r.height>1&&r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight};
+    const visible=el=>{if(el.closest('.outline:not(.open),.backdrop:not(.on),[hidden],.hidden'))return false;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>1&&r.height>1&&r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight};
     const all=[root,...root.querySelectorAll('*')].filter(visible);
     const vertical=all.filter(el=>!el.matches('textarea,input,select,[contenteditable="true"]')&&['auto','scroll'].includes(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2).map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,100),owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight}));
     const outside=all.filter(el=>{const r=el.getBoundingClientRect();return (r.left<-2||r.right>innerWidth+2)&&!el.closest('.table-scroll,.detail-toc-chips,.study-quiz-jumps,.exam-mini-navigator,.tutor-ai-table-wrap,.tutor-compare-wrap')}).slice(0,12).map(el=>{const r=el.getBoundingClientRect();return{tag:el.tagName,cls:String(el.className||'').slice(0,80),text:norm(el.textContent).slice(0,70),left:Math.round(r.left),right:Math.round(r.right)}});
@@ -98,9 +98,13 @@ try{
     await studyTab(page,'detail');
     const cmp=page.locator('[data-detail-jump="comparison"]:visible').first();
     if(await cmp.count()){
-      await cmp.click();await page.waitForTimeout(250);
-      const active=await cmp.evaluate(el=>el.classList.contains('on')&&el.getAttribute('aria-current')==='location');
-      vpRow.flow.detailActive=active;if(!active)addIssue('P1','navigation','Detail jump does not show current section',{viewport:vp.name});
+      await cmp.click();
+      let active=false;
+      try{
+        await page.waitForFunction(()=>{const b=[...document.querySelectorAll('[data-detail-jump="comparison"]')].find(x=>x.offsetParent!==null),s=[...document.querySelectorAll('[data-detail-section="comparison"]')].find(x=>x.offsetParent!==null);return !!b&&!!s&&b.classList.contains('on')&&b.getAttribute('aria-current')==='location'&&s.classList.contains('detail-section-active')},{timeout:2500});
+        active=true;
+      }catch{}
+      vpRow.flow.detailActive=active;if(!active)addIssue('P1','navigation','Detail jump does not keep current section highlighted',{viewport:vp.name});
     }
 
     // AI Enter send
@@ -110,6 +114,12 @@ try{
       const t=Date.now();await input.fill('정의만 간단히 알려줘');await input.press('Enter');
       await page.waitForFunction(()=>[...document.querySelectorAll('.tutor-message.me')].some(x=>x.textContent.includes('정의만 간단히 알려줘')),{timeout:10000});
       vpRow.flow.aiEnterMs=Date.now()-t;
+      await input.fill('소방본부는 지역에 몇개씩 있어?');await input.press('Enter');
+      await page.waitForFunction(()=>[...document.querySelectorAll('.tutor-message.me')].some(x=>x.textContent.includes('소방본부는 지역에 몇개씩 있어?')),{timeout:10000});
+      await page.waitForTimeout(350);
+      const aiAnswer=await page.locator('.tutor-message.ai:visible').last().innerText().catch(()=> '');
+      vpRow.flow.aiNumberAnswer=norm(aiAnswer).slice(0,500);
+      if(aiAnswer&&!/[0-9]|하나|한\s*개|확인되지|근거에서/.test(aiAnswer))addIssue('P1','ai','AI numeric question is not answered directly',{viewport:vp.name,answer:norm(aiAnswer).slice(0,220)});
     }else addIssue('P0','ai','AI input is not visible',{viewport:vp.name});
 
     // Question entry latency
@@ -126,6 +136,18 @@ try{
       const t=Date.now();await btn.click();
       try{await page.waitForSelector('#pdfEvidence canvas',{state:'visible',timeout:item.limit});const ms=Date.now()-t;vpRow.flow[item.label+'Ms']=ms;if(ms>5000)addIssue('P1','performance','Official source first canvas is slow',{viewport:vp.name,concept:item.id,label:item.label,ms});await page.locator('#pdfEvidence [data-pdf-close]:visible').click().catch(()=>{})}
       catch{addIssue('P0','source','Official source canvas failed to appear',{viewport:vp.name,concept:item.id,label:item.label,timeoutMs:item.limit});await page.locator('#pdfEvidence [data-pdf-close]:visible').click().catch(()=>{})}
+    }
+
+    if(vp.name==='mobile-390'){
+      const tLong=Date.now();
+      try{
+        const info=await page.evaluate(async()=>{const p=await window.AITUTOR_V9.SourcePDF.openPdf('law2',{timeoutMs:90000});return{origin:p.origin,pages:p.pdf?.numPages||0}});
+        vpRow.flow.law2LongMs=Date.now()-tLong;vpRow.flow.law2Long=info;
+        if(vpRow.flow.law2LongMs>10000)addIssue('P1','performance','Law2 source engine eventually works but is too slow',{viewport:vp.name,ms:vpRow.flow.law2LongMs,origin:info.origin,pages:info.pages});
+      }catch(err){
+        vpRow.flow.law2LongMs=Date.now()-tLong;vpRow.flow.law2LongError=String(err?.message||err);
+        addIssue('P0','source','Law2 source engine still fails within 90s',{viewport:vp.name,ms:vpRow.flow.law2LongMs,error:vpRow.flow.law2LongError});
+      }
     }
 
     const uniqueErrs=[...new Set(errs)];vpRow.errors=uniqueErrs.slice(0,20);
