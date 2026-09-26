@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+const index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const lazy=fs.readFileSync(new URL('./lazy-loader-119.js',import.meta.url),'utf8');
+const source=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
+const ai=fs.readFileSync(new URL('./local-ai.js',import.meta.url),'utf8');
+const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
+const failures=[];const ok=(v,m)=>{if(v)console.log('PASS',m);else failures.push(m)};
+const scripts=[...index.matchAll(/<script\s+([^>]*\bsrc=["'][^"']+["'][^>]*)>/g)].map(x=>x[1]);
+ok(scripts.length>80,'runtime script inventory remains explicit');
+ok(scripts.every(x=>/\bdefer\b/.test(x)),'all external learner scripts are deferred');
+ok(!lazy.includes("['bank','exam','wrong','stats','notes']"),'notes no longer blocks on question lane');
+ok(lazy.includes("['bank','exam','wrong','stats']"),'question routes remain lazy-gated');
+ok(app.includes('requestIdleCallback(warmQuestions')&&app.includes('requestIdleCallback(warmSource'),'question and source lanes warm after first paint');
+ok(source.includes('async function prefetch(key')&&source.includes('saveData'),'large official PDF prefetch respects data-saver');
+ok(app.includes('function wantsTutorNumber')&&app.includes('확인되지 않은 숫자는 추정하지 않습니다'),'numeric tutor fallback is explicit and grounded');
+ok(app.includes("if(numberQuestion&&!numberGrounded){runtime.aiStatus='공식근거 확인';return}"),'ungrounded numeric questions cannot be overwritten by local model guesses');
+ok(ai.includes('/1\\.5B.*Instruct/i')&&ai.includes("emit('경량 AI로 전환 중'"),'capable devices prefer stronger local tutor with safe small-model fallback');
+ok(!app.includes('dashboard-schedule"><b>공식 시험 일정'),'home removes duplicate official-schedule card');
+ok(css.includes('V69 production UX + desktop space usage')&&css.includes('max-width:1400px!important'),'V69 wide-screen layout contract is present');
+ok(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))')&&css.includes('.resources-119>.card>.list'),'resources use a compact multi-column desktop layout');
+if(failures.length){console.error('V69_PRODUCTION_UX_AUDIT_FAIL',JSON.stringify(failures));process.exit(1)}
+console.log('V69_PRODUCTION_UX_AUDIT_SUCCESS');
