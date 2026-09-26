@@ -71,7 +71,8 @@ async function ensureQuestions({background=false}={}){
   document.documentElement.dataset.questionLane='loading';
   if(!background)document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
-    for(const file of QUESTION_FILES)await loadScript(file);
+    // Start all deferred question requests together. Because each dynamic classic script has async=false, browser execution order remains insertion order.
+    await Promise.all(QUESTION_FILES.map(loadScript));
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
     V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
@@ -112,7 +113,7 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v2-source-impact',
+  version:'119-lazy-runtime-v3-parallel-source-impact',
   questionFiles:[...QUESTION_FILES],
   ensureQuestions,needsQuestions,needsQuestionsForCurrentState,
   get questionsReady(){return questionsReady},
