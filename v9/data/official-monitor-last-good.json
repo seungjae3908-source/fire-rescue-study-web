@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-09-23T20:26:54.184Z",
+  "generatedAt": "2026-09-26T19:55:50.742Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -403,48 +403,6 @@
       "changeSummary": []
     },
     {
-      "sourceId": "nfsa-notice",
-      "sourceLabel": "중앙소방학교 고시·공고",
-      "title": "소방학교 소식",
-      "publishedAt": "",
-      "url": "https://www.nfa.go.kr/nfsa/news",
-      "kind": "exam_scope",
-      "meaningful": true,
-      "reviewRequired": true,
-      "targetYearMatch": false,
-      "baselineYearMatch": false,
-      "explicitYear": null,
-      "noticeYear": null,
-      "notificationEligible": false,
-      "id": "5b3a0a598e8d70de9b132f55",
-      "fingerprint": "8441f097d72ba011b682",
-      "detailEligible": false,
-      "changeState": "same",
-      "previousFingerprint": "",
-      "changeSummary": []
-    },
-    {
-      "sourceId": "nfsa-notice",
-      "sourceLabel": "중앙소방학교 고시·공고",
-      "title": "중앙소방학교 훈령·예규",
-      "publishedAt": "",
-      "url": "https://www.nfa.go.kr/nfsa/releaseinformation/legalinformation/instruction;jsessionid=0l+4cBJUpE9gT96kmWPyikvG.nfa22",
-      "kind": "exam_scope",
-      "meaningful": true,
-      "reviewRequired": true,
-      "targetYearMatch": false,
-      "baselineYearMatch": false,
-      "explicitYear": null,
-      "noticeYear": null,
-      "notificationEligible": false,
-      "id": "ad88afb0ee42bde73d647e5b",
-      "fingerprint": "d633872d0be0764f0591",
-      "detailEligible": false,
-      "changeState": "new",
-      "previousFingerprint": "",
-      "changeSummary": []
-    },
-    {
       "sourceId": "gosi-fire",
       "sourceLabel": "국가공무원 채용시스템 · 소방청",
       "title": "채용공고/원서접수",
@@ -490,14 +448,12 @@
   "degraded": false,
   "preservedLastGood": false,
   "notificationSuppressed": false,
-  "lastAttemptAt": "2026-09-23T20:26:54.184Z",
-  "lastSuccessfulAt": "2026-09-23T20:26:54.184Z",
+  "lastAttemptAt": "2026-09-26T19:55:50.742Z",
+  "lastSuccessfulAt": "2026-09-26T19:55:50.742Z",
   "delta": {
-    "newIds": [
-      "ad88afb0ee42bde73d647e5b"
-    ],
+    "newIds": [],
     "updatedIds": [],
-    "newCount": 1,
+    "newCount": 0,
     "updatedCount": 0
   }
 }
