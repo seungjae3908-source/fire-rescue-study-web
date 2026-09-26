@@ -28,5 +28,12 @@ assert(pdf.includes("official-proxy-full-cache-fallback"),'full PDF blob downloa
 assert(proxy.includes("const clientRange=(req.headers&&req.headers.range)||''")&&proxy.includes("res.setHeader('Access-Control-Allow-Headers','Range, If-Range, Content-Type')"),'official proxy forwards browser byte-range requests');
 assert(/officialPdfMirrorDocs:\['fire1','fire2','ems'\]/.test(config),'known fast static mirrors remain unchanged');
 assert(perf.includes('noParserBlockingScripts:parserBlockingScripts.length===0'),'performance budget prevents parser-blocking bootstrap regression');
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
+assert(!app.includes('<span>오늘 목표</span><b>\${goal.done}/\${goal.total}</b>'),'home metrics no longer duplicate the full daily-goal card');
+assert(!app.includes('class="card dashboard-schedule"'),'home no longer repeats the official schedule beside the hero');
+assert(app.includes('class="card dashboard-quick"')&&app.includes('공식 자료')&&app.includes('오답 복습')&&app.includes('성적 분석'),'home replaces duplicate schedule with useful shortcuts');
+assert(app.includes('resource-grid')&&app.includes('중앙소방학교 공식 교재'),'resources show source attribution once and use a compact grid');
+assert(css.includes('@media(min-width:1600px)')&&css.includes('max-width:1240px!important')&&css.includes('max-width:1320px!important')&&css.includes('max-width:1400px!important'),'1920-class desktop layout uses materially more horizontal space');
 
 console.log('V69_PERFORMANCE_FOUNDATION_AUDIT_SUCCESS');
