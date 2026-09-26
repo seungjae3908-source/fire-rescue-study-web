@@ -11,7 +11,7 @@ const failures=[];
 const ok=(v,m)=>{if(!v)failures.push(m);else console.log('PASS',m)};
 
 ok(app.includes('bindDetailSectionTracking()'),'detail scroll tracking is wired after render');
-ok(app.includes('syncDetailTocActive(root,key,{scrollChip:true})'),'detail click updates active state');
+ok(app.includes('syncDetailTocActive(root,key,{scrollChip:true,lock:true})'),'detail click updates active state and holds it through scroll settle');
 ok(app.includes("e.target.matches('[data-tutor-input]')&&!e.isComposing"),'tutor Enter send handler exists');
 ok(css.includes('.detail-toc-chip[aria-current="location"]'),'active detail chip has explicit style');
 ok(css.includes('.detail-section-active h3'),'active detail section title is highlighted');
