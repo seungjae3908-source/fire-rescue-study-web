@@ -61,20 +61,27 @@ function queryTokens(queries){const out=[];for(const q of queries||[]){for(const
 async function pdfjs(){if(V.RuntimeDeps?.loadPdfJs)return V.RuntimeDeps.loadPdfJs();const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p}
 async function clearPdfCache(key){const hit=pdfCache.get(key);pdfCache.delete(key);if(hit?.task)await hit.task.destroy?.().catch?.(()=>{});else if(hit?.pdf)await hit.pdf.destroy?.().catch?.(()=>{})}
 function waitPdfTask(task,timeoutMs){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('SOURCE_PDF_PARSE_TIMEOUT')),timeoutMs);task.promise.then(v=>{clearTimeout(timer);resolve(v)},e=>{clearTimeout(timer);reject(e)})})}
+function retireTimedOutPdfTask(task){
+  try{task?.promise?.then(pdf=>Promise.resolve(pdf?.cleanup?.()).catch(()=>{}),()=>{})}catch{}
+}
+async function releaseFailedPdfTask(task,err){
+  if(String(err?.message||err)==='SOURCE_PDF_PARSE_TIMEOUT'){retireTimedOutPdfTask(task);return}
+  await task?.destroy?.().catch?.(()=>{})
+}
 async function openPdf(key,{timeoutMs=90000,onProgress}={}){const cached=pdfCache.get(key);if(cached?.pdf)return cached;const p=await pdfjs(),local=await get(key),catalog=V.SourceCatalog119?.get?.(key),staticRange=catalog?.transport==='range-static'&&!!catalog?.mirrorPdf;let task,name,origin;
   if(local?.blob){task=p.getDocument({data:await local.blob.arrayBuffer()});name=local.name||key;origin='local-cache'}
   else if(staticRange){
     const fastUrl=catalog.mirrorPdf,fastTimeout=Math.min(7000,timeoutMs);
     task=p.getDocument({url:fastUrl,withCredentials:false,disableRange:false,disableStream:false,disableAutoFetch:true,rangeChunkSize:65536});name=catalog.expectedNames?.[0]||catalog.label||key;origin='official-static-range';
     try{const pdf=await waitPdfTask(task,fastTimeout),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);onProgress?.({ready:true,transport:'mirror'});return entry}
-    catch{await task.destroy?.().catch?.(()=>{});onProgress?.({fallback:true,transport:'mirror'});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin='official-proxy-fallback'}
+    catch(err){await releaseFailedPdfTask(task,err);onProgress?.({fallback:true,transport:'mirror'});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin='official-proxy-fallback'}
   }else if(catalog?.proxyPdf){
     const fastUrl=catalog.proxyPdf,fastTimeout=Math.min(6500,timeoutMs);
     task=p.getDocument({url:fastUrl,withCredentials:false,disableRange:false,disableStream:true,disableAutoFetch:true,rangeChunkSize:65536});name=catalog.expectedNames?.[0]||catalog.label||key;origin='official-proxy-range';
     try{const pdf=await waitPdfTask(task,fastTimeout),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);onProgress?.({ready:true,transport:'proxy-range'});return entry}
-    catch{await task.destroy?.().catch?.(()=>{});onProgress?.({fallback:true,transport:'proxy-range'});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||catalog.expectedNames?.[0]||catalog.label||key;origin='official-proxy-full-cache-fallback'}
+    catch(err){await releaseFailedPdfTask(task,err);onProgress?.({fallback:true,transport:'proxy-range'});const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||catalog.expectedNames?.[0]||catalog.label||key;origin='official-proxy-full-cache-fallback'}
   }else{const row=await resolveRow(key,{timeoutMs,onProgress});task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=row.origin||'local-cache'}
-  try{const pdf=await waitPdfTask(task,Math.min(timeoutMs,25000)),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await task.destroy?.().catch?.(()=>{});throw err}
+  try{const pdf=await waitPdfTask(task,Math.min(timeoutMs,25000)),entry={key,pdf,task,name,origin};pdfCache.set(key,entry);return entry}catch(err){await releaseFailedPdfTask(task,err);throw err}
 }
 async function locate(key,queries=[],options={}){const {pdf}=await openPdf(key),tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};const ranges=Array.isArray(options.bookRanges)?options.bookRanges.filter(x=>x&&x.doc===key):[],pageSet=new Set();if(ranges.length){for(const r of ranges){const from=Math.max(1,pdfPage(key,Number(r.from)||1)),to=Math.min(pdf.numPages,pdfPage(key,Number(r.to)||Number(r.from)||1));for(let n=from;n<=to;n++)pageSet.add(n)}}const pages=pageSet.size?[...pageSet].sort((a,b)=>a-b):Array.from({length:pdf.numPages},(_,i)=>i+1);let best={page:pages[0]||1,score:-1,pages:pdf.numPages};for(const n of pages){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
 async function findPages(key,query,{limit=12}={}){
@@ -192,5 +199,5 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
   return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v13-fast-range-anchor-context-lines'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v14-timeout-safe-range-anchor-context-lines'};
 })();
