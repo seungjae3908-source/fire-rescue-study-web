@@ -247,6 +247,24 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Probe GitHub Pages static Range + CORS
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://seungjae3908-source.github.io/fire-rescue-study-web/v9/boot-v69-4.js"
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' -H 'Range: bytes=0-99' -H 'Origin: https://fire-rescue-study-web.vercel.app' "$url")"
+          bytes="$(wc -c < "$body" | tr -d ' ')"
+          content_range="$(grep -i '^content-range:' "$headers" | tail -1 | tr -d '\r' || true)"
+          accept_ranges="$(grep -i '^accept-ranges:' "$headers" | tail -1 | tr -d '\r' || true)"
+          acao="$(grep -i '^access-control-allow-origin:' "$headers" | tail -1 | tr -d '\r' || true)"
+          echo "V70_PAGES_RANGE_PROBE status=$code bytes=$bytes $content_range $accept_ranges $acao"
+          test "$code" = "206"
+          test "$bytes" -le 128
+          test -n "$content_range"
+          test -n "$acao"
+
       - name: Install V70 Production performance browser
         run: |
           npm install --no-save playwright@1.55.0
