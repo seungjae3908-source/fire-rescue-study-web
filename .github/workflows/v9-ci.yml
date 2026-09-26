@@ -101,6 +101,7 @@ jobs:
           node --check v9/v69-performance-foundation-audit.mjs
           node --check v9/v69-bootstrap-bundle-audit.mjs
           node --check v9/v69-bootstrap-network-e2e.mjs
+          node --check v9/v70-static-mirror-cutover-e2e.mjs
           node --check v9/v70-production-performance-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
@@ -265,6 +266,51 @@ jobs:
           test -n "$content_range"
           test -n "$acao"
 
+      - name: Validate seven mirror source PDFs can materialize
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          proxy='https://fire-rescue-study-web.vercel.app/api/official-pdf'
+          docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
+          for doc in "${docs[@]}"; do
+            out="$tmpdir/${doc}.pdf"
+            echo "V70_MIRROR_SOURCE_FETCH_START $doc"
+            curl -fL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 20 --max-time 180               -H 'Cache-Control: no-cache' "${proxy}?doc=${doc}" -o "$out"
+            magic="$(head -c 5 "$out")"
+            bytes="$(wc -c < "$out" | tr -d ' ')"
+            echo "V70_MIRROR_SOURCE_OK $doc bytes=$bytes magic=$magic"
+            test "$magic" = '%PDF-'
+            test "$bytes" -gt 100000
+          done
+
+      - name: Probe seven deployed Pages PDF mirrors
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror'
+          docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
+          for doc in "${docs[@]}"; do
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' \
+              -H 'Range: bytes=0-65535' \
+              -H 'Origin: https://fire-rescue-study-web.vercel.app' \
+              "${base}/${doc}.pdf")"
+            bytes="$(wc -c < "$body" | tr -d ' ')"
+            magic="$(head -c 5 "$body")"
+            content_range="$(grep -i '^content-range:' "$headers" | tail -1 | tr -d '\r' || true)"
+            accept_ranges="$(grep -i '^accept-ranges:' "$headers" | tail -1 | tr -d '\r' || true)"
+            acao="$(grep -i '^access-control-allow-origin:' "$headers" | tail -1 | tr -d '\r' || true)"
+            echo "V70_PAGES_PDF_RANGE_OK $doc status=$code bytes=$bytes magic=$magic $content_range $accept_ranges $acao"
+            test "$code" = "206"
+            test "$bytes" = "65536"
+            test "$magic" = "%PDF-"
+            test -n "$content_range"
+            test -n "$accept_ranges"
+            test -n "$acao"
+          done
+
       - name: Install V70 Production performance browser
         run: |
           npm install --no-save playwright@1.55.0
@@ -356,6 +402,10 @@ jobs:
         run: node v9/v53-tablet-ux-e2e.mjs
       - name: V54 tablet-PC + medium desktop + PDF range QA
         run: node v9/v54-tablet-pc-e2e.mjs
+      - name: V70 law2 Pages static range cutover QA
+        env:
+          STUDY_119_V70_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v70-static-mirror-cutover-e2e.mjs
       - name: V55 core/detail precision + navigation QA
         run: node v9/v55-core-detail-precision-e2e.mjs
       - name: V56 study usability + answer integrity + PDF find QA
