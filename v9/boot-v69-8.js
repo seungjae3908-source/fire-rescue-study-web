@@ -1,4 +1,9 @@
 'use strict';
+/* V69 bootstrap bundle 8. Source order is canonical. */
+
+;
+/* ---- app.js ---- */
+'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},S=V.Store;const $=(s,r=document)=>r.querySelector(s);const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const SESSION_EXPIRED_CONTRACT_COPY='로그인 세션이 만료되어 게스트 모드로 전환되었습니다.';
@@ -1037,3 +1042,4 @@ V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studen
 }
 boot();
 })();
+

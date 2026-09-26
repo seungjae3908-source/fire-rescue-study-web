@@ -216,7 +216,7 @@ try{
 
     for(const tab of ['core','detail','quiz','source','ai']){
       await setStudyTab(page,tab);
-      const owner=vp.isMobile?'study-mobile':'study-desktop';
+      const owner='study';
       await assertSingleEffectiveOwner(page,owner,'study '+tab+' '+vp.width);
       await wheel(page,'.concept-head',owner,'study '+tab+' header '+vp.width);
       if(tab==='core'){
@@ -229,7 +229,7 @@ try{
         await touchBridge(page,'.concept-head',owner,'study '+tab+' header touch '+vp.width);
         if(tab==='core')await horizontalTouchSafe(page,'.book-jumpbar',owner,'study mobile tabbar '+vp.width);
       }
-      await wheel(page,(vp.isMobile?'.study-body-mobile':'.study-body-desktop'),owner,'study '+tab+' body '+vp.width);
+      await wheel(page,'.study[data-scroll-owner="study"]',owner,'study '+tab+' body '+vp.width);
       if(tab==='detail'){
         const toc=page.locator('.detail-toc:visible');
         if(await toc.count())await wheel(page,'.detail-toc',owner,'study detail toc '+vp.width);

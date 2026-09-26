@@ -98,6 +98,9 @@ jobs:
           node --check v9/v67-whole-app-real-ux-e2e.mjs
           node --check v9/v68-detail-source-brand-audit.mjs
           node --check v9/v68-detail-source-brand-e2e.mjs
+          node --check v9/v69-performance-foundation-audit.mjs
+          node --check v9/v69-bootstrap-bundle-audit.mjs
+          node --check v9/v69-bootstrap-network-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -120,6 +123,10 @@ jobs:
         run: node v9/performance-budget-audit.mjs
       - name: V54 official PDF range-first strategy gate
         run: node v9/v54-source-range-strategy-audit.mjs
+      - name: V69 performance foundation gate
+        run: node v9/v69-performance-foundation-audit.mjs
+      - name: V69 bootstrap bundle integrity gate
+        run: node v9/v69-bootstrap-bundle-audit.mjs
       - name: Official notice monitor contract gate
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
@@ -260,6 +267,10 @@ jobs:
           done
           cat /tmp/aitutor-v9-http.log
           exit 1
+      - name: V69 bootstrap real-network request QA
+        env:
+          STUDY_119_V69_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v69-bootstrap-network-e2e.mjs
       - name: V66 branch real-interaction scroll QA
         env:
           STUDY_119_V66_URL: http://127.0.0.1:4173/v9/index.html

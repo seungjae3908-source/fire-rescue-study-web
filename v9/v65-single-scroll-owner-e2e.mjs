@@ -64,10 +64,10 @@ try{
       await setStudyTab(page,tab);
       const rows=await owners(page,'study '+tab+' '+vp.width);
       assert(rows.length===1,'study '+tab+' keeps exactly one vertical owner '+vp.width);
-      assert(rows[0].owner===(vp.isMobile?'study-mobile':'study-desktop'),'study '+tab+' uses visible study-body owner '+vp.width);
+      assert(rows[0].owner==='study','study '+tab+' uses the full study route owner '+vp.width);
       if(tab==='ai'){
-        const ai=await page.locator('.study-ai-chat:visible').first().evaluate(el=>({overflowY:getComputedStyle(el).overflowY,scrollTop:el.scrollTop,bodyOverflow:getComputedStyle(el.closest('.study-body')).overflowY}));
-        assert(!['auto','scroll'].includes(ai.overflowY)&&['auto','scroll'].includes(ai.bodyOverflow),'AI delegates vertical scrolling to study-body '+vp.width);
+        const ai=await page.locator('.study-ai-chat:visible').first().evaluate(el=>({overflowY:getComputedStyle(el).overflowY,scrollTop:el.scrollTop,bodyOverflow:getComputedStyle(el.closest('.study-body')).overflowY,routeOverflow:getComputedStyle(el.closest('.study[data-scroll-owner="study"]')).overflowY}));
+        assert(!['auto','scroll'].includes(ai.overflowY)&&!['auto','scroll'].includes(ai.bodyOverflow)&&['auto','scroll'].includes(ai.routeOverflow),'AI delegates vertical scrolling to the study route '+vp.width);
       }
     }
 

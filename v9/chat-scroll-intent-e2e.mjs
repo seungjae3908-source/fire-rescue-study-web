@@ -18,12 +18,12 @@ try{
   });
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const before=await page.locator('.study-body-mobile .study-ai-chat').evaluate(el=>{
-    const body=el.closest('.study-body');
-    if(body&&body.scrollHeight>body.clientHeight+80)body.scrollTop=Math.max(0,body.scrollHeight-body.clientHeight-140);
+    const route=el.closest('.study[data-scroll-owner="study"]');
+    if(route&&route.scrollHeight>route.clientHeight+80)route.scrollTop=Math.max(0,route.scrollHeight-route.clientHeight-140);
     const chatStyle=getComputedStyle(el);
-    return{chatTop:el.scrollTop,bodyTop:body?.scrollTop||0,bodyGap:(body?.scrollHeight||0)-(body?.clientHeight||0)-(body?.scrollTop||0),chatOverflow:chatStyle.overflowY};
+    return{chatTop:el.scrollTop,routeTop:route?.scrollTop||0,routeGap:(route?.scrollHeight||0)-(route?.clientHeight||0)-(route?.scrollTop||0),chatOverflow:chatStyle.overflowY};
   });
-  assert(before.bodyGap>24,'history-scroll fixture is intentionally away from newest message in the single study-body owner');
+  assert(before.routeGap>24,'history-scroll fixture is intentionally away from newest message in the single study route owner');
   assert(!['auto','scroll'].includes(before.chatOverflow)&&before.chatTop===0,'AI chat itself is not a vertical scroll owner');
   await page.evaluate(()=>{
     const V=window.AITUTOR_V9,c=V.curriculum.byId['F04-C01'],s=V.Store.state;
@@ -32,10 +32,10 @@ try{
   });
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const after=await page.locator('.study-body-mobile .study-ai-chat').evaluate((el,before)=>{
-    const body=el.closest('.study-body');
-    return{chatTop:el.scrollTop,bodyTop:body?.scrollTop||0,bodyGap:(body?.scrollHeight||0)-(body?.clientHeight||0)-(body?.scrollTop||0),chatStable:Math.abs(el.scrollTop-before.chatTop)<=2,bodyStable:Math.abs((body?.scrollTop||0)-before.bodyTop)<=2,chatOverflow:getComputedStyle(el).overflowY};
+    const route=el.closest('.study[data-scroll-owner="study"]');
+    return{chatTop:el.scrollTop,routeTop:route?.scrollTop||0,routeGap:(route?.scrollHeight||0)-(route?.clientHeight||0)-(route?.scrollTop||0),chatStable:Math.abs(el.scrollTop-before.chatTop)<=2,routeStable:Math.abs((route?.scrollTop||0)-before.routeTop)<=2,chatOverflow:getComputedStyle(el).overflowY};
   },before);
-  assert(after.bodyGap>24&&after.chatStable&&after.bodyStable&&!['auto','scroll'].includes(after.chatOverflow),'incoming AI render preserves intentional reading position in the single study-body scroll owner');
+  assert(after.routeGap>24&&after.chatStable&&after.routeStable&&!['auto','scroll'].includes(after.chatOverflow),'incoming AI render preserves intentional reading position in the single study route scroll owner');
   assert(errors.length===0,'history-scroll acceptance has zero browser runtime errors');
   console.log('CHAT_SCROLL_INTENT_E2E_COMPLETE');
   await ctx.close();

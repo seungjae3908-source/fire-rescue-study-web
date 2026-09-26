@@ -1,4 +1,500 @@
 'use strict';
+/* V69 bootstrap bundle 5a. Source order is canonical. */
+
+;
+/* ---- quality2-ems-medical-content-119.js ---- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored;if(!P)return;
+const sec=(title,body,bullets=[])=>({title,body,bullets});
+const uniq=a=>[...new Set((a||[]).filter(Boolean))];
+function put(id,x){
+  const p=P[id]||{};
+  P[id]={...p,...x,status:'verified',
+    detail:uniq([...(p.detail||[]),...(x.detail||[])]),
+    features:uniq([...(p.features||[]),...(x.features||[])]),
+    must:uniq([...(p.must||[]),...(x.must||[])]),
+    traps:uniq([...(p.traps||[]),...(x.traps||[])]),
+    deepSections:[...(p.deepSections||[]),...(x.deepSections||[])],
+    compare:[...(p.compare||[]),...(x.compare||[])],
+    officialLinks:[...(p.officialLinks||[]),...(x.officialLinks||[])]
+  };
+}
+
+put('E25-C01',{
+  source:'2026 응급처치학개론 출제범위 · 2026 소방전술3(구급) 217·223~224쪽',
+  sourcePrecision:'official-scope+official-textbook',
+  summary:'간·담도·췌장 응급은 윗배 통증의 위치·방사통·유발요인과 쇼크 징후를 연결해 감별하고, 환자에게 먹을 것을 주지 않은 채 안정·평가·신속이송하는 흐름으로 정리한다.',
+  detail:[
+    '소방전술3은 급성복통 환자 처치에서 기도와 활력징후를 평가하고, 복통·불편감을 호소하는 환자에게 아무것도 먹이지 않으며 침착하게 안정시켜 신속히 이송하도록 설명한다.',
+    '담낭염·담석은 심한 윗배 또는 우상복부 통증이 나타날 수 있고 어깨나 등으로 방사될 수 있으며, 지방이 많은 음식 섭취 뒤 통증이 악화될 수 있다.',
+    '췌장염은 만성 음주자에서 흔히 언급되며 윗배 통증과 등·어깨 방향 방사통이 나타날 수 있고, 심한 경우 쇼크 징후가 동반될 수 있다.',
+    '간은 혈액조절·해독·담즙분비와 관련된 장기라는 기본 해부생리와 연결해 보되, 현재 공개 소방전술3에서 간질환별 세부 응급처치는 제한적이므로 앱이 임의로 세부 치료 알고리즘을 만들지 않는다.'
+  ],
+  features:[
+    '담낭염·담석 → 윗배/RUQ 통증 + 어깨·등 방사 가능 + 지방식 후 악화 가능',
+    '췌장염 → 윗배 통증 + 등·어깨 방사 가능 + 심한 경우 쇼크 징후',
+    '급성복통 공통 → ABC·활력징후 평가 + 금식 + 안정 + 신속이송'
+  ],
+  must:[
+    '복통 환자에게 임의로 음식·음료를 제공하지 않는다.',
+    '방사통의 방향과 유발요인을 함께 묻는다.',
+    '쇼크 징후가 있으면 단순 복통으로 보지 말고 중증도를 높게 평가한다.'
+  ],
+  traps:[
+    '담낭염 통증을 반드시 좌하복부에만 나타나는 것으로 외우지 않는다.',
+    '췌장염을 단순 소화불량으로 단정하거나 현장에서 진단 확정하지 않는다.'
+  ],
+  compare:[
+    ['담낭염·담석','주로 윗배·우상복부 통증 · 어깨/등 방사 가능 · 지방식 후 악화 가능'],
+    ['췌장염','윗배 통증 · 등/어깨 방사 가능 · 심하면 쇼크 징후'],
+    ['위장관출혈','토혈·혈변/흑색변과 순환상태 평가가 핵심'],
+    ['배대동맥류','찢어지는 듯한 복통·등 방사통 가능 · 파열 시 중증']
+  ],
+  deepSections:[
+    sec('현장 접근','복통은 원인 확정이 아니라 중증도 선별이 핵심이다. ABC, 활력징후, 통증 위치와 시작시각, 방사통, 구토·출혈, 과거력과 복용약을 확인하고 불안정하면 우선 이송한다.'),
+    sec('담낭·담도','담낭염과 담석은 우상복부 또는 윗배의 통증과 어깨·등 방사통이 시험 포인트다. 지방식 뒤 악화 가능성도 함께 기억한다.'),
+    sec('췌장','췌장염은 윗배 통증이 등이나 어깨로 퍼질 수 있고 심하면 쇼크 징후가 나타날 수 있다. 통증 양상만으로 현장에서 확진하지 않는다.'),
+    sec('공통 처치와 함정','복통 환자에게 먹을 것을 주지 않고 안정시키며, 반복 활력징후 평가와 신속이송을 시행한다. 통증이 완화됐다고 중증 원인을 배제하지 않는다.'),
+    sec('문제 풀이 순서','윗배 통증을 보면 ① 위치와 시작시각 ② 등·어깨로의 방사 여부 ③ 구토·출혈 ④ 음주·담석 등 관련 병력 ⑤ 쇼크 징후 순으로 확인한다. 담낭·췌장 질환 이름을 맞히는 것보다 중증도를 놓치지 않는 판단이 우선이다.')
+  ]
+});
+
+put('E25-C02',{
+  source:'2026 응급처치학개론 출제범위 · 2026 소방전술3(구급) 217·224·435~437쪽',
+  sourcePrecision:'official-scope+official-textbook',
+  summary:'비뇨생식기계 응급은 콩팥·방광의 기능을 이해하고, 옆구리 통증·배뇨장애·혈뇨와 신부전 병력 및 투석 여부를 확인해 중증도와 이송 필요성을 판단하는 영역이다.',
+  detail:[
+    '소방전술3은 콩팥이 노폐물을 여과하고 수분·혈액·전해질 수치를 조절하며, 방광은 콩팥에서 내려온 소변을 저장한다고 설명한다.',
+    '신장/요로 결석은 돌이 요로를 따라 이동할 때 심한 옆구리 통증, 오심·구토와 서혜부 방향 방사통이 나타날 수 있다.',
+    '구급활동일지의 배뇨장애 항목에는 배뇨통·잔뇨감·빈뇨·혈뇨가 포함된다. 이런 증상은 단순 복통과 달리 비뇨기계 원인을 의심하게 하는 단서다.',
+    '과거력에서 신부전이 확인되면 투석 여부까지 기록하도록 되어 있다. 투석 환자는 전해질·체액 문제나 동반질환이 있을 수 있으므로 현재 증상과 활력징후를 함께 평가한다.'
+  ],
+  features:[
+    '요로결석 → 심한 옆구리 통증 + 오심/구토 + 서혜부 방사통 가능',
+    '배뇨장애 → 배뇨통·잔뇨감·빈뇨·혈뇨 확인',
+    '신부전 병력 → 투석 여부까지 확인·기록'
+  ],
+  must:[
+    '통증 위치와 방사 방향을 확인한다.',
+    '소변 관련 증상과 혈뇨 여부를 문진한다.',
+    '신부전 환자는 투석 여부와 마지막 투석 관련 정보를 확인한다.'
+  ],
+  traps:[
+    '혈뇨를 질출혈이나 위장관출혈과 같은 것으로 기록하지 않는다.',
+    '심한 옆구리 통증이 있다고 현장에서 요로결석으로 확진하지 않는다.'
+  ],
+  compare:[
+    ['요로결석','옆구리 통증 · 서혜부 방사 가능 · 오심/구토'],
+    ['배뇨장애','배뇨통 · 잔뇨감 · 빈뇨 · 혈뇨'],
+    ['신부전 병력','투석 여부 확인 · 체액/전해질 문제 가능성 고려'],
+    ['복부 대동맥류 등 중증복통','쇼크·찢어지는 통증·불안정 활력징후가 있으면 즉시 중증평가']
+  ],
+  deepSections:[
+    sec('기본 해부생리','콩팥은 노폐물 여과와 수분·전해질 조절, 방광은 소변 저장을 담당한다. 기능 이상은 소변증상뿐 아니라 전신상태 변화와도 연결될 수 있다.'),
+    sec('요로결석 양상','통증은 옆구리에서 시작해 서혜부 방향으로 퍼질 수 있고 오심·구토가 동반될 수 있다. 통증 양상과 배뇨증상을 함께 묻는다.'),
+    sec('배뇨장애 문진','배뇨통·잔뇨감·빈뇨·혈뇨를 구분해 묻고, 출혈이 보이면 다른 출혈원과 구분한다.'),
+    sec('중증도를 높이는 단서','옆구리 통증이 있으면서 창백·식은땀·의식변화·저혈압 같은 순환저하가 동반되거나, 심한 혈뇨·지속 구토·발열·전신쇠약이 있으면 단순한 통증질환으로 좁히지 않는다. 복부·혈관계 등 다른 중증 원인 가능성까지 열어 두고 ABC와 활력징후를 우선한다.'),
+    sec('신부전·투석','과거력에 신부전이 있으면 투석 여부를 확인한다. 의식·호흡·순환이 불안정하거나 심한 증상이 있으면 원인 확정보다 신속한 평가와 이송이 우선이다.')
+  ]
+});
+
+put('E25-C03',{
+  source:'2026 응급처치학개론 출제범위 · 2026 소방전술3(구급) 66·227쪽 · 질병관리청 국가건강정보포털 빈혈/출혈질환 보강',
+  sourcePrecision:'official-scope+official-textbook+KDCA-supplement',
+  summary:'조혈계 응급은 적혈구·백혈구·혈소판의 역할과 빈혈·출혈경향을 연결해 환자의 산소공급 저하 또는 비정상 출혈 위험을 빠르게 인지하는 것이 핵심이다.',
+  detail:[
+    '소방전술3은 적혈구가 산소운반, 백혈구가 면역, 혈소판이 혈액응고에 중요한 역할을 한다고 설명한다. 출혈 상황에서는 혈관수축과 혈소판·응고인자의 작용이 지혈에 관여한다.',
+    '질병관리청 국가건강정보포털은 빈혈을 적혈구 또는 혈색소 부족으로 충분한 산소공급이 어려운 상태로 설명하며 피로, 어지럼, 숨참, 두통, 창백 등이 나타날 수 있다고 정리한다.',
+    '혈소판 수나 기능이 저하되면 일차 지혈이 어려워져 점상출혈·멍·점막출혈 같은 출혈경향이 나타날 수 있다. 현재 구급 현장에서는 질환명을 확정하기보다 출혈의 양상과 순환상태를 평가한다.',
+    '소방전술3은 와파린 같은 항응고 관련 약물 복용자가 비정상적인 출혈반응을 보일 수 있음을 설명한다. 따라서 출혈 환자에서는 약물복용력 확인이 중요하다.'
+  ],
+  features:[
+    '적혈구 → 산소운반 · 감소 시 빈혈/조직 산소공급 저하와 연결',
+    '백혈구 → 면역 기능',
+    '혈소판 → 일차 지혈·응고에 중요 · 감소/기능이상 시 출혈경향'
+  ],
+  must:[
+    '빈혈 의심증상 → 창백·피로·어지럼·숨참 등과 활력징후를 함께 평가',
+    '비정상 출혈 → 출혈 부위·양·지속시간 + 항응고제 복용력 확인',
+    '중증 출혈·저혈압·의식변화가 있으면 혈액질환명보다 쇼크 처치와 신속이송이 우선'
+  ],
+  traps:[
+    '빈혈을 단순히 혈압이 낮은 상태와 동일시하지 않는다.',
+    '혈소판 문제를 적혈구의 산소운반 기능과 혼동하지 않는다.'
+  ],
+  compare:[
+    ['적혈구/빈혈','산소운반 저하 · 피로·창백·어지럼·숨참 가능'],
+    ['혈소판 이상','지혈장애 · 점상출혈·멍·점막출혈 등 출혈경향'],
+    ['백혈구','면역 기능과 연결'],
+    ['항응고제 관련 출혈','약물복용력 확인 · 지속출혈 위험을 함께 평가']
+  ],
+  deepSections:[
+    sec('혈액세포 역할','적혈구는 산소운반, 백혈구는 면역, 혈소판은 지혈에 중요하다. 역할을 섞어 외우지 않는 것이 첫 번째 시험포인트다.'),
+    sec('빈혈','빈혈은 적혈구·혈색소가 부족해 조직 산소공급이 떨어지는 상태다. 창백, 피로, 어지럼, 숨참이 있을 수 있으며 현장에서는 증상·활력징후와 출혈 여부를 함께 본다.'),
+    sec('혈소판·출혈경향','혈소판 수나 기능 이상은 지혈장애와 연결된다. 점상출혈·멍·비출혈·잇몸출혈 등 비정상 출혈 패턴을 확인한다.'),
+    sec('현장에서 묻는 병력','빈혈·혈액질환 진단 여부, 최근 출혈, 항응고제·항혈소판제 복용, 반복되는 멍·코피, 최근 수술이나 시술 여부를 확인한다. 증상이 혈액질환 때문이라고 바로 단정하지 않고 현재 출혈과 산소화·순환 상태를 함께 본다.'),
+    sec('현장 우선순위','진단명보다 ABC와 순환상태가 우선이다. 대량출혈, 저혈압, 빈맥, 의식변화가 있으면 쇼크 가능성을 평가하고 신속히 이송한다.')
+  ],
+  officialLinks:[
+    {label:'질병관리청 국가건강정보포털 · 빈혈',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=1104'},
+    {label:'질병관리청 · 출혈질환의 응고검사',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=6269'}
+  ]
+});
+
+put('E25-C04',{
+  source:'2026 응급처치학개론 출제범위 · 2026 소방전술3(구급) 105·435쪽 · 질병관리청 국가건강정보포털 비출혈/각막화상 보강',
+  sourcePrecision:'official-scope+official-textbook+KDCA-supplement',
+  summary:'눈·귀·코·목 응급은 기도위험 여부를 먼저 확인하고, 비출혈·눈 화학손상·이물 등에서 추가 손상을 막는 기본 응급처치와 신속한 전문진료 연결이 핵심이다.',
+  detail:[
+    '소방전술3은 비인두기도기 삽입 시 잘못된 방법이 코피를 일으킬 수 있음을 설명하고, 구급활동일지에서는 비출혈을 별도의 증상으로 기록한다.',
+    '질병관리청은 비출혈 환자에서 고개를 뒤로 젖히기보다 앞으로 숙여 혈액의 기도 흡인을 줄이고, 전방 비출혈에서는 콧등 아래 연골부위를 압박하는 방법을 설명한다.',
+    '화학물질에 의한 각막손상에서는 지체하지 말고 생리식염수 또는 깨끗한 물로 즉시 충분히 세척하는 것이 가장 중요하다. 물질명·노출시간·세척 여부를 확인해 전문진료로 연결한다.',
+    '눈·귀·코·목 질환은 구조적으로 기도와 가까운 부위가 많다. 출혈·부종·이물로 호흡이나 기도 유지가 위협받는다면 국소질환보다 ABC 우선순위로 전환한다.'
+  ],
+  features:[
+    '비출혈 → 앞으로 숙여 흡인 방지 + 출혈량/활력징후 확인',
+    '눈 화학손상 → 즉시 충분한 세척이 최우선',
+    'ENT 부위 출혈·부종·이물 → 기도위험 여부를 먼저 확인'
+  ],
+  must:[
+    '눈 화학노출은 중화제를 찾느라 세척을 지연하지 않는다.',
+    '비출혈 환자는 피가 기도로 넘어가지 않도록 자세와 기도상태를 확인한다.',
+    '심한 출혈·시력저하·호흡곤란·의식변화가 있으면 신속이송 우선'
+  ],
+  traps:[
+    '코피가 나면 무조건 고개를 뒤로 젖힌다는 선지는 경계한다.',
+    '화학물질이 눈에 들어간 뒤 정확한 물질을 확인할 때까지 세척을 기다리지 않는다.'
+  ],
+  compare:[
+    ['비출혈','앞으로 숙임 · 출혈량/기도흡인 위험 확인 · 지속/대량 출혈은 중증평가'],
+    ['화학적 눈 손상','즉시 물/생리식염수로 충분히 세척 · 물질명/노출시간 확인'],
+    ['기도 이물·인후/후두 부종','호흡곤란·기도폐쇄 징후가 있으면 ABC 최우선'],
+    ['단순 귀·코 이물','무리한 제거보다 손상 방지와 전문진료 연결']
+  ],
+  deepSections:[
+    sec('비출혈','대부분 전방 비출혈이지만 후방 출혈은 더 많은 출혈과 기도흡인 위험을 만들 수 있다. 환자를 안정시키고 앞으로 숙이며 출혈량과 활력징후를 본다.'),
+    sec('눈 화학손상','화학물질이 눈에 들어간 경우 즉시 세척한다. 생리식염수가 없어도 깨끗한 물로 지체 없이 세척하고, 이후 안과 평가가 필요하다.'),
+    sec('기도와 연결','인후·후두의 부종, 심한 비강 출혈, 이물은 기도문제로 진행할 수 있으므로 호흡곤란·청색증·의식저하가 있으면 기도 우선순위를 높인다.'),
+    sec('중증도를 높이는 단서','갑작스러운 시력저하, 관통성 안손상 의심, 지속되는 대량 비출혈, 얼굴·목의 빠른 부종, 호흡음 변화나 침도 삼키기 어려운 상태는 단순 국소증상보다 우선도가 높다. 해당 부위만 보지 말고 ABC와 전신상태를 다시 평가한다.'),
+    sec('금지 행동','박힌 이물을 무리하게 뽑거나, 눈을 비비거나, 비출혈에서 피를 계속 삼키게 하는 자세를 유지하는 행동을 피한다.')
+  ],
+  officialLinks:[
+    {label:'질병관리청 국가건강정보포털 · 코피(비출혈)',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=3768'},
+    {label:'질병관리청 국가건강정보포털 · 안외상(각막화상)',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=1381'}
+  ]
+});
+
+put('E25-C05',{
+  source:'2026 응급처치학개론 출제범위 · 2026 소방전술3(구급) 390~394쪽 · 질병관리청 국가건강정보포털 골관절염/통풍 보강',
+  sourcePrecision:'official-scope+official-textbook+KDCA-supplement',
+  summary:'비외상성 근골격계 응급은 외상 없이 발생한 관절·근골격 통증에서 퇴행성·염증성·감염성 가능성을 구분하고, 급성 통증·부종·기능저하와 전신상태를 함께 평가하는 영역이다.',
+  detail:[
+    '2026 공식 출제범위는 비외상성 근골격계 질환을 퇴행성·염증성·감염성 질환으로 구분해 포함한다. 따라서 골절·탈구 같은 외상성 손상과 별도 축으로 학습해야 한다.',
+    '소방전술3의 노인환자 부분은 노화에 따라 골관절염과 골다공증이 흔해지고 관절 유연성과 기능이 감소할 수 있음을 설명한다.',
+    '질병관리청은 골관절염을 관절 연골과 뼈의 퇴행성 변화로 통증·기능장애·변형이 생기는 질환으로 설명한다. 활동 뒤 통증, 뻣뻣함과 기능제한을 평가한다.',
+    '질병관리청은 통풍을 요산결정이 관절이나 주변 조직에 침착해 반복적인 염증을 일으키는 질환으로 설명한다. 급성 통풍관절염은 갑작스러운 관절 통증·염증으로 나타날 수 있다.',
+    '감염성 관절·골 질환은 발열이나 전신상태 저하와 연결될 수 있으므로 단순한 만성 통증으로 단정하지 않고 활력징후와 전신증상을 확인한다.'
+  ],
+  features:[
+    '퇴행성 → 골관절염처럼 점진적 통증·기능저하와 연결',
+    '염증성 → 통풍처럼 급성 관절염 형태가 나타날 수 있음',
+    '감염성 가능성 → 전신증상·발열·심한 국소증상이 있으면 중증도 상승'
+  ],
+  must:[
+    '외상 유무를 먼저 구분한다.',
+    '통증 부위·발병속도·부종·발적·운동제한·발열을 확인한다.',
+    '전신상태가 나쁘거나 심한 급성 통증·기능상실이 있으면 신속한 의료평가가 필요하다.'
+  ],
+  traps:[
+    '비외상성 근골격계 질환을 모두 단순 근육통으로 처리하지 않는다.',
+    '통풍과 골관절염을 같은 원리의 질환으로 외우지 않는다.'
+  ],
+  compare:[
+    ['골관절염','퇴행성 변화 · 활동 관련 통증/뻣뻣함 · 만성 경과'],
+    ['급성 통풍관절염','요산결정 관련 염증 · 급성 관절통·부종 가능'],
+    ['감염성 관절/골 질환','감염 가능성 · 발열/전신상태 저하 동반 가능 · 신속평가 중요'],
+    ['외상성 근골격손상','명확한 손상기전 · 골절/탈구/염좌 등과 구분']
+  ],
+  deepSections:[
+    sec('출제범위 분류','비외상성 근골격계 질환은 퇴행성·염증성·감염성으로 나누어 보는 것이 공식 범위의 핵심 구분이다.'),
+    sec('퇴행성 질환','골관절염은 관절 연골과 주변 구조의 퇴행성 변화로 통증과 기능장애를 일으킨다. 노인환자에서는 낙상 위험과 기능상태까지 함께 본다.'),
+    sec('염증성 질환','통풍은 요산결정 침착에 의한 반복성 염증질환이다. 외상 없이 갑자기 심한 관절통과 부종이 나타난 경우 병력과 전신상태를 함께 평가한다.'),
+    sec('평가 순서','외상 여부를 먼저 확인하고, 통증 시작시각·관절의 발적과 부종·운동제한·발열·기저질환·복용약을 묻는다. 체중부하가 갑자기 불가능해졌거나 전신상태가 나쁘면 단순한 만성 관절통으로 처리하지 않는다.'),
+    sec('감염성 가능성과 현장판단','발열·오한·전신쇠약이나 심한 국소염증이 동반되면 단순 퇴행성 통증으로 단정하지 않는다. 구급현장에서는 진단명 확정보다 활력징후와 이송 필요성 판단이 우선이다.')
+  ],
+  officialLinks:[
+    {label:'질병관리청 국가건강정보포털 · 골관절염',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=1988'},
+    {label:'질병관리청 국가건강정보포털 · 통풍',url:'https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=6732'}
+  ]
+});
+
+V.Quality2EMSMedical119={version:'2026-quality2-ems-medical-v1',concepts:['E25-C01','E25-C02','E25-C03','E25-C04','E25-C05'],policy:'2026 official exam scope first; official NFA textbook first; KDCA supplemental sources explicitly labeled where textbook depth is insufficient'};
+})();
+
+;
+/* ---- quality2-fire-admin-content-119.js ---- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored;if(!P)return;
+const sec=(title,body,bullets=[])=>({title,body,bullets});
+const uniq=a=>[...new Set((a||[]).filter(Boolean))];
+function merge(id,x){
+  const p=P[id];if(!p)return;
+  p.detail=uniq([...(p.detail||[]),...(x.detail||[])]);
+  p.features=uniq([...(p.features||[]),...(x.features||[])]);
+  p.must=uniq([...(p.must||[]),...(x.must||[])]);
+  p.traps=uniq([...(p.traps||[]),...(x.traps||[])]);
+  p.deepSections=[...(p.deepSections||[]),...(x.deepSections||[])];
+  p.compare=[...(p.compare||[]),...(x.compare||[])];
+  p.officialLinks=[...(p.officialLinks||[]),...(x.officialLinks||[])];
+  p.source=[p.source,x.source].filter(Boolean).join(' · ');
+  p.quality2FireAdmin=true;
+}
+
+merge('F01-C01',{
+  source:'2026 소방법령2 · 소방기관 설치·소속·지휘관계',
+  features:[
+    '소방기관·조직체계의 핵심은 시·도 단위 소방본부, 지역 단위 소방서, 소방서장 소속 현장조직의 관계를 구분하는 것이다.',
+    '기관 이름을 따로 암기하기보다 “어느 단계에 설치되고 누구의 지휘·감독을 받는가”를 중심으로 본다.',
+    '소방의 역사나 조직관리 일반이론은 이 개념의 상세설명에 섞지 않고 별도 주제로 학습해야 한다.'
+  ],
+  detail:[
+    '시·도 소방행정은 소방본부를 중심으로 운영되고, 지역 단위 현장 소방행정은 소방서를 중심으로 수행된다.',
+    '119안전센터·119구조대·119구급대·119지역대 등은 소방서장 소속 하부 현장조직으로 구분해 이해한다.',
+    '시험에서는 상위기관과 하부조직의 설치단계·소속·지휘관계를 서로 바꿔 제시하는 선지를 주의한다.',
+    '소방기관의 역할을 볼 때는 정책·조정 기능과 지역 현장출동 기능을 구분하면 조직관계를 쉽게 정리할 수 있다.'
+  ],
+  must:[
+    '시·도 단위 → 소방본부',
+    '지역 단위 → 소방서',
+    '소방서장 소속 → 119안전센터·119구조대·119구급대·119지역대 등',
+    '소속·설치단계·지휘관계를 한 세트로 기억'
+  ],
+  traps:[
+    '소방본부와 119안전센터를 같은 조직단계로 묶지 않는다.',
+    '119안전센터·구조대·구급대를 시·도지사 직속 상위기관처럼 설명한 선지에 주의한다.',
+    '소방 발전연혁이나 계층제·명령통일·통솔범위 같은 조직관리론을 이 개념의 조직도와 섞지 않는다.'
+  ],
+  compare:[
+    ['소방본부','시·도 단위 소방행정의 중심'],
+    ['소방서','지역 단위 소방행정·현장대응의 중심'],
+    ['119안전센터 등','소방서장 소속 최일선 현장조직']
+  ],
+  deepSections:[
+    sec('전체 조직관계','시·도 단위의 소방행정과 지역 단위 현장대응이 소방본부 → 소방서 → 현장조직으로 이어지는 구조를 먼저 잡는다. 기관명을 외우기 전에 조직단계를 이해하는 것이 핵심이다.'),
+    sec('소방본부','소방본부는 시·도 차원의 소방행정·지휘·조정 기능을 수행하는 상위 조직으로 이해한다. 세부 권한은 관련 법령과 공식교재의 설치·지휘 관계를 함께 확인한다.'),
+    sec('소방서','소방서는 담당 지역의 화재진압·구조·구급 등 현장업무와 예방·안전관리 업무를 수행하는 지역 단위 관서다.'),
+    sec('119안전센터·구조대·구급대','소방서장 소속으로 두는 현장조직은 기능에 따라 화재진압·구조·구급 등 역할이 나뉜다. 시험에서는 이들의 소속을 상위기관과 바꾸는 함정이 자주 나온다.'),
+    sec('시험 풀이법','기관이 나오면 ① 조직단계 ② 소속·지휘주체 ③ 대표기능 순서로 확인한다. 발전연혁과 조직관리론은 별도 개념으로 분리해서 학습한다.')
+  ]
+});
+
+merge('F01-C02',{
+  source:'2026 소방학개론 공식 출제범위 · 소방자원관리',
+  features:[
+    '2026 출제범위는 소방자원관리를 인적·물적·재정적 자원관리 개요로 구분한다.',
+    '인적자원은 인력의 확보·배치·교육훈련·역량, 물적자원은 차량·장비·소방용수·물품의 확보와 유지, 재정적 자원은 예산의 확보·배분·집행과 성과책임의 관점으로 구분한다.',
+    '세 자원은 따로 존재하는 것이 아니라 지역위험과 업무수요에 맞게 함께 배치될 때 실제 소방력으로 기능한다.'
+  ],
+  detail:[
+    '인적 자원관리는 필요한 인력을 적정하게 확보·배치하고 교육·훈련과 전문성 향상을 통해 업무수행 역량을 유지하는 축이다.',
+    '물적 자원관리는 소방차량·구조구급장비·통신장비·개인보호장비·소방용수 등 현장업무에 필요한 물적 기반을 확보하고 실제 사용할 수 있는 상태로 유지하는 축이다.',
+    '재정적 자원관리는 한정된 예산을 정책·지역위험·출동수요와 우선순위에 따라 확보·배분·집행하고 그 사용에 책임을 지는 축으로 이해한다.',
+    '자원관리 문제는 “무엇을 관리하는가”뿐 아니라 인력·장비·예산이 서로 맞물리지 않으면 실제 대응능력이 떨어진다는 상호의존성을 함께 보는 것이 중요하다.'
+  ],
+  must:[
+    '소방자원관리 = 인적 + 물적 + 재정적 자원관리',
+    '인적 → 인력 확보·배치·교육훈련·전문성',
+    '물적 → 차량·장비·용수·물품 확보와 유지관리',
+    '재정적 → 예산 확보·배분·집행·책임'
+  ],
+  traps:[
+    '소방자원관리를 인력과 장비만으로 한정해 재정적 자원을 누락한 선지를 경계한다.',
+    '예산은 물적자원 자체가 아니라 재정적 자원관리의 수단·대상이라는 구분을 유지한다.'
+  ],
+  compare:[
+    ['인적 자원관리','사람 · 확보·배치·교육훈련·전문성'],
+    ['물적 자원관리','차량·장비·용수·물품 · 확보·점검·유지'],
+    ['재정적 자원관리','예산 · 확보·배분·집행·성과책임']
+  ],
+  deepSections:[
+    sec('인적 자원','재난현장 업무는 숙련과 협업이 핵심이므로 단순 정원보다 배치, 교육훈련, 자격·역량과 지속적인 전문성 관리까지 함께 본다.'),
+    sec('물적 자원','차량과 장비는 보유 숫자만으로 충분하지 않다. 가용성·정비상태·배치위치·현장 접근성과 소방용수 확보가 실제 대응력을 좌우한다.'),
+    sec('재정적 자원','예산은 인력과 장비를 실제로 유지하는 기반이다. 필요한 사업의 우선순위를 정하고 예산을 확보·배분·집행하며 결과와 책임을 연결하는 관점으로 본다.'),
+    sec('통합관리','지역 위험과 출동수요를 기준으로 사람·장비·예산을 함께 설계해야 한다. 한 요소가 부족하면 다른 요소가 충분해도 현장 대응능력이 제한될 수 있다.')
+  ]
+});
+
+merge('F01-C05',{
+  source:'2026 소방학개론 공식 출제범위 · 의용소방대법 · 화재예방법 제24조 · 위험물안전관리법 제15조 · 소방시설공사업법 제2조',
+  features:[
+    '2026 출제범위는 민간 소방조직의 종류와 역할을 소방조직 범위에 포함한다.',
+    '민간·지역 안전주체는 의용소방대 같은 자율봉사조직뿐 아니라 특정소방대상물의 소방안전관리자, 위험물 제조소등의 위험물안전관리자, 소방시설 설계·시공·감리 등 전문 소방시설업을 기능별로 구분해 볼 수 있다.',
+    '시험에서는 “누가 무엇을 관리·지원·설계·시공·감리하는가”를 서로 바꾼 선지를 구분하는 것이 핵심이다.'
+  ],
+  detail:[
+    '의용소방대는 지역 주민의 자율적 참여를 바탕으로 소방업무와 재난대응을 지원하는 지역 협력조직이며 소방공무원 내부직제와는 구분한다.',
+    '화재예방법 제24조는 전문적인 안전관리가 요구되는 소방안전관리대상물의 관계인이 자격을 갖춘 소방안전관리자를 선임하도록 정한다.',
+    '위험물안전관리법 제15조는 대상 제조소등의 관계인이 위험물 안전관리 직무를 수행하도록 자격을 갖춘 위험물안전관리자를 선임하도록 정한다.',
+    '소방시설공사업법상 소방시설업에는 소방시설설계업·소방시설공사업·소방공사감리업·방염처리업 등이 있으며, 설계·시공·감리는 각각 설계도서 작성, 시설 공사, 설계도서와 법령에 맞는 시공 확인·기술지도라는 역할을 갖는다.',
+    '소방시설의 점검·관리 기능은 소방시설관리업 등 별도 현행 법체계와 연결되므로 설계·시공·감리와 같은 역할로 섞지 않는다.'
+  ],
+  must:[
+    '의용소방대 → 지역 주민 중심 자율봉사·소방활동 지원',
+    '소방안전관리자 → 소방안전관리대상물의 소방안전관리 업무',
+    '위험물안전관리자 → 제조소등의 위험물 안전관리 직무',
+    '소방시설업 → 설계·시공·감리·방염 등 역할을 구분',
+    '설계 ≠ 시공 ≠ 감리 ≠ 점검·관리'
+  ],
+  traps:[
+    '의용소방대를 소방공무원 내부 조직과 동일하게 보지 않는다.',
+    '소방안전관리자와 위험물안전관리자의 근거법·관리대상을 서로 바꾸지 않는다.',
+    '감리를 직접 시공하는 영업으로 설명하거나, 설계를 점검·관리와 동일시한 선지를 경계한다.'
+  ],
+  compare:[
+    ['의용소방대','지역 주민 자율 참여 · 예방·재난대응·소방활동 지원'],
+    ['소방안전관리자','특정소방대상물 · 화재예방 및 안전관리 업무'],
+    ['위험물안전관리자','제조소등 · 위험물 저장·취급 안전관리'],
+    ['소방시설설계업','설계도서 작성'],
+    ['소방시설공사업','설계도서에 따른 소방시설 시공'],
+    ['소방공사감리업','적법 시공 확인 + 품질·시공 기술지도'],
+    ['점검·관리 기능','소방시설의 유지관리 상태 확인·관리 · 설계/시공/감리와 구분']
+  ],
+  deepSections:[
+    sec('민간 소방조직을 보는 축','공공 소방조직 밖에서도 지역 자율조직, 대상물 안전관리자, 위험물 안전관리자, 소방시설 전문업체가 예방과 안전관리 기능을 분담한다. “누가·무엇을·어떤 법에 따라” 수행하는지 구분한다.'),
+    sec('안전관리자 비교','소방안전관리자는 소방안전관리대상물의 화재안전관리, 위험물안전관리자는 제조소등의 위험물 안전관리라는 대상 차이가 핵심이다.'),
+    sec('설계·시공·감리','설계는 설계도서를 만들고, 시공은 설계도서에 따라 시설을 설치·정비하며, 감리는 법령·설계도서에 맞는 시공 여부를 확인하고 기술지도한다.'),
+    sec('시험 풀이법','의용소방대/안전관리자/시설업 명칭이 나오면 조직 성격, 관리대상, 법적 기능을 먼저 붙인 뒤 세부 선지를 판단한다.')
+  ],
+  officialLinks:[
+    {label:'2026 소방공무원 채용시험 · 소방학개론 출제범위',url:'https://js119.gwd.go.kr/egf/bp/board/article/download?fileSeq=1245182'},
+    {label:'국가법령정보센터 · 화재예방법 제24조',url:'https://law.go.kr/lsLinkCommonInfo.do?lsJoLnkSeq=1020680213'},
+    {label:'국가법령정보센터 · 위험물안전관리법 제15조',url:'https://www.law.go.kr/lsLawLinkInfo.do?chrClsCd=010202&lsJoLnkSeq=1000777042'},
+    {label:'국가법령정보센터 · 소방시설공사업법 제2조',url:'https://law.go.kr/lsLinkCommonInfo.do?chrClsCd=010202&lsJoLnkSeq=1021620313'}
+  ]
+});
+V.Quality2FireAdmin119={version:'2026-fire-admin-quality2-v1',concepts:['F01-C01','F01-C02','F01-C05'],policy:'2026 official exam scope first; NFA history/current statutes used for concrete facts; general organization-management concepts are labeled as foundational theory'};
+})();
+
+;
+/* ---- fire-admin-split-119.js ---- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored;if(!P)return;
+const sec=(title,body,bullets=[])=>({title,body,bullets});
+P['F01-C06']={
+  status:'verified',
+  summary:'소방의 발전과정은 조선의 방화조직에서 근대 소방서, 정부수립 후 소방행정, 소방방재청·중앙소방본부를 거쳐 2017년 소방청과 2020년 국가직 체제로 이어진 흐름을 시대순으로 정리하는 개념이다.',
+  source:'소방청 공식 연혁 · 2026 소방학개론 공식 출제범위',
+  features:[
+    '1426년 금화도감·수성금화도감과 1481년 수성금화사는 조선시대 방화조직의 대표 흐름이다.',
+    '1925년 경성소방서는 근대 소방관서 변천의 대표 연혁으로 제시된다.',
+    '1948년 정부수립 이후 내무부 치안국 소방과 체제를 거쳐 1975년 내무부 소방국이 설치되었다.',
+    '1992년 시·도 소방본부 설치, 1995년 시·도 지방직 전환의 순서를 구분한다.',
+    '2004년 소방방재청 → 2014년 국민안전처 중앙소방본부 → 2017년 소방청 → 2020년 소방공무원 국가직 전환의 흐름을 묶어 기억한다.'
+  ],
+  detail:[
+    '조선시대에는 화재를 예방·진압하기 위한 관청 조직이 형성되었고, 소방청 공식 연혁은 1426년 금화도감·수성금화도감과 1481년 수성금화사를 주요 변천으로 제시한다.',
+    '근대에는 1925년 경성소방서가 설치되었고, 정부수립 이후에는 중앙의 내무부 치안국 소방과와 지방 경찰국 소방조직을 중심으로 운영되었다.',
+    '1958년 소방법 제정, 1975년 내무부 소방국 설치, 1978년 소방공무원법 제정은 정부수립 이후 소방행정의 제도화 과정에서 중요한 연혁이다.',
+    '1992년 시·도 소방본부 설치 후 1995년 시·도 지방직 체제로 전환되면서 지방 단위 소방행정 구조가 강화되었다.',
+    '2004년 소방방재청이 출범했고, 2014년 국민안전처 중앙소방본부 체제로 개편된 뒤 2017년 독립 외청인 소방청이 출범했다.',
+    '2019년 관련 법률 개정 이후 2020년 4월 1일 소방공무원 신분이 국가직으로 일원화되었다. 시험에서는 기관명과 연도를 서로 뒤바꾸는 함정을 특히 주의한다.'
+  ],
+  must:[
+    '1426 금화도감·수성금화도감 → 1481 수성금화사',
+    '1925 경성소방서',
+    '1958 소방법 → 1975 내무부 소방국 → 1978 소방공무원법',
+    '1992 시·도 소방본부 → 1995 지방직 전환',
+    '2004 소방방재청 → 2014 중앙소방본부 → 2017 소방청 → 2020 국가직 전환'
+  ],
+  traps:[
+    '소방청 출범 연도와 소방방재청 출범 연도를 바꾸지 않는다.',
+    '시·도 소방본부 설치(1992)와 지방직 전환(1995)의 순서를 뒤집지 않는다.',
+    '2020년 국가직 전환을 2017년 소방청 출범과 같은 사건으로 보지 않는다.'
+  ],
+  compare:[
+    ['2004','소방방재청 출범'],
+    ['2014','국민안전처 중앙소방본부 체제'],
+    ['2017','소방청 출범'],
+    ['2020','소방공무원 국가직 전환']
+  ],
+  flow:['조선 방화조직','근대 소방서','정부수립 후 내무부 체제','소방방재청','중앙소방본부','소방청·국가직'],
+  visuals:['fire-history-timeline'],
+  deepSections:[
+    sec('조선시대 방화조직','소방청 공식 연혁은 1426년 금화도감·수성금화도감, 1481년 수성금화사를 조선시대 주요 변천으로 제시한다. 연도와 기관명을 한 묶음으로 외운다.'),
+    sec('근대와 정부수립 이후','1925년 경성소방서가 설치되었고, 정부수립 이후에는 내무부 치안국 소방과 중심의 중앙 소방행정이 이어졌다. 1958년 소방법 제정은 법제화 흐름에서 중요한 지점이다.'),
+    sec('소방국과 시·도 체제','1975년 내무부 소방국 설치, 1978년 소방공무원법 제정, 1992년 시·도 소방본부 설치, 1995년 지방직 전환을 순서대로 연결한다.'),
+    sec('독립 소방행정 강화','2004년 소방방재청, 2014년 국민안전처 중앙소방본부, 2017년 소방청으로 중앙 소방행정 조직이 변천했다. 기관명만 외우지 말고 앞뒤 체제를 연결한다.'),
+    sec('국가직 전환','2019년 법률 개정을 거쳐 2020년 4월 1일 소방공무원 국가직 전환이 시행되었다. 소방청 출범과 국가직 전환은 서로 다른 연혁이다.'),
+    sec('시험 풀이법','연혁문제는 한 연도를 단독 암기하기보다 “기관 변천의 앞뒤 관계”를 먼저 확인한다. 1992/1995, 2004/2014/2017/2020이 대표 비교축이다.')
+  ],
+  officialLinks:[
+    {label:'소방청 · 연혁',url:'https://nfa.go.kr/nfa/introduce/status/history'},
+    {label:'소방청 · 2020 국가직 전환 보도자료',url:'https://www.nfa.go.kr/nfa/news/pressrelease/press/?cntId=772&mode=view'}
+  ]
+};
+
+P['F01-C07']={
+  status:'verified',
+  summary:'소방조직관리 기초이론은 조직목표를 달성하기 위해 권한·책임과 직무를 어떻게 나누고 지휘·조정할지를 설명하는 원리로, 계층제·명령통일·통솔범위·분업전문화·조정통합을 구분하는 것이 핵심이다.',
+  source:'2026 소방공무원 채용시험 소방학개론 공식 출제범위 · 소방조직관리 기초이론',
+  features:[
+    '계층제는 권한·책임과 직무를 상하 단계로 배분해 지휘체계를 형성하는 원리다.',
+    '명령통일은 원칙적으로 한 직속상관의 지휘·보고 체계를 명확히 하는 원리다.',
+    '통솔범위는 한 관리자가 효과적으로 직접 감독할 수 있는 부하나 업무의 범위를 뜻한다.',
+    '분업·전문화는 업무를 기능별로 나누어 숙련과 전문성을 높이는 원리다.',
+    '조정·통합은 분화된 활동을 공통 목표에 맞게 연결하고 충돌을 줄이는 원리다.'
+  ],
+  detail:[
+    '조직관리는 조직의 목적을 달성하기 위해 업무를 분담하고 권한과 책임을 배분하며 지휘·보고·협업 관계를 설계하는 과정으로 이해한다.',
+    '계층제는 상하 단계별 권한관계를 명확히 해 지휘체계를 형성한다. 장점은 책임과 지휘선이 명확해지는 것이고, 지나치게 경직되면 의사결정이 느려질 수 있다.',
+    '명령통일은 한 구성원이 복수의 상급자로부터 상충되는 지시를 받는 혼란을 줄이기 위한 원리다. 시험에서는 통솔범위와 개념을 바꾸어 제시하는 경우가 많다.',
+    '통솔범위는 한 관리자가 직접 감독할 수 있는 적정 범위를 다룬다. 업무의 복잡성, 구성원의 숙련도, 공간적 분산, 표준화 정도 등에 따라 적정 범위가 달라질 수 있다.',
+    '분업·전문화는 업무 효율과 숙련을 높일 수 있지만 부서 간 단절이 커질 수 있으므로 조정·통합 원리와 함께 봐야 한다.',
+    '권한과 책임은 가능한 한 서로 대응하도록 배분해야 하며, 책임만 부여하고 필요한 권한을 주지 않거나 권한만 부여하고 책임을 묻지 않는 구조는 조직운영에 문제를 만든다.'
+  ],
+  must:[
+    '계층제 → 상하 권한·책임 단계',
+    '명령통일 → 한 직속상관 중심의 지휘·보고',
+    '통솔범위 → 한 관리자가 직접 감독할 수 있는 범위',
+    '분업·전문화 → 기능분화와 전문성 향상',
+    '조정·통합 → 분화된 활동을 공통 목표에 맞게 연결'
+  ],
+  traps:[
+    '명령통일을 “감독 가능한 부하 수”라고 설명하면 통솔범위와 뒤바뀐 것이다.',
+    '분업·전문화가 강화될수록 조정 필요성이 사라진다고 보지 않는다.',
+    '계층제가 존재한다고 해서 모든 의사결정을 상위계층이 직접 해야 하는 것은 아니다.'
+  ],
+  compare:[
+    ['계층제','권한·책임과 직무의 상하 단계'],
+    ['명령통일','지휘·보고 계통의 일관성'],
+    ['통솔범위','직접 감독 가능한 범위'],
+    ['분업·전문화','업무를 기능별로 나누고 전문성 강화'],
+    ['조정·통합','분화된 업무를 목표에 맞게 연결']
+  ],
+  flow:[],
+  deepSections:[
+    sec('계층제','조직의 권한과 책임을 상하 단계로 나누어 지휘·보고의 흐름을 명확히 한다. 시험에서는 계층 수가 많아질수록 항상 효율적이라고 단정하는 선지를 경계한다.'),
+    sec('명령통일','복수의 상관으로부터 상충되는 지시를 받지 않도록 지휘선을 명확하게 하는 원리다. 지휘계통의 명확성과 책임소재를 연결해서 이해한다.'),
+    sec('통솔범위','관리자가 효과적으로 직접 감독할 수 있는 인원·업무 범위를 뜻한다. 업무 난이도와 표준화, 부하의 숙련도, 지리적 분산 정도에 따라 적정 범위가 달라질 수 있다.'),
+    sec('분업·전문화','업무를 기능과 전문영역별로 나누면 숙련과 효율을 높일 수 있지만 부서 간 장벽과 목표 불일치가 생길 수 있어 조정이 필요하다.'),
+    sec('조정·통합','서로 다른 부서·기능의 활동을 공통 목표에 맞게 연결하고 중복·충돌을 줄이는 원리다. 분업이 강해질수록 조정의 중요성도 커진다.'),
+    sec('권한과 책임','업무수행에 필요한 권한과 결과에 대한 책임을 대응시키는 것이 기본이다. 권한 없는 책임 또는 책임 없는 권한이 되지 않도록 설계한다.'),
+    sec('시험 풀이법','원리의 이름보다 “무엇을 해결하려는 원리인가”를 묻는다. 지휘선=명령통일, 감독범위=통솔범위, 상하단계=계층제, 기능분화=분업, 연결=조정으로 빠르게 구분한다.')
+  ],
+  officialLinks:[
+    {label:'2026 소방공무원 채용시험 · 소방학개론 출제범위',url:'https://js119.gwd.go.kr/egf/bp/board/article/download?fileSeq=1245182'}
+  ]
+};
+
+V.FireAdminSplit119={version:'119-fire-admin-boundary-v1',concepts:['F01-C06','F01-C07']};
+})();
+
+;
+/* ---- quality2-global-content-119.js ---- */
+'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored,C=V.curriculum;
 if(!P||!C?.concepts)return;
@@ -659,5 +1155,346 @@ V.Quality2GlobalContent119={
   featureReady:C.concepts.filter(c=>(P[c.id]?.features||[]).length>=3).length,
   comparisonReady:C.concepts.filter(c=>(P[c.id]?.compare||[]).length>=2).length,
   policy:'features/must/deep content are derived only from the same verified pack; comparisons are supplied only by authored content or curated semantic comparison families'
+};
+})();
+
+;
+/* ---- quality2-comparison-families-119.js ---- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored,C=V.curriculum;
+if(!P||!C?.byId)return;
+const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
+const key=s=>norm(s).toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
+const clip=(s,n=150)=>{const t=norm(s);return t.length>n?t.slice(0,n-1)+'…':t};
+const uniq=rows=>{const out=[],seen=new Set();for(const x of rows||[]){const t=norm(x),k=key(t);if(!t||seen.has(k))continue;seen.add(k);out.push(t)}return out};
+
+const families=[
+  {key:'fire-org',title:'소방조직 역할 비교',ids:['F01-C01','F01-C02','F01-C03','F01-C04','F01-C05']},
+  {key:'disaster-cycle',title:'재난관리 기능 비교',ids:['F02-C01','F02-C02','F02-C03','F02-C04','F02-C05','F02-C06','F02-C07']},
+  {key:'heat-combustion',title:'열·연소 기초 구분',ids:['F03-C02','F03-C03','F03-C04','F03-C05']},
+  {key:'fire-transition',title:'구획화재 특수현상 비교',ids:['F03-C06','F03-C09','F03-C10','F03-C11']},
+  {key:'tank-overflow',title:'유류탱크 특수현상 비교',ids:['F03-C12','F03-C13','F03-C14']},
+  {key:'special-fire',title:'특수화재·폭발현상 비교',ids:['F03-C08','F03-C15','F03-C16']},
+  {key:'extinguishing-agent',title:'소화약제 비교',ids:['F04-C03','F04-C04','F04-C05','F04-C06','F04-C07','F04-C08']},
+  {key:'hazmat-class',title:'위험물 제1~6류 비교',ids:['F05-C02','F05-C03','F05-C04','F05-C05','F05-C06','F05-C07']},
+  {key:'fire-investigation',title:'화재조사 단계·목적 비교',ids:['F06-C01','F06-C02','F06-C03','F06-C04']},
+  {key:'hydrant',title:'소화전·소화기구 비교',ids:['F07-C02','F07-C03','F07-C04']},
+  {key:'sprinkler-types',title:'스프링클러 방식 비교',ids:['F07-C05','F07-C06','F07-C17','F07-C18','F07-C19','F07-C20']},
+  {key:'sprinkler-components',title:'스프링클러 구성·헤드 비교',ids:['F07-C16','F07-C21']},
+  {key:'fixed-extinguishing',title:'고정식 소화설비 비교',ids:['F07-C07','F07-C08','F07-C09','F07-C10']},
+  {key:'detection-alarm',title:'감지·경보설비 비교',ids:['F07-C11','F07-C12']},
+  {key:'support-facilities',title:'피난·용수·소방활동 지원설비 비교',ids:['F07-C13','F07-C14','F07-C15']},
+
+  {key:'ems-system',title:'응급의료체계·법적역할 비교',ids:['E01-C01','E01-C02','E01-C03']},
+  {key:'rescuer-wellbeing',title:'대원 스트레스·안전 비교',ids:['E02-C01','E02-C02']},
+  {key:'infection-control',title:'감염예방·소독·관리 비교',ids:['E03-C01','E03-C02','E03-C03','E03-C04']},
+  {key:'communication-record',title:'의사소통·통신·기록 비교',ids:['E05-C01','E05-C02','E05-C03','E05-C04']},
+  {key:'patient-movement',title:'환자 이동 원칙 비교',ids:['E06-C01','E06-C02','E06-C03','E06-C04','E06-C05']},
+  {key:'ems-equipment',title:'응급의료 장비 목적 비교',ids:['E07-C01','E07-C02','E07-C03','E07-C04','E07-C05']},
+  {key:'patient-assessment',title:'환자평가 단계 비교',ids:['E08-C01','E08-C02','E08-C03','E08-C04','E08-C05','E08-C06']},
+  {key:'airway-care',title:'기도·호흡 처치 비교',ids:['E09-C01','E09-C02','E09-C03','E09-C04','E09-C05','E09-C06','E09-C07','E09-C08']},
+  {key:'respiratory-emergency',title:'호흡 이상·특수상황 비교',ids:['E10-C01','E10-C02','E10-C03','E10-C04','E10-C05']},
+  {key:'cardiac-emergency',title:'심장응급·제세동 체계 비교',ids:['E11-C01','E11-C02','E11-C03','E11-C04','E11-C05','E11-C06']},
+  {key:'abdominal-emergency',title:'급성복통 평가·처치 비교',ids:['E12-C01','E12-C02','E12-C03','E12-C04','E12-C05']},
+  {key:'bleeding-shock',title:'출혈·쇼크 비교',ids:['E13-C01','E13-C02','E13-C03','E13-C04','E13-C05']},
+  {key:'soft-tissue-burn',title:'연부조직·화상 비교',ids:['E14-C01','E14-C02','E14-C03']},
+  {key:'musculoskeletal',title:'근골격계 손상 비교',ids:['E15-C01','E15-C02','E15-C03']},
+  {key:'head-spine',title:'머리·척추손상 비교',ids:['E16-C01','E16-C02','E16-C03','E16-C04']},
+  {key:'altered-mental',title:'의식장애 원인 비교',ids:['E17-C01','E17-C02','E17-C03','E17-C04']},
+  {key:'poison-allergy',title:'중독·알레르기 비교',ids:['E18-C01','E18-C02']},
+  {key:'environmental',title:'환경응급 비교',ids:['E19-C01','E19-C02','E19-C03','E19-C04','E19-C05']},
+  {key:'obstetric',title:'산과·분만 상황 비교',ids:['E20-C01','E20-C02','E20-C03','E20-C04','E20-C05','E20-C06']},
+  {key:'pediatric',title:'소아 평가·처치 비교',ids:['E21-C01','E21-C02','E21-C03','E21-C04','E21-C05','E21-C06','E21-C07','E21-C08']},
+  {key:'geriatric',title:'노인환자 접근 비교',ids:['E22-C01','E22-C02','E22-C03']},
+  {key:'behavioral',title:'행동응급 상황 비교',ids:['E23-C01','E23-C02','E23-C03']},
+  {key:'bls',title:'기본소생술 단계 비교',ids:['E24-C01','E24-C02','E24-C03','E24-C04','E24-C05']}
+];
+
+function rowFor(id){
+  const c=C.byId[id],p=P[id];if(!c||!p)return null;
+  const feature=uniq([...(p.features||[]),...(p.must||[]),...(p.detail||[])])[0]||p.summary||'';
+  const second=uniq([...(p.must||[]),...(p.features||[]),...(p.detail||[])]).find(x=>key(x)!==key(feature));
+  const desc=clip([feature,second].filter(Boolean).join(' · '),175);
+  return desc?[c.title,desc]:null
+}
+const memberIds=new Set(),applied=[];
+for(const fam of families){
+  const ids=fam.ids.filter(id=>C.byId[id]&&P[id]?.status==='verified');
+  if(ids.length<2)continue;
+  const rows=ids.map(rowFor).filter(Boolean);
+  if(rows.length<2)continue;
+  for(const id of ids){
+    memberIds.add(id);
+    const p=P[id];
+    const authored=(p.compare||[]).length>=2&&!p.compareDerived;
+    if(!authored){
+      p.compare=rows.map(r=>[...r]);
+      p.compareDerived='semantic-family';
+    }
+    p.compareFamily={key:fam.key,title:fam.title,members:ids.slice()};
+    applied.push(id)
+  }
+}
+V.Quality2ComparisonFamilies119={
+  version:'119-quality2-semantic-comparison-v1',
+  families:families.map(f=>({key:f.key,title:f.title,ids:f.ids.slice()})),
+  memberIds:[...memberIds],
+  applied:[...new Set(applied)],
+  policy:'comparison tables are grouped by curated semantic family; authored comparisons are preserved and arbitrary adjacent-concept fallback is forbidden'
+};
+})();
+
+;
+/* ---- quality4-highyield-119.js ---- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored;
+if(!P)return;
+const uniqPush=(arr,rows)=>{arr=Array.isArray(arr)?arr:[];for(const row of rows||[])if(row&&!arr.includes(row))arr.push(row);return arr};
+const addText=(id,rows)=>{const p=P[id];if(!p||p.status!=='verified')return false;p.detail=uniqPush(p.detail,rows);return true};
+const addVisuals=(id,ids)=>{const p=P[id];if(!p||p.status!=='verified')return false;p.visuals=uniqPush(p.visuals,ids);return true};
+
+addText('F03-C11',[
+  '공기 유입 이전에는 환기가 제한된 공간에서 산소 부족과 고온 미연소가스 축적 상태가 형성될 수 있다.',
+  '개구부가 형성된 직후에는 외부 공기가 유입되면서 가스 혼합 상태가 급격히 변하고 폭발적 연소로 이어질 수 있다.',
+  '시험에서는 발생 전의 환기 제한·가스 축적 상태와 공기 유입 이후의 급격한 연소를 하나의 순서로 연결해 구분한다.'
+]);
+addText('F07-C05',[
+  '스프링클러는 방식에 따라 작동 이전의 2차측 배관 상태와 밸브 개방 조건이 다르다.',
+  '헤드 또는 감지설비 작동 이후에는 방식별로 밸브 개방·충수·방수 순서가 달라지므로 습식·건식·준비작동식·일제살수식을 구분해 본다.'
+]);
+
+addVisuals('F07-C05',['sprinkler-system']);
+
+addVisuals('E09-C02',['ems-breathing']);
+addVisuals('E09-C05',['ems-breathing']);
+addVisuals('E10-C02',['ems-breathing']);
+addVisuals('E12-C03',['ems-primary','ems-reassessment']);
+addVisuals('E24-C01',['ems-cpr']);
+addVisuals('E24-C04',['ems-cpr']);
+
+const REQUIREMENTS=[
+  {id:'F03-C11',timing:2,beforeAfter:2,visuals:['backdraft-flow']},
+  {id:'F07-C05',timing:2,beforeAfter:2,visuals:['sprinkler-system']},
+  {id:'E09-C02',visuals:['ems-breathing']},
+  {id:'E09-C05',visuals:['ems-breathing']},
+  {id:'E10-C02',visuals:['ems-breathing']},
+  {id:'E12-C03',visuals:['ems-primary','ems-reassessment']},
+  {id:'E24-C01',visuals:['ems-cpr']},
+  {id:'E24-C04',visuals:['ems-cpr']}
+];
+function audit(){
+  const rows=REQUIREMENTS.map(r=>{
+    const pack=P[r.id],schema=V.Quality2StudySchema119?.get?.(r.id),missing=[];
+    if(pack?.status!=='verified')missing.push('verified-pack');
+    if(!String(pack?.source||'').trim())missing.push('official-source');
+    if(r.timing&&(schema?.timingStages?.length||0)<r.timing)missing.push('timing');
+    if(r.beforeAfter&&(schema?.beforeAfter?.length||0)<r.beforeAfter)missing.push('before-after');
+    for(const visual of r.visuals||[]){
+      if(!(schema?.visuals||[]).includes(visual))missing.push('visual:'+visual);
+      if(!(V.Visual119?.data?.[visual]||[]).length)missing.push('visual-data:'+visual);
+    }
+    return{id:r.id,title:V.curriculum?.byId?.[r.id]?.title||r.id,missing,ready:missing.length===0};
+  });
+  const backlog=rows.filter(x=>!x.ready);
+  return{version:'119-quality4-highyield-v1',total:rows.length,ready:rows.length-backlog.length,missing:backlog.length,rows,backlog};
+}
+V.Quality4HighYield119={version:'119-quality4-highyield-v1',requirements:REQUIREMENTS,audit,policy:{sourceBackedOnly:true,noForcedNonApplicableFields:true,reuseVerifiedVisuals:true}};
+})();
+
+;
+/* ---- v50-visible-detail-coverage-119.js ---- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored;if(!P)return;
+const norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
+const uniqText=rows=>{const out=[];for(const x of rows||[]){const t=String(x||'').trim(),k=norm(t);if(!t||!k||out.some(y=>norm(y)===k))continue;out.push(t)}return out};
+const uniqCompare=rows=>{const map=new Map(),order=[];for(const row of rows||[]){if(!Array.isArray(row)||!row[0]||!row[1])continue;const key=norm(row[0]),next=[String(row[0]).trim(),String(row[1]).trim()];if(!map.has(key)){map.set(key,next);order.push(key)}else if(next[1].length>(map.get(key)?.[1]||'').length)map.set(key,next)}return order.map(k=>map.get(k))};
+const uniqSections=rows=>{const out=[],seen=new Set();for(const x of rows||[]){if(!x)continue;const key=norm((x.title||'')+' '+(x.body||''));if(!key||seen.has(key))continue;seen.add(key);out.push(x)}return out};
+const link=(label,url)=>({label,url,kind:'official'});
+const add=(id,{must=[],traps=[],compare=[],deepSections=[],officialLinks=[]})=>{const p=P[id];if(!p)return;p.must=uniqText([...(p.must||[]),...must]);p.traps=uniqText([...(p.traps||[]),...traps]);p.compare=uniqCompare([...(p.compare||[]),...compare]);p.deepSections=uniqSections([...(p.deepSections||[]),...deepSections]);p.officialLinks=[...(p.officialLinks||[]),...officialLinks].filter((x,i,a)=>x?.url&&a.findIndex(y=>y?.url===x.url)===i);p.visibleDetailCoverageV50=true};
+const sec=(title,body,bullets=[])=>({title,body,bullets});
+
+add('F07-C03',{
+must:[
+'수원은 옥내소화전 설치개수가 가장 많은 층의 설치개수에 2.6㎥를 곱해 산정하며, 2개 이상 설치된 경우 계산상 2개를 적용한다.',
+'옥상수조는 원칙적으로 산정 유효수량 외에 그 유효수량의 3분의 1 이상을 확보한다.',
+'수원을 수조로 설치하는 경우 소화설비 전용수조를 원칙으로 한다.'
+],
+compare:[
+['옥내소화전','건물 내부에서 사람이 호스·관창으로 직접 방수'],
+['옥외소화전','건물 외부에서 사람이 호스를 연결해 직접 방수'],
+['스프링클러','헤드가 화재열 등에 의해 작동해 자동으로 방수']
+],
+deepSections:[
+sec('수원과 옥상수조','옥내소화전설비의 수원은 가장 많은 층의 설치개수에 2.6㎥를 곱해 산정하고, 설치개수가 2개 이상이면 계산상 2개를 적용한다. 옥상수조는 예외에 해당하지 않는 경우 산정 유효수량 외에 그 3분의 1 이상을 확보하는 구조를 이해한다.'),
+sec('수조의 기본 원칙','수원을 수조로 설치하는 경우 소화설비 전용수조가 원칙이다. 다른 설비와 겸용하는 경우에는 유효수량 산정 위치와 흡수구 높이 관계까지 함께 확인한다.')
+],
+officialLinks:[link('옥내소화전설비 화재안전성능기준 NFPC 102','https://www.law.go.kr/admRulLsInfoP.do?admRulId=31179&efYd=0')]
+});
+
+add('F07-C04',{
+must:[
+'수원은 옥외소화전 설치개수에 7㎥를 곱해 산정하며, 2개 이상 설치된 경우 계산상 2개를 적용한다.',
+'수원을 수조로 설치하는 경우 소방소화설비 전용수조를 원칙으로 한다.',
+'수조에는 수위계·고정식 사다리·청소용 배수설비·표지·실내조명 등 유지관리 설비를 둔다.'
+],
+compare:[
+['옥내소화전','건물 내부'],
+['옥외소화전','건물 외부'],
+['소화용수설비','소방대가 사용할 물을 확보·공급']
+],
+deepSections:[
+sec('수원 기준','옥외소화전설비의 수원은 설치개수에 7㎥를 곱해 산정하고, 옥외소화전이 2개 이상이면 계산상 2개를 적용한다.'),
+sec('수조 유지관리','옥외소화전설비용 수조는 점검하기 편하고 동결 우려를 줄일 수 있는 위치에 설치하며, 수위계·고정식 사다리·청소용 배수설비·표지·실내조명 등 유지관리에 필요한 설비를 갖춘다.')
+],
+officialLinks:[link('옥외소화전설비 화재안전성능기준 NFPC 109','https://www.law.go.kr/admRulLsInfoP.do?admRulSeq=2100000269712')]
+});
+
+add('F07-C14',{
+must:[
+'소화수조는 소화용수 전용 수조이고, 저수조는 소화용수와 일반 생활용수를 함께 쓰는 겸용 수조다.',
+'채수구는 소방차의 소방호스와 접결되는 흡입구이고, 흡수관투입구는 소방차 흡수관을 수조에 넣기 위한 투입구다.',
+'채수구 또는 흡수관투입구는 소방차가 2m 이내까지 접근할 수 있는 위치에 둔다.',
+'저수량은 기준면적으로 나눈 수를 올림해 20㎥를 곱해 산정한다.',
+'지하 흡수관투입구는 한 변 또는 직경 0.6m 이상이며 소요수량 80㎥ 미만은 1개 이상, 80㎥ 이상은 2개 이상 설치한다.',
+'채수구는 원칙적으로 2개이며 소요수량 40㎥ 미만은 1개, 100㎥ 이상은 3개를 설치한다.',
+'채수구는 구경 65mm 이상의 나사식 결합금속구를 사용하고 지면에서 0.5m 이상 1m 이하에 설치한다.',
+'수조 내부바닥 기준 지표면으로부터 깊이가 4.5m 이상인 지하 수조는 가압송수장치를 설치한다.'
+],
+compare:[
+['소화수조','소화용수 전용 수조'],
+['저수조','소화용수 + 일반 생활용수 겸용 수조'],
+['채수구','소방호스·흡수관을 접결하는 흡입구'],
+['흡수관투입구','소방차 흡수관을 수조 안으로 직접 넣는 투입구'],
+['옥내·옥외소화전','사람이 호스로 직접 방수하는 소화설비']
+],
+deepSections:[
+sec('정의','소화수조와 저수조는 화재진압에 필요한 물을 항상 확보하는 소화용수설비다. 소화수조는 소화용수 전용, 저수조는 생활용수와 겸용이라는 차이를 먼저 잡는다.'),
+sec('소방차 접근','채수구 또는 흡수관투입구는 소방차가 2m 이내의 지점까지 접근할 수 있는 위치에 설치한다.'),
+sec('저수량 산정','소화수조·저수조 저수량은 특정소방대상물의 연면적을 기준면적으로 나눈 수에 20㎥를 곱한다. 일반 기준면적은 12,500㎡이고, 1층과 2층 바닥면적의 합계가 15,000㎡ 이상인 특정소방대상물은 7,500㎡를 적용하며 소수점 이하는 1로 본다.'),
+sec('흡수관투입구','지하 소화용수설비의 흡수관투입구는 한 변 또는 직경 0.6m 이상으로 하고, 소요수량 80㎥ 미만은 1개 이상, 80㎥ 이상은 2개 이상 설치한다.'),
+sec('채수구','채수구는 원칙적으로 2개를 설치하되 소요수량 40㎥ 미만은 1개, 100㎥ 이상은 3개를 설치한다. 구경 65mm 이상의 나사식 결합금속구를 사용하고 지면에서 0.5m 이상 1m 이하에 설치한다.'),
+sec('가압송수장치','소화수조 또는 저수조가 수조 내부바닥 기준 지표면으로부터 4.5m 이상 깊은 지하에 있으면 소요수량을 고려한 가압송수장치를 설치한다.')
+],
+officialLinks:[link('소화수조 및 저수조 화재안전성능기준 NFPC 402','https://law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000278592&chrClsCd=010202&lsId=33671')]
+});
+
+let normalizedConcepts=0;
+for(const concept of V.curriculum?.concepts||[]){const p=V.contentPacks?.get?.(concept.id);if(!p)continue;p.must=uniqText(p.must||[]);p.traps=uniqText(p.traps||[]);p.compare=uniqCompare(p.compare||[]);p.deepSections=uniqSections(p.deepSections||[]);p.visibleDetailCoverageV50=true;normalizedConcepts++}
+V.VisibleDetailCoverage119={version:'119-visible-detail-coverage-v50',normalizedConcepts,officialFacilityConcepts:['F07-C03','F07-C04','F07-C14']};
+})();
+
+;
+/* ---- v55-core-detail-precision-content-119.js ---- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{},P=V.contentPacks?.authored;if(!P)return;
+const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
+const uniq=rows=>{const out=[],seen=new Set;for(const row of rows||[]){const x=norm(row),k=x.toLowerCase();if(!x||seen.has(k))continue;seen.add(k);out.push(x)}return out};
+const uniqCompare=rows=>{const out=[],seen=new Set;for(const row of rows||[]){if(!Array.isArray(row)||!row[0]||!row[1])continue;const a=norm(row[0]),b=norm(row[1]),k=a.toLowerCase().replace(/[^0-9a-z가-힣]/g,'');if(!k||seen.has(k))continue;seen.add(k);out.push([a,b])}return out};
+const uniqSections=rows=>{const out=[],seen=new Set;for(const row of rows||[]){if(!row?.title||!row?.body)continue;const k=(norm(row.title)+'|'+norm(row.body)).toLowerCase();if(seen.has(k))continue;seen.add(k);out.push({...row,title:norm(row.title),body:norm(row.body),bullets:uniq(row.bullets||[])})}return out};
+function refine(id,x){
+  const p=P[id];if(!p||p.status!=='verified')return false;
+  if(x.summary)p.summary=norm(x.summary);
+  if(x.must)p.must=uniq([...(x.must||[]),...(p.must||[])]);
+  if(x.traps)p.traps=uniq([...(x.traps||[]),...(p.traps||[])]);
+  if(x.compare)p.compare=uniqCompare([...(x.compare||[]),...(p.compare||[])]);
+  if(x.deepSections)p.deepSections=uniqSections([...(x.deepSections||[]),...(p.deepSections||[])]);
+  p.v55Precision=true;return true
+}
+const applied=[];
+
+if(refine('F03-C06',{
+  summary:'플래시오버는 열축적에 따른 구획 전체의 급격한 연소 전이, 백드래프트는 산소부족 상태의 뜨거운 미연소가스에 공기가 유입된 뒤의 폭발적 연소, 롤오버는 상층 가연성가스의 부분적 불꽃 연소로 구분한다.',
+  must:[
+    '플래시오버 → 열·복사열 축적 → 여러 가연물의 급격한 연소 전이',
+    '백드래프트 → 산소부족·미연소가스 축적 → 개구부 공기 유입 → 폭발적 연소',
+    '롤오버 → 상층 가연성가스가 공기와 혼합 → 상층에서 부분적 불꽃 연소'
+  ],
+  traps:[
+    '백드래프트의 핵심 조건인 산소부족과 공기유입을 플래시오버의 조건으로 바꾸지 않는다.',
+    '롤오버를 구획 내 모든 가연물이 거의 동시에 연소로 전이하는 현상으로 보지 않는다.'
+  ],
+  compare:[
+    ['플래시오버','열축적·복사열 증가 → 구획 전체 급격한 연소 전이'],
+    ['백드래프트','산소부족·미연소가스 → 공기유입 뒤 폭발적 연소'],
+    ['롤오버','상층 가연성가스가 부분적으로 불꽃을 내며 연소']
+  ],
+  deepSections:[
+    {title:'판별 순서',body:'문제를 보면 먼저 열축적인지, 산소부족 뒤 공기유입인지, 상층 가연성가스의 부분연소인지 구분한다. 그다음 전조·진행양상·위험성을 대조하면 세 현상을 바꿔 낸 선지를 빠르게 걸러낼 수 있다.',bullets:[]}
+  ]
+}))applied.push('F03-C06');
+
+if(refine('F07-C14',{
+  summary:'소화용수설비는 화점을 직접 자동소화하는 설비가 아니라 소방대가 화재진압에 사용할 물을 확보·공급하는 기반설비로, 소화수조·저수조와 채수구·흡수관투입구의 수량·접근·흡수 조건을 함께 본다.',
+  must:[
+    '소화수조=소화용수 전용 / 저수조=소화용수와 일반 생활용수 겸용',
+    '채수구 또는 흡수관투입구 → 소방차가 2m 이내까지 접근 가능한 위치',
+    '저수량 → 연면적을 기준면적으로 나눈 수를 올림해 20㎥를 곱해 산정',
+    '흡수관투입구 → 한 변 또는 직경 0.6m 이상, 소요수량 80㎥ 미만 1개 이상·80㎥ 이상 2개 이상',
+    '채수구 → 원칙 2개, 40㎥ 미만 1개·100㎥ 이상 3개, 구경 65mm 이상·지면 0.5m 이상 1m 이하',
+    '수조 내부바닥이 지표면에서 4.5m 이상 깊은 지하 수조 → 소요수량을 고려한 가압송수장치'
+  ],
+  traps:[
+    '소화용수설비를 옥내·옥외소화전처럼 사람이 화점에 직접 방수하는 소화설비와 같은 것으로 보지 않는다.',
+    '채수구와 흡수관투입구의 용도·개수 기준을 서로 바꾸지 않는다.'
+  ],
+  compare:[
+    ['소화수조','소화용수 전용 수조'],
+    ['저수조','소화용수 + 일반 생활용수 겸용 수조'],
+    ['채수구','소방호스·흡수관을 접결하는 흡입구'],
+    ['흡수관투입구','소방차 흡수관을 수조 안으로 직접 넣는 투입구'],
+    ['옥내·옥외소화전','사람이 호스·관창으로 화점에 직접 방수하는 소화설비']
+  ],
+  deepSections:[
+    {title:'저수량 산정의 기준면적',body:'소화수조·저수조의 저수량은 특정소방대상물의 연면적을 기준면적으로 나눈 수에 20㎥를 곱한다. 일반 기준면적은 12,500㎡이고, 1층과 2층 바닥면적의 합계가 15,000㎡ 이상인 특정소방대상물은 7,500㎡를 적용하며 소수점 이하는 1로 본다.',bullets:[]},
+    {title:'채수구와 흡수관투입구를 구분',body:'채수구는 소방차의 소방호스·흡수관을 접결하는 흡입구이고, 흡수관투입구는 소방차 흡수관을 수조 안에 직접 넣는 투입구다. 시험에서는 이름·용도·개수 기준을 교차해 제시하는 선지를 주의한다.',bullets:[]}
+  ]
+}))applied.push('F07-C14');
+
+if(refine('F02-C02',{
+  summary:'재난관리책임기관은 중앙행정기관·지방자치단체와 대통령령으로 정하는 기관 등을 포함하는 넓은 재난관리 수행기관 범주이고, 재난관리주관기관은 재난·사고 유형별 예방·대비·대응·복구를 주관하도록 정한 관계 중앙행정기관이다.',
+  must:[
+    '재난관리책임기관 → 재난관리업무를 수행하는 넓은 기관 범주',
+    '재난관리주관기관 → 특정 재난·사고 유형을 주관하는 관계 중앙행정기관',
+    '주관기관의 구체적 유형별 지정 → 재난안전법 시행령 제3조의2·별표 1의3',
+    '한 재난 대응에는 주관기관과 여러 책임기관이 함께 참여할 수 있다.'
+  ],
+  traps:[
+    '재난관리책임기관과 재난관리주관기관을 같은 범주로 보지 않는다.',
+    '주관기관을 모든 재난에 공통으로 하나의 기관으로 고정하지 않는다.',
+    '책임기관을 중앙행정기관과 지방자치단체만으로 좁혀 외우지 않는다.'
+  ],
+  compare:[
+    ['재난관리책임기관','재난관리업무를 수행하는 넓은 기관 범주'],
+    ['재난관리주관기관','특정 재난·사고 유형의 예방·대비·대응·복구를 주관하는 관계 중앙행정기관']
+  ],
+  deepSections:[
+    {title:'선지에서 빠르게 구분',body:'“유형별·관계 중앙행정기관”이 보이면 주관기관을, 중앙행정기관·지방자치단체·공공기관·공공단체·중요시설 관리기관 등 폭넓은 범주가 보이면 책임기관을 먼저 판단한다. 구체적 재난유형과 주관기관의 매칭은 시행령 별표 1의3 기준으로 확인한다.',bullets:[]}
+  ]
+}))applied.push('F02-C02');
+
+if(refine('F05-C08',{
+  summary:'위험물화재는 위험물의 류·물질성상과 저장·용기 상태를 먼저 식별한 뒤 물과의 반응성·비산·유출확대 위험을 확인하고, 냉각·질식·억제 등 필요한 소화효과와 탱크화재 특수현상을 구분해 판단한다.',
+  must:[
+    '판단 순서 → 위험물 류·물질성상 → 저장·용기·누출 상태 → 물과의 반응성·비산 위험 → 적합한 소화수단',
+    '위험물은 류별·품목별 성질이 달라 “모두 물 금지” 또는 “모두 같은 소화약제”로 일반화하지 않는다.',
+    '탱크·유류화재의 보일오버·슬롭오버·프로스오버는 물의 위치와 발생조건을 구분한다.'
+  ],
+  traps:[
+    '위험물이라는 이유만으로 모든 화재에 같은 소화방법을 적용하지 않는다.',
+    '보일오버·슬롭오버·프로스오버를 단순히 “유류가 넘치는 현상” 하나로 외우지 않는다.'
+  ],
+  deepSections:[
+    {title:'현장·시험 판단 순서',body:'먼저 위험물의 류와 물질성상을 확인하고, 용기·누출·점화원 상태와 물과의 반응성을 확인한 뒤 주수 가능 여부와 필요한 소화효과를 연결한다. 탱크화재라면 물이 어디에 존재하고 어떤 가열조건이 형성됐는지까지 확인한다.',bullets:[]}
+  ]
+}))applied.push('F05-C08');
+
+V.V55PrecisionContent119={
+  version:'119-v55-core-detail-precision-content-v1',
+  applied,
+  policy:'only reorders or sharpens facts already present in verified official-source-bound packs; no unsupported facts are introduced'
 };
 })();
