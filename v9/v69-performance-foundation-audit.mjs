@@ -12,6 +12,7 @@ const pdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
 const proxy=fs.readFileSync(new URL('./api/official-pdf.js',import.meta.url),'utf8');
 const config=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
 const perf=fs.readFileSync(new URL('./performance-budget-audit.mjs',import.meta.url),'utf8');
+const localAi=fs.readFileSync(new URL('./local-ai.js',import.meta.url),'utf8');
 
 const external=[...index.matchAll(/<script\b[^>]*\bsrc="\.\/([^"]+\.js)"[^>]*>/g)];
 const blocking=external.filter(x=>!/(?:^|\s)(?:defer|async)(?:\s|=|>)/i.test(x[0])).map(x=>x[1]);
@@ -41,5 +42,8 @@ assert(app.includes("closest('.study[data-scroll-owner=\"study\"]')"),'AI and de
 assert(app.includes('<details class="detail-section detail-fold"')&&app.includes("index===0?' open':''"),'only the first secondary detail section is expanded by default');
 assert(app.includes("target?.tagName==='DETAILS')target.open=true"),'detail TOC opens a folded section before scrolling to it');
 assert(css.includes('/* V69 structured detail folding */')&&css.includes('.detail-fold-summary'),'long detail content is structured as accessible collapsible sections');
+assert(localAi.includes('function chooseModel(list=[])')&&localAi.includes('memory>=8')&&localAi.includes('cores>=8'),'local AI model choice is device-aware');
+assert(localAi.includes('1\\.5B|1\\.7B|1B|1\\.0B')&&localAi.includes('0\\.5B.*Instruct'),'capable desktops prefer a larger Instruct model while 0.5B remains the bounded low-end fallback');
+assert(!localAi.includes("const model=list.find(x=>/0\\.5B.*Instruct"),'0.5B is no longer unconditionally preferred on every WebGPU device');
 
 console.log('V69_PERFORMANCE_FOUNDATION_AUDIT_SUCCESS');
