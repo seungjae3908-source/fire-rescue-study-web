@@ -242,7 +242,7 @@ jobs:
     timeout-minutes: 15
     env:
       STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
-      STUDY_119_EXPECTED_RUNTIME_HEAD: cd5a23bd0aa0f42ec5ef26261ac1b5c99e617376
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
