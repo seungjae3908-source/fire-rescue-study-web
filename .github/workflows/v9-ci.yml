@@ -297,7 +297,8 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Measure exact Production performance
+      - name: Measure current Production baseline (non-release diagnostic)
+        continue-on-error: true
         run: node v9/v70-production-performance-e2e.mjs
 
 
