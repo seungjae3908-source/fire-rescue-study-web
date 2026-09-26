@@ -101,6 +101,7 @@ jobs:
           node --check v9/v69-performance-foundation-audit.mjs
           node --check v9/v69-bootstrap-bundle-audit.mjs
           node --check v9/v69-bootstrap-network-e2e.mjs
+          node --check v9/v70-production-performance-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -230,6 +231,28 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify current Production suggestion guest + anon guards
         run: node v9/suggestions-production-public-e2e.mjs
+
+
+
+  v70_production_performance_probe:
+    name: v70_production_performance_probe
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
+      STUDY_119_EXPECTED_RUNTIME_HEAD: cd5a23bd0aa0f42ec5ef26261ac1b5c99e617376
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Install V70 Production performance browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Measure exact Production performance
+        run: node v9/v70-production-performance-e2e.mjs
 
 
   official_monitor_live_probe:
