@@ -24,8 +24,8 @@ const cssCount=rows.filter(x=>x.asset.endsWith('.css')).length;
 const largest=rows.slice().sort((a,b)=>b.size-a.size)[0]||{asset:'',size:0};
 const limits={
   totalBytes:1850000,
-  assetCount:110,
-  jsCount:109,
+  assetCount:20,
+  jsCount:16,
   largestSingleAsset:250000
 };
 const checks={
@@ -41,7 +41,7 @@ const checks={
 };
 const blockers=Object.entries(checks).filter(([,v])=>!v).map(([k])=>k);
 const result={
-  version:'119-performance-budget-v3-deferred-bootstrap',
+  version:'119-performance-budget-v4-bundled-bootstrap',
   totalBytes,
   totalKiB:Math.round(totalBytes/1024),
   lazyQuestionBytes,
