@@ -1041,7 +1041,9 @@ if(V.Lazy119?.needsQuestionsForCurrentState?.()){try{await V.Lazy119.ensureQuest
 const restoredActiveExam=questionLaneReady?restoreActiveExam():false;
 V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();
 const warmQuestions=()=>{if(!V.Lazy119?.questionsReady&&!V.Lazy119?.questionsLoading)V.Lazy119?.ensureQuestions?.().catch(()=>{})};
-if('requestIdleCallback'in window)requestIdleCallback(warmQuestions,{timeout:3000});else setTimeout(warmQuestions,1400)
+if('requestIdleCallback'in window)requestIdleCallback(warmQuestions,{timeout:3000});else setTimeout(warmQuestions,1400);
+const warmSource=()=>{const c=currentConcept(),key=c?.sourceRanges?.[0]?.doc,cat=key&&V.SourceCatalog119?.get?.(key);if(key&&cat?.transport==='full-cache-proxy')V.SourcePDF?.prefetch?.(key).catch?.(()=>{})};
+if('requestIdleCallback'in window)requestIdleCallback(warmSource,{timeout:6500});else setTimeout(warmSource,4500)
 }
 boot();
 })();
