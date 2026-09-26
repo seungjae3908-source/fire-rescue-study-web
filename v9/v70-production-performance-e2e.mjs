@@ -79,6 +79,12 @@ async function widthOf(page,selector){
     return{width:r.width,viewport:innerWidth,available:p?.width||innerWidth}
   });
 }
+async function rangeProbe(url){
+  const r=await fetch(url,{headers:{range:'bytes=0-65535','cache-control':'no-cache'}});
+  const h=Object.fromEntries(r.headers.entries());
+  const ab=await r.arrayBuffer();
+  return{status:r.status,bytes:ab.byteLength,contentRange:h['content-range']||'',acceptRanges:h['accept-ranges']||'',contentLength:h['content-length']||'',contentType:h['content-type']||''}
+}
 const browser=await chromium.launch({headless:true});
 try{
   const runtime=await runtimeHead();
@@ -116,8 +122,13 @@ try{
 
   const [law2Meta,fire1,law2]=await Promise.all([proxyMeta('law2'),measurePdf(browser,'fire1'),measurePdf(browser,'law2')]);
 
+  const proxyRangeProbe={
+    sameOrigin:await rangeProbe(new URL('/api/official-pdf?doc=law2',production)),
+    external:await rangeProbe('https://study-119-pdf-proxy.vercel.app/api/official-pdf?doc=law2')
+  };
   const metrics={
     exactProductionHead:runtime.sha,
+    proxyRangeProbe,
     cold:{
       appReadyMs:round(cold.appReadyMs),
       domContentLoadedMs:round(cold.nav.domContentLoaded),
