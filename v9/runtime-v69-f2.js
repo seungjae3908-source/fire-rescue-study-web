@@ -1,3 +1,430 @@
+/* V69 runtime-v69-f2.js — canonical order */
+
+/* --- suggestions.js --- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
+const T='study_suggestions',A='study_admins';
+const STATUS=['접수','수렴완료','개선중','개선완료','보류'];
+const CATEGORY=['개선','건의','오류','콘텐츠','기타'];
+const id=()=>crypto.randomUUID?crypto.randomUUID():'suggest-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+async function ready(){await V.Auth?.init?.();if(!V.Auth?.client||!V.Auth?.user)throw Error('LOGIN_REQUIRED');return{client:V.Auth.client,user:V.Auth.user}}
+async function isAdmin(){
+  const {client,user}=await ready(),r=await client.from(A).select('user_id').eq('user_id',user.id).maybeSingle();
+  if(r.error)throw r.error;return !!r.data
+}
+async function list({offset=0,limit=20}={}){
+  const {client}=await ready(),start=Math.max(0,Number(offset)||0),size=Math.max(1,Math.min(50,Number(limit)||20));
+  const r=await client.from(T).select('*').order('created_at',{ascending:false}).range(start,start+size);if(r.error)throw r.error;
+  const page=(r.data||[]).sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0)),hasMore=page.length>size,rows=page.slice(0,size);
+  rows.hasMore=hasMore;return rows
+}
+async function create({category='개선',title='',body='',anonymous=true}={}){
+  const {client,user}=await ready();title=String(title||'').trim();body=String(body||'').trim();
+  if(title.length<2)throw Error('TITLE_REQUIRED');if(body.length<2)throw Error('BODY_REQUIRED');
+  if(!CATEGORY.includes(category))category='기타';
+  const row={id:id(),user_id:user.id,category,title,body,anonymous:anonymous!==false,status:'접수',admin_reply:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+  const r=await client.from(T).insert([row]);if(r.error)throw r.error;return row
+}
+async function adminReply(suggestionId,{status='수렴완료',reply=''}={}){
+  if(!STATUS.includes(status))throw Error('INVALID_STATUS');if(!(await isAdmin()))throw Error('ADMIN_REQUIRED');
+  const {client}=await ready(),one=await client.from(T).select('*').eq('id',suggestionId).maybeSingle();if(one.error)throw one.error;if(!one.data)throw Error('SUGGESTION_NOT_FOUND');
+  const patch={status,admin_reply:String(reply||'').trim(),admin_replied_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+  const r=await client.from(T).update(patch).eq('id',suggestionId);if(r.error)throw r.error;return{...one.data,...patch}
+}
+async function remove(suggestionId){
+  const {client}=await ready(),r=await client.from(T).delete().eq('id',suggestionId);if(r.error)throw r.error;return true
+}
+V.Suggestions={STATUS,CATEGORY,isAdmin,list,create,adminReply,remove};
+})();
+;
+
+/* --- auth-membership-guard.js --- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
+const A=V.Auth;
+if(!A)return;
+
+async function hasStudyMembership(uid){
+  if(!uid)return false;
+  await A.init();
+  const client=A.client;
+  if(!client)return false;
+  const {data,error}=await client.from('study_memberships').select('user_id').eq('user_id',uid).maybeSingle();
+  if(error)throw error;
+  return !!data;
+}
+
+async function rejectNonStudySession(){
+  await A.init();
+  const current=A.user;
+  if(!current)return true;
+  if(await hasStudyMembership(current.id))return true;
+  await A.signOut();
+  return false;
+}
+
+const rawSignIn=A.signIn.bind(A);
+A.signIn=async(email,password)=>{
+  const data=await rawSignIn(email,password);
+  const signed=data?.user||A.user;
+  if(signed&&!(await hasStudyMembership(signed.id))){
+    await A.signOut();
+    throw Error('STUDY_ACCOUNT_REQUIRED');
+  }
+  return data;
+};
+
+const rawPull=A.pull.bind(A);
+A.pull=async()=>{
+  if(!(await rejectNonStudySession()))throw Error('STUDY_ACCOUNT_REQUIRED');
+  return rawPull();
+};
+
+const rawSync=A.syncAll.bind(A);
+A.syncAll=async()=>{
+  if(!(await rejectNonStudySession()))throw Error('STUDY_ACCOUNT_REQUIRED');
+  return rawSync();
+};
+
+V.Auth.hasStudyMembership=hasStudyMembership;
+V.Auth.rejectNonStudySession=rejectNonStudySession;
+V.Auth.syncPolicy={...V.Auth.syncPolicy,dbMembershipRequired:true,membershipTable:'study_memberships',membershipPreflightBeforeAdopt:true,clientRuntime:'same-origin-lite'};
+
+// Protect against an already-persisted session from another app sharing this Supabase project.
+rejectNonStudySession().catch(e=>console.warn('study membership guard failed',e));
+})();
+
+;
+
+/* --- pass-note.js --- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
+const now=()=>Date.now();
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const hash=s=>{let h=2166136261;for(const ch of String(s||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return (h>>>0).toString(36)};
+const state=()=>V.Store.state;
+const subjectOf=c=>c?.subject==='fire'||String(c?.id||'').startsWith('F')?'fire':'ems';
+const subjectLabel=s=>s==='fire'?'소방학개론':'응급처치학개론';
+const normalize=s=>String(s||'').replace(/\s+/g,' ').trim();
+const uniq=arr=>{const out=[];for(const x of arr||[]){const t=normalize(x);if(t&&!out.includes(t))out.push(t)}return out};
+const emphasis=()=>{const E=V.StudyEmphasis119;if(!E)throw Error('STUDY_EMPHASIS_SSOT_MISSING');return E};
+
+function conceptKey(conceptId,bucket='must',index=0){return 'pass-c-'+conceptId+'-'+bucket+'-'+index}
+function conceptCoreKey(conceptId){return 'pass-c-'+conceptId+'-core'}
+function questionKey(questionId){return 'pass-q-'+questionId}
+function find(id){return (state().notes||[]).find(n=>n.id===id)||null}
+function has(id){return !!find(id)}
+async function persist(note){
+  const s=state(),i=(s.notes||[]).findIndex(n=>n.id===note.id),row={private:true,...note,createdAt:note.createdAt||now(),updatedAt:now()};
+  if(i>=0)s.notes[i]={...s.notes[i],...row};else s.notes.push(row);
+  V.Store.save();
+  try{if(V.Auth?.user&&V.Auth?.saveNote)await V.Auth.saveNote(row)}catch(e){console.warn('pass note sync failed',e)}
+  return row;
+}
+async function remove(id){
+  try{if(V.Auth?.user&&V.Auth?.deleteNote)await V.Auth.deleteNote(id)}catch(e){throw e}
+  V.Store.state.notes=(V.Store.state.notes||[]).filter(n=>n.id!==id);V.Store.save();return true;
+}
+function conceptNoteFromKey(key){
+  const m=String(key||'').match(/^pass-c-(F\d\d-C\d\d|E\d\d-C\d\d)-(must|number|summary|feature)-(\d+)$/);if(!m)return null;
+  const [,conceptId,bucket,idxRaw]=m,idx=Number(idxRaw),c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
+  let rows=[];
+  if(bucket==='must')rows=emphasis().mustRows(p);
+  else if(bucket==='feature')rows=emphasis().featureRows(p);
+  else if(bucket==='number')rows=emphasis().numberRows(p,12);
+  else rows=[p.summary];
+  const text=rows[idx];if(!text)return null;
+  const subj=subjectOf(c),source=emphasis().evidence(conceptId,p).source||'공식교재';
+  return{id:key,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:`${text}\n\n[공식근거]\n${source}`,sourceType:'pass-star',conceptId,subject:subj,sourceRef:source};
+}
+async function toggleConcept(key){
+  if(has(key)){await remove(key);return{saved:false,id:key}}
+  const note=conceptNoteFromKey(key);if(!note)throw Error('PASS_NOTE_SOURCE_NOT_FOUND');await persist(note);return{saved:true,id:key,note};
+}
+function cleanStudentText(v){return normalize(v)
+.replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
+.replace(/(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
+.replace(/(?:연결된\s*)?(?:공식\s*)?(?:교재|원문|학습팩|근거)(?:\s*근거)?\s*(?:에서는?|에\s*따르면|에서|은|는)\s*/gi,'')
+.replace(/\s*교재의\s*정의(?:이)?다\.?/gi,'').trim()}
+function conceptCoreNote(conceptId){
+  const c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
+  const E=emphasis(),summary=cleanStudentText(p?.studySchema?.quick30||p.summary||''),core=uniq([...E.mustRows(p),...E.featureRows(p)].map(cleanStudentText)).filter(x=>x&&x!==summary).slice(0,6),numbers=uniq(E.numberRows(p,12).map(cleanStudentText)).filter(Boolean),traps=uniq(E.trapRows(p).map(cleanStudentText)).filter(Boolean).slice(0,4),source=E.evidence(conceptId,p).source||'공식교재',parts=[];
+  if(summary||core.length)parts.push('[핵심]\n'+[summary,...core].filter(Boolean).join('\n'));
+  if(numbers.length)parts.push('[숫자·단위·기준]\n'+numbers.join('\n'));
+  if(traps.length)parts.push('[주의·예외]\n'+traps.join('\n'));
+  parts.push('[공식근거]\n'+source);
+  const subj=subjectOf(c),id=conceptCoreKey(conceptId);return{id,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:parts.join('\n\n'),sourceType:'pass-star-concept',conceptId,subject:subj,sourceRef:source};
+}
+async function toggleConceptCore(conceptId){const id=conceptCoreKey(conceptId);if(has(id)){await remove(id);return{saved:false,id}}const note=conceptCoreNote(conceptId);if(!note)throw Error('PASS_NOTE_SOURCE_NOT_FOUND');await persist(note);return{saved:true,id,note}}
+
+function questionNote(qid){
+  const q=V.questionById?.[qid],c=q&&V.curriculum?.byId?.[q.conceptId];if(!q||!c)return null;
+  const subj=subjectOf(c),right=`${q.a+1}. ${q.choices?.[q.a]||''}`;
+  return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`${cleanStudentText(q.q)}\n\n정답: ${cleanStudentText(right)}\n\n해설: ${cleanStudentText(q.ex||'')}\n\n출처: ${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
+}
+async function toggleQuestion(qid){const id=questionKey(qid);if(has(id)){await remove(id);return{saved:false,id}}const note=questionNote(qid);if(!note)throw Error('PASS_QUESTION_NOT_FOUND');await persist(note);return{saved:true,id,note}}
+async function saveManual({id,title,body,sourceType='manual',subject=''}){
+  const text=normalize(body);if(!text)throw Error('NOTE_BODY_REQUIRED');
+  const subj=subject==='ems'?'ems':subject==='fire'?'fire':(V.Store.state.subject==='ems'?'ems':'fire');
+  return persist({id:id||('note-'+now()+'-'+hash(text)),title:normalize(title)||'내 합격노트',body:text,sourceType,subject:subj});
+}
+function extractLines(text){
+  const rows=uniq(String(text||'').split(/\n+/).map(x=>x.replace(/^\[\d+쪽\]\s*/,'').trim()).filter(x=>x.length>=10&&x.length<=260));
+  const score=x=>{
+    let n=0;if(/\d|%|℃|kg|mL|\bL\b|분|초|시간|배|이하|이상|미만|초과/.test(x))n+=5;
+    if(/핵심|주의|금지|원칙|예외|정의|기준|우선|반드시|위험|정답|증상|처치|소화|설치|저장|취급/.test(x))n+=4;
+    if(x.length>=20&&x.length<=110)n+=2;return n;
+  };
+  return rows.map((x,i)=>({x,i,s:score(x)})).sort((a,b)=>b.s-a.s||a.i-b.i).slice(0,14).sort((a,b)=>a.i-b.i).map(x=>x.x);
+}
+async function createFromPrivateDoc(docId,title){
+  const chunks=await V.PrivateDocs?.chunksFor?.(docId);if(!chunks?.length)throw Error('PRIVATE_DOC_TEXT_NOT_FOUND');
+  const sorted=chunks.sort((a,b)=>(a.page||0)-(b.page||0)||(a.chunkIndex||0)-(b.chunkIndex||0)),text=sorted.map(x=>x.text||'').join('\n');
+  const lines=extractLines(text),fallback=(lines.length?lines:['추출된 내용이 부족합니다. 원문을 확인해 직접 수정하세요.']).map(x=>'• '+x).join('\n');
+  let body=fallback,aiUsed=false;
+  if(navigator.gpu&&V.LocalAI?.studyDigest){
+    try{
+      const ai=await V.LocalAI.studyDigest({title:title||'PDF/사진 정리',text});
+      if(ai&&ai.length>=40){body=ai;aiUsed=true}
+    }catch{}
+  }
+  const review=sorted.some(x=>x.needsReview)?'\n\n⚠ OCR 신뢰도가 낮은 페이지가 포함되어 있습니다. 해당 원문 페이지를 꼭 확인하세요.':'';
+  const note=await persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+`\n\n※ 자동으로 정리한 초안입니다. 원문과 대조해 수정하세요.`+review,sourceType:aiUsed?'pass-doc-ai':'pass-doc'});
+  return{...note,aiUsed};
+}
+function passNotes(){return (state().notes||[]).filter(n=>/^pass-/.test(String(n.sourceType||''))||/^pass-/.test(String(n.id||'')))}
+function numericRows(p){return emphasis().numberRows(p,10)}
+function conceptHtml(c,compact=false){
+  const p=V.contentPacks?.get?.(c.id);if(!p)return'';
+  const E=emphasis(),features=E.featureRows(p),must=E.mustRows(p),allNums=E.numberRows(p,10),traps=E.trapRows(p);
+  const main=compact?must.slice(0,3):must,featureRows=compact?features.slice(0,2):features,nums=compact?allNums.slice(0,4):allNums;
+  return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${featureRows.length?'<h3>핵심 특징</h3><ul class="important">'+featureRows.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${main.length?'<h3>시험 필수</h3><ul class="important">'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자 · 단위 · 기준</h3><ul class="numbers">'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>자주 틀리는 포인트</h3><ul class="traps">'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
+}
+function notesHtml(rows){return rows.map(n=>`<section class="c"><h2>${esc(n.title||'합격노트')}</h2><div class="note">${esc(n.body||'').replace(/\n/g,'<br>')}</div></section>`).join('')}
+function rapidConceptHtml(c){
+  const p=V.contentPacks?.get?.(c.id);if(!p)return'';
+  const E=emphasis(),must=E.mustRows(p,3),nums=E.numberRows(p,3),traps=E.trapRows(p,2);
+  return `<section class="c rapid"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${must.length?'<h3>시험 필수</h3><ul class="important">'+must.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자 · 기준</h3><ul class="numbers">'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>자주 틀리는 포인트</h3><ul class="traps">'+traps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}</section>`
+}
+function rapidConceptSets(){
+  const concepts=V.curriculum?.concepts||[],wrongIds=[...new Set((state().wrongs||[]).filter(x=>!x.resolved).map(x=>x.conceptId))],wrongSet=new Set(wrongIds);
+  const wrong=wrongIds.map(id=>V.curriculum?.byId?.[id]).filter(Boolean).slice(0,40);
+  const high=concepts.filter(c=>!wrongSet.has(c.id)&&(V.QuestionQuality119?.forConcept?.(c.id)||[]).length>=20).slice(0,50);
+  return{wrong,high}
+}
+function printDocument(mode){
+  const map={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'};
+  const title=map[mode]||'119 합격노트';
+  let body='';
+  if(mode==='pass'){const all=state().notes||[],fire=all.filter(n=>n.subject==='fire'),ems=all.filter(n=>n.subject==='ems'),other=all.filter(n=>n.subject!=='fire'&&n.subject!=='ems');body=(fire.length?'<h1>소방학</h1>'+notesHtml(fire):'')+(ems.length?'<h1>구급</h1>'+notesHtml(ems):'')+(other.length?'<h1>기타 메모</h1>'+notesHtml(other):'');if(!body)body='<p>저장한 합격노트가 없습니다.</p>'}
+  else if(mode==='rapid'){
+    const starred=passNotes(),sets=rapidConceptSets();
+    body=starred.length?'<h1>내 ★ 핵심</h1>'+notesHtml(starred):'<p>저장한 ★ 핵심이 없습니다.</p>';
+    if(sets.wrong.length)body+='<h1>최근 오답 개념</h1>'+sets.wrong.map(rapidConceptHtml).join('');
+    if(sets.high.length)body+='<h1>초고빈도 핵심</h1>'+sets.high.map(rapidConceptHtml).join('');
+    if(!sets.wrong.length&&!sets.high.length)body+='<h1>핵심 압축</h1>'+((V.curriculum?.concepts||[]).slice(0,30).map(rapidConceptHtml).join(''));
+  } else {
+    const subject=mode==='fire'?'fire':'ems';
+    body=(V.curriculum?.concepts||[]).filter(c=>subjectOf(c)===subject).map(c=>conceptHtml(c,true)).join('');
+  }
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"><title>${esc(title)}</title><style>
+  @page{size:A4;margin:9mm}*{box-sizing:border-box}html{font-size:16px}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#17202b;font-size:14pt;line-height:1.68;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:24pt;color:#17202b;border-bottom:3px solid #3f6e9e;padding-bottom:8px;margin:18px 0 12px}h2{font-size:17pt;line-height:1.42;margin:18px 0 8px;color:#173c62;break-after:avoid-page}h3{font-size:13.5pt;line-height:1.42;margin:10px 0 5px;color:#385a78;break-after:avoid-page}ul{margin:5px 0 10px 20px;padding:0}.c{break-inside:auto;border-bottom:1px solid #d8e0e8;padding:0 0 10px;margin:0 0 10px}.summary{font-weight:720;background:#f5f8fb;border-left:3px solid #668fb8;padding:9px 11px;border-radius:4px}.important{border-left:3px solid #7fa6c8;padding-left:24px}.numbers{border-left:3px solid #c49a4e;padding-left:24px}.traps{border-left:3px solid #b8785b;padding-left:24px}.important li,.numbers li,.traps li{margin:4px 0;text-decoration:none;break-inside:avoid-page}.numbers li{font-weight:650}.src{font-size:10pt;color:#647283;margin-top:8px}.note{white-space:normal;line-height:1.74}.cover{min-height:255mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:31pt;color:#173c62}.cover p{color:#5f6d7b}.c li{margin:3px 0}.rapid h2{font-size:15.5pt}
+  @media screen and (min-width:721px) and (max-width:1180px){body{font-size:19px;line-height:1.76;padding:24px;max-width:920px;margin:0 auto}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}.src{font-size:14px}.cover{min-height:88vh}}
+  @media screen and (max-width:720px){body{font-size:17px;padding:14px;line-height:1.78}h1{font-size:28px}h2{font-size:22px}h3{font-size:18px}.cover{min-height:88vh}.src{font-size:13px}}
+  @media print{body{padding:0;font-size:14pt;line-height:1.64}.cover{min-height:255mm}.c{break-inside:auto}.c h2,.c h3{break-after:avoid-page}.c li{break-inside:avoid-page}}
+  </style></head><body><section class="cover"><h1>${esc(title)}</h1><p>119 소방·구급 합격 학습 OS</p><p>생성일 ${new Date().toLocaleDateString('ko-KR')}</p><p>텍스트 기반 문서 · PDF 저장 후 확대해도 선명하게 볼 수 있습니다.</p></section>${body}</body></html>`;
+}
+function exportPdf(mode){
+  const html=printDocument(mode),w=window.open('','_blank');if(!w)throw Error('POPUP_BLOCKED');try{w.opener=null}catch{}
+  w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch{}},350);return true;
+}
+function exportEditable(mode){
+  const names={fire:'소방학-핵심',ems:'구급-핵심',pass:'내-합격노트',rapid:'시험직전-초압축'},html=printDocument(mode);
+  const blob=new Blob(['\ufeff',html],{type:'application/msword;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=(names[mode]||'119-합격노트')+'.doc';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return true
+}
+V.PassNote={conceptKey,conceptCoreKey,questionKey,has,find,persist,remove,toggleConcept,toggleConceptCore,conceptCoreNote,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,exportEditable,subjectOf,subjectLabel};
+})();
+;
+
+/* --- lazy-loader-119.js --- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
+const QUESTION_FILES=[
+  'questions-quality2-gap-119.js',
+  'questions-verified-ems-batch2-119.js',
+  'questions-verified-ems-batch3-119.js',
+  'questions-verified-fire-batch2-119.js',
+  'questions-verified-ems-breadth1-119.js',
+  'questions-verified-ems-breadth2-119.js',
+  'questions-verified-fire-breadth2-119.js',
+  'questions-verified-highyield4-119.js',
+  'questions-verified-fire-target1-119.js',
+  'questions-verified-fire-target2-119.js',
+  'questions-verified-ems-target1-119.js',
+  'questions-verified-ems-target2-119.js',
+  'questions-verified-v52-fire-breadth-119.js',
+  'questions-v52-breadth-batch2-119.js',
+  'questions-official-past-2025-119.js',
+  'question-variant-engine-119.js',
+  'mock-exam-quality-119.js',
+  'v29-reviewed-promotions-119.js',
+  'v60-source-reviewed-promotions-119.js',
+  'analytics-v61-119.js'
+];
+const CONTENT_FILE='content-core-v69.js';
+const QUESTION_CORE_FILE='question-core-v69.js';
+let prefetchPromise=null,contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
+
+// V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
+// tokens as real learner-facing underlines as well as marker emphasis so the core
+// contract remains visible on every responsive layout without re-highlighting full lines.
+function restoreCoreUnderlineSemantics(root=document){
+  root?.querySelectorAll?.('.study-key-emphasis').forEach(el=>{
+    el.classList.add('study-key-underline');
+    el.style.setProperty('text-decoration','underline','important');
+    el.style.setProperty('text-decoration-thickness','2px','important');
+    el.style.setProperty('text-underline-offset','3px','important');
+  });
+}
+function installCoreUnderlineObserver(){
+  if(typeof document==='undefined'||typeof MutationObserver==='undefined')return;
+  restoreCoreUnderlineSemantics(document);
+  const root=document.documentElement||document.body;
+  if(!root)return;
+  new MutationObserver(records=>{
+    for(const record of records){
+      for(const node of record.addedNodes||[]){
+        if(node?.nodeType!==1)continue;
+        if(node.matches?.('.study-key-emphasis'))restoreCoreUnderlineSemantics(node.parentElement||node);
+        else restoreCoreUnderlineSemantics(node);
+      }
+    }
+  }).observe(root,{childList:true,subtree:true});
+}
+installCoreUnderlineObserver();
+
+function loadScript(file){
+  return new Promise((resolve,reject)=>{
+    const selector='script[data-lazy-119="'+file+'"]',existing=document.querySelector(selector);
+    if(existing?.dataset.loaded==='true')return resolve();
+    if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('LAZY_119_LOAD_FAILED '+file)),{once:true});return}
+    const s=document.createElement('script');
+    s.src='./'+file;s.async=false;s.setAttribute('data-lazy-119',file);
+    s.addEventListener('load',()=>{s.dataset.loaded='true';resolve()},{once:true});
+    s.addEventListener('error',()=>{s.remove();reject(new Error('LAZY_119_LOAD_FAILED '+file))},{once:true});
+    document.head.appendChild(s);
+  })
+}
+function deferredAssets(){return [CONTENT_FILE,QUESTION_CORE_FILE,...QUESTION_FILES]}
+function prefetch(){
+  if(prefetchPromise)return prefetchPromise;
+  const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+  if(conn?.saveData||/^(?:slow-2g|2g)$/i.test(String(conn?.effectiveType||'')))return Promise.resolve([]);
+  const files=deferredAssets().filter(Boolean);
+  document.documentElement.dataset.deferredPrefetch='loading';
+  prefetchPromise=Promise.all(files.map(async file=>{
+    try{
+      const r=await fetch('./'+file,{cache:'force-cache',credentials:'same-origin'});
+      if(!r.ok)throw Error('PREFETCH_HTTP_'+r.status);
+      await r.arrayBuffer();
+      return file
+    }catch(err){
+      console.warn('V69_PREFETCH_FAILED',file,err);
+      return null
+    }
+  })).then(rows=>{
+    const loaded=rows.filter(Boolean);
+    document.documentElement.dataset.deferredPrefetch='ready';
+    return loaded
+  });
+  return prefetchPromise
+}
+async function ensureContent({background=false}={}){
+  if(contentReady)return true;
+  if(contentPromise)return contentPromise;
+  document.documentElement.dataset.contentLane='loading';
+  if(!background)document.body?.setAttribute('aria-busy','true');
+  contentPromise=loadScript(CONTENT_FILE).then(()=>{
+    contentReady=true;
+    document.documentElement.dataset.contentLane='ready';
+    window.dispatchEvent(new CustomEvent('aitutor-content-lane-ready',{detail:{file:CONTENT_FILE}}));
+    return true
+  }).catch(err=>{
+    contentPromise=null;
+    document.documentElement.dataset.contentLane='error';
+    throw err
+  }).finally(()=>{if(!background)document.body?.removeAttribute('aria-busy')});
+  return contentPromise
+}
+async function ensureQuestions({background=false}={}){
+  if(questionsReady)return V.questions||[];
+  if(questionsPromise)return questionsPromise;
+  document.documentElement.dataset.questionLane='loading';
+  if(!background)document.body?.setAttribute('aria-busy','true');
+  questionsPromise=(async()=>{
+    await ensureContent({background:true});
+    // Core + expansion requests start together; async=false preserves deterministic classic-script execution order.
+    await Promise.all([loadScript(QUESTION_CORE_FILE),...QUESTION_FILES.map(loadScript)]);
+    V.QuestionDifficulty?.annotate?.(V.questions||[]);
+    V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
+    V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
+    const sourceImpact=V.SourceImpact119?.audit?.();
+    if(sourceImpact&&!sourceImpact.complete){
+      throw new Error('SOURCE_IMPACT_CONTRACT_FAIL '+JSON.stringify({
+        invalidRanges:sourceImpact.invalidRanges?.length||0,
+        orphanVerified:sourceImpact.orphanVerified?.length||0,
+        reviewedUnmapped:sourceImpact.reviewedUnmapped?.length||0
+      }));
+    }
+    questionsReady=true;
+    document.documentElement.dataset.questionLane='ready';
+    if(!background)document.body?.removeAttribute('aria-busy');
+    window.dispatchEvent(new CustomEvent('aitutor-question-lane-ready',{detail:{
+      count:(V.questions||[]).length,
+      sourceImpact:sourceImpact?{
+        complete:sourceImpact.complete,
+        conceptCount:sourceImpact.conceptCount,
+        verifiedQuestionCount:sourceImpact.verifiedQuestionCount,
+        reviewedQuestionCount:sourceImpact.reviewedQuestionCount
+      }:null
+    }}));
+    return V.questions||[]
+  })().catch(err=>{
+    questionsPromise=null;
+    document.documentElement.dataset.questionLane='error';
+    if(!background)document.body?.removeAttribute('aria-busy');
+    throw err
+  });
+  return questionsPromise
+}
+function needsContent(page,studyTab){return String(page||'')==='study'}
+function needsContentForCurrentState(){const state=V.Store?.state||{};return needsContent(state.page,state.studyTab)}
+function needsQuestions(page,studyTab){
+  return ['bank','exam','wrong','stats'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
+}
+function needsQuestionsForCurrentState(){
+  const state=V.Store?.state||{};
+  return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
+}
+V.Lazy119={
+  version:'119-lazy-runtime-v5-prefetch-only',
+  contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,questionFiles:[...QUESTION_FILES],
+  deferredAssets,prefetch,ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
+  get prefetched(){return document.documentElement.dataset.deferredPrefetch==='ready'},
+  get contentReady(){return contentReady},
+  get contentLoading(){return !!contentPromise&&!contentReady},
+  get questionsReady(){return questionsReady},
+  get questionsLoading(){return !!questionsPromise&&!questionsReady}
+};
+})();
+;
+
+/* --- app.js --- */
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},S=V.Store;const $=(s,r=document)=>r.querySelector(s);const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -45,18 +472,17 @@ if(c?.subject===subject){state().subject=subject;state().scopeId=c.scopeId;state
 const sc=(subject==='fire'?V.curriculum.fire:V.curriculum.ems)[0];state().subject=subject;state().scopeId=sc.id;state().conceptId=`${sc.id}-C01`;state().studyTab='core';return V.curriculum.byId[state().conceptId]
 }
 async function ensurePageData(page,tab=state().studyTab){
-const needContent=!!V.Lazy119?.needsContent?.(page,tab),needCore=!!V.Lazy119?.needsQuestionCore?.(page,tab),needQuestions=!!V.Lazy119?.needsQuestions?.(page,tab);
-if((!needContent||V.Lazy119.contentReady)&&(!needCore||V.Lazy119.questionCoreReady)&&(!needQuestions||V.Lazy119.questionsReady))return true;
+const needContent=!!V.Lazy119?.needsContent?.(page,tab),needQuestions=!!V.Lazy119?.needsQuestions?.(page,tab);
+if((!needContent||V.Lazy119.contentReady)&&(!needQuestions||V.Lazy119.questionsReady))return true;
 try{
   document.body?.setAttribute('aria-busy','true');
   if(needContent&&!V.Lazy119.contentReady)await V.Lazy119.ensureContent();
-  if(needCore&&!V.Lazy119.questionCoreReady)await V.Lazy119.ensureQuestionCore();
   if(needQuestions&&!V.Lazy119.questionsReady)await V.Lazy119.ensureQuestions();
   return true
 }catch(err){console.error(err);toast('학습 데이터를 불러오지 못했습니다. 다시 시도해주세요.');return false}
 finally{document.body?.removeAttribute('aria-busy')}
 }
-async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render();if(target==='bank'&&!V.Lazy119?.questionsReady&&!V.Lazy119?.questionsLoading)V.Lazy119.ensureQuestions({background:true}).then(()=>{if(state().page==='bank')render()}).catch(err=>console.warn('BANK_BACKGROUND_EXPANSION_FAILED',err))}
+async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render()}
 function chooseConcept(id,{keepTab=false}={}){const c=V.curriculum.byId[id];if(!c)return;state().conceptId=id;state().scopeId=c.scopeId;state().subject=c.subject;if(!keepTab)state().studyTab='core';state().outline=false;rememberStudyPosition(c.subject);S.save();return go('study')}
 function navButton([id,ico,label]){const active=state().page===id;return `<button class="${active?'active':''}" ${active?'aria-current="page"':''} data-go="${id}"><span class="ico">${ico}</span><span>${label}</span></button>`}
 function shell(content,title='',crumb=''){const account=V.Auth?.user?'회원':'게스트';return `<div class="app"><aside class="side"><div class="brand"><span class="brand-mark">✓</span><div><b>소방합격</b></div></div><nav class="nav">${NAV.map(navButton).join('')}</nav><div class="side-foot"><button class="account-chip" data-account><b>${esc(account)}</b></button></div></aside><main class="main page-${state().page} ${state().page==='exam'&&runtime.exam?'exam-active':''}"><header class="top"><h1>${esc(title||NAV.find(x=>x[0]===state().page)?.[2]||'119')}</h1><span class="spacer"></span><button class="btn small ghost" data-account>${V.Auth?.isGuest?'계정':'회원'}</button></header><section class="page">${content}</section><nav class="mobile-nav" aria-label="주요 메뉴"><button class="${state().page==='home'?'active':''}" ${state().page==='home'?'aria-current="page"':''} data-go="home">홈</button><button class="${state().page==='study'?'active':''}" ${state().page==='study'?'aria-current="page"':''} data-go="study">학습</button><button class="${state().page==='exam'?'active':''}" ${state().page==='exam'?'aria-current="page"':''} data-go="exam">시험</button><button class="${state().page==='wrong'?'active':''}" ${state().page==='wrong'?'aria-current="page"':''} data-go="wrong">오답</button><button data-more>더보기</button></nav></main>${runtime.more?moreSheet():''}${runtime.account?accountModal():''}${runtime.toast?`<div class="app-toast" role="status" aria-live="polite" aria-atomic="true"><span>${esc(runtime.toast)}</span>${runtime.toastAction?`<button class="app-toast-action" data-toast-action>${esc(runtime.toastAction.label)}</button>`:''}</div>`:''}</div>`}
@@ -1066,7 +1492,6 @@ async function boot(){
 let dataLaneReady=true;
 try{
   if(V.Lazy119?.needsContentForCurrentState?.())await V.Lazy119.ensureContent();
-  if(V.Lazy119?.needsQuestionCoreForCurrentState?.())await V.Lazy119.ensureQuestionCore();
   if(V.Lazy119?.needsQuestionsForCurrentState?.())await V.Lazy119.ensureQuestions();
 }catch(err){
   dataLaneReady=false;console.error(err);
@@ -1079,3 +1504,5 @@ V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studen
 }
 boot();
 })();
+
+;

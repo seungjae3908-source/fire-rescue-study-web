@@ -942,3 +942,64 @@
 .detail-view [data-detail-section].detail-section-active h3{
   color:#ffb15b!important
 }
+
+
+/* V69 desktop density + wide-screen utilization */
+@media(min-width:1200px){
+  .notes-page,
+  .resources-119,
+  .suggestions-page,
+  .settings-page,
+  .page-wrong .screen-scroll,
+  .page-stats .home-grid,
+  .exam-landing{
+    width:100%!important;
+    max-width:1360px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  .page-bank .bank-page{
+    width:100%!important;
+    max-width:1440px!important;
+    margin:0 auto!important;
+  }
+  .page-bank .question-card{
+    max-width:1120px!important;
+  }
+  .page-study .study-body-desktop>.lesson,
+  .page-study .detail-view{
+    max-width:1280px!important;
+  }
+  .page-study .study-ai{
+    max-width:1280px!important;
+  }
+}
+@media(min-width:1440px){
+  .page-study .detail-view{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    column-gap:22px!important;
+    row-gap:0!important;
+    align-items:start!important;
+  }
+  .page-study .detail-view>.detail-toc,
+  .page-study .detail-view>.detail-definition,
+  .page-study .detail-view>.detail-compare-cards,
+  .page-study .detail-view>.detail-exam-points,
+  .page-study .detail-view>.source-connect{
+    grid-column:1/-1!important;
+  }
+  .page-study .detail-view>.detail-section{
+    align-self:start!important;
+  }
+}
+.resource-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.resource-section-head h2{margin:0}
+.resource-compact-list{gap:5px!important}
+.resource-compact-list .resource-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:12px!important;padding-block:9px!important}
+.resource-compact-list .resource-row>b{font-size:14px!important}
+.resource-compact-list .resource-actions{display:flex;gap:6px}
+@media(max-width:720px){
+  .resource-compact-list .resource-row{grid-template-columns:minmax(0,1fr)!important;gap:8px!important}
+  .resource-compact-list .resource-actions{display:grid;grid-template-columns:1fr 1fr}
+  .resource-compact-list .resource-actions .btn{width:100%}
+}

@@ -718,7 +718,7 @@ ok(officialMonitorProbe.includes('OFFICIAL_MONITOR_SOURCE_HARD_FAILURE')&&offici
 ok(officialMonitorProbe.includes('UND_ERR_CONNECT_TIMEOUT')&&officialMonitorProbe.includes('ENOTFOUND')&&officialMonitorProbe.includes('EAI_AGAIN'),'live official-monitor probe explicitly classifies common transport-level outages');
 
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
-ok(sourcePdf.includes("pdfjs-v13-fast-range-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:h.l.text')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)'),'official PDF evidence underlines strong anchor lines plus matching explanatory context');
+ok(sourcePdf.includes("pdfjs-v14-timeout-safe-range-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:h.l.text')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)'),'official PDF evidence underlines strong anchor lines plus matching explanatory context while using timeout-safe worker fallback');
 ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
 ok(sourcePdf.includes('qn.length<3'),'official PDF evidence accepts short Korean concept anchors such as 롤오버·플래시오버 instead of dropping all queries under eight characters');
 ok(sourcePdf.includes('anchorTokens')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)')&&sourcePdf.includes('anchorTerms:opts.anchorTerms')&&sourcePdf.includes('evidenceLinesForQA:evidenceLines'),'official PDF evidence deterministically prioritizes strong concept-anchor lines and exposes the exact matcher to browser QA');
@@ -727,7 +727,7 @@ ok(sourcePdf.includes('devicePixelRatio')&&sourcePdf.includes('outputScale'),'of
 ok(sourcePdf.includes('serverUpload:false')&&sourcePdf.includes('originalUnmodified:true'),'official source PDFs are never server-uploaded and remain unmodified');
 ok(sourcePdf.includes('userUploadRequired:false')&&sourcePdf.includes('officialRemotePreferred:true'),'PDF evidence prefers official remote sources and never requires user upload');
 ok(sourcePdf.includes('SOURCE_REMOTE_UNRESOLVED'),'unresolved direct PDFs fail closed to official-page fallback');
-ok(sourcePdf.includes('preferProxy')&&sourcePdf.includes("origin='official-proxy-fallback'")&&sourcePdf.includes("origin='official-proxy-full-cache'")&&sourcePdf.includes('fastTimeout=Math.min(7000,timeoutMs)')&&sourcePdf.includes('else if(catalog?.proxyPdf)'),'official PDF viewer keeps bounded mirror range loading and uses reliable full-cache proxy loading for non-range sources');
+ok(sourcePdf.includes('preferProxy')&&sourcePdf.includes("origin='official-proxy-fallback'")&&sourcePdf.includes("origin='official-proxy-range'")&&sourcePdf.includes("origin='official-proxy-full-cache-fallback'")&&sourcePdf.includes('fastTimeout=Math.min(6500,timeoutMs)')&&sourcePdf.includes('disableStream:true'),'official PDF viewer uses bounded range-first loading for proxy textbooks with full-cache fallback');
 ok(sourcePdf.includes('opts.zoom')&&sourcePdf.includes('fitScale')&&sourcePdf.includes('Math.min(3'),'official PDF renderer supports fit-width user zoom while preserving up to 3x device-pixel sharpness');
 const appSource=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const appStyles=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');

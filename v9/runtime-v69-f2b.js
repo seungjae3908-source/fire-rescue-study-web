@@ -1,3 +1,179 @@
+/* V69 split from runtime-v69-f2.js part 2 */
+/* --- lazy-loader-119.js --- */
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
+const QUESTION_FILES=[
+  'questions-quality2-gap-119.js',
+  'questions-verified-ems-batch2-119.js',
+  'questions-verified-ems-batch3-119.js',
+  'questions-verified-fire-batch2-119.js',
+  'questions-verified-ems-breadth1-119.js',
+  'questions-verified-ems-breadth2-119.js',
+  'questions-verified-fire-breadth2-119.js',
+  'questions-verified-highyield4-119.js',
+  'questions-verified-fire-target1-119.js',
+  'questions-verified-fire-target2-119.js',
+  'questions-verified-ems-target1-119.js',
+  'questions-verified-ems-target2-119.js',
+  'questions-verified-v52-fire-breadth-119.js',
+  'questions-v52-breadth-batch2-119.js',
+  'questions-official-past-2025-119.js',
+  'question-variant-engine-119.js',
+  'mock-exam-quality-119.js',
+  'v29-reviewed-promotions-119.js',
+  'v60-source-reviewed-promotions-119.js',
+  'analytics-v61-119.js'
+];
+const CONTENT_FILE='content-core-v69.js';
+const QUESTION_CORE_FILE='question-core-v69.js';
+let prefetchPromise=null,contentPromise=null,contentReady=false,questionsPromise=null,questionsReady=false;
+
+// V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
+// tokens as real learner-facing underlines as well as marker emphasis so the core
+// contract remains visible on every responsive layout without re-highlighting full lines.
+function restoreCoreUnderlineSemantics(root=document){
+  root?.querySelectorAll?.('.study-key-emphasis').forEach(el=>{
+    el.classList.add('study-key-underline');
+    el.style.setProperty('text-decoration','underline','important');
+    el.style.setProperty('text-decoration-thickness','2px','important');
+    el.style.setProperty('text-underline-offset','3px','important');
+  });
+}
+function installCoreUnderlineObserver(){
+  if(typeof document==='undefined'||typeof MutationObserver==='undefined')return;
+  restoreCoreUnderlineSemantics(document);
+  const root=document.documentElement||document.body;
+  if(!root)return;
+  new MutationObserver(records=>{
+    for(const record of records){
+      for(const node of record.addedNodes||[]){
+        if(node?.nodeType!==1)continue;
+        if(node.matches?.('.study-key-emphasis'))restoreCoreUnderlineSemantics(node.parentElement||node);
+        else restoreCoreUnderlineSemantics(node);
+      }
+    }
+  }).observe(root,{childList:true,subtree:true});
+}
+installCoreUnderlineObserver();
+
+function loadScript(file){
+  return new Promise((resolve,reject)=>{
+    const selector='script[data-lazy-119="'+file+'"]',existing=document.querySelector(selector);
+    if(existing?.dataset.loaded==='true')return resolve();
+    if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('LAZY_119_LOAD_FAILED '+file)),{once:true});return}
+    const s=document.createElement('script');
+    s.src='./'+file;s.async=false;s.setAttribute('data-lazy-119',file);
+    s.addEventListener('load',()=>{s.dataset.loaded='true';resolve()},{once:true});
+    s.addEventListener('error',()=>{s.remove();reject(new Error('LAZY_119_LOAD_FAILED '+file))},{once:true});
+    document.head.appendChild(s);
+  })
+}
+function deferredAssets(){return [CONTENT_FILE,QUESTION_CORE_FILE,...QUESTION_FILES]}
+function prefetch(){
+  if(prefetchPromise)return prefetchPromise;
+  const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+  if(conn?.saveData||/^(?:slow-2g|2g)$/i.test(String(conn?.effectiveType||'')))return Promise.resolve([]);
+  const files=deferredAssets().filter(Boolean);
+  document.documentElement.dataset.deferredPrefetch='loading';
+  prefetchPromise=Promise.all(files.map(async file=>{
+    try{
+      const r=await fetch('./'+file,{cache:'force-cache',credentials:'same-origin'});
+      if(!r.ok)throw Error('PREFETCH_HTTP_'+r.status);
+      await r.arrayBuffer();
+      return file
+    }catch(err){
+      console.warn('V69_PREFETCH_FAILED',file,err);
+      return null
+    }
+  })).then(rows=>{
+    const loaded=rows.filter(Boolean);
+    document.documentElement.dataset.deferredPrefetch='ready';
+    return loaded
+  });
+  return prefetchPromise
+}
+async function ensureContent({background=false}={}){
+  if(contentReady)return true;
+  if(contentPromise)return contentPromise;
+  document.documentElement.dataset.contentLane='loading';
+  if(!background)document.body?.setAttribute('aria-busy','true');
+  contentPromise=loadScript(CONTENT_FILE).then(()=>{
+    contentReady=true;
+    document.documentElement.dataset.contentLane='ready';
+    window.dispatchEvent(new CustomEvent('aitutor-content-lane-ready',{detail:{file:CONTENT_FILE}}));
+    return true
+  }).catch(err=>{
+    contentPromise=null;
+    document.documentElement.dataset.contentLane='error';
+    throw err
+  }).finally(()=>{if(!background)document.body?.removeAttribute('aria-busy')});
+  return contentPromise
+}
+async function ensureQuestions({background=false}={}){
+  if(questionsReady)return V.questions||[];
+  if(questionsPromise)return questionsPromise;
+  document.documentElement.dataset.questionLane='loading';
+  if(!background)document.body?.setAttribute('aria-busy','true');
+  questionsPromise=(async()=>{
+    await ensureContent({background:true});
+    // Core + expansion requests start together; async=false preserves deterministic classic-script execution order.
+    await Promise.all([loadScript(QUESTION_CORE_FILE),...QUESTION_FILES.map(loadScript)]);
+    V.QuestionDifficulty?.annotate?.(V.questions||[]);
+    V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
+    V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
+    const sourceImpact=V.SourceImpact119?.audit?.();
+    if(sourceImpact&&!sourceImpact.complete){
+      throw new Error('SOURCE_IMPACT_CONTRACT_FAIL '+JSON.stringify({
+        invalidRanges:sourceImpact.invalidRanges?.length||0,
+        orphanVerified:sourceImpact.orphanVerified?.length||0,
+        reviewedUnmapped:sourceImpact.reviewedUnmapped?.length||0
+      }));
+    }
+    questionsReady=true;
+    document.documentElement.dataset.questionLane='ready';
+    if(!background)document.body?.removeAttribute('aria-busy');
+    window.dispatchEvent(new CustomEvent('aitutor-question-lane-ready',{detail:{
+      count:(V.questions||[]).length,
+      sourceImpact:sourceImpact?{
+        complete:sourceImpact.complete,
+        conceptCount:sourceImpact.conceptCount,
+        verifiedQuestionCount:sourceImpact.verifiedQuestionCount,
+        reviewedQuestionCount:sourceImpact.reviewedQuestionCount
+      }:null
+    }}));
+    return V.questions||[]
+  })().catch(err=>{
+    questionsPromise=null;
+    document.documentElement.dataset.questionLane='error';
+    if(!background)document.body?.removeAttribute('aria-busy');
+    throw err
+  });
+  return questionsPromise
+}
+function needsContent(page,studyTab){return String(page||'')==='study'}
+function needsContentForCurrentState(){const state=V.Store?.state||{};return needsContent(state.page,state.studyTab)}
+function needsQuestions(page,studyTab){
+  return ['bank','exam','wrong','stats'].includes(String(page||''))||(page==='study'&&studyTab==='quiz')
+}
+function needsQuestionsForCurrentState(){
+  const state=V.Store?.state||{};
+  return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
+}
+V.Lazy119={
+  version:'119-lazy-runtime-v5-prefetch-only',
+  contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,questionFiles:[...QUESTION_FILES],
+  deferredAssets,prefetch,ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
+  get prefetched(){return document.documentElement.dataset.deferredPrefetch==='ready'},
+  get contentReady(){return contentReady},
+  get contentLoading(){return !!contentPromise&&!contentReady},
+  get questionsReady(){return questionsReady},
+  get questionsLoading(){return !!questionsPromise&&!questionsReady}
+};
+})();
+;
+
+/* --- app.js --- */
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},S=V.Store;const $=(s,r=document)=>r.querySelector(s);const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -45,18 +221,17 @@ if(c?.subject===subject){state().subject=subject;state().scopeId=c.scopeId;state
 const sc=(subject==='fire'?V.curriculum.fire:V.curriculum.ems)[0];state().subject=subject;state().scopeId=sc.id;state().conceptId=`${sc.id}-C01`;state().studyTab='core';return V.curriculum.byId[state().conceptId]
 }
 async function ensurePageData(page,tab=state().studyTab){
-const needContent=!!V.Lazy119?.needsContent?.(page,tab),needCore=!!V.Lazy119?.needsQuestionCore?.(page,tab),needQuestions=!!V.Lazy119?.needsQuestions?.(page,tab);
-if((!needContent||V.Lazy119.contentReady)&&(!needCore||V.Lazy119.questionCoreReady)&&(!needQuestions||V.Lazy119.questionsReady))return true;
+const needContent=!!V.Lazy119?.needsContent?.(page,tab),needQuestions=!!V.Lazy119?.needsQuestions?.(page,tab);
+if((!needContent||V.Lazy119.contentReady)&&(!needQuestions||V.Lazy119.questionsReady))return true;
 try{
   document.body?.setAttribute('aria-busy','true');
   if(needContent&&!V.Lazy119.contentReady)await V.Lazy119.ensureContent();
-  if(needCore&&!V.Lazy119.questionCoreReady)await V.Lazy119.ensureQuestionCore();
   if(needQuestions&&!V.Lazy119.questionsReady)await V.Lazy119.ensureQuestions();
   return true
 }catch(err){console.error(err);toast('학습 데이터를 불러오지 못했습니다. 다시 시도해주세요.');return false}
 finally{document.body?.removeAttribute('aria-busy')}
 }
-async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render();if(target==='bank'&&!V.Lazy119?.questionsReady&&!V.Lazy119?.questionsLoading)V.Lazy119.ensureQuestions({background:true}).then(()=>{if(state().page==='bank')render()}).catch(err=>console.warn('BANK_BACKGROUND_EXPANSION_FAILED',err))}
+async function go(page){const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render()}
 function chooseConcept(id,{keepTab=false}={}){const c=V.curriculum.byId[id];if(!c)return;state().conceptId=id;state().scopeId=c.scopeId;state().subject=c.subject;if(!keepTab)state().studyTab='core';state().outline=false;rememberStudyPosition(c.subject);S.save();return go('study')}
 function navButton([id,ico,label]){const active=state().page===id;return `<button class="${active?'active':''}" ${active?'aria-current="page"':''} data-go="${id}"><span class="ico">${ico}</span><span>${label}</span></button>`}
 function shell(content,title='',crumb=''){const account=V.Auth?.user?'회원':'게스트';return `<div class="app"><aside class="side"><div class="brand"><span class="brand-mark">✓</span><div><b>소방합격</b></div></div><nav class="nav">${NAV.map(navButton).join('')}</nav><div class="side-foot"><button class="account-chip" data-account><b>${esc(account)}</b></button></div></aside><main class="main page-${state().page} ${state().page==='exam'&&runtime.exam?'exam-active':''}"><header class="top"><h1>${esc(title||NAV.find(x=>x[0]===state().page)?.[2]||'119')}</h1><span class="spacer"></span><button class="btn small ghost" data-account>${V.Auth?.isGuest?'계정':'회원'}</button></header><section class="page">${content}</section><nav class="mobile-nav" aria-label="주요 메뉴"><button class="${state().page==='home'?'active':''}" ${state().page==='home'?'aria-current="page"':''} data-go="home">홈</button><button class="${state().page==='study'?'active':''}" ${state().page==='study'?'aria-current="page"':''} data-go="study">학습</button><button class="${state().page==='exam'?'active':''}" ${state().page==='exam'?'aria-current="page"':''} data-go="exam">시험</button><button class="${state().page==='wrong'?'active':''}" ${state().page==='wrong'?'aria-current="page"':''} data-go="wrong">오답</button><button data-more>더보기</button></nav></main>${runtime.more?moreSheet():''}${runtime.account?accountModal():''}${runtime.toast?`<div class="app-toast" role="status" aria-live="polite" aria-atomic="true"><span>${esc(runtime.toast)}</span>${runtime.toastAction?`<button class="app-toast-action" data-toast-action>${esc(runtime.toastAction.label)}</button>`:''}</div>`:''}</div>`}
@@ -1066,7 +1241,6 @@ async function boot(){
 let dataLaneReady=true;
 try{
   if(V.Lazy119?.needsContentForCurrentState?.())await V.Lazy119.ensureContent();
-  if(V.Lazy119?.needsQuestionCoreForCurrentState?.())await V.Lazy119.ensureQuestionCore();
   if(V.Lazy119?.needsQuestionsForCurrentState?.())await V.Lazy119.ensureQuestions();
 }catch(err){
   dataLaneReady=false;console.error(err);
@@ -1079,3 +1253,5 @@ V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studen
 }
 boot();
 })();
+
+;

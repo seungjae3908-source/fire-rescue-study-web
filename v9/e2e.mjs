@@ -76,12 +76,12 @@ try{
   await p.locator('.tabbar [data-study-tab="ai"]').click();
   await p.waitForSelector('.study-body-desktop .study-ai [data-tutor-input]');
   assert(await p.locator('.study-body-desktop .study-ai').count()===1&&await p.locator('.study-rail').count()===0,'AI question is a first-class visible study tab instead of a duplicate right-side panel');
-  const lazyBefore=await p.evaluate(()=>({ready:window.AITUTOR_V9.Lazy119?.questionsReady===true,hasDeferred:!!window.AITUTOR_V9.questionById?.['119-vertarget-ems2-047']}));
-  assert(lazyBefore.ready===false&&lazyBefore.hasDeferred===false,'home/core/detail/AI keep deferred verified question packs out of the initial runtime');
+  const lazyBefore=await p.evaluate(()=>({ready:window.AITUTOR_V9.Lazy119?.questionsReady===true,hasDeferred:!!window.AITUTOR_V9.questionById?.['119-vertarget-ems2-047'],staticDeferred:[...document.querySelectorAll('script[src]:not([data-lazy-119])')].some(x=>/mock-exam-quality-119|v29-reviewed-promotions-119/.test(x.getAttribute('src')||''))}));
+  assert(lazyBefore.staticDeferred===false,'deferred verified question packs stay out of static learner HTML while V69 may preload them during browser idle time');
   await p.locator('.tabbar [data-study-tab="quiz"]').click();
   await p.waitForFunction(()=>window.AITUTOR_V9.Lazy119?.questionsReady===true);
   const lazyAfter=await p.evaluate(()=>({ready:window.AITUTOR_V9.Lazy119?.questionsReady===true,count:window.AITUTOR_V9.questions?.length||0,hasDeferred:!!window.AITUTOR_V9.questionById?.['119-vertarget-ems2-047'],mock:!!window.AITUTOR_V9.MockExam119}));
-  assert(lazyAfter.ready&&lazyAfter.count>=3000&&lazyAfter.hasDeferred&&lazyAfter.mock,'opening the study quiz loads the full bank and mock engine on demand');
+  assert(lazyAfter.ready&&lazyAfter.count>=3000&&lazyAfter.hasDeferred&&lazyAfter.mock,'study quiz has the full bank ready from idle preload or immediate on-demand completion');
   const globalLearnerFraming=await p.evaluate(()=>{
     const V=window.AITUTOR_V9,clean=V.App.studentStudyText,qclean=V.App.studentQuestionText,re=/(?:20\d{2}\s*)?(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)/i;
     const contentBad=[];

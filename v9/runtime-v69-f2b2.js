@@ -1,3 +1,5 @@
+/* V69 split from runtime-v69-f2b.js part 2 */
+/* --- app.js --- */
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{},S=V.Store;const $=(s,r=document)=>r.querySelector(s);const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -1079,3 +1081,5 @@ V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studen
 }
 boot();
 })();
+
+;
