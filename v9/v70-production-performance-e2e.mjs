@@ -6,6 +6,9 @@ const now=()=>Date.now();
 const round=n=>Math.round(Number(n)||0);
 function assert(v,m){if(!v)throw new Error(m)}
 function ratio(n,d){return d?Math.round(n/d*1000)/10:0}
+async function diagnostic(label,fn){
+  try{return await fn()}catch(err){return{error:label+': '+String(err?.message||err||'UNKNOWN_ERROR')}}
+}
 async function runtimeHead(){
   const r=await fetch(new URL('/api/runtime-head',production),{headers:{'cache-control':'no-cache'}});
   assert(r.ok,'RUNTIME_HEAD_HTTP_'+r.status);
@@ -120,11 +123,16 @@ try{
   const widthPct=Object.fromEntries(Object.entries(widths).map(([k,v])=>[k,{viewportPct:ratio(v.width,v.viewport),availablePct:ratio(v.width,v.available),width:round(v.width)}]));
   await cold.context.close();
 
-  const [law2Meta,fire1,law2]=await Promise.all([proxyMeta('law2'),measurePdf(browser,'fire1'),measurePdf(browser,'law2')]);
+  const requireLaw2Static=process.env.STUDY_119_REQUIRE_LAW2_STATIC==='1';
+  const [law2Meta,fire1,law2]=await Promise.all([
+    diagnostic('law2Meta',()=>proxyMeta('law2')),
+    measurePdf(browser,'fire1'),
+    requireLaw2Static?measurePdf(browser,'law2'):diagnostic('law2',()=>measurePdf(browser,'law2'))
+  ]);
 
   const proxyRangeProbe={
-    sameOrigin:await rangeProbe(new URL('/api/official-pdf?doc=law2',production)),
-    external:await rangeProbe('https://study-119-pdf-proxy.vercel.app/api/official-pdf?doc=law2')
+    sameOrigin:await diagnostic('sameOriginRange',()=>rangeProbe(new URL('/api/official-pdf?doc=law2',production))),
+    external:await diagnostic('externalRange',()=>rangeProbe('https://study-119-pdf-proxy.vercel.app/api/official-pdf?doc=law2'))
   };
   const metrics={
     exactProductionHead:runtime.sha,
@@ -144,9 +152,10 @@ try{
   console.log('V70_PRODUCTION_PERFORMANCE',JSON.stringify(metrics));
 
   assert(questionCold<3000,'QUESTION_COLD_TOO_SLOW_'+round(questionCold));
-  const law2NeedsStaticMirror=law2.renderMs>=10000||law2.origin!=='official-static-range';
-  console.log('V70_LAW2_MIRROR_REQUIRED',JSON.stringify({required:law2NeedsStaticMirror,renderMs:law2.renderMs,origin:law2.origin,rangeProbe:proxyRangeProbe}));
-  if(process.env.STUDY_119_REQUIRE_LAW2_STATIC==='1'){
+  const law2NeedsStaticMirror=!!law2?.error||law2.renderMs>=10000||law2.origin!=='official-static-range';
+  console.log('V70_LAW2_MIRROR_REQUIRED',JSON.stringify({required:law2NeedsStaticMirror,renderMs:law2?.renderMs||0,origin:law2?.origin||'',error:law2?.error||'',rangeProbe:proxyRangeProbe}));
+  if(requireLaw2Static){
+    assert(!law2?.error,'LAW2_STATIC_FETCH_FAILED_'+law2.error);
     assert(law2.renderMs<10000,'LAW2_STATIC_RENDER_TOO_SLOW_'+law2.renderMs);
     assert(law2.origin==='official-static-range','LAW2_NOT_STATIC_RANGE_'+law2.origin);
   }
