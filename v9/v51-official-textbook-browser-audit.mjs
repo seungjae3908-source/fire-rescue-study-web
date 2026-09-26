@@ -14,7 +14,9 @@ try{
   const ctx=await browser.newContext({viewport:{width:1280,height:900}});
   const page=await ctx.newPage();page.setDefaultTimeout(120000);
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
-  await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF?.openPdf&&!!window.AITUTOR_V9?.ConceptArchitecture119,{timeout:60000});
+  await page.waitForFunction(()=>!!window.AITUTOR_V9?.Lazy119&&!!window.AITUTOR_V9?.SourcePDF?.openPdf,{timeout:60000});
+  await page.evaluate(()=>window.AITUTOR_V9.Lazy119.ensureContent());
+  await page.waitForFunction(()=>window.AITUTOR_V9?.Lazy119?.contentReady===true&&!!window.AITUTOR_V9?.ConceptArchitecture119,{timeout:60000});
   const plan=await page.evaluate(()=>{
     const V=window.AITUTOR_V9;
     return V.curriculum.concepts.map(c=>{
