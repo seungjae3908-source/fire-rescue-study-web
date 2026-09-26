@@ -35,5 +35,8 @@ assert(!app.includes('class="card dashboard-schedule"'),'home no longer repeats 
 assert(app.includes('class="card dashboard-quick"')&&app.includes('공식 자료')&&app.includes('오답 복습')&&app.includes('성적 분석'),'home replaces duplicate schedule with useful shortcuts');
 assert(app.includes('resource-grid')&&app.includes('중앙소방학교 공식 교재'),'resources show source attribution once and use a compact grid');
 assert(css.includes('@media(min-width:1600px)')&&css.includes('max-width:1240px!important')&&css.includes('max-width:1320px!important')&&css.includes('max-width:1400px!important'),'1920-class desktop layout uses materially more horizontal space');
+assert(app.includes('class="study" data-scroll-owner="study"')&&!app.includes('data-scroll-owner="study-desktop"')&&!app.includes('data-scroll-owner="study-mobile"'),'study has one route-level scroll owner across desktop and mobile');
+assert(css.includes('/* V69 study route scroll owner: no short inner reading viewport */')&&css.includes('max-height:none!important')&&css.includes('overflow:visible!important'),'study content is no longer trapped in the former short inner reading viewport');
+assert(app.includes("closest('.study[data-scroll-owner=\"study\"]')"),'AI and detail runtime target the route-level study owner');
 
 console.log('V69_PERFORMANCE_FOUNDATION_AUDIT_SUCCESS');
