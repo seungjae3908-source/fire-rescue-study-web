@@ -4,7 +4,7 @@ const src=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
 const cfg=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('./v54-responsive.css',import.meta.url),'utf8');
 const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
-assert(src.includes("else if(staticRange)")&&src.includes("disableStream:false")&&src.includes("rangeChunkSize:65536"),'verified static mirrors keep the range-first path');
+assert(src.includes("catalog?.transport==='range-static'&&catalog?.mirrorPdf?'mirror'")&&src.includes("disableStream:false")&&src.includes("rangeChunkSize:65536"),'verified static mirrors keep the range-first path');
 assert(src.includes("catalog?.transport==='range-proxy'")&&src.includes("origin=rangeMode==='mirror'?'official-static-range':'official-proxy-range'")&&src.includes("rangeChunkSize:65536"),'non-mirrored official textbooks use the range-capable proxy before full-cache fallback');
 assert(src.includes("official-proxy-fallback"),'static mirror failure still falls back to the official proxy');
 assert(/officialPdfMirrorDocs:\['fire1','fire2','ems'\]/.test(cfg),'three known static mirrors stay unchanged');
