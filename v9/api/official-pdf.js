@@ -20,8 +20,51 @@ const SOURCES=Object.freeze({
   law5:{cntId:'106806',name:'7. 소방법령5.pdf'}
 });
 const cache=new Map();
+const RANGE_CACHE_PREFIX='official-pdf-v70';
+const RANGE_CACHE_CHUNK_BYTES=768*1024;
+const RANGE_CACHE_TTL=30*24*60*60;
+let runtimeCachePromise=null;
 
 function one(v){return Array.isArray(v)?v[0]:v}
+function rangeCacheKey(doc,suffix){return RANGE_CACHE_PREFIX+':'+doc+':'+suffix}
+function parseByteRange(value,total){
+  const n=Number(total);if(!Number.isFinite(n)||n<=0)return null;
+  const m=String(value||'').trim().match(/^bytes=(\d*)-(\d*)$/i);if(!m)return null;
+  let start,end;
+  if(m[1]===''&&m[2]!==''){const count=Math.max(1,Number(m[2])||0);start=Math.max(0,n-count);end=n-1}
+  else{start=Number(m[1]);end=m[2]===''?n-1:Number(m[2]);if(!Number.isFinite(start)||start<0)return null}
+  if(!Number.isFinite(end)||end<start||start>=n)return null;
+  end=Math.min(end,n-1);return{start,end,length:end-start+1,total:n}
+}
+function bufferLooksPdf(buf){return Buffer.isBuffer(buf)&&buf.subarray(0,64).toString('latin1').includes('%PDF-')}
+function pdfChunks(buf,size=RANGE_CACHE_CHUNK_BYTES){const out=[];for(let i=0;i<buf.length;i+=size)out.push(buf.subarray(i,Math.min(buf.length,i+size)));return out}
+async function runtimeRangeCache(){
+  if(runtimeCachePromise)return runtimeCachePromise;
+  runtimeCachePromise=(async()=>{try{const m=await import('@vercel/functions');return typeof m.getCache==='function'?m.getCache():null}catch(e){console.error('OFFICIAL_PDF_RANGE_CACHE_UNAVAILABLE',String((e&&e.message)||e||'').slice(0,160));return null}})();
+  return runtimeCachePromise
+}
+async function storePdfBuffer(doc,row,buf,cacheImpl){
+  const c=cacheImpl||await runtimeRangeCache();if(!c||!bufferLooksPdf(buf))return null;
+  const chunks=pdfChunks(buf),meta={doc,name:row?.name||SOURCES[doc]?.name||doc,size:buf.length,chunkBytes:RANGE_CACHE_CHUNK_BYTES,chunkCount:chunks.length,generation:RANGE_CACHE_PREFIX,savedAt:Date.now()};
+  const opts={ttl:RANGE_CACHE_TTL,tags:['official-pdf','official-pdf-'+doc]};
+  await Promise.all(chunks.map((chunk,i)=>c.set(rangeCacheKey(doc,'chunk-'+i),chunk.toString('base64'),{...opts,name:'official-pdf-'+doc+'-chunk-'+i})));
+  await c.set(rangeCacheKey(doc,'meta'),meta,{...opts,name:'official-pdf-'+doc+'-meta'});
+  return meta
+}
+async function cachedPdfMeta(doc,cacheImpl){const c=cacheImpl||await runtimeRangeCache();if(!c)return null;const meta=await c.get(rangeCacheKey(doc,'meta'));return meta&&meta.generation===RANGE_CACHE_PREFIX&&Number(meta.size)>0?meta:null}
+async function readCachedPdf(doc,rangeValue='',cacheImpl){
+  const c=cacheImpl||await runtimeRangeCache();if(!c)return null;
+  const meta=await cachedPdfMeta(doc,c);if(!meta)return null;
+  const parsed=rangeValue?parseByteRange(rangeValue,meta.size):{start:0,end:meta.size-1,length:meta.size,total:meta.size};
+  if(!parsed)return{meta,invalidRange:true};
+  const first=Math.floor(parsed.start/meta.chunkBytes),last=Math.floor(parsed.end/meta.chunkBytes);
+  const encoded=await Promise.all(Array.from({length:last-first+1},(_,k)=>c.get(rangeCacheKey(doc,'chunk-'+(first+k)))));
+  if(encoded.some(x=>typeof x!=='string'||!x))return null;
+  const joined=Buffer.concat(encoded.map(x=>Buffer.from(x,'base64'))),offset=parsed.start-first*meta.chunkBytes;
+  const body=joined.subarray(offset,offset+parsed.length);
+  if(body.length!==parsed.length)return null;
+  return{meta,range:parsed,body}
+}
 function norm(s){return String(s||'').toLowerCase().replace(/&nbsp;|\s|_|-/g,'').replace(/[^0-9a-z가-힣().]/g,'')}
 function strip(s){return String(s||'').trim()}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
@@ -235,6 +278,24 @@ async function fetchPdf(doc,req,meta=false){
   return fetchPdfWith(doc,req,meta);
 }
 
+function setPdfHeaders(res,row,total,{partial=false,range}={}){
+  res.setHeader('Content-Type','application/pdf');
+  res.setHeader('Content-Disposition',"inline; filename*=UTF-8''"+safeName(row?.name||'official.pdf'));
+  res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  res.setHeader('X-Content-Type-Options','nosniff');
+  res.setHeader('X-119-Official-Source','nfa');
+  res.setHeader('Accept-Ranges','bytes');
+  if(partial&&range)res.setHeader('Content-Range','bytes '+range.start+'-'+range.end+'/'+range.total);
+  res.setHeader('Content-Length',String(partial&&range?range.length:total));
+}
+function sendCachedPdf(req,res,row,cached){
+  if(cached?.invalidRange){res.statusCode=416;res.setHeader('Content-Range','bytes */'+cached.meta.size);return res.end()}
+  const partial=!!((req.headers&&req.headers.range)||'');
+  res.statusCode=partial?206:200;setPdfHeaders(res,row,cached.meta.size,{partial,range:cached.range});
+  if((req.method||'GET')==='HEAD')return res.end();
+  return res.end(cached.body)
+}
+
 module.exports=async function handler(req,res){
   res.setHeader('Access-Control-Allow-Origin','*');
   res.setHeader('Access-Control-Allow-Methods','GET, HEAD, OPTIONS');
@@ -246,7 +307,24 @@ module.exports=async function handler(req,res){
   }
   const doc=one(req.query&&req.query.doc)||'';
   if(!SOURCES[doc]){res.statusCode=400;return res.end('UNKNOWN_OFFICIAL_DOCUMENT')}
-  const meta=one(req.query&&req.query.meta)==='1';
+  const meta=one(req.query&&req.query.meta)==='1',warm=one(req.query&&req.query.warm)==='1';
+  const rangeValue=(req.headers&&req.headers.range)||'';
+  let rangeCache=null;try{rangeCache=await runtimeRangeCache()}catch{}
+  if(!meta&&!warm&&rangeCache){
+    try{const cached=await readCachedPdf(doc,rangeValue,rangeCache);if(cached)return sendCachedPdf(req,res,{name:cached.meta.name},cached)}
+    catch(e){console.error('OFFICIAL_PDF_RANGE_CACHE_READ_ERROR',JSON.stringify({doc,error:String((e&&e.message)||e||'').slice(0,160)}))}
+  }
+  if(warm){
+    res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');
+    try{
+      const hit=rangeCache?await cachedPdfMeta(doc,rangeCache):null;
+      if(hit){res.statusCode=200;return res.end(JSON.stringify({doc,cached:true,size:hit.size,chunkCount:hit.chunkCount,generation:hit.generation}))}
+      const warmed=await fetchPdf(doc,{method:'GET',headers:{}},false),buf=Buffer.from(await warmed.upstream.arrayBuffer());
+      if(!bufferLooksPdf(buf))throw new Error('OFFICIAL_SOURCE_NOT_PDF');
+      const saved=rangeCache?await storePdfBuffer(doc,warmed.row,buf,rangeCache):null;
+      res.statusCode=200;return res.end(JSON.stringify({doc,cached:!!saved,size:buf.length,chunkCount:saved?.chunkCount||0,generation:saved?.generation||'',runtimeCache:!!rangeCache}))
+    }catch(e){const msg=String((e&&e.message)||e||'WARM_FAILED').slice(0,180);console.error('OFFICIAL_PDF_WARM_ERROR',JSON.stringify({doc,error:msg}));res.statusCode=502;return res.end(JSON.stringify({doc,cached:false,error:msg}))}
+  }
 
   let result;
   try{result=await fetchPdf(doc,req,meta)}
@@ -256,6 +334,20 @@ module.exports=async function handler(req,res){
     res.statusCode=502;return res.end(msg)
   }
   const {row,upstream}=result;
+  if(!meta&&rangeCache&&upstream.status===200&&typeLooksPdf(upstream)){
+    try{
+      const buf=Buffer.from(await upstream.arrayBuffer());
+      if(bufferLooksPdf(buf)){
+        let saved=null;try{saved=await storePdfBuffer(doc,row,buf,rangeCache)}catch(e){console.error('OFFICIAL_PDF_RANGE_CACHE_WRITE_ERROR',JSON.stringify({doc,error:String((e&&e.message)||e||'').slice(0,160)}))}
+        const parsed=rangeValue?parseByteRange(rangeValue,buf.length):{start:0,end:buf.length-1,length:buf.length,total:buf.length};
+        if(!parsed){res.statusCode=416;res.setHeader('Content-Range','bytes */'+buf.length);return res.end()}
+        const body=rangeValue?buf.subarray(parsed.start,parsed.end+1):buf;
+        res.statusCode=rangeValue?206:200;setPdfHeaders(res,{name:saved?.name||row.name},buf.length,{partial:!!rangeValue,range:parsed});
+        if(req.method==='HEAD')return res.end();
+        return res.end(body)
+      }
+    }catch(e){console.error('OFFICIAL_PDF_RANGE_SYNTH_ERROR',JSON.stringify({doc,error:String((e&&e.message)||e||'').slice(0,160)}))}
+  }
   if(!upstream.ok&&upstream.status!==206){
     res.statusCode=upstream.status||502;
     try{await upstream.body?.cancel?.()}catch{}
@@ -309,3 +401,11 @@ module.exports.fetchDetailWithSession=fetchDetailWithSession;
 module.exports.isRefreshableCandidateError=isRefreshableCandidateError;
 module.exports.fetchPdfWith=fetchPdfWith;
 module.exports.pdfProbe=pdfProbe;
+module.exports.parseByteRange=parseByteRange;
+module.exports.pdfChunks=pdfChunks;
+module.exports.storePdfBuffer=storePdfBuffer;
+module.exports.cachedPdfMeta=cachedPdfMeta;
+module.exports.readCachedPdf=readCachedPdf;
+module.exports.rangeCacheKey=rangeCacheKey;
+module.exports.RANGE_CACHE_CHUNK_BYTES=RANGE_CACHE_CHUNK_BYTES;
+module.exports.RANGE_CACHE_PREFIX=RANGE_CACHE_PREFIX;
