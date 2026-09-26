@@ -92,6 +92,7 @@ function prefetch(){
   document.documentElement.dataset.deferredPrefetch='loading';
   prefetchPromise=Promise.all(files.map(async file=>{
     try{
+      if(PRECOMPUTED_FILES.includes(file)){await loadJson(file);return file}
       const r=await fetch('./'+file,{cache:'force-cache',credentials:'same-origin'});
       if(!r.ok)throw Error('PREFETCH_HTTP_'+r.status);
       await r.arrayBuffer();
@@ -177,7 +178,7 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v7-json-precomputed',
+  version:'119-lazy-runtime-v8-idle-json-parse',
   contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,precomputedFiles:[...PRECOMPUTED_FILES],questionPostFile:QUESTION_POST_FILE,questionFiles:[...QUESTION_FILES],
   deferredAssets,prefetch,ensureContent,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestions,needsQuestionsForCurrentState,
   get prefetched(){return document.documentElement.dataset.deferredPrefetch==='ready'},
