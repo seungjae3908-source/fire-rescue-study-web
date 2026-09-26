@@ -480,7 +480,6 @@ function withDirect(key,url,meta={}){if(!C[key])return false;C[key]={...C[key],d
 function audit(){const rows=Object.values(C);return{total:rows.length,direct:rows.filter(x=>x.directPdf).length,fallback:rows.filter(x=>!x.directPdf).length,licenseOk:rows.every(x=>x.license==='KOGL-1'),rows}}
 V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true,sameOriginProxy:!proxyBase,crossOriginProxy:!!proxyBase,arbitraryUrlProxy:false,allCatalogDocsProxyable:true,staticMirrorEnabled:!!mirrorBase,staticMirrorDocs:[...mirrorDocs]}};
 })();
-
 ;
 /* ---- source-impact-119.js ---- */
 'use strict';
