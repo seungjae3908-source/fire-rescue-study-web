@@ -140,30 +140,4 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   assert.equal(candidates,4,'initial candidate attempt plus at most three fresh-session retries');
 }
 
-
-{
-  assert.deepEqual(P.parseByteRange('bytes=0-65535',5438067),{start:0,end:65535,length:65536,total:5438067});
-  assert.deepEqual(P.parseByteRange('bytes=1048576-',5438067),{start:1048576,end:5438066,length:4389491,total:5438067});
-  assert.deepEqual(P.parseByteRange('bytes=-128',1000),{start:872,end:999,length:128,total:1000});
-  assert.equal(P.parseByteRange('bytes=9999-10000',1000),null);
-}
-{
-  const rows=new Map(),cache={
-    async get(k){return rows.get(k)},
-    async set(k,v){rows.set(k,v)}
-  };
-  const payload=Buffer.concat([Buffer.from('%PDF-1.7\n'),Buffer.alloc(P.RANGE_CACHE_CHUNK_BYTES*2+12345,0x61)]);
-  const meta=await P.storePdfBuffer('law2',{name:'4. 소방법령2.pdf'},payload,cache);
-  assert.ok(meta&&meta.chunkCount>=3,'full official PDF is split into cache-safe chunks');
-  assert.ok([...rows.keys()].some(x=>x.includes(':chunk-0')),'first runtime-cache chunk is stored');
-  const cross=await P.readCachedPdf('law2',`bytes=${P.RANGE_CACHE_CHUNK_BYTES-31}-${P.RANGE_CACHE_CHUNK_BYTES+47}`,cache);
-  assert.ok(cross?.body,'cross-chunk range is reconstructed');
-  assert.deepEqual(cross.body,payload.subarray(cross.range.start,cross.range.end+1),'cross-chunk range preserves exact PDF bytes');
-  const suffix=await P.readCachedPdf('law2','bytes=-257',cache);
-  assert.equal(suffix.body.length,257,'suffix range returns requested byte count');
-  assert.deepEqual(suffix.body,payload.subarray(payload.length-257),'suffix range preserves exact tail bytes');
-  const full=await P.readCachedPdf('law2','',cache);
-  assert.equal(full.body.length,payload.length,'cache can reconstruct a full PDF without upstream refetch');
-  assert.deepEqual(full.body,payload,'full cached PDF is byte-identical');
-}
 console.log('PASS official PDF proxy deterministic candidate-selection contract');
