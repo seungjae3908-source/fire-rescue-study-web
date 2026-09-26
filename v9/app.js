@@ -1025,11 +1025,16 @@ return
 if(reason==='signed-in'||reason==='manual-signout')runtime.authNotice='';
 render()
 });
+function scheduleQuestionPreload(){
+if(!V.Lazy119?.ensureQuestions||V.Lazy119.questionsReady||V.Lazy119.questionsLoading)return;
+const run=()=>V.Lazy119.ensureQuestions({background:true}).catch(err=>console.warn('QUESTION_IDLE_PRELOAD_FAILED',err));
+if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:2500});else setTimeout(run,1200)
+}
 async function boot(){
 let questionLaneReady=true;
 if(V.Lazy119?.needsQuestionsForCurrentState?.()){try{await V.Lazy119.ensureQuestions()}catch(err){questionLaneReady=false;console.error(err);if(V.ExamSession119?.has?.(S.ownerId)||V.Lazy119?.needsQuestions?.(state().page,state().studyTab)){state().page='home';state().studyTab='core';S.save();runtime.authNotice='문제은행 로딩에 실패해 홈으로 이동했습니다. 네트워크 연결 후 다시 시도해주세요.'}}}
 const restoredActiveExam=questionLaneReady?restoreActiveExam():false;
-V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker()
+V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker();else scheduleQuestionPreload()
 }
 boot();
 })();
