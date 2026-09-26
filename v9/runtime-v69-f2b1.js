@@ -26,8 +26,10 @@ const QUESTION_FILES=[
   'analytics-v61-119.js'
 ];
 const CONTENT_FILE='content-core-v69.js';
-const QUESTION_CORE_FILE='question-core-v69.js';
+const QUESTION_CORE_FILE='question-core-v69.js'; // build/audit artifact; not executed in the bank critical path
+const BANK_BASE_FILE='questions-bank-base-v69.json';
 const PRECOMPUTED_FILES=["questions-precomputed-v69-1.json","questions-precomputed-v69-2.json","questions-precomputed-v69-3.json","questions-precomputed-v69-4.json","questions-precomputed-v69-5.json","questions-precomputed-v69-6.json"];
+const QUESTION_CONTRACT_FILE='content-contract-119.js';
 const QUESTION_POST_FILE='question-post-v69.js';
 let prefetchPromise=null,contentPromise=null,contentReady=false,questionCorePromise=null,questionCoreReady=false,questionsPromise=null,questionsReady=false;
 
@@ -68,8 +70,8 @@ function loadJson(file){
   }).catch(err=>{jsonPromises.delete(file);throw err});
   jsonPromises.set(file,p);return p
 }
-async function appendPrecomputedQuestions(){
-  const chunks=await Promise.all(PRECOMPUTED_FILES.map(loadJson));
+async function appendBankCoreQuestions(){
+  const chunks=await Promise.all([loadJson(BANK_BASE_FILE),...PRECOMPUTED_FILES.map(loadJson)]);
   const ids=new Set((V.questions||[]).map(q=>q.id));
   for(const rows of chunks)for(const q of rows||[])if(!ids.has(q.id)){V.questions.push(q);ids.add(q.id)}
 }
@@ -85,7 +87,7 @@ function loadScript(file){
     document.head.appendChild(s);
   })
 }
-function deferredAssets(){return [CONTENT_FILE,QUESTION_CORE_FILE,...PRECOMPUTED_FILES,QUESTION_POST_FILE,...QUESTION_FILES]}
+function deferredAssets(){return [CONTENT_FILE,BANK_BASE_FILE,...PRECOMPUTED_FILES,QUESTION_CONTRACT_FILE,QUESTION_POST_FILE,...QUESTION_FILES]}
 function prefetch(){
   if(prefetchPromise)return prefetchPromise;
   const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
@@ -94,7 +96,7 @@ function prefetch(){
   document.documentElement.dataset.deferredPrefetch='loading';
   prefetchPromise=Promise.all(files.map(async file=>{
     try{
-      if(PRECOMPUTED_FILES.includes(file)){await loadJson(file);return file}
+      if(file===BANK_BASE_FILE||PRECOMPUTED_FILES.includes(file)){await loadJson(file);return file}
       const r=await fetch('./'+file,{cache:'force-cache',credentials:'same-origin'});
       if(!r.ok)throw Error('PREFETCH_HTTP_'+r.status);
       await r.arrayBuffer();
@@ -133,10 +135,7 @@ async function ensureQuestionCore({background=false}={}){
   document.documentElement.dataset.questionCoreLane='loading';
   if(!background)document.body?.setAttribute('aria-busy','true');
   questionCorePromise=(async()=>{
-    await ensureContent({background:true});
-    await loadScript(QUESTION_CORE_FILE);
-    await appendPrecomputedQuestions();
-    await loadScript(QUESTION_POST_FILE);
+    await appendBankCoreQuestions();
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
     V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
@@ -158,6 +157,9 @@ async function ensureQuestions({background=false}={}){
   if(!background)document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
     await ensureQuestionCore({background:true});
+    await ensureContent({background:true});
+    await loadScript(QUESTION_CONTRACT_FILE);
+    await loadScript(QUESTION_POST_FILE);
     await Promise.all(QUESTION_FILES.map(loadScript));
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
@@ -203,8 +205,8 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v9-fast-bank-core',
-  contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,precomputedFiles:[...PRECOMPUTED_FILES],questionPostFile:QUESTION_POST_FILE,questionFiles:[...QUESTION_FILES],
+  version:'119-lazy-runtime-v10-json-bank-core',
+  contentFile:CONTENT_FILE,questionCoreFile:QUESTION_CORE_FILE,bankBaseFile:BANK_BASE_FILE,precomputedFiles:[...PRECOMPUTED_FILES],questionContractFile:QUESTION_CONTRACT_FILE,questionPostFile:QUESTION_POST_FILE,questionFiles:[...QUESTION_FILES],
   deferredAssets,prefetch,ensureContent,ensureQuestionCore,ensureQuestions,needsContent,needsContentForCurrentState,needsQuestionCore,needsQuestionCoreForCurrentState,needsQuestions,needsQuestionsForCurrentState,
   get prefetched(){return document.documentElement.dataset.deferredPrefetch==='ready'},
   get contentReady(){return contentReady},

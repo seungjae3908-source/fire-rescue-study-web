@@ -18,7 +18,7 @@ const lazyRows=lazyQuestionAssets.map(asset=>({asset,size:fs.statSync(new URL('.
 const lazyQuestionBytes=lazyRows.reduce((a,x)=>a+x.size,0);
 const precomputedMatch=lazySource.match(/const PRECOMPUTED_FILES=\[([^\]]+)\]/);
 const precomputedAssets=[...(precomputedMatch?.[1]||'').matchAll(/[\"']([^\"']+\.(?:js|json))[\"']/g)].map(m=>m[1]);
-const lazyCoreAssets=[...(lazySource.match(/const CONTENT_FILE='([^']+)'/)?.slice(1)||[]),...(lazySource.match(/const QUESTION_CORE_FILE='([^']+)'/)?.slice(1)||[]),...precomputedAssets,...(lazySource.match(/const QUESTION_POST_FILE='([^']+)'/)?.slice(1)||[])];
+const lazyCoreAssets=[...(lazySource.match(/const CONTENT_FILE='([^']+)'/)?.slice(1)||[]),...(lazySource.match(/const BANK_BASE_FILE='([^']+)'/)?.slice(1)||[]),...precomputedAssets,...(lazySource.match(/const QUESTION_CONTRACT_FILE='([^']+)'/)?.slice(1)||[]),...(lazySource.match(/const QUESTION_POST_FILE='([^']+)'/)?.slice(1)||[])];
 const lazyCoreRows=lazyCoreAssets.map(asset=>({asset,size:fs.statSync(new URL('./'+asset,root)).size}));
 const lazyCoreBytes=lazyCoreRows.reduce((a,x)=>a+x.size,0);
 const combinedRuntimeBytes=totalBytes+lazyQuestionBytes+lazyCoreBytes;
@@ -36,7 +36,7 @@ const checks={
   totalPayload:totalBytes<=limits.totalBytes,
   lazyQuestionManifest:lazyQuestionAssets.length>=10&&lazyQuestionBytes>250000,
   lazyQuestionNotEager:lazyQuestionAssets.every(asset=>!unique.includes(asset)),
-  lazyCoreManifest:lazyCoreAssets.length===9&&precomputedAssets.length===6&&lazyCoreBytes>4000000,
+  lazyCoreManifest:lazyCoreAssets.length===10&&precomputedAssets.length===6&&lazyCoreBytes>4000000,
   lazyCoreNotEager:lazyCoreAssets.every(asset=>!unique.includes(asset)),
   assetCount:rows.length<=limits.assetCount,
   jsCount:jsCount<=limits.jsCount,

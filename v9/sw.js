@@ -1,5 +1,5 @@
 'use strict';
-const CACHE='ai-tutor-v9-shell-20260926-v69-precomputed-json-v2-v67-real-ux';
+const CACHE='ai-tutor-v9-shell-20260926-v69-bank-core-json-v3-v67-real-ux';
 const PREFIX='ai-tutor-v9-';
 const CORE=[
   './','./index.html','./styles.css','./v54-responsive.css','./manifest.webmanifest','./config.js',
@@ -30,7 +30,7 @@ self.addEventListener('fetch',event=>{
     event.respondWith(fetch(event.request,{cache:'no-store'}).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put('./',copy));return r}).catch(()=>caches.match('./').then(r=>r||caches.match('./index.html'))));
     return;
   }
-  const deferredRuntime=/(?:content-core-v69|question-core-v69|question-post-v69|questions-precomputed-v69-\d+|questions-[^/]+|question-variant-engine-119|mock-exam-quality-119|v29-reviewed-promotions-119|v60-source-reviewed-promotions-119|analytics-v61-119)\.(?:js|json)$/i.test(url.pathname);
+  const deferredRuntime=/(?:content-core-v69|question-core-v69|question-post-v69|content-contract-119|questions-precomputed-v69-\d+|questions-[^/]+|question-variant-engine-119|mock-exam-quality-119|v29-reviewed-promotions-119|v60-source-reviewed-promotions-119|analytics-v61-119)\.(?:js|json)$/i.test(url.pathname);
   if(deferredRuntime){
     event.respondWith(caches.match(event.request).then(hit=>hit||fetch(event.request,{cache:'no-store'}).then(r=>{if(r&&r.ok){const copy=r.clone();caches.open(CACHE).then(c=>c.put(event.request,copy))}return r})));
     return;
