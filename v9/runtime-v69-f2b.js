@@ -61,7 +61,7 @@ function loadScript(file){
     if(existing?.dataset.loaded==='true')return resolve();
     if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('LAZY_119_LOAD_FAILED '+file)),{once:true});return}
     const s=document.createElement('script');
-    s.src='./'+file;s.async=false;s.dataset.lazy119=file;
+    s.src='./'+file;s.async=false;s.setAttribute('data-lazy-119',file);
     s.addEventListener('load',()=>{s.dataset.loaded='true';resolve()},{once:true});
     s.addEventListener('error',()=>{s.remove();reject(new Error('LAZY_119_LOAD_FAILED '+file))},{once:true});
     document.head.appendChild(s);
@@ -73,7 +73,8 @@ async function ensureQuestions({background=false}={}){
   document.documentElement.dataset.questionLane='loading';
   if(!background)document.body?.setAttribute('aria-busy','true');
   questionsPromise=(async()=>{
-    for(const file of QUESTION_FILES)await loadScript(file);
+    // Start all deferred question requests together. Because each dynamic classic script has async=false, browser execution order remains insertion order.
+    await Promise.all(QUESTION_FILES.map(loadScript));
     V.QuestionDifficulty?.annotate?.(V.questions||[]);
     V.questionById=Object.fromEntries((V.questions||[]).map(q=>[q.id,q]));
     V.questionsForConcept=id=>(V.questions||[]).filter(q=>q.conceptId===id);
@@ -114,14 +115,13 @@ function needsQuestionsForCurrentState(){
   return needsQuestions(state.page,state.studyTab)||!!V.ExamSession119?.has?.(V.Store?.ownerId)
 }
 V.Lazy119={
-  version:'119-lazy-runtime-v2-source-impact',
+  version:'119-lazy-runtime-v3-parallel-source-impact',
   questionFiles:[...QUESTION_FILES],
   ensureQuestions,needsQuestions,needsQuestionsForCurrentState,
   get questionsReady(){return questionsReady},
   get questionsLoading(){return !!questionsPromise&&!questionsReady}
 };
 })();
-
 ;
 
 /* --- app.js --- */
@@ -694,6 +694,7 @@ function tutorMessageHtml(m){const t=cleanTutorText(m?.text||''),r=Array.isArray
 function wantsTutorDetail(prompt){return /상세|자세히|깊게|전부|원리부터|교재처럼/.test(String(prompt||''))}
 function wantsTutorCompare(prompt){return /비교|차이|뭐가\s*달|vs|구분/.test(String(prompt||'').toLowerCase())}
 function wantsTutorEvidence(prompt){return /근거만|출처만|원문만|공식\s*근거만|근거\s*위주/.test(String(prompt||''))}
+function wantsTutorNumber(prompt){return /몇\s*(?:개|명|곳|대|회|개씩|명씩)|얼마|수량|개수|몇개|몇명/.test(String(prompt||''))}
 function tutorKeywords(v){
 const stop=new Set(['그럼','그러면','그거','그건','이거','이건','뭐가있어','뭐야','무엇','어떤','알려줘','설명해줘','해줘','있어','있나','관련','대해','핵심','요약','시험','상세','자세히']);
 return [...new Set(String(v||'').toLowerCase().split(/[^0-9a-z가-힣]+/).map(x=>x.replace(/(?:들에게|에서|으로|부터|까지|하고|이랑|들은|에게|처럼|보다|은|는|이|가|을|를|의|에|도|만)$/,'')).filter(x=>x.length>=2&&!stop.has(x)))]
@@ -710,7 +711,15 @@ const score=row=>{const n=studyNorm(row.text),label=studyNorm(row.label);let z=0
 return candidates.map(x=>({...x,score:score(x)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||b.text.length-a.text.length)
 }
 function fallbackTutor(prompt,c,pack){
-const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),rows=[],general=/30초|요약|핵심\s*(?:정리|설명)?$/.test(String(prompt||''));
+const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),numberQuestion=wantsTutorNumber(prompt),rows=[],general=/30초|요약|핵심\s*(?:정리|설명)?$/.test(String(prompt||''));
+if(numberQuestion){
+  const hits=tutorRelevantRows(prompt,c,pack),numeric=hits.filter(x=>/\d/.test(x.text)).slice(0,3);
+  if(numeric.length){rows.push('답변',numeric[0].text);if(numeric.length>1)rows.push('','관련 기준',...numeric.slice(1).map(x=>'• '+x.text));rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));return cleanTutorText(rows.join('\n'))}
+  const known=hits[0]?.text||studentStudyText(pack.summary||((pack.must||[])[0])||c.title);
+  rows.push('답변','현재 연결된 공식 근거에서는 해당 수량을 숫자로 확인할 수 없습니다. 확인되지 않은 숫자는 추정하지 않습니다.');
+  if(known)rows.push('','확인되는 내용','• '+known);
+  rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));return cleanTutorText(rows.join('\n'))
+}
 if(evidenceOnly)rows.push('근거','• '+(pack.source||'공식 학습팩'));
 else if(general){rows.push('답변',studentStudyText(pack.summary||((pack.must||[])[0])||c.title));const must=(pack.must||[]).map(studentStudyText).filter(Boolean).slice(0,detail?5:3),why=uniqueTextRows([...(pack.detail||[]),...(pack.deepSections||[]).map(x=>x?.body).filter(Boolean)].map(studentStudyText)).slice(0,detail?4:2);if(must.length)rows.push('','핵심 포인트',...must.map(x=>'• '+x));if(why.length)rows.push('','왜 그런가',...why.map(x=>'• '+x))}
 else{
@@ -769,9 +778,10 @@ if(!target.allowed){
 const out=`현재 학습 항목은 「${current.title}」입니다.\n이 AI는 현재 항목과 직접 등록된 비교 내용만 설명합니다.\n「${target.detected?.title||'다른 개념'}」은 해당 개념 페이지로 이동해서 질문해 주세요.`;
 const ix=state().chat.findIndex(x=>x.id===assistant.id);if(ix>=0)state().chat[ix]={...assistant,text:out,outOfScope:true,suggestedConceptId:target.detected?.id||''};S.save();render();return
 }
-const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),compareRows=compare?(pack.compare||[]).slice(0,6):[];
+const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),numberQuestion=wantsTutorNumber(prompt),numberGrounded=!numberQuestion||tutorRelevantRows(prompt,current,pack).some(x=>/\d/.test(x.text)),compareRows=compare?(pack.compare||[]).slice(0,6):[];
 let out=fallbackTutor(prompt,current,pack),idx=state().chat.findIndex(x=>x.id===assistant.id);
 if(idx>=0)state().chat[idx]={...assistant,text:out,targetConceptId:current.id,compareRows};S.save();render();
+if(numberQuestion&&!numberGrounded){runtime.aiStatus='공식근거 확인';return}
 if(!(runtime.aiEngine||V.LocalAI?.ready)&&navigator.gpu&&V.LocalAI?.ensure){
 try{runtime.aiStatus='AI 준비 중';runtime.aiEngine=await V.LocalAI.ensure({onProgress:()=>{runtime.aiStatus='AI 준비 중'}});runtime.aiStatus='대화형 답변 준비됨'}catch{runtime.aiStatus='근거 기반 답변'}
 }
@@ -902,9 +912,9 @@ function view(){if(state().page==='tutor'){state().page='study';state().studyTab
 function scrollTutorToBottom(s,force){requestAnimationFrame(()=>requestAnimationFrame(()=>{const x=[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent!==null);if(!x)return;const b=x.closest('.study-body');if(!b)return;if(force||!s||s[1])b.scrollTop=b.scrollHeight;else b.scrollTop=s[0];runtime.tutorForceLatest=false}))}
 function render(){const a=state().page==='study'&&state().studyTab==='ai',x=a?[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent!==null):null,b=x?.closest('.study-body'),s=b&&[b.scrollTop,b.scrollHeight-b.clientHeight-b.scrollTop<25],f=runtime.tutorForceLatest;document.querySelector('#app').innerHTML=view();if(a)scrollTutorToBottom(s,f);if(state().page==='study'&&state().studyTab==='detail')bindDetailSectionTracking()}
 
-function syncDetailTocActive(root,key,{scrollChip=false}={}){
+function syncDetailTocActive(root,key,{scrollChip=false,lock=false}={}){
 const view=root?.querySelector?.('.detail-view')||root?.closest?.('.detail-view')||document.querySelector('.detail-view');if(!view)return;
-const wanted=String(key??'');
+const wanted=String(key??'');if(lock)runtime.detailActiveLock={key:wanted,until:Date.now()+1400};
 view.querySelectorAll('[data-detail-section]').forEach(sec=>sec.classList.toggle('detail-section-active',String(sec.dataset.detailSection||'')===wanted));
 view.querySelectorAll('[data-detail-jump]').forEach(btn=>{const on=String(btn.dataset.detailJump||'')===wanted;btn.classList.toggle('on',on);if(on){btn.setAttribute('aria-current','location');if(scrollChip)btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})}else btn.removeAttribute('aria-current')})
 }
@@ -912,7 +922,7 @@ function bindDetailSectionTracking(){
 const owner=[...document.querySelectorAll('.page-study .study-body[data-scroll-owner]')].find(el=>el.offsetParent!==null),view=owner?.querySelector('.detail-view');if(!owner||!view)return;
 const sections=[...view.querySelectorAll('[data-detail-section]')];if(!sections.length)return;
 let raf=0;
-const update=()=>{raf=0;const r0=owner.getBoundingClientRect(),anchor=r0.top+Math.min(120,Math.max(72,owner.clientHeight*.20));let best=sections[0],bestScore=Infinity;for(const sec of sections){const r=sec.getBoundingClientRect(),passed=r.top<=anchor,score=(passed?0:500)+Math.abs(r.top-anchor);if(score<bestScore){best=sec;bestScore=score}}syncDetailTocActive(view,best.dataset.detailSection)};
+const update=()=>{raf=0;const locked=runtime.detailActiveLock;if(locked&&locked.until>Date.now()){syncDetailTocActive(view,locked.key);return}if(locked)runtime.detailActiveLock=null;const r0=owner.getBoundingClientRect(),anchor=r0.top+Math.min(120,Math.max(72,owner.clientHeight*.20));let best=sections[0],bestScore=Infinity;for(const sec of sections){const r=sec.getBoundingClientRect(),passed=r.top<=anchor,score=(passed?0:500)+Math.abs(r.top-anchor);if(score<bestScore){best=sec;bestScore=score}}syncDetailTocActive(view,best.dataset.detailSection)};
 owner.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(update)},{passive:true});requestAnimationFrame(update)
 }
 function sourceAnchorQueries(c,p=V.contentPacks.get(c?.id)){const t=String(c?.title||'').trim(),a=[t,t.replace(/\s*(?:개론|원리|이론|기초|종류|구조|방법|개요)\s*$/,''),...t.split(/[·,/()\s-]+/),...(V.ConceptArchitecture119?.termsFor?.(c?.id)||[]),...(p?.compare||[]).flatMap(x=>x||[]),...(p?.must||[]).flatMap(x=>String(x||'').split(/\s*(?:→|:|=|·|\/|,)\s*/))],stop=/^(개념|기초|종류|이론|구조|원리|정리|방법|특징|설명|및)$/;return[...new Set(a.map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).filter(x=>x.length>=2&&x.length<=28&&!stop.test(x)))].sort((a,b)=>b.length-a.length).slice(0,18)}
@@ -1081,7 +1091,7 @@ document.body.insertAdjacentHTML('beforeend',`<div class="modal-wrap" id="source
 return
 }
 const hasMappedBookPage=Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOffsets||{},key),initialPdf=bookFrom?(V.SourcePDF.pdfPage?.(key,bookFrom)||bookFrom):0;document.querySelector('#sourceModal')?.remove();document.querySelector('#pdfEvidence')?.remove();document.body.insertAdjacentHTML('beforeend',`<div class="modal-wrap" id="pdfEvidence" data-pdf-backdrop data-concept-id="${esc(id)}" data-doc-key="${esc(key)}" data-page="${initialPdf||''}" data-zoom="1"><div class="modal pdf-evidence-modal"><div class="toolbar pdf-modal-head"><div><span class="eyebrow">공식 근거</span><h2>${esc(c?.title||id)}</h2><small data-pdf-page-label class="muted">${bookFrom?(hasMappedBookPage?`교재 ${bookFrom}쪽`:`PDF ${bookFrom}쪽`):'근거 위치 찾기'}</small></div><span class="spacer"></span><button class="btn small ghost" data-source-back>← 뒤로</button><button class="btn small" data-pdf-download>다운로드</button><button class="btn small ghost pdf-close-btn" data-pdf-close>닫기 ✕</button></div><div class="toolbar pdf-zoombar"><button class="btn small ghost" data-pdf-zoom="-0.25">−</button><span class="pill" data-pdf-zoom-label>100%</span><button class="btn small ghost" data-pdf-zoom="0.25">＋</button><button class="btn small ghost" data-pdf-fit>폭 맞춤</button></div><div class="pdf-findbar"><div class="pdf-jump-control"><input class="input" type="number" min="1" inputmode="numeric" data-pdf-jump-input placeholder="${hasMappedBookPage?'교재 쪽':'PDF 쪽'}" aria-label="원문 쪽 이동"><button class="btn small" data-pdf-jump>이동</button></div><div class="pdf-search-control"><input class="input" type="search" data-pdf-search-input placeholder="원문 안에서 검색" aria-label="원문 검색"><button class="btn small primary" data-pdf-search>검색</button></div></div><div class="pdf-search-results hidden" data-pdf-search-nav><button class="btn small ghost" data-pdf-search-prev>← 이전 결과</button><span class="pill" data-pdf-search-label></span><button class="btn small ghost" data-pdf-search-next>다음 결과 →</button></div><div id="pdfEvidenceHost" class="pdf-evidence-host" data-scroll-owner="pdf"><div class="empty">공식 원문 여는 중…</div></div><div class="toolbar pdf-pager hidden"><button class="btn ghost" data-pdf-page="-1">← 이전 페이지</button><button class="btn ghost" data-pdf-page="1">다음 페이지 →</button></div></div></div>`);sourceOpen();await renderPdfEvidence(id)}
-document.addEventListener('click',async e=>{const t=e.target instanceof Element?e.target:null;if(!t)return;if(t.matches('[data-backdrop-close-more]')){runtime.more=false;return render()}if(t.matches('[data-backdrop-close-account]')){runtime.account=false;return render()}if(t.matches('[data-source-backdrop],[data-resource-pdf-backdrop],[data-pdf-backdrop]')){sourceClose();return}const b=t.closest('button,[data-outline-close]');if(!b)return;if('toastAction'in b.dataset){const action=runtime.toastAction;runtime.toast='';runtime.toastAction=null;runtime.toastToken='';render();if(action?.run)await action.run();return}if(b.dataset.detailJump!==undefined){const key=String(b.dataset.detailJump||''),root=b.closest('.study-body')||document,target=root.querySelector(`[data-detail-section="${CSS.escape(key)}"]`);syncDetailTocActive(root,key,{scrollChip:true});target?.scrollIntoView({behavior:'smooth',block:'start'});return}if('sourceBack'in b.dataset){sourceClose();return}if('resourcePdfClose'in b.dataset){sourceClose();return}
+document.addEventListener('click',async e=>{const t=e.target instanceof Element?e.target:null;if(!t)return;if(t.matches('[data-backdrop-close-more]')){runtime.more=false;return render()}if(t.matches('[data-backdrop-close-account]')){runtime.account=false;return render()}if(t.matches('[data-source-backdrop],[data-resource-pdf-backdrop],[data-pdf-backdrop]')){sourceClose();return}const b=t.closest('button,[data-outline-close]');if(!b)return;if('toastAction'in b.dataset){const action=runtime.toastAction;runtime.toast='';runtime.toastAction=null;runtime.toastToken='';render();if(action?.run)await action.run();return}if(b.dataset.detailJump!==undefined){const key=String(b.dataset.detailJump||''),root=b.closest('.study-body')||document,target=root.querySelector(`[data-detail-section="${CSS.escape(key)}"]`);syncDetailTocActive(root,key,{scrollChip:true,lock:true});target?.scrollIntoView({behavior:'smooth',block:'start'});return}if('sourceBack'in b.dataset){sourceClose();return}if('resourcePdfClose'in b.dataset){sourceClose();return}
 if(b.dataset.resourceDoc){await openResourcePdf(b.dataset.resourceDoc);return}
 if(b.dataset.resourceDownload){await downloadOfficialPdf(b.dataset.resourceDownload);return}
 if('resourcePdfRetry'in b.dataset){const root=document.querySelector('#resourcePdf'),key=root?.dataset.docKey||'';if(key)await V.SourcePDF.clearPdfCache?.(key);await renderResourcePdf(key,Number(root?.dataset.page)||1);return}if(b.dataset.resourcePdfPage){const root=document.querySelector('#resourcePdf'),key=root?.dataset.docKey,current=Number(root?.dataset.page)||1;await renderResourcePdf(key,current+Number(b.dataset.resourcePdfPage));return}if(b.dataset.resourcePdfZoom){const root=document.querySelector('#resourcePdf');root.dataset.zoom=String(Math.max(.75,Math.min(2.25,(Number(root.dataset.zoom)||1)+Number(b.dataset.resourcePdfZoom))));await renderResourcePdf(root.dataset.docKey,Number(root.dataset.page)||1);return}if('resourcePdfFit'in b.dataset){const root=document.querySelector('#resourcePdf');root.dataset.zoom='1';await renderResourcePdf(root.dataset.docKey,Number(root.dataset.page)||1);return}
