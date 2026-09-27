@@ -525,6 +525,7 @@ module.exports.selectWorkingCandidate=selectWorkingCandidate;
 module.exports.officialCandidateUrls=officialCandidateUrls;
 module.exports.fetchFirstWorkingCandidate=fetchFirstWorkingCandidate;
 module.exports.fetchDetailWithSession=fetchDetailWithSession;
+module.exports.resolveSource=resolveSource;
 module.exports.isRefreshableCandidateError=isRefreshableCandidateError;
 module.exports.fetchPdfWith=fetchPdfWith;
 module.exports.fetchPagesMirror=fetchPagesMirror;
