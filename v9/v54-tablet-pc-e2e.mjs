@@ -67,21 +67,21 @@ try{
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF?.openPdf&&!!window.AITUTOR_V9?.SourceCatalog119);
   const strategy=await page.evaluate(async()=>{
     const V=window.AITUTOR_V9,audit=V.SourceCatalog119.audit();
-    const mirrorKeys=['fire1','fire2','ems'],proxyKeys=['prevention1','prevention2','law1','law2','law3','law4','law5'];
-    const mirrors=mirrorKeys.map(key=>{const c=V.SourceCatalog119.get(key);return{key,transport:c?.transport||'',mirrorPdf:c?.mirrorPdf||'',proxyPdf:c?.proxyPdf||''}});
-    const proxies=proxyKeys.map(key=>{const c=V.SourceCatalog119.get(key);return{key,transport:c?.transport||'',mirrorPdf:c?.mirrorPdf||'',proxyPdf:c?.proxyPdf||''}});
+    const vercelMirrorKeys=['fire1','fire2','ems'],pagesMirrorKeys=['prevention1','prevention2','law1','law2','law3','law4','law5'];
+    const mirrors=vercelMirrorKeys.map(key=>{const c=V.SourceCatalog119.get(key);return{key,transport:c?.transport||'',mirrorPdf:c?.mirrorPdf||'',proxyPdf:c?.proxyPdf||''}});
+    const pagesMirrors=pagesMirrorKeys.map(key=>{const c=V.SourceCatalog119.get(key);return{key,transport:c?.transport||'',mirrorPdf:c?.mirrorPdf||'',proxyPdf:c?.proxyPdf||''}});
     const fire1=await V.SourcePDF.availability('fire1'),law2=await V.SourcePDF.availability('law2');
     return{
       total:audit.total,
-      mirrors,proxies,fire1,law2,
+      mirrors,pagesMirrors,fire1,law2,
       runtime:V.SourcePDF.runtime||''
     };
   });
   assert(strategy.total===10,'all ten official textbooks remain catalogued');
-  assert(strategy.mirrors.every(x=>x.transport==='range-static'&&!!x.mirrorPdf&&!!x.proxyPdf),'fire1/fire2/ems keep verified static range mirrors with proxy fallback');
+  assert(strategy.mirrors.every(x=>x.transport==='range-static'&&!!x.mirrorPdf&&!!x.proxyPdf&&x.mirrorPdf.includes('study-119-official-pdf.vercel.app')),'fire1/fire2/ems keep verified Vercel static range mirrors with proxy fallback');
   assert(strategy.fire1.mirror===true&&strategy.fire1.range===true&&strategy.fire1.rangeProxy===false&&!!strategy.fire1.rangeUrl,'mirrored textbook availability exposes the static range path');
-  assert(strategy.proxies.every(x=>x.transport==='range-proxy'&&!x.mirrorPdf&&!!x.proxyPdf),'law/prevention textbooks use the allowlisted range-capable proxy');
-  assert(strategy.law2.rangeProxy===true&&strategy.law2.range===true&&strategy.law2.mirror===false&&!!strategy.law2.rangeUrl,'large law textbook availability exposes the proxy range path');
+  assert(strategy.pagesMirrors.every(x=>x.transport==='range-static'&&!!x.mirrorPdf&&!!x.proxyPdf&&x.mirrorPdf.includes('github.io/fire-rescue-study-web/official-pdf-mirror/')),'law/prevention textbooks use persistent GitHub Pages static range mirrors with proxy fallback');
+  assert(strategy.law2.mirror===true&&strategy.law2.range===true&&strategy.law2.rangeProxy===false&&strategy.law2.rangeUrl.includes('/official-pdf-mirror/law2.pdf'),'large law textbook availability exposes the Pages static range path');
   assert(strategy.runtime==='pdfjs-v14-range-remote-anchor-context-lines','PDF runtime reports the V69 range-first engine');
   await ctx.close();
   console.log('V54_TABLET_PC_PDF_RANGE_ACCEPTANCE_SUCCESS');
