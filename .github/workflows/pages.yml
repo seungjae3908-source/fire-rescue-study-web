@@ -24,16 +24,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
+      - name: Verify official textbook baseline is still current
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot="/tmp/official-monitor.json"
+          curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors \
+            "https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json" \
+            -o "$snapshot"
+          node v9/official-textbook-change-gate.mjs --snapshot "$snapshot" --max-age-hours 6
+
       - name: Restore 2026 official PDF mirror cache
         uses: actions/cache@v4
         with:
           path: official-pdf-mirror
-          key: study119-official-pdf-2026-v1
+          key: study119-official-pdf-${{ hashFiles('v9/data/official-textbook-baseline.json') }}
 
       - name: Materialize law and prevention static PDF mirrors
         shell: bash
@@ -62,7 +76,18 @@ jobs:
             cd official-pdf-mirror
             sha256sum prevention1.pdf prevention2.pdf law1.pdf law2.pdf law3.pdf law4.pdf law5.pdf > SHA256SUMS.txt
             wc -c prevention1.pdf prevention2.pdf law1.pdf law2.pdf law3.pdf law4.pdf law5.pdf > SIZES.txt
+            sha256sum -c SHA256SUMS.txt
           )
+          baseline_sha="$(sha256sum v9/data/official-textbook-baseline.json | awk '{print $1}')"
+          generated_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > official-pdf-mirror/MANIFEST.json <<EOF
+          {
+            "version": "119-official-pdf-mirror-manifest-v1",
+            "generatedAt": "$generated_at",
+            "baselineSha256": "$baseline_sha",
+            "docs": ["prevention1","prevention2","law1","law2","law3","law4","law5"]
+          }
+          EOF
           touch official-pdf-mirror/.nojekyll
 
       - name: Upload static site
