@@ -204,7 +204,10 @@ async function resourcePdfAudit(page,doc,{exercise=false,download=false}={}){
   const close=page.locator('#resourcePdf [data-resource-pdf-close]');
   if(await close.count())await close.click();
   await page.waitForSelector('#resourcePdf',{state:'detached',timeout:10000}).catch(()=>{});
-  const focusReturned=await btn.evaluate(el=>document.activeElement===el);
+  const focusReturned=await page.waitForFunction(doc=>{
+    const el=document.querySelector('[data-resource-doc="'+CSS.escape(doc)+'"]:not([hidden])');
+    return !!el&&document.activeElement===el;
+  },doc,{timeout:1000}).then(()=>true).catch(()=>false);
   check(focusReturned,'resource '+doc+' focus returns to opener after close');
 }
 async function sourceTabAudit(page,doc){
@@ -223,7 +226,10 @@ async function sourceTabAudit(page,doc){
   const close=page.locator('#pdfEvidence [data-pdf-close]');
   if(await close.count())await close.click();
   await page.waitForSelector('#pdfEvidence',{state:'detached',timeout:10000}).catch(()=>{});
-  const focusReturned=await button.evaluate(el=>document.activeElement===el);
+  const focusReturned=await page.waitForFunction(id=>{
+    const el=document.querySelector('[data-source-concept="'+CSS.escape(id)+'"]:not([hidden])');
+    return !!el&&document.activeElement===el;
+  },id,{timeout:1000}).then(()=>true).catch(()=>false);
   check(focusReturned,'concept source '+doc+' focus returns to opener after close');
 }
 
