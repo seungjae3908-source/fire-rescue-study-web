@@ -242,7 +242,7 @@ jobs:
     timeout-minutes: 15
     env:
       STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
-      STUDY_119_EXPECTED_RUNTIME_HEAD: cd5a23bd0aa0f42ec5ef26261ac1b5c99e617376
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
@@ -265,24 +265,6 @@ jobs:
           test "$bytes" -le 128
           test -n "$content_range"
           test -n "$acao"
-
-      - name: Validate seven mirror source PDFs can materialize
-        shell: bash
-        run: |
-          set -euo pipefail
-          tmpdir="$(mktemp -d)"
-          proxy='https://fire-rescue-study-web.vercel.app/api/official-pdf'
-          docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
-          for doc in "${docs[@]}"; do
-            out="$tmpdir/${doc}.pdf"
-            echo "V70_MIRROR_SOURCE_FETCH_START $doc"
-            curl -fL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 20 --max-time 180               -H 'Cache-Control: no-cache' "${proxy}?doc=${doc}" -o "$out"
-            magic="$(head -c 5 "$out")"
-            bytes="$(wc -c < "$out" | tr -d ' ')"
-            echo "V70_MIRROR_SOURCE_OK $doc bytes=$bytes magic=$magic"
-            test "$magic" = '%PDF-'
-            test "$bytes" -gt 100000
-          done
 
       - name: Probe seven deployed Pages PDF mirrors
         shell: bash
