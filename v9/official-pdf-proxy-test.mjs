@@ -186,20 +186,42 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
 }
 {
   let pagesCalls=0,nfaCalls=0;
-  await P.fetchPdfWithPagesFirst(
+  const result=await P.fetchPdfWithPagesFirst(
     'fire1',
-    {method:'GET',headers:{}},
+    {method:'GET',headers:{range:'bytes=0-63'}},
     false,
     {
-      pagesImpl:async()=>{pagesCalls++;throw new Error('SHOULD_NOT_RUN')},
+      pagesImpl:async()=>{
+        pagesCalls++;
+        return{row:{doc:'fire1',name:'10. 소방전술1(화재1).pdf'},upstream:new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(55)),{status:206,headers:{'content-type':'application/pdf','content-range':'bytes 0-63/1000','accept-ranges':'bytes','content-length':'64'}}),transport:'pages-mirror'};
+      },
       nfaImpl:async()=>{
         nfaCalls++;
         return{row:{doc:'fire1',name:'10. 소방전술1(화재1).pdf'},upstream:pdf()};
       }
     }
   );
-  assert.equal(pagesCalls,0,'fire1 keeps its existing path and never uses the Pages law/prevention mirror');
-  assert.equal(nfaCalls,1,'fire1 continues through the existing proxy resolver when needed');
+  assert.equal(pagesCalls,1,'fire1 now uses the persistent Pages mirror first');
+  assert.equal(nfaCalls,0,'fire1 does not touch NFA when the Pages mirror is healthy');
+  assert.equal(result.transport,'pages-mirror','fire1 Pages transport is explicit');
+}
+{
+  let nfaCalls=0;
+  const result=await P.fetchPdfWithPagesFirst(
+    'ems',
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    {
+      pagesImpl:async()=>{throw new Error('PAGES_MIRROR_HTTP_404')},
+      nfaImpl:async()=>{
+        nfaCalls++;
+        return{row:{doc:'ems',name:'13. 소방전술3(구급)-저용량.pdf'},upstream:pdf()};
+      },
+      onMirrorError:()=>{}
+    }
+  );
+  assert.equal(nfaCalls,1,'fire/EMS Pages failure still falls back to NFA exactly once');
+  assert.equal(result.transport,'nfa-origin','fire/EMS fallback transport remains explicit');
 }
 
 
