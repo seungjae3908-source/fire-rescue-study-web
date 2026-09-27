@@ -45,21 +45,28 @@ try{
     const local=await V.SourcePDF.get('ems');
     const localRaw=await raw('ems');
 
-    await put({key:'law1',name:'current.pdf',mime:'application/pdf',blob,updatedAt:3,origin:'official-mirror-cache',cacheEpoch:epoch});
+    await put({key:'law1',name:'current.pdf',mime:'application/pdf',blob,updatedAt:Date.now(),origin:'official-mirror-cache',cacheEpoch:epoch});
     const current=await V.SourcePDF.get('law1');
     const currentRaw=await raw('law1');
+
+    await put({key:'law2',name:'expired.pdf',mime:'application/pdf',blob,updatedAt:Date.now()-V.SourcePDF.officialCacheMaxAgeMs-1000,origin:'official-mirror-cache',cacheEpoch:epoch});
+    const expired=await V.SourcePDF.get('law2');
+    const expiredRaw=await raw('law2');
 
     await V.SourcePDF.remove('ems');
     await V.SourcePDF.remove('law1');
     return{
       epoch,
       exportedEpoch:V.SourcePDF.officialCacheEpoch||'',
+      maxAgeMs:V.SourcePDF.officialCacheMaxAgeMs||0,
       staleReturned:!!stale,
       stalePersisted:!!staleRaw,
       localReturned:!!local?.blob,
       localPersisted:!!localRaw?.blob,
       currentReturned:!!current?.blob,
-      currentPersisted:!!currentRaw?.blob
+      currentPersisted:!!currentRaw?.blob,
+      expiredReturned:!!expired,
+      expiredPersisted:!!expiredRaw
     };
   });
 
@@ -68,6 +75,8 @@ try{
   assert(!result.staleReturned&&!result.stalePersisted,'stale official IndexedDB PDF row is rejected and deleted',result);
   assert(result.localReturned&&result.localPersisted,'local/user PDF row without official origin is preserved',result);
   assert(result.currentReturned&&result.currentPersisted,'current official PDF row with matching epoch is preserved',result);
+  assert(result.maxAgeMs===24*60*60*1000,'official persistent PDF cache TTL is exactly 24 hours',result);
+  assert(!result.expiredReturned&&!result.expiredPersisted,'expired official PDF row is rejected and deleted even when epoch matches',result);
   assert(errors.length===0,'cache epoch QA has no page errors',{errors});
   console.log('V70_OFFICIAL_PDF_CACHE_EPOCH_E2E_SUCCESS',JSON.stringify(result));
 }finally{
