@@ -1,13 +1,6 @@
 name: V70 Fire PDF Focus Audit
 
 on:
-  pull_request:
-    paths:
-      - 'v9/api/official-pdf.js'
-      - 'v9/source-pdf.js'
-      - 'v9/boot-v69-7b.js'
-      - 'v9/v70-fire-pdf-focus-e2e.mjs'
-      - '.github/workflows/v70-fire-pdf-focus.yml'
   workflow_dispatch:
 
 concurrency:
