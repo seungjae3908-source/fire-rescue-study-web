@@ -45,6 +45,9 @@ const officialTextbookChangeGate=fs.readFileSync(new URL('./official-textbook-ch
 const officialTextbookFreshnessHelper=fs.readFileSync(new URL('./official-textbook-freshness-check.sh',import.meta.url),'utf8');
 const officialPdfMaterializer=fs.readFileSync(new URL('./materialize-official-pdfs.sh',import.meta.url),'utf8');
 const sourcePdfRuntime=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
+const curriculumJs=fs.readFileSync(new URL('./curriculum.js',import.meta.url),'utf8');
+const bootV691=fs.readFileSync(new URL('./boot-v69-1.js',import.meta.url),'utf8');
+
 const curriculumFireDepth=fs.readFileSync(new URL('./curriculum-fire-depth-119.js',import.meta.url),'utf8');
 const curriculumComplete=fs.readFileSync(new URL('./curriculum-complete-2026.js',import.meta.url),'utf8');
 const v51OfficialTextbookAudit=fs.readFileSync(new URL('./v51-official-textbook-browser-audit.mjs',import.meta.url),'utf8');
@@ -115,6 +118,7 @@ const checks={
   pagesUsesHardenedMaterializer:pagesWorkflow.includes('bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5')&&!pagesWorkflow.includes('OFFICIAL_PDF_MATERIALIZE_SESSION doc=$doc refresh=$refresh')&&officialPdfMaterializer.includes('min_bytes=100000')&&officialPdfMaterializer.includes('OFFICIAL_PDF_MATERIALIZE_CACHE_REJECT'),
 
 
+  f02SourceRangePrecision:curriculumJs.includes("add('F02-C02','law5',512,519)")&&bootV691.includes("add('F02-C02','law5',512,519)")&&bootV691.includes('소방법령5 · 재난 및 안전관리 기본법 512~519쪽'),
   officialTextbookAnchorEvidenceGate:v51OfficialTextbookAudit.includes("V51_OFFICIAL_TEXTBOOK_ANCHOR_REVIEW_REQUIRED")&&v51OfficialTextbookAudit.includes("if(anchorReview.length)")&&curriculumFireDepth.includes("a('F03-C09','fire1','2026 소방전술1',29,31)")&&curriculumFireDepth.includes("a('F03-C11','fire1','2026 소방전술1',25,27)")&&curriculumFireDepth.includes("a('F03-C15','fire1','2026 소방전술1',310,311)")&&curriculumFireDepth.includes("a('F03-C16','fire1','2026 소방전술1',437)")&&curriculumComplete.includes("{doc:'fire1',from:303,to:304")&&curriculumComplete.includes("anchor('F07-C01','prevention1',187)")&&curriculumComplete.includes("{doc:'prevention1',from:259,to:260")&&curriculumComplete.includes("anchor('F07-C09','prevention1',418)")&&curriculumComplete.includes("{doc:'prevention1',from:451,to:453")&&curriculumComplete.includes("anchor('F07-C14','prevention1',187)"),
   officialPdfSourceRangeCorrections:curriculumComplete.includes("{doc:'prevention2',from:524,to:525")&&curriculumComplete.includes("{doc:'prevention1',from:468,to:469")&&contentRich.includes('예방실무2 PDF 524~525쪽')&&contentRich.includes('예방실무1 PDF 167·174·433·468~469쪽'),
   officialPdfBranchBrowserMirror:workflow.includes('Restore branch PDF audit cache')&&workflow.includes('Materialize branch ten-PDF mirror')&&workflow.includes('provider=branch-local')&&workflow.includes('STUDY_119_PDF_MIRROR_BASE: http://127.0.0.1:4174/official-pdf-mirror')&&workflow.includes('Restore V51 official PDF audit cache')&&workflow.includes('Materialize V51 branch ten-PDF mirror')&&workflow.includes('Start V51 branch-local PDF provider')&&workflow.includes('V51_BRANCH_PDF_PROVIDER_READY')&&workflow.match(/v70-local-pdf-mirror-server\.mjs/g)?.length>=2,
