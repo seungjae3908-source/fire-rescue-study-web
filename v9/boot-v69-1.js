@@ -10,6 +10,8 @@ window.AITUTOR_V9_CONFIG={
   officialPdfProxyBase:'https://study-119-pdf-proxy.vercel.app',
   officialPdfMirrorBase:'https://study-119-official-pdf.vercel.app',
   officialPdfMirrorDocs:['fire1','fire2','ems'],
+  officialPdfPagesMirrorBase:'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',
+  officialPdfPagesMirrorDocs:['prevention1','prevention2','law1','law2','law3','law4','law5'],
   study119:true
 };
 
