@@ -165,11 +165,23 @@ async function seed(page){
   });
   await settle(page);
 }
+async function bindV66Law2PagesMirror(page){
+  const mirror='https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror/law2.pdf';
+  await page.evaluate(async url=>{
+    const V=window.AITUTOR_V9,c=V.SourceCatalog119?.catalog?.law2;
+    if(!c)throw new Error('V66_LAW2_CATALOG_MISSING');
+    c.directPdf=url;c.mirrorPdf=url;c.transport='range-static';
+    await V.SourcePDF?.clearPdfCache?.('law2');
+  },mirror);
+}
 async function openPdf(page){
+  await bindV66Law2PagesMirror(page);
   await page.evaluate(()=>window.AITUTOR_V9.App.go('study'));
   await page.waitForSelector('.workspace',{timeout:30000});
-  await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
-  await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
+  const law2Concept=await page.evaluate(()=>window.AITUTOR_V9.curriculum.concepts.find(c=>(c.sourceRanges||[]).some(r=>r.doc==='law2'))?.id||'');
+  if(!law2Concept)throw new Error('V66_LAW2_CONCEPT_MISSING');
+  await page.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),law2Concept);
+  await page.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,law2Concept);
   const mobile=await page.locator('.study-body-mobile').evaluate(el=>el.offsetParent!==null);
   const root=mobile?'.study-body-mobile':'.study-body-desktop';
   await page.locator('[data-study-tab="source"]:visible').first().click();
@@ -180,8 +192,9 @@ async function openPdf(page){
   await settle(page,250);
 }
 async function openResourcePdf(page){
+  await bindV66Law2PagesMirror(page);
   await go(page,'resources');
-  const open=page.locator('[data-resource-doc]:visible').first();
+  const open=page.locator('[data-resource-doc="law2"]:visible').first();
   await open.waitFor({state:'visible',timeout:30000});await open.click();
   await page.waitForSelector('#resourcePdf .pdf-evidence-host[data-scroll-owner="pdf"]',{state:'visible',timeout:120000});
   await page.waitForFunction(()=>document.querySelector('#resourcePdf')?.dataset?.renderState==='ready',null,{timeout:120000});
