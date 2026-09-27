@@ -274,6 +274,47 @@ async function fetchPdfWithPagesFirst(doc,req,meta=false,deps={}){
 async function fetchPdf(doc,req,meta=false){
   return fetchPdfWithPagesFirst(doc,req,meta);
 }
+function parseByteRange(value,total){
+  const m=String(value||'').trim().match(/^bytes=(\d+)-(\d*)$/i);
+  if(!m||!Number.isFinite(total)||total<=0)return null;
+  const start=Number(m[1]),rawEnd=m[2]?Number(m[2]):total-1;
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(rawEnd)||start<0||start>=total||rawEnd<start)return null;
+  const end=Math.min(total-1,rawEnd);
+  return{start,end,length:end-start+1,total};
+}
+function syntheticRangeResponse(upstream,value){
+  if(!upstream||upstream.status!==200)return null;
+  const total=Number(upstream.headers?.get?.('content-length')||0),r=parseByteRange(value,total);
+  if(!r)return null;
+  const headers=new Headers(upstream.headers);
+  headers.set('content-length',String(r.length));
+  headers.set('content-range',`bytes ${r.start}-${r.end}/${r.total}`);
+  headers.set('accept-ranges','bytes');
+  if(!upstream.body)return new Response(null,{status:206,headers});
+  const reader=upstream.body.getReader();
+  let offset=0,closed=false;
+  const stream=new ReadableStream({
+    async pull(controller){
+      if(closed)return;
+      try{
+        while(true){
+          const {done,value:chunk}=await reader.read();
+          if(done){closed=true;controller.close();return}
+          const chunkStart=offset,chunkEnd=offset+chunk.byteLength-1;offset+=chunk.byteLength;
+          if(chunkEnd<r.start)continue;
+          const from=Math.max(0,r.start-chunkStart),to=Math.min(chunk.byteLength,r.end-chunkStart+1);
+          if(to>from)controller.enqueue(chunk.slice(from,to));
+          if(chunkEnd>=r.end){
+            closed=true;try{await reader.cancel()}catch{}controller.close();
+          }
+          return;
+        }
+      }catch(err){closed=true;controller.error(err)}
+    },
+    async cancel(reason){closed=true;try{await reader.cancel(reason)}catch{}}
+  });
+  return new Response(stream,{status:206,headers});
+}
 
 module.exports=async function handler(req,res){
   res.setHeader('Access-Control-Allow-Origin','*');
@@ -315,9 +356,12 @@ module.exports=async function handler(req,res){
     }));
   }
 
-  res.statusCode=upstream.status;
+  const clientRange=(req.headers&&req.headers.range)||'';
+  const ranged=clientRange&&upstream.status===200?syntheticRangeResponse(upstream,clientRange):null;
+  const response=ranged||upstream;
+  res.statusCode=response.status;
   for(const h of ['content-length','content-range','accept-ranges','etag','last-modified']){
-    const v=upstream.headers.get(h);if(v)res.setHeader(h,v)
+    const v=response.headers.get(h);if(v)res.setHeader(h,v)
   }
   // NFA often serves verified PDF bytes as application/octet-stream.
   // This endpoint is a fixed ten-document PDF allowlist and fetchFirstWorkingCandidate
@@ -328,12 +372,14 @@ module.exports=async function handler(req,res){
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('X-119-Official-Source','nfa');
   res.setHeader('X-119-Official-Transport',transport||'nfa-origin');
-  if(req.method==='HEAD'||!upstream.body)return res.end();
+  if(req.method==='HEAD'||!response.body)return res.end();
   try{
-    await pipeline(Readable.fromWeb(upstream.body),res);
+    await pipeline(Readable.fromWeb(response.body),res);
     return;
   }catch(e){
-    console.error('OFFICIAL_PDF_PROXY_STREAM_ERROR',JSON.stringify({doc,error:String((e&&e.message)||e||'STREAM_FAILED').slice(0,200)}));
+    const msg=String((e&&e.message)||e||'STREAM_FAILED').slice(0,200);
+    if(res.destroyed||/premature close/i.test(msg)){try{await response.body?.cancel?.()}catch{}return}
+    console.error('OFFICIAL_PDF_PROXY_STREAM_ERROR',JSON.stringify({doc,error:msg}));
     try{if(!res.headersSent){res.statusCode=502;return res.end('OFFICIAL_SOURCE_STREAM_FAILED')}res.destroy()}catch{}
   }
 };
@@ -353,4 +399,6 @@ module.exports.fetchPagesMirror=fetchPagesMirror;
 module.exports.fetchPdfWithPagesFirst=fetchPdfWithPagesFirst;
 module.exports.pagesMirrorUrl=pagesMirrorUrl;
 module.exports.PAGES_MIRROR_DOCS=PAGES_MIRROR_DOCS;
+module.exports.parseByteRange=parseByteRange;
+module.exports.syntheticRangeResponse=syntheticRangeResponse;
 module.exports.pdfProbe=pdfProbe;
