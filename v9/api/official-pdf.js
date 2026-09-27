@@ -21,7 +21,7 @@ const SOURCES=Object.freeze({
 });
 const cache=new Map();
 const PAGES_MIRROR_BASE='https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror';
-const PAGES_MIRROR_DOCS=new Set(['prevention1','prevention2','law1','law2','law3','law4','law5']);
+const PAGES_MIRROR_DOCS=new Set(['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5']);
 
 function one(v){return Array.isArray(v)?v[0]:v}
 function norm(s){return String(s||'').toLowerCase().replace(/&nbsp;|\s|_|-/g,'').replace(/[^0-9a-z가-힣().]/g,'')}
