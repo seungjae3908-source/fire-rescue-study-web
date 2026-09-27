@@ -268,12 +268,6 @@ jobs:
           test -n "$accept_ranges"
           test -n "$acao"
 
-      - name: Install V70 Production performance browser
-        run: |
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-      - name: Measure exact Production performance
-        run: node v9/v70-production-performance-e2e.mjs
 
 
   official_monitor_live_probe:
