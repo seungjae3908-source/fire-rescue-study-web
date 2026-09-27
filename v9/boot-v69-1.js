@@ -156,7 +156,7 @@ anchor('F05-C06','prevention2',496);
 anchor('F05-C07','prevention2',523);
 R['F05-C08']=[
   {doc:'fire1',from:319,to:319,label:V.curriculum.docs.fire1.label},
-  {doc:'prevention2',from:536,to:536,label:V.curriculum.docs.prevention2.label}
+  {doc:'prevention2',from:524,to:525,label:V.curriculum.docs.prevention2.label}
 ];
 R['F06-C01']=[
   {doc:'fire2',from:269,to:269,label:V.curriculum.docs.fire2.label},
@@ -196,7 +196,7 @@ R['F07-C15']=[
   {doc:'prevention1',from:167,to:167,label:V.curriculum.docs.prevention1.label},
   {doc:'prevention1',from:174,to:174,label:V.curriculum.docs.prevention1.label},
   {doc:'prevention1',from:433,to:433,label:V.curriculum.docs.prevention1.label},
-  {doc:'prevention1',from:482,to:482,label:V.curriculum.docs.prevention1.label}
+  {doc:'prevention1',from:468,to:469,label:V.curriculum.docs.prevention1.label}
 ];
 for(const c of V.curriculum.concepts)c.sourceRanges=R[c.id]||[];
 
