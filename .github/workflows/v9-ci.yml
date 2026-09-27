@@ -636,6 +636,8 @@ jobs:
           done
           cat /tmp/study119-v51-http.log
           exit 1
+      - name: Reconcile known source-anchor candidates
+        run: node v9/v70-source-anchor-reconcile-e2e.mjs
       - name: Audit all 183 concepts against mapped official textbook sources
         run: node v9/v51-official-textbook-browser-audit.mjs
 
