@@ -815,7 +815,9 @@ return true
 }
 function restoreSourceFocus(){
 const focus=sourceFocusReturn;sourceFocusReturn=null;
-if(focus?.isConnected){try{focus.focus({preventScroll:true})}catch{focus.focus?.()}}
+if(!focus?.isConnected)return false;
+const apply=()=>{if(!focus.isConnected)return false;try{focus.focus({preventScroll:true})}catch{focus.focus?.()}return document.activeElement===focus};
+apply();requestAnimationFrame(()=>apply());return true
 }
 function sourceClose(pop=false){
 const x=sourceOverlay();
