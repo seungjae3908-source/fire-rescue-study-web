@@ -718,7 +718,8 @@ ok(officialMonitorProbe.includes('OFFICIAL_MONITOR_SOURCE_HARD_FAILURE')&&offici
 ok(officialMonitorProbe.includes('UND_ERR_CONNECT_TIMEOUT')&&officialMonitorProbe.includes('ENOTFOUND')&&officialMonitorProbe.includes('EAI_AGAIN'),'live official-monitor probe explicitly classifies common transport-level outages');
 
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
-ok(sourcePdf.includes("pdfjs-v14-range-remote-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:h.l.text')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)'),'official PDF evidence underlines strong anchor lines plus matching explanatory context');
+ok(sourcePdf.includes("pdfjs-v15-range-remote-cache-epoch-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:h.l.text')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)'),'official PDF evidence underlines strong anchor lines plus matching explanatory context');
+ok(sourcePdf.includes('OFFICIAL_CACHE_EPOCH')&&sourcePdf.includes('row.cacheEpoch!==OFFICIAL_CACHE_EPOCH')&&sourcePdf.includes('staleOfficialCacheAutoDelete:true'),'official PDF persistent cache rejects stale official rows while preserving separate local rows');
 ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
 ok(sourcePdf.includes('qn.length<3'),'official PDF evidence accepts short Korean concept anchors such as 롤오버·플래시오버 instead of dropping all queries under eight characters');
 ok(sourcePdf.includes('anchorTokens')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)')&&sourcePdf.includes('anchorTerms:opts.anchorTerms')&&sourcePdf.includes('evidenceLinesForQA:evidenceLines'),'official PDF evidence deterministically prioritizes strong concept-anchor lines and exposes the exact matcher to browser QA');
