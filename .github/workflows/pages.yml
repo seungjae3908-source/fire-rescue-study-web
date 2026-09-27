@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: official-pdf-mirror
-          key: study119-official-pdf-${{ hashFiles('v9/data/official-textbook-baseline.json') }}
+          key: study119-official-pdf-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
 
       - name: Materialize all ten official PDF mirrors directly from NFA
         shell: bash
