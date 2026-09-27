@@ -295,6 +295,35 @@ async function bufferedRangeBody(response,maxBytes=2*1024*1024){
     throw e;
   }
 }
+const nfaPdfBufferCache=new Map();
+const NFA_BUFFER_DOCS=new Set(['fire1','fire2','ems']);
+async function nfaFullPdfBuffer(doc,upstream,{ttlMs=10*60*1000,maxBytes=128*1024*1024}={}){
+  const now=Date.now(),hit=nfaPdfBufferCache.get(doc);
+  if(hit&&hit.expires>now){
+    try{await upstream?.body?.cancel?.()}catch{}
+    return hit.promise;
+  }
+  const expected=Number(upstream?.headers?.get?.('content-length')||0);
+  if(expected>maxBytes)throw new Error('NFA_PDF_TOO_LARGE_'+expected);
+  const promise=(async()=>{
+    const ab=await upstream.arrayBuffer(),buf=Buffer.from(ab);
+    if(!buf.length||buf.length>maxBytes)throw new Error('NFA_PDF_BUFFER_SIZE_'+buf.length);
+    if(expected>0&&buf.length!==expected)throw new Error('NFA_PDF_BUFFER_LENGTH_'+buf.length+'_'+expected);
+    if(buf.subarray(0,5).toString('latin1')!=='%PDF-')throw new Error('NFA_PDF_BUFFER_NOT_PDF');
+    return buf;
+  })();
+  nfaPdfBufferCache.set(doc,{promise,expires:now+ttlMs});
+  try{return await promise}catch(err){nfaPdfBufferCache.delete(doc);throw err}
+}
+async function bufferedNfaRangeResponse(doc,upstream,value){
+  if(!upstream||upstream.status!==200)return null;
+  const headers=new Headers(upstream.headers),buf=await nfaFullPdfBuffer(doc,upstream),r=parseByteRange(value,buf.length);
+  if(!r)return null;
+  headers.set('content-length',String(r.length));
+  headers.set('content-range',`bytes ${r.start}-${r.end}/${r.total}`);
+  headers.set('accept-ranges','bytes');
+  return new Response(buf.subarray(r.start,r.end+1),{status:206,headers});
+}
 function syntheticRangeResponse(upstream,value){
   if(!upstream||upstream.status!==200)return null;
   const total=Number(upstream.headers?.get?.('content-length')||0),r=parseByteRange(value,total);
@@ -370,7 +399,19 @@ module.exports=async function handler(req,res){
   }
 
   const clientRange=(req.headers&&req.headers.range)||'';
-  const ranged=clientRange&&upstream.status===200?syntheticRangeResponse(upstream,clientRange):null;
+  let ranged=null;
+  if(clientRange&&upstream.status===200){
+    try{
+      ranged=NFA_BUFFER_DOCS.has(doc)
+        ?await bufferedNfaRangeResponse(doc,upstream,clientRange)
+        :syntheticRangeResponse(upstream,clientRange);
+    }catch(e){
+      const msg=String(e?.message||e||'NFA_RANGE_BUFFER_FAILED').slice(0,200);
+      console.error('OFFICIAL_PDF_PROXY_NFA_BUFFER_ERROR',JSON.stringify({doc,range:clientRange,error:msg}));
+      if(!res.headersSent){res.statusCode=502;return res.end('OFFICIAL_SOURCE_RANGE_BUFFER_FAILED')}
+      try{return res.destroy()}catch{return}
+    }
+  }
   const response=ranged||upstream;
   res.statusCode=response.status;
   for(const h of ['content-length','content-range','accept-ranges','etag','last-modified']){
@@ -386,7 +427,7 @@ module.exports=async function handler(req,res){
   res.setHeader('X-119-Official-Source','nfa');
   res.setHeader('X-119-Official-Transport',transport||'nfa-origin');
   if(req.method==='HEAD'||!response.body)return res.end();
-  if(clientRange){
+  if(clientRange&&response.status===206){
     try{
       const body=await bufferedRangeBody(response);
       if(body){
@@ -429,4 +470,6 @@ module.exports.PAGES_MIRROR_DOCS=PAGES_MIRROR_DOCS;
 module.exports.parseByteRange=parseByteRange;
 module.exports.syntheticRangeResponse=syntheticRangeResponse;
 module.exports.bufferedRangeBody=bufferedRangeBody;
+module.exports.nfaFullPdfBuffer=nfaFullPdfBuffer;
+module.exports.bufferedNfaRangeResponse=bufferedNfaRangeResponse;
 module.exports.pdfProbe=pdfProbe;
