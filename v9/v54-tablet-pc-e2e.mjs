@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_BRANCH_URL||'http://127.0.0.1:4173/v9/index.html';
+const expectedMirrorBase=process.env.STUDY_119_PDF_MIRROR_BASE||'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 const viewports=[
   {width:768,height:1024,label:'tablet-portrait'},
@@ -77,10 +78,10 @@ try{
     };
   });
   assert(strategy.total===10,'all ten official textbooks remain catalogued');
-  assert(strategy.mirrors.length===10&&strategy.mirrors.every(x=>x.transport==='range-static'&&!!x.mirrorPdf&&!!x.proxyPdf&&x.mirrorPdf.includes('github.io/fire-rescue-study-web/official-pdf-mirror/')),'all ten textbooks use persistent GitHub Pages static range mirrors with proxy fallback');
+  assert(strategy.mirrors.length===10&&strategy.mirrors.every(x=>x.transport==='range-static'&&!!x.mirrorPdf&&!!x.proxyPdf&&x.mirrorPdf.startsWith(expectedMirrorBase+'/')),'all ten textbooks use the configured static range mirror with proxy fallback');
   assert(strategy.fire1.mirror===true&&strategy.fire1.range===true&&strategy.fire1.rangeProxy===false&&!!strategy.fire1.rangeUrl,'mirrored textbook availability exposes the static range path');
-  assert(strategy.law2.mirror===true&&strategy.law2.range===true&&strategy.law2.rangeProxy===false&&strategy.law2.rangeUrl.includes('/official-pdf-mirror/law2.pdf'),'large law textbook availability exposes the Pages static range path');
-  assert(strategy.runtime==='pdfjs-v14-range-remote-anchor-context-lines','PDF runtime reports the V69 range-first engine');
+  assert(strategy.law2.mirror===true&&strategy.law2.range===true&&strategy.law2.rangeProxy===false&&strategy.law2.rangeUrl===expectedMirrorBase+'/law2.pdf','large law textbook availability exposes the configured static range path');
+  assert(strategy.runtime==='pdfjs-v15-range-remote-cache-epoch-anchor-context-lines','PDF runtime reports the cache-epoch range-first engine');
   await ctx.close();
   console.log('V54_TABLET_PC_PDF_RANGE_ACCEPTANCE_SUCCESS');
 }finally{await browser.close()}
