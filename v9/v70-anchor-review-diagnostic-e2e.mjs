@@ -1,35 +1,49 @@
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_BRANCH_URL||'http://127.0.0.1:4173/v9/index.html';
-const targets=['F03-C09','F03-C11','F03-C15','F03-C16','F05-C08','F07-C01','F07-C04','F07-C09','F07-C13','F07-C14'];
+const targets={
+  'F03-C09':{docs:['fire1','fire2'],queries:['플래시오버','flashover','플래쉬오버']},
+  'F03-C11':{docs:['fire1','fire2'],queries:['백드래프트','backdraft']},
+  'F03-C15':{docs:['fire1','fire2'],queries:['BLEVE','비등액체팽창증기폭발','파이어볼','fire ball']},
+  'F03-C16':{docs:['fire1','fire2'],queries:['풀파이어','pool fire','제트파이어','jet fire']},
+  'F05-C08':{docs:['fire1','fire2','prevention2'],queries:['보일오버','슬롭오버','프로스오버','위험물 사고 대응요령','물과 반응하는 물질']},
+  'F07-C01':{docs:['prevention1'],queries:['소방시설의 종류','소방시설','피난구조설비','소화용수설비','소화활동설비']},
+  'F07-C04':{docs:['prevention1'],queries:['옥외소화전설비','옥외소화전']},
+  'F07-C09':{docs:['prevention1'],queries:['이산화탄소소화설비','가스계소화설비','할로겐화합물','불활성기체']},
+  'F07-C13':{docs:['prevention1'],queries:['피난구조설비','피난기구','유도등','인명구조기구']},
+  'F07-C14':{docs:['prevention1'],queries:['소화용수설비','소화수조','저수조','채수구','흡수관투입구']}
+};
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:1280,height:900}});
   const page=await ctx.newPage();page.setDefaultTimeout(120000);
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
-  await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF?.openPdf&&!!window.AITUTOR_V9?.ConceptArchitecture119,{timeout:60000});
+  await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF?.findPages,{timeout:60000});
   const result=await page.evaluate(async targets=>{
-    const V=window.AITUTOR_V9,out=[];
-    for(const id of targets){
-      const c=V.curriculum.byId[id],p=V.contentPacks.get(id)||{};
-      const row={id,title:c?.title||'',terms:V.ConceptArchitecture119.termsFor(id),ranges:[],summary:p.summary||'',must:p.must||[]};
-      for(const r of c?.sourceRanges||[]){
-        const entry=await V.SourcePDF.openPdf(r.doc,{timeoutMs:120000});
-        const from=Math.max(1,Number(r.from)||1),to=Math.max(from,Number(r.to)||from);
-        const pages=[];
-        for(let bookPage=from;bookPage<=to;bookPage++){
-          const pdfPage=V.SourcePDF.pdfPage(r.doc,bookPage);
-          if(pdfPage<1||pdfPage>entry.pdf.numPages)continue;
-          const pg=await entry.pdf.getPage(pdfPage),tc=await pg.getTextContent();
-          const text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
-          pages.push({bookPage,pdfPage,text:text.slice(0,5000)});
+    const V=window.AITUTOR_V9,out={};
+    for(const [id,t] of Object.entries(targets)){
+      out[id]={};
+      for(const doc of t.docs){
+        const entry=await V.SourcePDF.openPdf(doc,{timeoutMs:120000});
+        const seen=new Set(),candidates=[];
+        for(const q of t.queries){
+          const r=await V.SourcePDF.findPages(doc,q,{limit:12});
+          for(const hit of r.results||[]){
+            const key=String(hit.page);
+            if(seen.has(key))continue;
+            seen.add(key);
+            const pg=await entry.pdf.getPage(hit.page),tc=await pg.getTextContent();
+            const text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
+            candidates.push({query:q,pdfPage:hit.page,bookPage:V.SourcePDF.bookPage(doc,hit.page),score:hit.score,text:text.slice(0,2600)});
+            if(candidates.length>=12)break;
+          }
+          if(candidates.length>=12)break;
         }
-        row.ranges.push({doc:r.doc,from,to,pages});
+        out[id][doc]=candidates;
       }
-      out.push(row);
     }
     return out;
   },targets);
-  console.log('V70_ANCHOR_REVIEW_DIAGNOSTIC',JSON.stringify(result,null,2));
+  console.log('V70_ANCHOR_CANDIDATE_SEARCH',JSON.stringify(result,null,2));
   await ctx.close();
 }finally{await browser.close()}
