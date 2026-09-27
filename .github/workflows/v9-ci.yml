@@ -363,6 +363,27 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Probe official PDF provider availability
+        id: remote_pdf
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Range: bytes=0-63' -H 'Cache-Control: no-cache' 'https://study-119-official-pdf.vercel.app/fire1.pdf' || true)"
+          if [[ "$code" == "200" || "$code" == "206" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$code" == "402" ]] && grep -q 'DEPLOYMENT_DISABLED' "$body"; then
+            echo "::warning::PDF_SOURCE_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "blocker=VERCEL_DEPLOYMENT_DISABLED" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "UNEXPECTED_PDF_SOURCE_STATUS=$code"
+          cat "$body"
+          exit 1
       - name: Install browser QA dependency
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
@@ -384,6 +405,7 @@ jobs:
       - name: V66 branch real-interaction scroll QA
         env:
           STUDY_119_V66_URL: http://127.0.0.1:4173/v9/index.html
+          STUDY_119_SKIP_REMOTE_PDF: ${{ steps.remote_pdf.outputs.available == 'true' && '0' || '1' }}
         run: node v9/v66-real-interaction-scroll-e2e.mjs
       - name: V67 whole-app real UX + layout audit
         env:
@@ -394,42 +416,58 @@ jobs:
           STUDY_119_V68_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v68-detail-source-brand-e2e.mjs
       - name: Phase A remaining official-PDF evidence audit
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/phase-a-source-audit.mjs
       - name: Phase B EMS official-PDF evidence audit
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/phase-b-ems-source-audit.mjs
       - name: V29 first-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v29-source-review-e2e.mjs
       - name: V29 second-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v29-batch2-source-review-e2e.mjs
       - name: V38 third-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v38-batch3-source-review-e2e.mjs
       - name: V40 fourth-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v40-batch4-source-review-e2e.mjs
       - name: V41 fifth-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v41-batch5-source-review-e2e.mjs
       - name: V43 sixth-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v43-batch6-source-review-e2e.mjs
       - name: V44 seventh-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v44-batch7-source-review-e2e.mjs
       - name: V45 eighth-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v45-batch8-source-review-e2e.mjs
       - name: V45 pediatric source boundary reconciliation
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v45-blocker-source-reconcile-e2e.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
       - name: Korean image OCR quality + owner isolation QA
         run: node v9/image-ocr-e2e.mjs
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/e2e.mjs
       - name: V53 tablet usability + bounded official-source loading QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v53-tablet-ux-e2e.mjs
       - name: V54 tablet-PC + medium desktop + PDF range QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v54-tablet-pc-e2e.mjs
       - name: V55 core/detail precision + navigation QA
         run: node v9/v55-core-detail-precision-e2e.mjs
       - name: V56 study usability + answer integrity + PDF find QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v56-study-usability-integrity-e2e.mjs
       - name: V57 daily-study UX + filters + retry + undo + multi-result PDF QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v57-daily-study-ux-e2e.mjs
       - name: V59 seeded round + variant persistence QA
         run: node v9/v59-seeded-round-variant-e2e.mjs
@@ -446,6 +484,7 @@ jobs:
       - name: Active exam reload recovery and timer QA
         run: node v9/exam-session-e2e.mjs
       - name: Final learner journey backup wrong-answer exam source AI QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/final-user-journey-e2e.mjs
       - name: Structured detail core underline and latest AI chat QA
         run: node v9/study-structure-chat-e2e.mjs
@@ -468,11 +507,34 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Probe official PDF provider availability
+        id: remote_pdf
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Range: bytes=0-63' -H 'Cache-Control: no-cache' 'https://study-119-official-pdf.vercel.app/fire1.pdf' || true)"
+          if [[ "$code" == "200" || "$code" == "206" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$code" == "402" ]] && grep -q 'DEPLOYMENT_DISABLED' "$body"; then
+            echo "::warning::PDF_SOURCE_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "blocker=VERCEL_DEPLOYMENT_DISABLED" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "UNEXPECTED_PDF_SOURCE_STATUS=$code"
+          cat "$body"
+          exit 1
       - name: Install V51 official textbook audit browser
+        if: steps.remote_pdf.outputs.available == 'true'
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149
           npx playwright install --with-deps chromium
       - name: Start branch-only static server
+        if: steps.remote_pdf.outputs.available == 'true'
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/study119-v51-http.log 2>&1 &
           for i in $(seq 1 30); do
@@ -482,6 +544,7 @@ jobs:
           cat /tmp/study119-v51-http.log
           exit 1
       - name: Audit all 183 concepts against mapped official textbook sources
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v51-official-textbook-browser-audit.mjs
 
 
