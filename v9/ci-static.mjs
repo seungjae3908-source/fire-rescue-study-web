@@ -334,11 +334,11 @@ ok(Object.entries(exactAnchorBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
 }),'seven sprinkler concepts are exact-page verified from 2026 prevention1 PDF');
-const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':40,'F03-C11':453,'F03-C12':303,'F03-C13':304,'F03-C14':303,'F03-C15':326,'F03-C16':453};
-ok(Object.entries(exactFirePhenomenaBatch).every(([id,page])=>{
+const exactFirePhenomenaBatch={'F03-C09':[29,31],'F03-C10':[40,40],'F03-C11':[25,27],'F03-C12':[303,303],'F03-C13':[304,304],'F03-C14':[303,303],'F03-C15':[310,311],'F03-C16':[437,437]};
+ok(Object.entries(exactFirePhenomenaBatch).every(([id,[from,to]])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
-  return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
-}),'eight fire-phenomena concepts are exact-page verified from 2026 fire1 PDF');
+  return r?.doc==='fire1'&&Number(r?.from)===from&&Number(r?.to)===to&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
+}),'eight fire-phenomena concepts are exact-range verified from 2026 fire1 PDF');
 const exactHazmatBatch={'F05-C02':385,'F05-C03':407,'F05-C04':428,'F05-C05':449,'F05-C06':496,'F05-C07':523};
 ok(Object.entries(exactHazmatBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
@@ -346,17 +346,17 @@ ok(Object.entries(exactHazmatBatch).every(([id,page])=>{
 }),'hazardous-material classes 1-6 are exact-page verified from 2026 prevention2 PDF');
 const haz01=V.curriculum.byId['F05-C01']?.sourceRanges||[],haz08=V.curriculum.byId['F05-C08']?.sourceRanges||[];
 ok(haz01.length===2&&haz01[0]?.doc==='prevention2'&&Number(haz01[0]?.from)===345&&Number(haz01[1]?.from)===385&&V.contentPacks.authored['F05-C01']?.status==='verified','hazardous-material definition/classification keeps both exact official pages');
-ok(haz08.length===2&&haz08[0]?.doc==='fire1'&&Number(haz08[0]?.from)===319&&haz08[1]?.doc==='prevention2'&&Number(haz08[1]?.from)===524&&Number(haz08[1]?.to)===525&&V.contentPacks.authored['F05-C08']?.status==='verified','hazardous-material fire principles keep exact fire1 319 and prevention2 524~525 response pages');
+ok(haz08.length===2&&haz08[0]?.doc==='fire1'&&Number(haz08[0]?.from)===303&&Number(haz08[0]?.to)===304&&haz08[1]?.doc==='prevention2'&&Number(haz08[1]?.from)===524&&Number(haz08[1]?.to)===525&&V.contentPacks.authored['F05-C08']?.status==='verified','hazardous-material fire principles keep exact fire1 303~304 and prevention2 524~525 response pages');
 const inv=Object.fromEntries(['F06-C01','F06-C02','F06-C03','F06-C04'].map(id=>[id,V.curriculum.byId[id]?.sourceRanges||[]]));
 ok(inv['F06-C01']?.length===2&&inv['F06-C01'].every(r=>r.doc==='fire2')&&Number(inv['F06-C01'][0].from)===269&&Number(inv['F06-C01'][1].from)===270&&V.contentPacks.authored['F06-C01']?.status==='verified','fire-investigation purpose keeps exact fire2 pages 269 and 270');
 ok(inv['F06-C02']?.length===2&&inv['F06-C02'].every(r=>r.doc==='fire2')&&Number(inv['F06-C02'][0].from)===276&&Number(inv['F06-C02'][1].from)===282&&V.contentPacks.authored['F06-C02']?.status==='verified','fire-investigation preservation/procedure keeps exact fire2 pages 276 and 282');
 ok(inv['F06-C03']?.length===2&&inv['F06-C03'].every(r=>r.doc==='fire2')&&Number(inv['F06-C03'][0].from)===282&&Number(inv['F06-C03'][1].from)===297&&V.contentPacks.authored['F06-C03']?.status==='verified','fire-investigation origin/cause keeps exact fire2 pages 282 and 297');
 ok(inv['F06-C04']?.length===2&&inv['F06-C04'].every(r=>r.doc==='fire2')&&Number(inv['F06-C04'][0].from)===287&&Number(inv['F06-C04'][1].from)===294&&V.contentPacks.authored['F06-C04']?.status==='verified','fire-damage investigation/records keep exact fire2 pages 287 and 294');
-const facilitySingles={'F07-C01':17,'F07-C02':207,'F07-C03':247,'F07-C04':273,'F07-C07':328,'F07-C08':347,'F07-C09':432,'F07-C10':415,'F07-C11':23,'F07-C12':18,'F07-C13':465,'F07-C14':201};
-ok(Object.entries(facilitySingles).every(([id,page])=>{
+const facilityAnchors={'F07-C01':[187,187],'F07-C02':[207,207],'F07-C03':[247,247],'F07-C04':[259,260],'F07-C07':[328,328],'F07-C08':[347,347],'F07-C09':[418,418],'F07-C10':[415,415],'F07-C11':[23,23],'F07-C12':[18,18],'F07-C13':[451,453],'F07-C14':[187,187]};
+ok(Object.entries(facilityAnchors).every(([id,[from,to]])=>{
   const rows=V.curriculum.byId[id]?.sourceRanges||[],p=V.contentPacks.authored[id];
-  return rows.length===1&&rows[0].doc==='prevention1'&&Number(rows[0].from)===page&&Number(rows[0].to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
-}),'twelve single-page non-sprinkler facility concepts keep exact Prevention1 evidence');
+  return rows.length===1&&rows[0].doc==='prevention1'&&Number(rows[0].from)===from&&Number(rows[0].to)===to&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
+}),'twelve non-sprinkler facility concepts keep corrected exact Prevention1 evidence');
 const f06=V.curriculum.byId['F07-C06']?.sourceRanges||[];
 ok(f06.length===2&&f06.every(r=>r.doc==='prevention1')&&Number(f06[0].from)===321&&Number(f06[1].from)===333&&V.contentPacks.authored['F07-C06']?.status==='verified'&&V.contentPacks.authored['F07-C06']?.sourcePrecision==='exact-pdf-page-anchor','simple + ESFR sprinkler concept keeps exact Prevention1 pages 321 and 333');
 const f15=V.curriculum.byId['F07-C15']?.sourceRanges||[];
