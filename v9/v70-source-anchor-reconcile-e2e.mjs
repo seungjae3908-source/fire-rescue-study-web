@@ -22,7 +22,24 @@ try{
         out[doc][q]=(r.results||[]).map(x=>({pdfPage:x.page,bookPage:x.bookPage,score:x.score}));
       }
     }
-    return out;
+    const snippets={};
+    const inspect={
+      prevention2:[419,425,454,523,524,525,526,527,528,529,530,531,532],
+      prevention1:[468,469,470,471,472]
+    };
+    for(const [doc,bookPages] of Object.entries(inspect)){
+      const entry=await V.SourcePDF.openPdf(doc,{timeoutMs:120000});
+      snippets[doc]=[];
+      for(const bookPage of bookPages){
+        const pdfPage=V.SourcePDF.pdfPage(doc,bookPage);
+        if(pdfPage<1||pdfPage>entry.pdf.numPages)continue;
+        const pg=await entry.pdf.getPage(pdfPage);
+        const tc=await pg.getTextContent();
+        const text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
+        snippets[doc].push({bookPage,pdfPage,text:text.slice(0,2200)});
+      }
+    }
+    return{matches:out,snippets};
   });
   console.log('V70_SOURCE_ANCHOR_RECONCILE',JSON.stringify(result,null,2));
   await ctx.close();
