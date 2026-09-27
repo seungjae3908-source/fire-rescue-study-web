@@ -8,6 +8,7 @@
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const cfg=window.AITUTOR_V9_CONFIG||{};
 const OFFICIAL_CACHE_EPOCH=String(cfg.officialPdfCacheEpoch||'');
+const OFFICIAL_CACHE_MAX_AGE_MS=24*60*60*1000;
 const DB='aitutor-v9-official-source-pdfs',VER=1;let dbp=null,activeRemote=null;const pdfCache=new Map();
 const PAGE_OFFSETS=Object.freeze({fire1:16,fire2:10,ems:18,prevention1:14,prevention2:12,law1:4,law2:12,law3:8,law4:6,law5:14});
 const pdfPage=(key,bookPage)=>{const n=Number(bookPage);if(!Number.isFinite(n)||n<=0)return 0;return Object.prototype.hasOwnProperty.call(PAGE_OFFSETS,key)?n+PAGE_OFFSETS[key]:n};
@@ -32,7 +33,8 @@ async function deleteStoredSource(key){const d=await db(),t=d.transaction('sourc
 const officialCachedRow=row=>/^official-/.test(String(row?.origin||''));
 async function get(key){
   const row=await readStoredSource(key);
-  if(row?.blob&&officialCachedRow(row)&&(!OFFICIAL_CACHE_EPOCH||row.cacheEpoch!==OFFICIAL_CACHE_EPOCH)){
+  const officialAge=Date.now()-Number(row?.updatedAt||0);
+  if(row?.blob&&officialCachedRow(row)&&(!OFFICIAL_CACHE_EPOCH||row.cacheEpoch!==OFFICIAL_CACHE_EPOCH||!Number.isFinite(officialAge)||officialAge<0||officialAge>OFFICIAL_CACHE_MAX_AGE_MS)){
     try{await deleteStoredSource(key)}catch{}
     if(activeRemote?.key===key)activeRemote=null;
     return null;
@@ -321,7 +323,7 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
   return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',officialCacheEpoch:OFFICIAL_CACHE_EPOCH,privacy:{localCacheAllowed:true,persistentOfficialCache:true,officialCacheEpochRequired:true,staleOfficialCacheAutoDelete:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v15-range-remote-cache-epoch-anchor-context-lines'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',officialCacheEpoch:OFFICIAL_CACHE_EPOCH,officialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,privacy:{localCacheAllowed:true,persistentOfficialCache:true,officialCacheEpochRequired:true,staleOfficialCacheAutoDelete:true,persistentOfficialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v15-range-remote-cache-epoch-anchor-context-lines'};
 })();
 
 ;
