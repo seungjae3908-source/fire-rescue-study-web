@@ -24,10 +24,26 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Restore Playwright Chromium cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: study119-playwright-chromium-${{ runner.os }}-1.55.0
+
+      - name: Restore ten-PDF audit cache
+        uses: actions/cache@v4
+        with:
+          path: official-pdf-mirror
+          key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs') }}
       - name: Install browser audit dependencies
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
-          npx playwright install --with-deps chromium
+          npx playwright install-deps chromium
+          if [[ ! -x "$HOME/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell" && ! -d "$HOME/.cache/ms-playwright/chromium-1187" ]]; then
+            npx playwright install chromium
+          else
+            echo "PLAYWRIGHT_BROWSER_CACHE_HIT"
+          fi
       - name: Materialize ten-PDF audit mirror
         shell: bash
         run: |
