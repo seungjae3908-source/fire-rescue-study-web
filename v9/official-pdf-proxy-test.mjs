@@ -140,4 +140,66 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   assert.equal(candidates,4,'initial candidate attempt plus at most three fresh-session retries');
 }
 
+
+{
+  let seenUrl='',seenHeaders=null;
+  const result=await P.fetchPagesMirror(
+    'law2',
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    async (url,options)=>{
+      seenUrl=url;seenHeaders=options.headers;
+      return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(55)),{
+        status:206,
+        headers:{
+          'content-type':'application/pdf',
+          'content-range':'bytes 0-63/5438067',
+          'accept-ranges':'bytes',
+          'content-length':'64'
+        }
+      });
+    }
+  );
+  assert.equal(seenUrl,'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror/law2.pdf');
+  assert.equal(seenHeaders.range,'bytes=0-63','Pages mirror receives the exact browser byte range');
+  assert.equal(result.upstream.status,206,'Pages mirror preserves HTTP 206');
+  assert.equal(result.transport,'pages-mirror','Pages mirror transport is explicit');
+}
+{
+  let mirrorErrors=[],nfaCalls=0;
+  const result=await P.fetchPdfWithPagesFirst(
+    'law2',
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    {
+      pagesImpl:async()=>{throw new Error('PAGES_MIRROR_RANGE_UNSUPPORTED_200')},
+      nfaImpl:async()=>{
+        nfaCalls++;
+        return{row:{doc:'law2',name:'4. 소방법령2.pdf'},upstream:pdf()};
+      },
+      onMirrorError:m=>mirrorErrors.push(m)
+    }
+  );
+  assert.equal(nfaCalls,1,'Pages mirror failure falls back to the existing NFA resolver exactly once');
+  assert.equal(result.transport,'nfa-origin','fallback transport is explicit');
+  assert.match(mirrorErrors[0],/PAGES_MIRROR_RANGE_UNSUPPORTED_200/);
+}
+{
+  let pagesCalls=0,nfaCalls=0;
+  await P.fetchPdfWithPagesFirst(
+    'fire1',
+    {method:'GET',headers:{}},
+    false,
+    {
+      pagesImpl:async()=>{pagesCalls++;throw new Error('SHOULD_NOT_RUN')},
+      nfaImpl:async()=>{
+        nfaCalls++;
+        return{row:{doc:'fire1',name:'10. 소방전술1(화재1).pdf'},upstream:pdf()};
+      }
+    }
+  );
+  assert.equal(pagesCalls,0,'fire1 keeps its existing path and never uses the Pages law/prevention mirror');
+  assert.equal(nfaCalls,1,'fire1 continues through the existing proxy resolver when needed');
+}
+
 console.log('PASS official PDF proxy deterministic candidate-selection contract');
