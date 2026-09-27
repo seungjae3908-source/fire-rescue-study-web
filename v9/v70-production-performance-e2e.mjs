@@ -83,7 +83,7 @@ async function rangeProbe(url){
   const r=await fetch(url,{headers:{range:'bytes=0-65535','cache-control':'no-cache'}});
   const h=Object.fromEntries(r.headers.entries());
   const ab=await r.arrayBuffer();
-  return{status:r.status,bytes:ab.byteLength,contentRange:h['content-range']||'',acceptRanges:h['accept-ranges']||'',contentLength:h['content-length']||'',contentType:h['content-type']||''}
+  return{status:r.status,bytes:ab.byteLength,contentRange:h['content-range']||'',acceptRanges:h['accept-ranges']||'',contentLength:h['content-length']||'',contentType:h['content-type']||'',transport:h['x-119-official-transport']||''}
 }
 const browser=await chromium.launch({headless:true});
 try{
@@ -122,8 +122,13 @@ try{
 
   const [law2Meta,fire1,law2]=await Promise.all([proxyMeta('law2'),measurePdf(browser,'fire1'),measurePdf(browser,'law2')]);
 
+  const pagesProxyDocs=['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'];
+  const sameOriginPagesRanges=Object.fromEntries(await Promise.all(
+    pagesProxyDocs.map(async doc=>[doc,await rangeProbe(new URL('/api/official-pdf?doc='+encodeURIComponent(doc),production))])
+  ));
   const proxyRangeProbe={
-    sameOrigin:await rangeProbe(new URL('/api/official-pdf?doc=law2',production)),
+    sameOrigin:sameOriginPagesRanges.law2,
+    sameOriginPagesRanges,
     external:await rangeProbe('https://study-119-pdf-proxy.vercel.app/api/official-pdf?doc=law2')
   };
   const metrics={
@@ -144,11 +149,30 @@ try{
   console.log('V70_PRODUCTION_PERFORMANCE',JSON.stringify(metrics));
 
   assert(questionCold<3000,'QUESTION_COLD_TOO_SLOW_'+round(questionCold));
-  const law2NeedsStaticMirror=law2.renderMs>=10000||law2.origin!=='official-static-range';
-  console.log('V70_LAW2_MIRROR_REQUIRED',JSON.stringify({required:law2NeedsStaticMirror,renderMs:law2.renderMs,origin:law2.origin,rangeProbe:proxyRangeProbe}));
+  const law2HasTrueRange=law2.statuses.includes(206)&&law2.ranges.some(Boolean);
+  const law2NeedsRangeFix=law2.renderMs>=10000||!law2HasTrueRange;
+  console.log('V70_LAW2_RANGE_STATUS',JSON.stringify({required:law2NeedsRangeFix,renderMs:law2.renderMs,origin:law2.origin,statuses:law2.statuses,ranges:law2.ranges,rangeProbe:proxyRangeProbe}));
   if(process.env.STUDY_119_REQUIRE_LAW2_STATIC==='1'){
     assert(law2.renderMs<10000,'LAW2_STATIC_RENDER_TOO_SLOW_'+law2.renderMs);
     assert(law2.origin==='official-static-range','LAW2_NOT_STATIC_RANGE_'+law2.origin);
+  }
+  if(process.env.STUDY_119_REQUIRE_LAW2_PROXY_RANGE==='1'){
+    assert(law2.renderMs<10000,'LAW2_PROXY_RANGE_RENDER_TOO_SLOW_'+law2.renderMs);
+    assert(law2.origin==='official-proxy-range','LAW2_NOT_PROXY_RANGE_'+law2.origin);
+    assert(law2.statuses.includes(206),'LAW2_PROXY_BROWSER_NO_206_'+JSON.stringify(law2.statuses));
+    assert(law2.ranges.some(Boolean),'LAW2_PROXY_BROWSER_NO_CONTENT_RANGE');
+    assert(proxyRangeProbe.sameOrigin.status===206,'LAW2_SAME_ORIGIN_PROXY_NO_206_'+proxyRangeProbe.sameOrigin.status);
+    assert(proxyRangeProbe.sameOrigin.bytes===65536,'LAW2_SAME_ORIGIN_PROXY_WRONG_RANGE_BYTES_'+proxyRangeProbe.sameOrigin.bytes);
+    for(const doc of pagesProxyDocs){
+      const p=proxyRangeProbe.sameOriginPagesRanges[doc];
+      assert(p.status===206,'PAGES_PROXY_NO_206_'+doc+'_'+p.status);
+      assert(p.bytes===65536,'PAGES_PROXY_WRONG_RANGE_BYTES_'+doc+'_'+p.bytes);
+      assert(!!p.contentRange,'PAGES_PROXY_NO_CONTENT_RANGE_'+doc);
+      assert(!!p.acceptRanges,'PAGES_PROXY_NO_ACCEPT_RANGES_'+doc);
+      assert((p.contentType||'').includes('application/pdf'),'PAGES_PROXY_BAD_CONTENT_TYPE_'+doc+'_'+p.contentType);
+      assert(p.transport==='pages-mirror','PAGES_PROXY_WRONG_TRANSPORT_'+doc+'_'+p.transport);
+    }
+    console.log('V70_ALL_PAGES_PROXY_RANGE_SUCCESS',JSON.stringify(proxyRangeProbe.sameOriginPagesRanges));
   }
 
   assert(fire1.origin==='official-static-range','FIRE1_NOT_STATIC_RANGE_'+fire1.origin);

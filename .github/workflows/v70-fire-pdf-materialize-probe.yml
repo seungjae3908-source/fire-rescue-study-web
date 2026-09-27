@@ -1,0 +1,59 @@
+name: V70 Fire PDF Materialize Probe
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: v70-fire-pdf-materialize-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  materialize_fire_pdfs:
+    name: curl materialize fire1 fire2 ems
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Resolve and materialize official fire PDFs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fire-pdf-probe
+          for doc in fire1 fire2 ems; do
+            meta="/tmp/fire-pdf-probe/$doc.json"
+            out="/tmp/fire-pdf-probe/$doc.pdf"
+            node v9/official-pdf-materialize-resolve.mjs "$doc" "$meta"
+            referer="$(jq -r '.detailUrl' "$meta")"
+            cookie="$(jq -r '.cookie' "$meta")"
+            ok=0
+            while IFS= read -r url; do
+              tmp="${out}.tmp"
+              rm -f "$tmp"
+              args=(-fsSL --retry 4 --retry-delay 2 --retry-all-errors --connect-timeout 20 --max-time 180
+                -A 'Mozilla/5.0 (compatible; 119Study/1.0)'
+                -H 'Accept: application/pdf,*/*;q=0.8'
+                -H 'Cache-Control: no-cache'
+                -e "$referer")
+              if [[ -n "$cookie" ]]; then args+=(-H "Cookie: $cookie"); fi
+              if curl "${args[@]}" "$url" -o "$tmp"; then
+                magic="$(head -c 5 "$tmp" 2>/dev/null || true)"
+                bytes="$(wc -c < "$tmp" | tr -d ' ')"
+                if [[ "$magic" == "%PDF-" && "$bytes" -gt 100000 ]]; then
+                  mv "$tmp" "$out"
+                  ok=1
+                  break
+                fi
+              fi
+              rm -f "$tmp"
+            done < <(jq -r '.urls[]' "$meta")
+            test "$ok" = "1"
+            bytes="$(wc -c < "$out" | tr -d ' ')"
+            sha="$(sha256sum "$out" | awk '{print $1}')"
+            echo "FIRE_PDF_MATERIALIZE_SUCCESS doc=$doc bytes=$bytes sha256=$sha"
+          done

@@ -140,4 +140,175 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   assert.equal(candidates,4,'initial candidate attempt plus at most three fresh-session retries');
 }
 
+
+{
+  let seenUrl='',seenHeaders=null;
+  const result=await P.fetchPagesMirror(
+    'law2',
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    async (url,options)=>{
+      seenUrl=url;seenHeaders=options.headers;
+      return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(55)),{
+        status:206,
+        headers:{
+          'content-type':'application/pdf',
+          'content-range':'bytes 0-63/5438067',
+          'accept-ranges':'bytes',
+          'content-length':'64'
+        }
+      });
+    }
+  );
+  assert.equal(seenUrl,'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror/law2.pdf');
+  assert.equal(seenHeaders.range,'bytes=0-63','Pages mirror receives the exact browser byte range');
+  assert.equal(result.upstream.status,206,'Pages mirror preserves HTTP 206');
+  assert.equal(result.transport,'pages-mirror','Pages mirror transport is explicit');
+}
+{
+  let mirrorErrors=[],nfaCalls=0;
+  const result=await P.fetchPdfWithPagesFirst(
+    'law2',
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    {
+      pagesImpl:async()=>{throw new Error('PAGES_MIRROR_RANGE_UNSUPPORTED_200')},
+      nfaImpl:async()=>{
+        nfaCalls++;
+        return{row:{doc:'law2',name:'4. 소방법령2.pdf'},upstream:pdf()};
+      },
+      onMirrorError:m=>mirrorErrors.push(m)
+    }
+  );
+  assert.equal(nfaCalls,1,'Pages mirror failure falls back to the existing NFA resolver exactly once');
+  assert.equal(result.transport,'nfa-origin','fallback transport is explicit');
+  assert.match(mirrorErrors[0],/PAGES_MIRROR_RANGE_UNSUPPORTED_200/);
+}
+{
+  let pagesCalls=0,nfaCalls=0;
+  const result=await P.fetchPdfWithPagesFirst(
+    'fire1',
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    {
+      pagesImpl:async()=>{
+        pagesCalls++;
+        return{row:{doc:'fire1',name:'10. 소방전술1(화재1).pdf'},upstream:new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(55)),{status:206,headers:{'content-type':'application/pdf','content-range':'bytes 0-63/1000','accept-ranges':'bytes','content-length':'64'}}),transport:'pages-mirror'};
+      },
+      nfaImpl:async()=>{
+        nfaCalls++;
+        return{row:{doc:'fire1',name:'10. 소방전술1(화재1).pdf'},upstream:pdf()};
+      }
+    }
+  );
+  assert.equal(pagesCalls,1,'fire1 now uses the persistent Pages mirror first');
+  assert.equal(nfaCalls,0,'fire1 does not touch NFA when the Pages mirror is healthy');
+  assert.equal(result.transport,'pages-mirror','fire1 Pages transport is explicit');
+}
+{
+  let nfaCalls=0;
+  const result=await P.fetchPdfWithPagesFirst(
+    'ems',
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    {
+      pagesImpl:async()=>{throw new Error('PAGES_MIRROR_HTTP_404')},
+      nfaImpl:async()=>{
+        nfaCalls++;
+        return{row:{doc:'ems',name:'13. 소방전술3(구급)-저용량.pdf'},upstream:pdf()};
+      },
+      onMirrorError:()=>{}
+    }
+  );
+  assert.equal(nfaCalls,1,'fire/EMS Pages failure still falls back to NFA exactly once');
+  assert.equal(result.transport,'nfa-origin','fire/EMS fallback transport remains explicit');
+}
+
+
+{
+  const row={
+    doc:'fire1',
+    name:'10. 소방전술1(화재1).pdf',
+    detailUrl:'https://www.nfa.go.kr/detail',
+    cookie:'',
+    urls:[
+      'https://www.nfa.go.kr/board/file/bbs/1/FIRST/fire1',
+      'https://www.nfa.go.kr/board/file/bbs/1/SECOND/fire1'
+    ]
+  };
+  const seen=[];
+  const result=await P.fetchFirstWorkingCandidate(
+    row,
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    async url=>{
+      seen.push(url);
+      if(url.includes('/FIRST/'))return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(58)),{status:200,headers:{'content-type':'application/pdf','content-length':'68'}});
+      return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(55)),{status:206,headers:{'content-type':'application/pdf','content-range':'bytes 0-63/1000','accept-ranges':'bytes','content-length':'64'}});
+    }
+  );
+  assert.equal(result.upstream.status,206,'explicit browser Range prefers a true HTTP 206 candidate over an earlier PDF 200 candidate');
+  assert.match(result.row.url,/\/SECOND\//,'true Range candidate is promoted to the front of the cached URL order');
+  assert.equal(seen.length,2,'explicit Range probes additional candidate after a valid but non-range 200 response');
+}
+
+{
+  const row={
+    doc:'fire1',
+    name:'10. 소방전술1(화재1).pdf',
+    detailUrl:'https://www.nfa.go.kr/detail',
+    cookie:'',
+    urls:['https://www.nfa.go.kr/board/file/bbs/1/FALLBACK/fire1']
+  };
+  const seen=[];
+  const result=await P.fetchFirstWorkingCandidate(
+    row,
+    {method:'GET',headers:{range:'bytes=65536-131071'}},
+    false,
+    async (_url,options)=>{
+      seen.push(options.headers.range||'');
+      if(options.headers.range)return new Response('missing',{status:404,headers:{'content-type':'text/plain'}});
+      return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(2048)),{status:200,headers:{'content-type':'application/pdf','content-length':'2057'}});
+    }
+  );
+  assert.equal(result.upstream.status,200,'Range-only 404 falls back to a full PDF candidate request');
+  assert.deepEqual(seen,['bytes=65536-131071',''],'fallback removes the Range header on the second candidate pass');
+  assert.match(await result.upstream.text(),/^%PDF-/,'full candidate fallback still validates as PDF');
+}
+
+{
+  let calls=0;
+  const row={doc:'fire1',name:'10. 소방전술1(화재1).pdf',detailUrl:'https://www.nfa.go.kr/detail',cookie:'',urls:['https://www.nfa.go.kr/board/file/bbs/1/ONE_TIME/fire1']};
+  const result=await P.fetchFirstWorkingCandidate(
+    row,
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    async ()=>{
+      calls++;
+      if(calls>1)return new Response('gone',{status:404,headers:{'content-type':'text/plain'}});
+      return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(58)),{status:200,headers:{'content-type':'application/pdf','content-length':'68'}});
+    }
+  );
+  assert.equal(calls,1,'one-time valid PDF 200 response is not discarded and refetched after Range probing');
+  assert.equal(result.upstream.status,200,'one-time valid 200 response remains available for synthetic/buffered Range serving');
+}
+
+{
+  const raw=Buffer.from('%PDF-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  const upstream=new Response(raw,{status:200,headers:{'content-type':'application/pdf','content-length':String(raw.length)}});
+  const ranged=P.syntheticRangeResponse(upstream,'bytes=5-14');
+  assert.ok(ranged,'200 upstream can be converted to a synthetic range response');
+  assert.equal(ranged.status,206,'synthetic range returns HTTP 206');
+  assert.equal(ranged.headers.get('content-range'),'bytes 5-14/'+raw.length,'synthetic range reports exact Content-Range');
+  assert.equal(ranged.headers.get('content-length'),'10','synthetic range reports exact slice length');
+  assert.equal(ranged.headers.get('accept-ranges'),'bytes','synthetic range advertises byte ranges');
+  const body=Buffer.from(await ranged.arrayBuffer());
+  assert.deepEqual(body,raw.subarray(5,15),'synthetic range body matches the requested byte slice');
+}
+{
+  const parsed=P.parseByteRange('bytes=10-',100);
+  assert.deepEqual(parsed,{start:10,end:99,length:90,total:100},'open-ended browser range is normalized against upstream length');
+  assert.equal(P.parseByteRange('bytes=100-120',100),null,'out-of-bounds browser range is rejected');
+}
+
 console.log('PASS official PDF proxy deterministic candidate-selection contract');

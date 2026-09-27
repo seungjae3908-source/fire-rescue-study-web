@@ -102,6 +102,7 @@ jobs:
           node --check v9/v69-bootstrap-bundle-audit.mjs
           node --check v9/v69-bootstrap-network-e2e.mjs
           node --check v9/v70-production-performance-e2e.mjs
+          node --check v9/v70-official-pdf-cache-epoch-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -225,11 +226,35 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Probe current Production availability
+        id: production_access
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          endpoint="${STUDY_119_PREVIEW_URL%/}/api/runtime-head"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "$endpoint" || true)"
+          if [[ "$code" == "200" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$code" == "402" ]] && grep -q 'DEPLOYMENT_DISABLED' "$body"; then
+            echo "::warning::PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "blocker=VERCEL_DEPLOYMENT_DISABLED" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "UNEXPECTED_PRODUCTION_ACCESS_STATUS=$code"
+          cat "$body"
+          exit 1
       - name: Install Production suggestion browser QA
+        if: steps.production_access.outputs.available == 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Verify current Production suggestion guest + anon guards
+        if: steps.production_access.outputs.available == 'true'
         run: node v9/suggestions-production-public-e2e.mjs
 
 
@@ -241,7 +266,7 @@ jobs:
     timeout-minutes: 15
     env:
       STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
-      STUDY_119_EXPECTED_RUNTIME_HEAD: cd5a23bd0aa0f42ec5ef26261ac1b5c99e617376
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
@@ -265,11 +290,60 @@ jobs:
           test -n "$content_range"
           test -n "$acao"
 
+      - name: Probe all 7 GitHub Pages PDF Range + CORS
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          for doc in prevention1 prevention2 law1 law2 law3 law4 law5; do
+            url="$base/$doc.pdf"
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' -H 'Range: bytes=0-65535' -H 'Origin: https://fire-rescue-study-web.vercel.app' "$url")"
+            bytes="$(wc -c < "$body" | tr -d ' ')"
+            content_range="$(grep -i '^content-range:' "$headers" | tail -1 | tr -d '\r' || true)"
+            accept_ranges="$(grep -i '^accept-ranges:' "$headers" | tail -1 | tr -d '\r' || true)"
+            acao="$(grep -i '^access-control-allow-origin:' "$headers" | tail -1 | tr -d '\r' || true)"
+            magic="$(head -c 5 "$body")"
+            echo "V70_PAGES_PDF_RANGE_PROBE doc=$doc status=$code bytes=$bytes magic=$magic $content_range $accept_ranges $acao"
+            test "$code" = "206"
+            test "$bytes" = "65536"
+            test "$magic" = "%PDF-"
+            test -n "$content_range"
+            test -n "$accept_ranges"
+            test -n "$acao"
+            rm -f "$headers" "$body"
+          done
+
+      - name: Probe current Production availability
+        id: production_access
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          endpoint="${STUDY_119_PRODUCTION_URL%/}/api/runtime-head"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "$endpoint" || true)"
+          if [[ "$code" == "200" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$code" == "402" ]] && grep -q 'DEPLOYMENT_DISABLED' "$body"; then
+            echo "::warning::PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "blocker=VERCEL_DEPLOYMENT_DISABLED" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "UNEXPECTED_PRODUCTION_ACCESS_STATUS=$code"
+          cat "$body"
+          exit 1
       - name: Install V70 Production performance browser
+        if: steps.production_access.outputs.available == 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Measure exact Production performance
+        if: steps.production_access.outputs.available == 'true'
         run: node v9/v70-production-performance-e2e.mjs
 
 
@@ -288,12 +362,81 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Restore branch PDF audit cache
+        uses: actions/cache@v4
+        with:
+          path: official-pdf-mirror
+          key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
+      - name: Materialize branch ten-PDF mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p official-pdf-mirror
+          pages_base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          for doc in prevention1 prevention2 law1 law2 law3 law4 law5; do
+            out="official-pdf-mirror/$doc.pdf"
+            bytes="$(wc -c < "$out" 2>/dev/null | tr -d ' ' || echo 0)"
+            if [[ -s "$out" && "$(head -c 5 "$out" 2>/dev/null || true)" == "%PDF-" && "$bytes" -gt 100000 ]]; then
+              echo "V9_BROWSER_PDF_CACHE_HIT doc=$doc bytes=$bytes"
+              continue
+            fi
+            rm -f "$out"
+            curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$pages_base/$doc.pdf" -o "$out"
+          done
+          bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems
+          for doc in fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5; do
+            test "$(head -c 5 "official-pdf-mirror/$doc.pdf")" = "%PDF-"
+            test "$(wc -c < "official-pdf-mirror/$doc.pdf" | tr -d ' ')" -gt 100000
+          done
+      - name: Start branch-local official PDF provider
+        id: remote_pdf
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup node --input-type=module -e "import { startLocalPdfMirror } from './v9/v70-local-pdf-mirror-server.mjs'; await startLocalPdfMirror({port:4174}); await new Promise(()=>{});" > /tmp/study119-branch-pdf.log 2>&1 &
+          echo $! > /tmp/study119-branch-pdf.pid
+          source_url="http://127.0.0.1:4174/official-pdf-mirror/fire1.pdf"
+          for attempt in $(seq 1 30); do
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' --max-time 5 -H 'Range: bytes=0-63' "$source_url" || true)"
+            magic="$(head -c 5 "$body" 2>/dev/null || true)"
+            rm -f "$headers" "$body"
+            if [[ "$code" == "206" && "$magic" == "%PDF-" ]]; then
+              echo "available=true" >> "$GITHUB_OUTPUT"
+              echo "provider=branch-local" >> "$GITHUB_OUTPUT"
+              echo "V9_BRANCH_PDF_PROVIDER_READY"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/study119-branch-pdf.log
+          exit 1
+      - name: Rewrite branch runtime to local PDF provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('v9/boot-v69-1.js')
+          text=path.read_text()
+          text=text.replace(
+            'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',
+            'http://127.0.0.1:4174/official-pdf-mirror'
+          )
+          text=text.replace(
+            'https://study-119-pdf-proxy.vercel.app',
+            'http://127.0.0.1:4174'
+          )
+          path.write_text(text)
+          PY
+          grep -q "http://127.0.0.1:4174/official-pdf-mirror" v9/boot-v69-1.js
       - name: Install browser QA dependency
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
@@ -312,9 +455,14 @@ jobs:
         env:
           STUDY_119_V69_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v69-bootstrap-network-e2e.mjs
+      - name: V70 official PDF browser cache epoch QA
+        env:
+          STUDY_119_V70_CACHE_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v70-official-pdf-cache-epoch-e2e.mjs
       - name: V66 branch real-interaction scroll QA
         env:
           STUDY_119_V66_URL: http://127.0.0.1:4173/v9/index.html
+          STUDY_119_SKIP_REMOTE_PDF: ${{ steps.remote_pdf.outputs.available == 'true' && '0' || '1' }}
         run: node v9/v66-real-interaction-scroll-e2e.mjs
       - name: V67 whole-app real UX + layout audit
         env:
@@ -325,42 +473,60 @@ jobs:
           STUDY_119_V68_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v68-detail-source-brand-e2e.mjs
       - name: Phase A remaining official-PDF evidence audit
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/phase-a-source-audit.mjs
       - name: Phase B EMS official-PDF evidence audit
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/phase-b-ems-source-audit.mjs
       - name: V29 first-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v29-source-review-e2e.mjs
       - name: V29 second-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v29-batch2-source-review-e2e.mjs
       - name: V38 third-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v38-batch3-source-review-e2e.mjs
       - name: V40 fourth-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v40-batch4-source-review-e2e.mjs
       - name: V41 fifth-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v41-batch5-source-review-e2e.mjs
       - name: V43 sixth-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v43-batch6-source-review-e2e.mjs
       - name: V44 seventh-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v44-batch7-source-review-e2e.mjs
       - name: V45 eighth-batch official source page review
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v45-batch8-source-review-e2e.mjs
       - name: V45 pediatric source boundary reconciliation
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v45-blocker-source-reconcile-e2e.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
       - name: Korean image OCR quality + owner isolation QA
         run: node v9/image-ocr-e2e.mjs
       - name: PC/tablet/mobile 119 textbook + evidence flow QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/e2e.mjs
       - name: V53 tablet usability + bounded official-source loading QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v53-tablet-ux-e2e.mjs
       - name: V54 tablet-PC + medium desktop + PDF range QA
+        if: steps.remote_pdf.outputs.available == 'true'
+        env:
+          STUDY_119_PDF_MIRROR_BASE: http://127.0.0.1:4174/official-pdf-mirror
         run: node v9/v54-tablet-pc-e2e.mjs
       - name: V55 core/detail precision + navigation QA
         run: node v9/v55-core-detail-precision-e2e.mjs
       - name: V56 study usability + answer integrity + PDF find QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v56-study-usability-integrity-e2e.mjs
       - name: V57 daily-study UX + filters + retry + undo + multi-result PDF QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v57-daily-study-ux-e2e.mjs
       - name: V59 seeded round + variant persistence QA
         run: node v9/v59-seeded-round-variant-e2e.mjs
@@ -377,6 +543,7 @@ jobs:
       - name: Active exam reload recovery and timer QA
         run: node v9/exam-session-e2e.mjs
       - name: Final learner journey backup wrong-answer exam source AI QA
+        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/final-user-journey-e2e.mjs
       - name: Structured detail core underline and latest AI chat QA
         run: node v9/study-structure-chat-e2e.mjs
@@ -399,6 +566,63 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Restore V51 official PDF audit cache
+        uses: actions/cache@v4
+        with:
+          path: official-pdf-mirror
+          key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
+      - name: Materialize V51 branch ten-PDF mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p official-pdf-mirror
+          pages_base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          for doc in prevention1 prevention2 law1 law2 law3 law4 law5; do
+            out="official-pdf-mirror/$doc.pdf"
+            bytes="$(wc -c < "$out" 2>/dev/null | tr -d ' ' || echo 0)"
+            if [[ -s "$out" && "$(head -c 5 "$out" 2>/dev/null || true)" == "%PDF-" && "$bytes" -gt 100000 ]]; then
+              echo "V51_PDF_CACHE_HIT doc=$doc bytes=$bytes"
+              continue
+            fi
+            rm -f "$out"
+            curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$pages_base/$doc.pdf" -o "$out"
+          done
+          bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems
+          for doc in fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5; do
+            test "$(head -c 5 "official-pdf-mirror/$doc.pdf")" = "%PDF-"
+            test "$(wc -c < "official-pdf-mirror/$doc.pdf" | tr -d ' ')" -gt 100000
+          done
+      - name: Start V51 branch-local PDF provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup node --input-type=module -e "import { startLocalPdfMirror } from './v9/v70-local-pdf-mirror-server.mjs'; await startLocalPdfMirror({port:4174}); await new Promise(()=>{});" > /tmp/study119-v51-pdf.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            body="$(mktemp)"
+            code="$(curl -sS -o "$body" -w '%{http_code}' --max-time 5 -H 'Range: bytes=0-63' 'http://127.0.0.1:4174/official-pdf-mirror/fire1.pdf' || true)"
+            magic="$(head -c 5 "$body" 2>/dev/null || true)"
+            rm -f "$body"
+            if [[ "$code" == "206" && "$magic" == "%PDF-" ]]; then
+              echo "V51_BRANCH_PDF_PROVIDER_READY"
+              break
+            fi
+            if [[ "$attempt" == "30" ]]; then cat /tmp/study119-v51-pdf.log; exit 1; fi
+            sleep 1
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('v9/boot-v69-1.js')
+          text=path.read_text()
+          text=text.replace(
+            'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',
+            'http://127.0.0.1:4174/official-pdf-mirror'
+          )
+          text=text.replace(
+            'https://study-119-pdf-proxy.vercel.app',
+            'http://127.0.0.1:4174'
+          )
+          path.write_text(text)
+          PY
       - name: Install V51 official textbook audit browser
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149

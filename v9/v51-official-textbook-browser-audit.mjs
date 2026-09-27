@@ -155,6 +155,7 @@ try{
   console.log('V51_OFFICIAL_TEXTBOOK_ROWS');console.table(rows.map(x=>({id:x.id,title:x.title,scopeId:x.scopeId,subject:x.subject,ranges:x.ranges,links:x.links,sampled:x.sampled,readable:x.readable,anchorHits:x.anchorHits,renderHits:x.renderHits,contractRanges:x.contractRanges,contractOk:x.contractOk})));
   if(rows.length!==183)throw new Error('V51_OFFICIAL_CURRICULUM_COUNT '+rows.length);
   if(issues.length)throw new Error('V51_OFFICIAL_TEXTBOOK_FAILED '+JSON.stringify(issues.slice(0,40)));
+  if(anchorReview.length)throw new Error('V51_OFFICIAL_TEXTBOOK_ANCHOR_REVIEW_REQUIRED '+JSON.stringify(anchorReview.slice(0,40)));
   console.log('V51_OFFICIAL_TEXTBOOK_BROWSER_AUDIT_COMPLETE');
   await ctx.close();
 }finally{await browser.close()}

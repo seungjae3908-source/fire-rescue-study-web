@@ -20,6 +20,8 @@ const SOURCES=Object.freeze({
   law5:{cntId:'106806',name:'7. 소방법령5.pdf'}
 });
 const cache=new Map();
+const PAGES_MIRROR_BASE='https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror';
+const PAGES_MIRROR_DOCS=new Set(['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5']);
 
 function one(v){return Array.isArray(v)?v[0]:v}
 function norm(s){return String(s||'').toLowerCase().replace(/&nbsp;|\s|_|-/g,'').replace(/[^0-9a-z가-힣().]/g,'')}
@@ -124,6 +126,30 @@ function typeLooksPdf(res){
   const type=String((res&&res.headers&&res.headers.get&&res.headers.get('content-type'))||'').toLowerCase();
   return type.includes('pdf')||type.includes('octet-stream');
 }
+function pagesMirrorUrl(doc){
+  return PAGES_MIRROR_DOCS.has(doc)?PAGES_MIRROR_BASE+'/'+encodeURIComponent(doc)+'.pdf':'';
+}
+async function fetchPagesMirror(doc,req,meta=false,fetchImpl=fetch){
+  const url=pagesMirrorUrl(doc);if(!url)throw new Error('PAGES_MIRROR_NOT_CONFIGURED');
+  const headers={'user-agent':UA,'accept':'application/pdf,*/*;q=0.8','cache-control':'no-cache'};
+  const clientRange=(req.headers&&req.headers.range)||'';
+  const range=meta?'bytes=0-63':(clientRange||((req.method||'GET')==='GET'?'bytes=0-':''));
+  if(range)headers.range=range;
+  if(req.headers&&req.headers['if-range'])headers['if-range']=req.headers['if-range'];
+  const upstream=await fetchImpl(url,{method:req.method||'GET',headers,redirect:'follow'});
+  if(![200,206].includes(upstream.status)||!typeLooksPdf(upstream))throw new Error('PAGES_MIRROR_HTTP_'+(upstream.status||0));
+  if(clientRange&&!meta&&upstream.status!==206)throw new Error('PAGES_MIRROR_RANGE_UNSUPPORTED_'+upstream.status);
+  const canCheckMagic=(req.method||'GET')!=='HEAD'&&(!range||/^bytes=0-/i.test(range));
+  if(canCheckMagic){
+    let magicOk=false;try{magicOk=await pdfProbe(upstream.clone())}catch{}
+    if(!magicOk)throw new Error('PAGES_MIRROR_NOT_PDF');
+  }
+  return{
+    row:{doc,name:SOURCES[doc].name,url,urls:[url],detailUrl:url,cookie:''},
+    upstream,
+    transport:'pages-mirror'
+  };
+}
 async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
   const baseHeaders={'user-agent':UA,'accept':'application/pdf,*/*;q=0.8','referer':row.detailUrl,'cache-control':'no-cache'};
   if(row.cookie)baseHeaders.cookie=row.cookie;
@@ -131,7 +157,7 @@ async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
   const range=meta?'bytes=0-63':(clientRange||((req.method||'GET')==='GET'?'bytes=0-':''));
   if(range)baseHeaders.range=range;
   if(req.headers&&req.headers['if-range'])baseHeaders['if-range']=req.headers['if-range'];
-  let lastStatus=0;
+  let lastStatus=0,fallback200=null;
   for(const url of row.urls||[]){
     let upstream;
     try{upstream=await fetchImpl(url,{method:req.method||'GET',headers:baseHeaders,redirect:'follow'})}
@@ -151,7 +177,29 @@ async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
         continue;
       }
     }
+    if(clientRange&&!meta&&upstream.status!==206){
+      if(!fallback200)fallback200={url,upstream};
+      else try{await upstream.body?.cancel?.()}catch{}
+      continue;
+    }
+    if(fallback200)try{await fallback200.upstream.body?.cancel?.()}catch{}
     return{row:{...row,url,urls:[url,...(row.urls||[]).filter(x=>x!==url)]},upstream};
+  }
+  if(fallback200){
+    return{row:{...row,url:fallback200.url,urls:[fallback200.url,...(row.urls||[]).filter(x=>x!==fallback200.url)]},upstream:fallback200.upstream};
+  }
+  if(clientRange&&!meta&&(req.method||'GET')==='GET'){
+    const fullHeaders={...baseHeaders};delete fullHeaders.range;delete fullHeaders['if-range'];
+    for(const url of row.urls||[]){
+      let upstream;
+      try{upstream=await fetchImpl(url,{method:'GET',headers:fullHeaders,redirect:'follow'})}
+      catch{continue}
+      lastStatus=upstream.status||0;
+      if(!upstream.ok||!typeLooksPdf(upstream)){try{await upstream.body?.cancel?.()}catch{};continue}
+      let magicOk=false;try{magicOk=await pdfProbe(upstream.clone())}catch{}
+      if(!magicOk){try{await upstream.body?.cancel?.()}catch{};continue}
+      return{row:{...row,url,urls:[url,...(row.urls||[]).filter(x=>x!==url)]},upstream};
+    }
   }
   throw new Error('OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_'+lastStatus);
 }
@@ -231,15 +279,132 @@ async function fetchPdfWith(doc,req,meta=false,deps={}){
   }
   throw new Error('OFFICIAL_SOURCE_REFRESH_EXHAUSTED');
 }
+async function fetchPdfWithPagesFirst(doc,req,meta=false,deps={}){
+  const pagesImpl=deps.pagesImpl||fetchPagesMirror;
+  const nfaImpl=deps.nfaImpl||((d,r,m)=>fetchPdfWith(d,r,m));
+  if(PAGES_MIRROR_DOCS.has(doc)){
+    try{return await pagesImpl(doc,req,meta)}
+    catch(e){
+      const msg=String((e&&e.message)||e||'PAGES_MIRROR_FAILED').slice(0,180);
+      if(typeof deps.onMirrorError==='function')deps.onMirrorError(msg);
+      else console.warn('OFFICIAL_PDF_PAGES_MIRROR_FALLBACK',JSON.stringify({doc,error:msg}));
+    }
+  }
+  const result=await nfaImpl(doc,req,meta);
+  return{...result,transport:result?.transport||'nfa-origin'};
+}
 async function fetchPdf(doc,req,meta=false){
-  return fetchPdfWith(doc,req,meta);
+  return fetchPdfWithPagesFirst(doc,req,meta);
+}
+function parseByteRange(value,total){
+  const m=String(value||'').trim().match(/^bytes=(\d+)-(\d*)$/i);
+  if(!m||!Number.isFinite(total)||total<=0)return null;
+  const start=Number(m[1]),rawEnd=m[2]?Number(m[2]):total-1;
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(rawEnd)||start<0||start>=total||rawEnd<start)return null;
+  const end=Math.min(total-1,rawEnd);
+  return{start,end,length:end-start+1,total};
+}
+async function bufferedRangeBody(response,maxBytes=2*1024*1024){
+  const len=Number(response?.headers?.get?.('content-length')||0);
+  if(!response?.body||!Number.isFinite(len)||len<=0||len>maxBytes)return null;
+  try{
+    const ab=await response.arrayBuffer();
+    if(ab.byteLength!==len)throw new Error('RANGE_BODY_LENGTH_MISMATCH_'+ab.byteLength+'_'+len);
+    return Buffer.from(ab);
+  }catch(err){
+    const e=new Error('RANGE_BODY_BUFFER_FAILED_'+String(err?.message||err).slice(0,160));
+    e.cause=err;
+    throw e;
+  }
+}
+const nfaPdfBufferCache=new Map();
+const NFA_BUFFER_DOCS=new Set(['fire1','fire2','ems']);
+async function nfaFullPdfBuffer(doc,upstream,{ttlMs=10*60*1000,maxBytes=128*1024*1024,timeoutMs=35000}={}){
+  const now=Date.now(),hit=nfaPdfBufferCache.get(doc);
+  if(hit&&hit.expires>now){
+    try{await upstream?.body?.cancel?.()}catch{}
+    return hit.promise;
+  }
+  const expected=Number(upstream?.headers?.get?.('content-length')||0);
+  if(expected>maxBytes)throw new Error('NFA_PDF_TOO_LARGE_'+expected);
+  const promise=(async()=>{
+    const reader=upstream?.body?.getReader?.();
+    if(!reader)throw new Error('NFA_PDF_BUFFER_NO_BODY');
+    const chunks=[];let size=0;const deadline=Date.now()+timeoutMs;
+    try{
+      while(true){
+        const remain=deadline-Date.now();
+        if(remain<=0)throw new Error('NFA_PDF_BUFFER_TIMEOUT');
+        let timer;
+        const step=await Promise.race([
+          reader.read(),
+          new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('NFA_PDF_BUFFER_TIMEOUT')),remain)})
+        ]).finally(()=>clearTimeout(timer));
+        if(step.done)break;
+        if(step.value){
+          size+=step.value.byteLength;
+          if(size>maxBytes)throw new Error('NFA_PDF_BUFFER_SIZE_'+size);
+          chunks.push(Buffer.from(step.value));
+        }
+      }
+    }catch(err){try{await reader.cancel(err)}catch{};throw err}
+    const buf=Buffer.concat(chunks,size);
+    if(!buf.length)throw new Error('NFA_PDF_BUFFER_EMPTY');
+    if(expected>0&&buf.length!==expected)throw new Error('NFA_PDF_BUFFER_LENGTH_'+buf.length+'_'+expected);
+    if(buf.subarray(0,5).toString('latin1')!=='%PDF-')throw new Error('NFA_PDF_BUFFER_NOT_PDF');
+    return buf;
+  })();
+  nfaPdfBufferCache.set(doc,{promise,expires:now+ttlMs});
+  try{return await promise}catch(err){nfaPdfBufferCache.delete(doc);throw err}
+}
+async function bufferedNfaRangeResponse(doc,upstream,value){
+  if(!upstream||upstream.status!==200)return null;
+  const headers=new Headers(upstream.headers),buf=await nfaFullPdfBuffer(doc,upstream),r=parseByteRange(value,buf.length);
+  if(!r)return null;
+  headers.set('content-length',String(r.length));
+  headers.set('content-range',`bytes ${r.start}-${r.end}/${r.total}`);
+  headers.set('accept-ranges','bytes');
+  return new Response(buf.subarray(r.start,r.end+1),{status:206,headers});
+}
+function syntheticRangeResponse(upstream,value){
+  if(!upstream||upstream.status!==200)return null;
+  const total=Number(upstream.headers?.get?.('content-length')||0),r=parseByteRange(value,total);
+  if(!r)return null;
+  const headers=new Headers(upstream.headers);
+  headers.set('content-length',String(r.length));
+  headers.set('content-range',`bytes ${r.start}-${r.end}/${r.total}`);
+  headers.set('accept-ranges','bytes');
+  if(!upstream.body)return new Response(null,{status:206,headers});
+  const reader=upstream.body.getReader();
+  let offset=0,closed=false;
+  const stream=new ReadableStream({
+    async pull(controller){
+      if(closed)return;
+      try{
+        while(true){
+          const {done,value:chunk}=await reader.read();
+          if(done){closed=true;controller.close();return}
+          const chunkStart=offset,chunkEnd=offset+chunk.byteLength-1;offset+=chunk.byteLength;
+          if(chunkEnd<r.start)continue;
+          const from=Math.max(0,r.start-chunkStart),to=Math.min(chunk.byteLength,r.end-chunkStart+1);
+          if(to>from)controller.enqueue(chunk.slice(from,to));
+          if(chunkEnd>=r.end){
+            closed=true;try{await reader.cancel()}catch{}controller.close();
+          }
+          return;
+        }
+      }catch(err){closed=true;controller.error(err)}
+    },
+    async cancel(reason){closed=true;try{await reader.cancel(reason)}catch{}}
+  });
+  return new Response(stream,{status:206,headers});
 }
 
 module.exports=async function handler(req,res){
   res.setHeader('Access-Control-Allow-Origin','*');
   res.setHeader('Access-Control-Allow-Methods','GET, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers','Range, If-Range, Content-Type');
-  res.setHeader('Access-Control-Expose-Headers','Content-Length, Content-Range, Accept-Ranges, ETag, Last-Modified, X-119-Official-Source');
+  res.setHeader('Access-Control-Expose-Headers','Content-Length, Content-Range, Accept-Ranges, ETag, Last-Modified, X-119-Official-Source, X-119-Official-Transport');
   if((req.method||'GET')==='OPTIONS'){res.statusCode=204;return res.end()}
   if(!['GET','HEAD'].includes(req.method||'GET')){
     res.statusCode=405;res.setHeader('Allow','GET, HEAD, OPTIONS');return res.end('Method Not Allowed');
@@ -247,6 +412,28 @@ module.exports=async function handler(req,res){
   const doc=one(req.query&&req.query.doc)||'';
   if(!SOURCES[doc]){res.statusCode=400;return res.end('UNKNOWN_OFFICIAL_DOCUMENT')}
   const meta=one(req.query&&req.query.meta)==='1';
+  const earlyRange=(req.headers&&req.headers.range)||'';
+  if(!meta&&earlyRange&&NFA_BUFFER_DOCS.has(doc)){
+    const hit=nfaPdfBufferCache.get(doc);
+    if(hit&&hit.expires>Date.now()){
+      try{
+        const buf=await hit.promise,r=parseByteRange(earlyRange,buf.length);
+        if(r){
+          res.statusCode=206;
+          res.setHeader('Content-Type','application/pdf');
+          res.setHeader('Content-Length',String(r.length));
+          res.setHeader('Content-Range',`bytes ${r.start}-${r.end}/${r.total}`);
+          res.setHeader('Accept-Ranges','bytes');
+          res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+          res.setHeader('X-Content-Type-Options','nosniff');
+          res.setHeader('X-119-Official-Source','nfa');
+          res.setHeader('X-119-Official-Transport','nfa-buffer-cache');
+          if((req.method||'GET')==='HEAD')return res.end();
+          return res.end(buf.subarray(r.start,r.end+1));
+        }
+      }catch(e){nfaPdfBufferCache.delete(doc)}
+    }
+  }
 
   let result;
   try{result=await fetchPdf(doc,req,meta)}
@@ -255,7 +442,7 @@ module.exports=async function handler(req,res){
     console.error('OFFICIAL_PDF_PROXY_ERROR',JSON.stringify({doc,meta,error:msg}));
     res.statusCode=502;return res.end(msg)
   }
-  const {row,upstream}=result;
+  const {row,upstream,transport}=result;
   if(!upstream.ok&&upstream.status!==206){
     res.statusCode=upstream.status||502;
     try{await upstream.body?.cancel?.()}catch{}
@@ -275,9 +462,24 @@ module.exports=async function handler(req,res){
     }));
   }
 
-  res.statusCode=upstream.status;
+  const clientRange=(req.headers&&req.headers.range)||'';
+  let ranged=null;
+  if(clientRange&&upstream.status===200){
+    try{
+      ranged=NFA_BUFFER_DOCS.has(doc)
+        ?await bufferedNfaRangeResponse(doc,upstream,clientRange)
+        :syntheticRangeResponse(upstream,clientRange);
+    }catch(e){
+      const msg=String(e?.message||e||'NFA_RANGE_BUFFER_FAILED').slice(0,200);
+      console.error('OFFICIAL_PDF_PROXY_NFA_BUFFER_ERROR',JSON.stringify({doc,range:clientRange,error:msg}));
+      if(!res.headersSent){res.statusCode=502;return res.end('OFFICIAL_SOURCE_RANGE_BUFFER_FAILED')}
+      try{return res.destroy()}catch{return}
+    }
+  }
+  const response=ranged||upstream;
+  res.statusCode=response.status;
   for(const h of ['content-length','content-range','accept-ranges','etag','last-modified']){
-    const v=upstream.headers.get(h);if(v)res.setHeader(h,v)
+    const v=response.headers.get(h);if(v)res.setHeader(h,v)
   }
   // NFA often serves verified PDF bytes as application/octet-stream.
   // This endpoint is a fixed ten-document PDF allowlist and fetchFirstWorkingCandidate
@@ -287,12 +489,29 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('X-119-Official-Source','nfa');
-  if(req.method==='HEAD'||!upstream.body)return res.end();
+  res.setHeader('X-119-Official-Transport',transport||'nfa-origin');
+  if(req.method==='HEAD'||!response.body)return res.end();
+  if(clientRange&&response.status===206){
+    try{
+      const body=await bufferedRangeBody(response);
+      if(body){
+        res.setHeader('Content-Length',String(body.length));
+        return res.end(body);
+      }
+    }catch(e){
+      const msg=String(e?.message||e||'RANGE_BODY_BUFFER_FAILED').slice(0,200);
+      console.error('OFFICIAL_PDF_PROXY_RANGE_BUFFER_ERROR',JSON.stringify({doc,range:clientRange,error:msg}));
+      if(!res.headersSent){res.statusCode=502;return res.end('OFFICIAL_SOURCE_RANGE_BODY_FAILED')}
+      try{return res.destroy()}catch{return}
+    }
+  }
   try{
-    await pipeline(Readable.fromWeb(upstream.body),res);
+    await pipeline(Readable.fromWeb(response.body),res);
     return;
   }catch(e){
-    console.error('OFFICIAL_PDF_PROXY_STREAM_ERROR',JSON.stringify({doc,error:String((e&&e.message)||e||'STREAM_FAILED').slice(0,200)}));
+    const msg=String((e&&e.message)||e||'STREAM_FAILED').slice(0,200);
+    if(res.destroyed||/premature close/i.test(msg)){try{await response.body?.cancel?.()}catch{}return}
+    console.error('OFFICIAL_PDF_PROXY_STREAM_ERROR',JSON.stringify({doc,error:msg}));
     try{if(!res.headersSent){res.statusCode=502;return res.end('OFFICIAL_SOURCE_STREAM_FAILED')}res.destroy()}catch{}
   }
 };
@@ -306,6 +525,16 @@ module.exports.selectWorkingCandidate=selectWorkingCandidate;
 module.exports.officialCandidateUrls=officialCandidateUrls;
 module.exports.fetchFirstWorkingCandidate=fetchFirstWorkingCandidate;
 module.exports.fetchDetailWithSession=fetchDetailWithSession;
+module.exports.resolveSource=resolveSource;
 module.exports.isRefreshableCandidateError=isRefreshableCandidateError;
 module.exports.fetchPdfWith=fetchPdfWith;
+module.exports.fetchPagesMirror=fetchPagesMirror;
+module.exports.fetchPdfWithPagesFirst=fetchPdfWithPagesFirst;
+module.exports.pagesMirrorUrl=pagesMirrorUrl;
+module.exports.PAGES_MIRROR_DOCS=PAGES_MIRROR_DOCS;
+module.exports.parseByteRange=parseByteRange;
+module.exports.syntheticRangeResponse=syntheticRangeResponse;
+module.exports.bufferedRangeBody=bufferedRangeBody;
+module.exports.nfaFullPdfBuffer=nfaFullPdfBuffer;
+module.exports.bufferedNfaRangeResponse=bufferedNfaRangeResponse;
 module.exports.pdfProbe=pdfProbe;

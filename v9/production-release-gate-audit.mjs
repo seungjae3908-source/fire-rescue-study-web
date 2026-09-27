@@ -12,6 +12,7 @@ const productionAcceptance=read('.github/workflows/production-current-main-accep
 const liveStudentSmoke=read('v9/live-student-ux-smoke.mjs');
 const runtimeDeps=read('v9/runtime-deps.js');
 const productionSuggestionsPublic=read('v9/suggestions-production-public-e2e.mjs');
+const v70Performance=read('v9/v70-production-performance-e2e.mjs');
 const developmentCi=read('.github/workflows/v9-ci.yml');
 const authenticatedSuggestionAcceptance=read('.github/workflows/production-suggestions-authenticated-acceptance.yml');
 const authenticatedSuggestionScript=read('v9/suggestions-production-authenticated-e2e.mjs');
@@ -48,11 +49,15 @@ const checks={
   pdfAllowlistedProxy:sourceCatalog.includes('arbitraryUrlProxy:false')&&sourceCatalog.includes('allCatalogDocsProxyable:true'),
   runtimeHeadRoute:runtimeHead.includes('VERCEL_GIT_COMMIT_SHA')&&runtimeHead.includes('RUNTIME_GIT_SHA_UNAVAILABLE')&&runtimeHead.includes("Cache-Control','no-store, max-age=0"),
   postDeployProductionAcceptance:productionAcceptance.includes('workflow_run:')&&productionAcceptance.includes('V9 Development CI')&&productionAcceptance.includes('PRODUCTION_EXACT_HEAD_READY')&&productionAcceptance.includes('live-student-ux-smoke.mjs'),
+  postDeployV68Acceptance:productionAcceptance.includes('Production V68 detail + AI interaction acceptance')&&productionAcceptance.includes('v68-detail-source-brand-e2e.mjs'),
+  postDeployV70AllPagesProxyRange:productionAcceptance.includes('v70-production-performance-e2e.mjs')&&['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'].every(x=>v70Performance.includes("'"+x+"'"))&&v70Performance.includes("p.transport==='pages-mirror'")&&v70Performance.includes('PAGES_PROXY_NO_206_'),
+  postDeployAcceptanceVercelBlockerFailFast:productionAcceptance.includes('PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED')&&productionAcceptance.includes('DEPLOYMENT_DISABLED')&&productionAcceptance.includes('code')&&productionAcceptance.includes('402'),
   postDeployAcceptanceExactHead:productionAcceptance.includes('github.event.workflow_run.head_sha')&&liveStudentSmoke.includes("fetch('/api/runtime-head'")&&liveStudentSmoke.includes('runtime.sha===expected'),
   productionRuntimeDepsNoLocalProbe:runtimeDeps.includes("const local=()=>")&&runtimeDeps.includes("deps('../node_modules/pdfjs-dist/build/pdf.min.mjs'")&&runtimeDeps.includes("deps('../node_modules/tesseract.js/dist/tesseract.esm.min.js'"),
   postDeploySuggestionPublicAcceptance:productionAcceptance.includes('suggestions-production-public-e2e.mjs')&&productionSuggestionsPublic.includes('LOGIN_REQUIRED')&&productionSuggestionsPublic.includes('study_suggestions')&&productionSuggestionsPublic.includes('study_admins')&&productionSuggestionsPublic.includes('anonymous Data API read is blocked'),
   prSuggestionPublicProbe:developmentCi.includes('suggestions_public_production_probe')&&developmentCi.includes('github.event.pull_request.base.sha')&&developmentCi.includes('suggestions-production-public-e2e.mjs'),
   authenticatedSuggestionGatePrepared:authenticatedSuggestionAcceptance.includes('workflow_dispatch:')&&authenticatedSuggestionAcceptance.includes('Wait for exact SHA to become Production')&&authenticatedSuggestionAcceptance.includes('suggestions-production-authenticated-e2e.mjs'),
+  authenticatedSuggestionVercelBlockerFailFast:authenticatedSuggestionAcceptance.includes('PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED')&&authenticatedSuggestionAcceptance.includes('DEPLOYMENT_DISABLED')&&authenticatedSuggestionAcceptance.includes('402'),
   authenticatedSuggestionAutoChain:authenticatedSuggestionAcceptance.includes('workflow_run:')&&authenticatedSuggestionAcceptance.includes('Production Current-Main Acceptance')&&authenticatedSuggestionAcceptance.includes("github.event.workflow_run.conclusion == 'success'")&&authenticatedSuggestionAcceptance.includes("github.event.workflow_run.head_branch == 'main'")&&authenticatedSuggestionAcceptance.includes('github.event.workflow_run.head_sha'),
   authenticatedSuggestionOidcBroker:authenticatedSuggestionAcceptance.includes('id-token: write')&&authenticatedSuggestionAcceptance.includes('study-119-production-acceptance')&&authenticatedSuggestionAcceptance.includes('ACTIONS_ID_TOKEN_REQUEST_URL')&&authenticatedSuggestionAcceptance.includes('ACTIONS_ID_TOKEN_REQUEST_TOKEN')&&authenticatedSuggestionAcceptance.includes('study-119-acceptance-broker')&&authenticatedSuggestionAcceptance.includes("--data '{\"action\":\"provision\"}'")&&authenticatedSuggestionAcceptance.includes("--data '{\"action\":\"cleanup\"}'")&&authenticatedSuggestionAcceptance.includes('if: always()')&&!authenticatedSuggestionAcceptance.includes('secrets.STUDY_119_'),
   acceptanceBrokerSyntaxChecked:true,

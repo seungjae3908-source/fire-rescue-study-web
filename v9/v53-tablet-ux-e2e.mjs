@@ -7,7 +7,9 @@ try{
   for(const vp of [{width:768,height:1024},{width:1024,height:768}]){
     const ctx=await browser.newContext({viewport:vp,deviceScaleFactor:1.5});
     const page=await ctx.newPage();page.setDefaultTimeout(45000);
-    await page.route('https://study-119-pdf-proxy.vercel.app/api/official-pdf?doc=prevention1**',route=>route.fulfill({status:503,contentType:'text/plain',body:'tablet-v53-source-failure-probe'}));
+    const failSource=route=>route.fulfill({status:503,contentType:'text/plain',body:'tablet-v53-source-failure-probe'});
+    await page.route('**/official-pdf-mirror/prevention1.pdf*',failSource);
+    await page.route('**/api/official-pdf?doc=prevention1**',failSource);
     await page.goto(base,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.Store);
     await page.evaluate(()=>{const V=window.AITUTOR_V9,s=V.Store.state,c=V.curriculum.byId['F03-C06'];s.page='study';s.subject='fire';s.scopeId=c.scopeId;s.conceptId=c.id;s.studyTab='detail';s.outline=false;V.Store.save();V.App.render()});

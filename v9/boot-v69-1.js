@@ -8,8 +8,9 @@ window.AITUTOR_V9_CONFIG={
   supabasePublishableKey:'sb_publishable_CxNMo2idqoaYJvbm8FTX8w_hre1kQ-c',
   enableCloudSync:true,
   officialPdfProxyBase:'https://study-119-pdf-proxy.vercel.app',
-  officialPdfMirrorBase:'https://study-119-official-pdf.vercel.app',
-  officialPdfMirrorDocs:['fire1','fire2','ems'],
+  officialPdfMirrorBase:'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',
+  officialPdfMirrorDocs:['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'],
+  officialPdfCacheEpoch:'119-official-pdf-cache-v1:c3a6d772977f90ec4e09:1696d7f1cb3c8d151ced:5b0ead2b24e9ffbee975:9f131c25171602b3ad2a:85b1a2c04c97237d5870',
   study119:true
 };
 
@@ -63,7 +64,7 @@ const ranges={};
 const add=(id,doc,from,to)=>{(ranges[id]||(ranges[id]=[])).push({doc,from,to,label:DOCS[doc].label})};
 EMS_SOURCE.forEach(([scopeId,from,to,starts])=>{const uniq=[...new Set(starts)].sort((a,b)=>a-b);starts.forEach((s,i)=>{const next=uniq.find(x=>x>s)||to+1;add(`${scopeId}-C${String(i+1).padStart(2,'0')}`,'ems',s,next-1)})});
 add('F01-C01','law2',42,66);add('F01-C02','law2',68,83);add('F01-C02','law2',99,103);add('F01-C03','law2',67,98);add('F01-C04','law2',104,164);add('F01-C05','law2',174,197);
-add('F02-C01','law5',509,521);add('F02-C02','law5',509,523);add('F02-C03','law5',524,543);add('F02-C04','law5',550,564);add('F02-C05','law5',509,510);add('F02-C05','law5',565,610);add('F02-C06','law5',581,601);add('F02-C07','law5',540,543);
+add('F02-C01','law5',509,521);add('F02-C02','law5',512,519);add('F02-C03','law5',524,543);add('F02-C04','law5',550,564);add('F02-C05','law5',509,510);add('F02-C05','law5',565,610);add('F02-C06','law5',581,601);add('F02-C07','law5',540,543);
 add('F03-C01','fire1',3,7);add('F03-C02','fire1',9,13);add('F03-C02','fire2',190,190);add('F03-C02','fire2',309,309);add('F03-C02','fire2',345,345);add('F03-C03','fire1',14,17);add('F03-C03','fire2',295,328);add('F03-C03','fire1',12,12);add('F03-C03','fire2',191,191);add('F03-C04','fire1',18,21);add('F03-C05','fire1',22,22);add('F03-C06','fire1',40,40);add('F03-C06','fire1',23,34);add('F03-C07','fire1',31,34);add('F03-C07','fire2',329,338);add('F03-C08','fire2',339,358);
 add('F04-C01','fire1',35,40);add('F04-C01','fire2',183,185);add('F04-C02','fire2',186,188);add('F04-C03','fire2',189,198);add('F04-C04','fire2',199,211);add('F04-C05','fire2',212,218);add('F04-C06','fire2',219,228);add('F04-C07','fire2',229,239);add('F04-C08','fire2',240,256);
 const scopes=[...FIRE,...EMS];
@@ -154,8 +155,8 @@ anchor('F05-C05','prevention2',449);
 anchor('F05-C06','prevention2',496);
 anchor('F05-C07','prevention2',523);
 R['F05-C08']=[
-  {doc:'fire1',from:319,to:319,label:V.curriculum.docs.fire1.label},
-  {doc:'prevention2',from:536,to:536,label:V.curriculum.docs.prevention2.label}
+  {doc:'fire1',from:303,to:304,label:V.curriculum.docs.fire1.label},
+  {doc:'prevention2',from:524,to:525,label:V.curriculum.docs.prevention2.label}
 ];
 R['F06-C01']=[
   {doc:'fire2',from:269,to:269,label:V.curriculum.docs.fire2.label},
@@ -174,10 +175,12 @@ R['F06-C04']=[
   {doc:'fire2',from:294,to:294,label:V.curriculum.docs.fire2.label}
 ];
 for(let i=1;i<=15;i++)note(`F07-C${String(i).padStart(2,'0')}`,'prevention1','소방시설 종류·작동원리·사용법 중심(구체 설치기준 제외)');
-anchor('F07-C01','prevention1',17);
+anchor('F07-C01','prevention1',187);
 anchor('F07-C02','prevention1',207);
 anchor('F07-C03','prevention1',247);
-anchor('F07-C04','prevention1',273);
+R['F07-C04']=[
+  {doc:'prevention1',from:259,to:260,label:V.curriculum.docs.prevention1.label}
+];
 anchor('F07-C05','prevention1',284);
 R['F07-C06']=[
   {doc:'prevention1',from:321,to:321,label:V.curriculum.docs.prevention1.label},
@@ -185,17 +188,19 @@ R['F07-C06']=[
 ];
 anchor('F07-C07','prevention1',328);
 anchor('F07-C08','prevention1',347);
-anchor('F07-C09','prevention1',432);
+anchor('F07-C09','prevention1',418);
 anchor('F07-C10','prevention1',415);
 anchor('F07-C11','prevention1',23);
 anchor('F07-C12','prevention1',18);
-anchor('F07-C13','prevention1',465);
-anchor('F07-C14','prevention1',201);
+R['F07-C13']=[
+  {doc:'prevention1',from:451,to:453,label:V.curriculum.docs.prevention1.label}
+];
+anchor('F07-C14','prevention1',187);
 R['F07-C15']=[
   {doc:'prevention1',from:167,to:167,label:V.curriculum.docs.prevention1.label},
   {doc:'prevention1',from:174,to:174,label:V.curriculum.docs.prevention1.label},
   {doc:'prevention1',from:433,to:433,label:V.curriculum.docs.prevention1.label},
-  {doc:'prevention1',from:482,to:482,label:V.curriculum.docs.prevention1.label}
+  {doc:'prevention1',from:468,to:469,label:V.curriculum.docs.prevention1.label}
 ];
 for(const c of V.curriculum.concepts)c.sourceRanges=R[c.id]||[];
 
@@ -224,14 +229,14 @@ V.curriculum.concepts=V.curriculum.scopes.flatMap(scope=>scope.concepts.map((tit
 V.curriculum.byId=Object.fromEntries(V.curriculum.concepts.map(x=>[x.id,x]));V.curriculum.totalConcepts=V.curriculum.concepts.length;V.curriculum.version='2026-study119-depth-v1';
 const R=V.curriculum.ranges;const n=(id,doc,label,note)=>R[id]=[{doc,label,note}];const a=(id,doc,label,from,to=from)=>R[id]=[{doc,label,from,to}];
 for(let i=9;i<=16;i++)n(`F03-C${String(i).padStart(2,'0')}`,'fire1','2026 소방전술1','화재성장·특수현상·위험물탱크 화재 공식 원문 page anchor 확장중');
-a('F03-C09','fire1','2026 소방전술1',37);
+a('F03-C09','fire1','2026 소방전술1',29,31);
 a('F03-C10','fire1','2026 소방전술1',40);
-a('F03-C11','fire1','2026 소방전술1',453);
+a('F03-C11','fire1','2026 소방전술1',25,27);
 a('F03-C12','fire1','2026 소방전술1',303);
 a('F03-C13','fire1','2026 소방전술1',304);
 a('F03-C14','fire1','2026 소방전술1',303);
-a('F03-C15','fire1','2026 소방전술1',326);
-a('F03-C16','fire1','2026 소방전술1',453);
+a('F03-C15','fire1','2026 소방전술1',310,311);
+a('F03-C16','fire1','2026 소방전술1',437);
 for(let i=16;i<=21;i++)n(`F07-C${String(i).padStart(2,'0')}`,'prevention1','2026 예방실무1','스프링클러 구성·종류·작동원리 공식 원문 page anchor 확장중');
 a('F07-C16','prevention1','2026 예방실무1',288);
 a('F07-C17','prevention1','2026 예방실무1',288);

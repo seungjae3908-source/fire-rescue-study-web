@@ -6,6 +6,9 @@
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
+const cfg=window.AITUTOR_V9_CONFIG||{};
+const OFFICIAL_CACHE_EPOCH=String(cfg.officialPdfCacheEpoch||'');
+const OFFICIAL_CACHE_MAX_AGE_MS=24*60*60*1000;
 const DB='aitutor-v9-official-source-pdfs',VER=1;let dbp=null,activeRemote=null;const pdfCache=new Map();
 const PAGE_OFFSETS=Object.freeze({fire1:16,fire2:10,ems:18,prevention1:14,prevention2:12,law1:4,law2:12,law3:8,law4:6,law5:14});
 const pdfPage=(key,bookPage)=>{const n=Number(bookPage);if(!Number.isFinite(n)||n<=0)return 0;return Object.prototype.hasOwnProperty.call(PAGE_OFFSETS,key)?n+PAGE_OFFSETS[key]:n};
@@ -22,10 +25,29 @@ const SOURCE_PAGES={
   prevention1:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106805&mode=view',
   prevention2:'https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/?boardId=bbs_0000000000000035&category=&cntId=106805&mode=view'
 };
+const OFFICIAL_DOC_KEYS=new Set(Object.keys(SOURCE_PAGES));
 function db(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{const r=indexedDB.open(DB,VER);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('sources'))d.createObjectStore('sources',{keyPath:'key'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});return dbp}
 const done=t=>new Promise((res,rej)=>{t.oncomplete=()=>res();t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)});
-async function attach(key,file){if(!key||!file)throw Error('SOURCE_PDF_REQUIRED');if(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name))throw Error('PDF_ONLY');await clearPdfCache(key);const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').put({key,name:file.name,mime:file.type||'application/pdf',blob:file,updatedAt:Date.now()});await done(t);return{key,name:file.name,size:file.size}}
-async function get(key){const d=await db(),t=d.transaction('sources','readonly'),r=t.objectStore('sources').get(key);return await new Promise((res,rej)=>{r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error)})}
+async function attach(key,file){if(!key||!file)throw Error('SOURCE_PDF_REQUIRED');if(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name))throw Error('PDF_ONLY');await clearPdfCache(key);const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').put({key,name:file.name,mime:file.type||'application/pdf',blob:file,updatedAt:Date.now(),origin:'local-attachment',localAttachmentVersion:1});await done(t);return{key,name:file.name,size:file.size}}
+async function readStoredSource(key){const d=await db(),t=d.transaction('sources','readonly'),r=t.objectStore('sources').get(key);return await new Promise((res,rej)=>{r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error)})}
+async function deleteStoredSource(key){const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').delete(key);await done(t)}
+const officialCachedRow=row=>/^official-/.test(String(row?.origin||''));
+async function get(key){
+  const row=await readStoredSource(key);
+  const legacyUnversionedOfficialAttachment=!!row?.blob&&OFFICIAL_DOC_KEYS.has(key)&&!row.origin&&!row.cacheEpoch&&!row.localAttachmentVersion;
+  if(legacyUnversionedOfficialAttachment){
+    try{await deleteStoredSource(key)}catch{}
+    if(activeRemote?.key===key)activeRemote=null;
+    return null;
+  }
+  const officialAge=Date.now()-Number(row?.updatedAt||0);
+  if(row?.blob&&officialCachedRow(row)&&(!OFFICIAL_CACHE_EPOCH||row.cacheEpoch!==OFFICIAL_CACHE_EPOCH||!Number.isFinite(officialAge)||officialAge<0||officialAge>OFFICIAL_CACHE_MAX_AGE_MS)){
+    try{await deleteStoredSource(key)}catch{}
+    if(activeRemote?.key===key)activeRemote=null;
+    return null;
+  }
+  return row||null;
+}
 async function putSourceRow(row){const d=await db(),t=d.transaction('sources','readwrite');t.objectStore('sources').put(row);await done(t);return row}
 async function cacheOfficial(key,{timeoutMs=90000,onProgress,preferProxy=false}={}){
   const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};
@@ -47,7 +69,7 @@ async function cacheOfficial(key,{timeoutMs=90000,onProgress,preferProxy=false}=
       }
       const blob=new Blob(chunks,{type:'application/pdf'}),head=new Uint8Array(await blob.slice(0,8).arrayBuffer());
       if(new TextDecoder('latin1').decode(head).indexOf('%PDF-')<0)throw Error('SOURCE_REMOTE_NOT_PDF');
-      const row={key,name:catalog.expectedNames?.[0]||catalog.label||key,mime:'application/pdf',blob,updatedAt:Date.now(),origin:url===catalog?.proxyPdf?'official-proxy-cache':'official-mirror-cache',officialPage:catalog.officialPage,license:catalog.license};
+      const row={key,name:catalog.expectedNames?.[0]||catalog.label||key,mime:'application/pdf',blob,updatedAt:Date.now(),cacheEpoch:OFFICIAL_CACHE_EPOCH,origin:url===catalog?.proxyPdf?'official-proxy-cache':'official-mirror-cache',officialPage:catalog.officialPage,license:catalog.license};
       activeRemote={key,row};try{await putSourceRow(row)}catch{}
       onProgress?.({loaded:blob.size,total:blob.size,percent:100,done:true,transport:url===catalog?.proxyPdf?'proxy':'mirror'});return row;
     }catch(err){lastError=err?.name==='AbortError'?Error('SOURCE_PDF_TIMEOUT'):err}
@@ -56,6 +78,85 @@ async function cacheOfficial(key,{timeoutMs=90000,onProgress,preferProxy=false}=
   throw lastError;
 }
 async function remoteRow(key,opts={}){return cacheOfficial(key,opts)}
+function parsedContentRange(value){
+  const m=String(value||'').trim().match(/^bytes\s+(\d+)-(\d+)\/(\d+)$/i);
+  if(!m)return null;
+  const start=Number(m[1]),end=Number(m[2]),total=Number(m[3]);
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||!Number.isSafeInteger(total)||start<0||end<start||total<=end)return null;
+  return{start,end,total,length:end-start+1};
+}
+async function fetchRangeChunk(url,start,end,{timeoutMs=20000,attempts=3}={}){
+  let last=Error('SOURCE_RANGE_FETCH_FAILED');
+  for(let attempt=1;attempt<=attempts;attempt++){
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeoutMs);
+    try{
+      const res=await fetch(url,{credentials:'omit',redirect:'follow',signal:ctl.signal,cache:'no-store',headers:{Range:`bytes=${start}-${end}`}});
+      if(res.status!==206)throw Error('SOURCE_RANGE_HTTP_'+res.status);
+      const cr=parsedContentRange(res.headers.get('content-range'));
+      if(!cr||cr.start!==start)throw Error('SOURCE_RANGE_CONTENT_RANGE_INVALID_'+String(res.headers.get('content-range')||''));
+      const buf=new Uint8Array(await res.arrayBuffer());
+      if(buf.byteLength!==cr.length)throw Error('SOURCE_RANGE_LENGTH_MISMATCH_'+buf.byteLength+'_'+cr.length);
+      return{buf,...cr};
+    }catch(err){last=err?.name==='AbortError'?Error('SOURCE_RANGE_TIMEOUT'):err}
+    finally{clearTimeout(timer)}
+    if(attempt<attempts)await new Promise(r=>setTimeout(r,180*attempt));
+  }
+  throw last;
+}
+async function openProxyPdfWithCustomRange(p,key,catalog,{timeoutMs=15000,onProgress}={}){
+  const url=catalog?.proxyPdf||'',Transport=p?.PDFDataRangeTransport;
+  if(!url||typeof Transport!=='function')throw Error('SOURCE_CUSTOM_RANGE_UNAVAILABLE');
+  const chunkSize=65536,first=await fetchRangeChunk(url,0,chunkSize-1,{timeoutMs:Math.min(12000,timeoutMs),attempts:3});
+  let aborted=false,loaded=first.buf.byteLength;
+  const transport=new Transport(first.total,first.buf,false,catalog.expectedNames?.[0]||catalog.label||key);
+  transport.requestDataRange=(begin,end)=>{
+    if(aborted)return;
+    const start=Math.max(0,Number(begin)||0),stop=Math.max(start,Math.min(first.total,Number(end)||start+chunkSize))-1;
+    fetchRangeChunk(url,start,stop,{timeoutMs:12000,attempts:3}).then(part=>{
+      if(aborted)return;
+      loaded=Math.max(loaded,part.end+1);
+      transport.onDataRange(start,part.buf);
+      transport.onDataProgress?.(loaded,first.total);
+      onProgress?.({loaded,total:first.total,percent:Math.min(100,Math.round(loaded/first.total*100)),transport:'proxy-custom-range'});
+    }).catch(err=>{
+      if(!aborted)console.warn('SOURCE_CUSTOM_RANGE_CHUNK_FAILED',key,start,stop,String(err?.message||err).slice(0,120));
+    });
+  };
+  transport.abort=()=>{aborted=true};
+  const task=p.getDocument({range:transport,disableRange:false,disableStream:true,disableAutoFetch:true,rangeChunkSize:chunkSize});
+  try{
+    const pdf=await waitPdfTask(task,timeoutMs);
+    onProgress?.({ready:true,transport:'proxy-custom-range'});
+    return{key,pdf,task,name:catalog.expectedNames?.[0]||catalog.label||key,origin:'official-proxy-custom-range'};
+  }catch(err){
+    aborted=true;await task.destroy?.().catch?.(()=>{});throw err
+  }
+}
+async function cacheOfficialByRange(key,{timeoutMs=120000,onProgress,chunkSize=1024*1024}={}){
+  const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};
+  const catalog=V.SourceCatalog119?.get?.(key),url=catalog?.proxyPdf||'';
+  if(!url)throw Error('SOURCE_RANGE_PROXY_UNRESOLVED');
+  const size=Math.max(65536,Math.min(2*1024*1024,Number(chunkSize)||1024*1024)),started=Date.now(),chunks=[];
+  const first=await fetchRangeChunk(url,0,size-1,{timeoutMs:Math.min(20000,timeoutMs),attempts:3});
+  const total=first.total;
+  if(total<=0||total>180*1024*1024)throw Error('SOURCE_RANGE_TOTAL_INVALID_'+total);
+  chunks.push(first.buf);let loaded=first.buf.byteLength;
+  onProgress?.({loaded,total,percent:Math.min(100,Math.round(loaded/total*100)),transport:'proxy-range-cache'});
+  while(loaded<total){
+    const remain=timeoutMs-(Date.now()-started);
+    if(remain<=3000)throw Error('SOURCE_PDF_TIMEOUT');
+    const start=loaded,end=Math.min(total-1,start+size-1),part=await fetchRangeChunk(url,start,end,{timeoutMs:Math.min(20000,remain),attempts:3});
+    if(part.total!==total||part.start!==start)throw Error('SOURCE_RANGE_SEQUENCE_MISMATCH');
+    chunks.push(part.buf);loaded+=part.buf.byteLength;
+    onProgress?.({loaded,total,percent:Math.min(100,Math.round(loaded/total*100)),transport:'proxy-range-cache'});
+  }
+  const blob=new Blob(chunks,{type:'application/pdf'}),head=new Uint8Array(await blob.slice(0,8).arrayBuffer());
+  if(blob.size!==total)throw Error('SOURCE_RANGE_ASSEMBLY_SIZE_MISMATCH_'+blob.size+'_'+total);
+  if(new TextDecoder('latin1').decode(head).indexOf('%PDF-')<0)throw Error('SOURCE_RANGE_NOT_PDF');
+  const row={key,name:catalog.expectedNames?.[0]||catalog.label||key,mime:'application/pdf',blob,updatedAt:Date.now(),cacheEpoch:OFFICIAL_CACHE_EPOCH,origin:'official-proxy-range-cache',officialPage:catalog.officialPage,license:catalog.license};
+  activeRemote={key,row};try{await putSourceRow(row)}catch{}
+  onProgress?.({loaded:blob.size,total:blob.size,percent:100,done:true,transport:'proxy-range-cache'});return row;
+}
 async function resolveRow(key,opts={}){const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};return cacheOfficial(key,opts)}
 async function availability(key){const local=await get(key),c=V.SourceCatalog119?.get?.(key),mirror=c?.transport==='range-static'&&!!c?.mirrorPdf,rangeProxy=c?.transport==='range-proxy'&&!!c?.proxyPdf;return{local:!!local?.blob,mirror,rangeProxy,range:mirror||rangeProxy,rangeUrl:mirror?c.mirrorPdf:(rangeProxy?c.proxyPdf:''),mirrorUrl:mirror?c.mirrorPdf:'',proxyUrl:c?.proxyPdf||'',direct:!!(c?.directPdf||c?.proxyPdf),officialPage:c?.officialPage||SOURCE_PAGES[key]||'',license:c?.license||'',label:c?.label||key}}
 async function has(key){const a=await availability(key);return a.local||a.direct}
@@ -85,8 +186,22 @@ async function openPdf(key,{timeoutMs=90000,onProgress}={}){
     }catch{
       await task.destroy?.().catch?.(()=>{});
       onProgress?.({fallback:true,transport:rangeMode});
-      const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});
-      task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=rangeMode==='mirror'?'official-proxy-fallback':'official-proxy-full-cache-fallback'
+      if(rangeMode==='mirror'&&catalog?.proxyPdf){
+        const proxyTimeout=Math.min(18000,Math.max(9000,timeoutMs-fastTimeout));
+        try{
+          const entry=await openProxyPdfWithCustomRange(p,key,catalog,{timeoutMs:proxyTimeout,onProgress});
+          pdfCache.set(key,entry);return entry
+        }catch{
+          onProgress?.({fallback:true,transport:'proxy-custom-range'});
+        }
+      }
+      let row;
+      try{
+        row=await cacheOfficialByRange(key,{timeoutMs:Math.max(20000,timeoutMs-fastTimeout),onProgress});
+      }catch{
+        row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});
+      }
+      task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=row.origin==='official-proxy-range-cache'?'official-proxy-range-cache-fallback':(rangeMode==='mirror'?'official-proxy-fallback':'official-proxy-full-cache-fallback')
     }
   }else if(catalog?.proxyPdf){
     const row=await cacheOfficial(key,{timeoutMs,onProgress,preferProxy:true});
@@ -195,7 +310,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   return picked;
 }
 function downloadName(key,row,catalog){const raw=row?.name||catalog?.expectedNames?.[0]||catalog?.label||key;return /\.pdf$/i.test(raw)?raw:`${raw}.pdf`}
-async function download(key,{timeoutMs=120000,onProgress}={}){const catalog=V.SourceCatalog119?.get?.(key);if(!catalog)throw Error('SOURCE_PDF_UNKNOWN');let row=await get(key);if(!row?.blob)row=await cacheOfficial(key,{timeoutMs,onProgress});if(!row?.blob)throw Error('SOURCE_PDF_DOWNLOAD_UNAVAILABLE');const name=downloadName(key,row,catalog),url=URL.createObjectURL(row.blob),a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return{name,size:row.blob.size,key}}
+async function download(key,{timeoutMs=120000,onProgress}={}){const catalog=V.SourceCatalog119?.get?.(key);if(!catalog)throw Error('SOURCE_PDF_UNKNOWN');let row=await get(key);if(!row?.blob){try{row=await cacheOfficialByRange(key,{timeoutMs,onProgress})}catch{row=await cacheOfficial(key,{timeoutMs,onProgress})}}if(!row?.blob)throw Error('SOURCE_PDF_DOWNLOAD_UNAVAILABLE');const name=downloadName(key,row,catalog),url=URL.createObjectURL(row.blob),a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return{name,size:row.blob.size,key}}
 async function render(key,pageNum,host,queries=[],opts={}){
   const {pdf,name,origin}=await openPdf(key,opts),p=await pdfjs(),pageNo=Math.max(1,Math.min(Number(pageNum)||1,pdf.numPages)),pg=await pdf.getPage(pageNo),base=pg.getViewport({scale:1});
   const maxWidth=Math.max(280,(host?.clientWidth||720)-16),fitScale=Math.min(1.85,maxWidth/base.width),zoom=Math.max(.75,Math.min(2.25,Number(opts.zoom)||1)),scale=fitScale*zoom,viewport=pg.getViewport({scale});
@@ -215,7 +330,7 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
   return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v14-range-remote-anchor-context-lines'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',officialCacheEpoch:OFFICIAL_CACHE_EPOCH,officialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,privacy:{localCacheAllowed:true,persistentOfficialCache:true,officialCacheEpochRequired:true,staleOfficialCacheAutoDelete:true,legacyUnversionedOfficialAttachmentAutoDelete:true,persistentOfficialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v15-range-remote-cache-epoch-anchor-context-lines'};
 })();
 
 ;

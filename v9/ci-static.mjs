@@ -334,11 +334,11 @@ ok(Object.entries(exactAnchorBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
   return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
 }),'seven sprinkler concepts are exact-page verified from 2026 prevention1 PDF');
-const exactFirePhenomenaBatch={'F03-C09':37,'F03-C10':40,'F03-C11':453,'F03-C12':303,'F03-C13':304,'F03-C14':303,'F03-C15':326,'F03-C16':453};
-ok(Object.entries(exactFirePhenomenaBatch).every(([id,page])=>{
+const exactFirePhenomenaBatch={'F03-C09':[29,31],'F03-C10':[40,40],'F03-C11':[25,27],'F03-C12':[303,303],'F03-C13':[304,304],'F03-C14':[303,303],'F03-C15':[310,311],'F03-C16':[437,437]};
+ok(Object.entries(exactFirePhenomenaBatch).every(([id,[from,to]])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
-  return Number(r?.from)===page&&Number(r?.to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
-}),'eight fire-phenomena concepts are exact-page verified from 2026 fire1 PDF');
+  return r?.doc==='fire1'&&Number(r?.from)===from&&Number(r?.to)===to&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
+}),'eight fire-phenomena concepts are exact-range verified from 2026 fire1 PDF');
 const exactHazmatBatch={'F05-C02':385,'F05-C03':407,'F05-C04':428,'F05-C05':449,'F05-C06':496,'F05-C07':523};
 ok(Object.entries(exactHazmatBatch).every(([id,page])=>{
   const r=V.curriculum.byId[id]?.sourceRanges?.[0],p=V.contentPacks.authored[id];
@@ -346,21 +346,21 @@ ok(Object.entries(exactHazmatBatch).every(([id,page])=>{
 }),'hazardous-material classes 1-6 are exact-page verified from 2026 prevention2 PDF');
 const haz01=V.curriculum.byId['F05-C01']?.sourceRanges||[],haz08=V.curriculum.byId['F05-C08']?.sourceRanges||[];
 ok(haz01.length===2&&haz01[0]?.doc==='prevention2'&&Number(haz01[0]?.from)===345&&Number(haz01[1]?.from)===385&&V.contentPacks.authored['F05-C01']?.status==='verified','hazardous-material definition/classification keeps both exact official pages');
-ok(haz08.length===2&&haz08[0]?.doc==='fire1'&&Number(haz08[0]?.from)===319&&haz08[1]?.doc==='prevention2'&&Number(haz08[1]?.from)===536&&V.contentPacks.authored['F05-C08']?.status==='verified','hazardous-material fire principles keep exact special-phenomenon and response pages');
+ok(haz08.length===2&&haz08[0]?.doc==='fire1'&&Number(haz08[0]?.from)===303&&Number(haz08[0]?.to)===304&&haz08[1]?.doc==='prevention2'&&Number(haz08[1]?.from)===524&&Number(haz08[1]?.to)===525&&V.contentPacks.authored['F05-C08']?.status==='verified','hazardous-material fire principles keep exact fire1 303~304 and prevention2 524~525 response pages');
 const inv=Object.fromEntries(['F06-C01','F06-C02','F06-C03','F06-C04'].map(id=>[id,V.curriculum.byId[id]?.sourceRanges||[]]));
 ok(inv['F06-C01']?.length===2&&inv['F06-C01'].every(r=>r.doc==='fire2')&&Number(inv['F06-C01'][0].from)===269&&Number(inv['F06-C01'][1].from)===270&&V.contentPacks.authored['F06-C01']?.status==='verified','fire-investigation purpose keeps exact fire2 pages 269 and 270');
 ok(inv['F06-C02']?.length===2&&inv['F06-C02'].every(r=>r.doc==='fire2')&&Number(inv['F06-C02'][0].from)===276&&Number(inv['F06-C02'][1].from)===282&&V.contentPacks.authored['F06-C02']?.status==='verified','fire-investigation preservation/procedure keeps exact fire2 pages 276 and 282');
 ok(inv['F06-C03']?.length===2&&inv['F06-C03'].every(r=>r.doc==='fire2')&&Number(inv['F06-C03'][0].from)===282&&Number(inv['F06-C03'][1].from)===297&&V.contentPacks.authored['F06-C03']?.status==='verified','fire-investigation origin/cause keeps exact fire2 pages 282 and 297');
 ok(inv['F06-C04']?.length===2&&inv['F06-C04'].every(r=>r.doc==='fire2')&&Number(inv['F06-C04'][0].from)===287&&Number(inv['F06-C04'][1].from)===294&&V.contentPacks.authored['F06-C04']?.status==='verified','fire-damage investigation/records keep exact fire2 pages 287 and 294');
-const facilitySingles={'F07-C01':17,'F07-C02':207,'F07-C03':247,'F07-C04':273,'F07-C07':328,'F07-C08':347,'F07-C09':432,'F07-C10':415,'F07-C11':23,'F07-C12':18,'F07-C13':465,'F07-C14':201};
-ok(Object.entries(facilitySingles).every(([id,page])=>{
+const facilityAnchors={'F07-C01':[187,187],'F07-C02':[207,207],'F07-C03':[247,247],'F07-C04':[259,260],'F07-C07':[328,328],'F07-C08':[347,347],'F07-C09':[418,418],'F07-C10':[415,415],'F07-C11':[23,23],'F07-C12':[18,18],'F07-C13':[451,453],'F07-C14':[187,187]};
+ok(Object.entries(facilityAnchors).every(([id,[from,to]])=>{
   const rows=V.curriculum.byId[id]?.sourceRanges||[],p=V.contentPacks.authored[id];
-  return rows.length===1&&rows[0].doc==='prevention1'&&Number(rows[0].from)===page&&Number(rows[0].to)===page&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
-}),'twelve single-page non-sprinkler facility concepts keep exact Prevention1 evidence');
+  return rows.length===1&&rows[0].doc==='prevention1'&&Number(rows[0].from)===from&&Number(rows[0].to)===to&&p?.status==='verified'&&p?.sourcePrecision==='exact-pdf-page-anchor';
+}),'twelve non-sprinkler facility concepts keep corrected exact Prevention1 evidence');
 const f06=V.curriculum.byId['F07-C06']?.sourceRanges||[];
 ok(f06.length===2&&f06.every(r=>r.doc==='prevention1')&&Number(f06[0].from)===321&&Number(f06[1].from)===333&&V.contentPacks.authored['F07-C06']?.status==='verified'&&V.contentPacks.authored['F07-C06']?.sourcePrecision==='exact-pdf-page-anchor','simple + ESFR sprinkler concept keeps exact Prevention1 pages 321 and 333');
 const f15=V.curriculum.byId['F07-C15']?.sourceRanges||[];
-ok(f15.length===4&&f15.every(r=>r.doc==='prevention1')&&[167,174,433,482].every((p,i)=>Number(f15[i]?.from)===p)&&V.contentPacks.authored['F07-C15']?.status==='verified'&&V.contentPacks.authored['F07-C15']?.sourcePrecision==='exact-pdf-page-anchor','firefighter-support concept keeps exact Prevention1 pages 167,174,433,482');
+ok(f15.length===4&&f15.every(r=>r.doc==='prevention1')&&Number(f15[0]?.from)===167&&Number(f15[0]?.to)===167&&Number(f15[1]?.from)===174&&Number(f15[1]?.to)===174&&Number(f15[2]?.from)===433&&Number(f15[2]?.to)===433&&Number(f15[3]?.from)===468&&Number(f15[3]?.to)===469&&V.contentPacks.authored['F07-C15']?.status==='verified'&&V.contentPacks.authored['F07-C15']?.sourcePrecision==='exact-pdf-page-anchor','firefighter-support concept keeps exact Prevention1 pages 167,174,433,468~469');
 ok(scopeVerified.length===0,`all ${V.curriculum.totalConcepts} concepts have verified source evidence; page-anchor pending = 0`);
 ok(missing.length===0,'no curriculum concept remains in scope-verified/page-anchor-pending state');
 ok(Object.keys(V.contentPacks.authored).filter(id=>V.curriculum.byId[id]).length===V.curriculum.totalConcepts,`exactly ${V.curriculum.totalConcepts} valid authored concept packs`);
@@ -704,7 +704,7 @@ const sourceCatalog=fs.readFileSync(new URL('./source-catalog-119.js',import.met
 ok(sourceCatalog.includes('noUserUploadRequired:true'),'official source catalog forbids user-upload requirement');
 ok(sourceCatalog.includes('officialPageFallback:true'),'official source catalog has official-page fallback');
 ok(sourceCatalog.includes('const proxyPdf=doc=>')&&sourceCatalog.includes('const mirrorPdf=doc=>')&&['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'].every(k=>sourceCatalog.includes(`proxyPdf:proxyPdf('${k}')`)&&sourceCatalog.includes(`directPdf:directPdf('${k}')`)),'all ten official textbooks retain a dedicated proxy fallback while mirrored books may use range-static first');
-ok(sourceCatalog.includes('arbitraryUrlProxy:false')&&sourceCatalog.includes('allCatalogDocsProxyable:true')&&sourceCatalog.includes('crossOriginProxy:!!proxyBase'),'official source catalog supports dedicated proxy origin while forbidding arbitrary URL proxying');
+ok(sourceCatalog.includes('arbitraryUrlProxy:false')&&sourceCatalog.includes('allCatalogDocsProxyable:true')&&sourceCatalog.includes('sameOriginProxy:sameOriginDeployment')&&sourceCatalog.includes('crossOriginProxy:!sameOriginDeployment&&!!proxyBase'),'official source catalog reports same-origin versus dedicated proxy truthfully while forbidding arbitrary URL proxying');
 const officialProxy=fs.readFileSync(new URL('./api/official-pdf.js',import.meta.url),'utf8');
 ok(officialProxy.includes("const SOURCES=Object.freeze")&&['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'].every(k=>officialProxy.includes(k+":")),'official PDF proxy uses a fixed ten-document allowlist');
 ok(!/req\.query\?\.url|req\.query\.url|new URL\(.*req\.query/i.test(officialProxy),'official PDF proxy accepts no arbitrary upstream URL');
@@ -718,7 +718,8 @@ ok(officialMonitorProbe.includes('OFFICIAL_MONITOR_SOURCE_HARD_FAILURE')&&offici
 ok(officialMonitorProbe.includes('UND_ERR_CONNECT_TIMEOUT')&&officialMonitorProbe.includes('ENOTFOUND')&&officialMonitorProbe.includes('EAI_AGAIN'),'live official-monitor probe explicitly classifies common transport-level outages');
 
 const sourcePdf=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
-ok(sourcePdf.includes("pdfjs-v14-range-remote-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:h.l.text')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)'),'official PDF evidence underlines strong anchor lines plus matching explanatory context');
+ok(sourcePdf.includes("pdfjs-v15-range-remote-cache-epoch-anchor-context-lines")&&sourcePdf.includes('evidenceTitle:h.l.text')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)'),'official PDF evidence underlines strong anchor lines plus matching explanatory context');
+ok(sourcePdf.includes('OFFICIAL_CACHE_EPOCH')&&sourcePdf.includes('OFFICIAL_CACHE_MAX_AGE_MS=24*60*60*1000')&&sourcePdf.includes('row.cacheEpoch!==OFFICIAL_CACHE_EPOCH')&&sourcePdf.includes('officialAge>OFFICIAL_CACHE_MAX_AGE_MS')&&sourcePdf.includes('legacyUnversionedOfficialAttachment')&&sourcePdf.includes('legacyUnversionedOfficialAttachmentAutoDelete:true')&&sourcePdf.includes("origin:'local-attachment'")&&sourcePdf.includes('localAttachmentVersion:1'),'official PDF persistent cache rejects stale, expired, and legacy shadow rows while preserving versioned local attachments');
 ok(sourcePdf.includes('pdf-evidence-line')&&sourcePdf.includes('evidenceLines('),'official PDF evidence highlights scored evidence lines instead of every matching word');
 ok(sourcePdf.includes('qn.length<3'),'official PDF evidence accepts short Korean concept anchors such as 롤오버·플래시오버 instead of dropping all queries under eight characters');
 ok(sourcePdf.includes('anchorTokens')&&sourcePdf.includes('m.length>1||x.m.some(t=>t.length>4)')&&sourcePdf.includes('anchorTerms:opts.anchorTerms')&&sourcePdf.includes('evidenceLinesForQA:evidenceLines'),'official PDF evidence deterministically prioritizes strong concept-anchor lines and exposes the exact matcher to browser QA');
@@ -731,7 +732,7 @@ ok(sourcePdf.includes('preferProxy')&&sourcePdf.includes("official-proxy-range")
 ok(sourcePdf.includes('opts.zoom')&&sourcePdf.includes('fitScale')&&sourcePdf.includes('Math.min(3'),'official PDF renderer supports fit-width user zoom while preserving up to 3x device-pixel sharpness');
 const appSource=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const appStyles=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
-ok(appSource.includes('sourceOpen()')&&appSource.includes("addEventListener('popstate'")&&appSource.includes("e.key==='Escape'")&&appSource.includes('sourceView:1'),'official source overlays close safely on browser/system back and Escape');
+ok(appSource.includes('function sourceOpen(opener=null)')&&appSource.includes("addEventListener('popstate'")&&appSource.includes("e.key==='Escape'")&&appSource.includes("e.key==='Tab'&&overlay")&&appSource.includes("aria-modal','true")&&appSource.includes('sourceView:1')&&appSource.includes('sourceFocusReturn=sourceFocusRef(opener)')&&appSource.includes('sourceFocusTarget(ref)')&&appSource.includes('sourceFocusGeneration'),'official source overlays close safely on browser/system back and Escape with dialog focus trapping and stable opener restoration across rerenders');
 ok(appSource.includes('data-source-back')&&appSource.includes('pdf-close-btn')&&appSource.includes('← 뒤로')&&appSource.includes('닫기 ✕'),'official source overlays expose explicit accessible back and close controls');
 ok(appStyles.includes('.pdf-modal-head{position:sticky')&&appStyles.includes('repeat(auto-fit,minmax(82px,1fr))'),'official source viewer keeps navigation controls sticky and mobile-readable');
 ok(appSource.includes('scrollTutorToBottom')&&appSource.includes("state().studyTab==='ai'")&&appSource.includes('runtime.tutorForceLatest')&&appSource.includes('b.scrollHeight-b.clientHeight-b.scrollTop<25')&&!appSource.includes('x.scrollTop=x.scrollHeight'),'AI study chat uses the study-body as its single vertical scroll owner while preserving intentional history position');

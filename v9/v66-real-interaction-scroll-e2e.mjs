@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_V66_URL||'http://127.0.0.1:4173/v9/index.html';
+const skipRemotePdf=process.env.STUDY_119_SKIP_REMOTE_PDF==='1';
 const emptyMonitor={ok:true,targetExamYear:'2027',contentBaselineYear:'2026',sources:[],items:[]};
 const failures=[];
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
@@ -264,31 +265,35 @@ try{
     const examFooter=page.locator('.exam-footer:visible');if(await examFooter.count()){await wheel(page,'.exam-footer','exam-active','exam footer '+vp.width);await diagonalTrackpad(page,'.exam-footer','exam-active','exam footer '+vp.width);await boundaryWheelSafe(page,'.exam-footer','exam-active','exam footer '+vp.width)}
     if(vp.isMobile&&await examFooter.count())await touchBridge(page,'.exam-footer','exam-active','exam footer touch '+vp.width);
 
-    await openPdf(page);
-    await assertSingleEffectiveOwner(page,'pdf','PDF modal '+vp.width,'#pdfEvidence');
-    await wheel(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
-    const zoom=page.locator('#pdfEvidence .pdf-zoombar:visible');if(await zoom.count())await wheel(page,'#pdfEvidence .pdf-zoombar','pdf','pdf zoombar '+vp.width,'#pdfEvidence');
-    await wheel(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar '+vp.width,'#pdfEvidence');
-    await wheel(page,'#pdfEvidence .pdf-evidence-host','pdf','pdf canvas host '+vp.width,'#pdfEvidence');
-    await horizontalWheelSafe(page,'#pdfEvidence .pdf-evidence-host','pdf','pdf canvas host '+vp.width,'#pdfEvidence');
-    await diagonalTrackpad(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
-    await boundaryWheelSafe(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
-    const pager=page.locator('#pdfEvidence .pdf-pager:visible');if(await pager.count())await wheel(page,'#pdfEvidence .pdf-pager','pdf','pdf pager '+vp.width,'#pdfEvidence');
-    if(vp.isMobile){await touchBridge(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header touch '+vp.width,'#pdfEvidence');await touchBridge(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar touch '+vp.width,'#pdfEvidence')}
-    await page.locator('#pdfEvidence [data-pdf-close]').click();
+    if(skipRemotePdf){
+      console.log('SKIP V66 remote PDF modal interactions: external PDF provider unavailable');
+    }else{
+      await openPdf(page);
+      await assertSingleEffectiveOwner(page,'pdf','PDF modal '+vp.width,'#pdfEvidence');
+      await wheel(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
+      const zoom=page.locator('#pdfEvidence .pdf-zoombar:visible');if(await zoom.count())await wheel(page,'#pdfEvidence .pdf-zoombar','pdf','pdf zoombar '+vp.width,'#pdfEvidence');
+      await wheel(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar '+vp.width,'#pdfEvidence');
+      await wheel(page,'#pdfEvidence .pdf-evidence-host','pdf','pdf canvas host '+vp.width,'#pdfEvidence');
+      await horizontalWheelSafe(page,'#pdfEvidence .pdf-evidence-host','pdf','pdf canvas host '+vp.width,'#pdfEvidence');
+      await diagonalTrackpad(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
+      await boundaryWheelSafe(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
+      const pager=page.locator('#pdfEvidence .pdf-pager:visible');if(await pager.count())await wheel(page,'#pdfEvidence .pdf-pager','pdf','pdf pager '+vp.width,'#pdfEvidence');
+      if(vp.isMobile){await touchBridge(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header touch '+vp.width,'#pdfEvidence');await touchBridge(page,'#pdfEvidence .pdf-findbar','pdf','pdf findbar touch '+vp.width,'#pdfEvidence')}
+      await page.locator('#pdfEvidence [data-pdf-close]').click();
 
-    await openResourcePdf(page);
-    await assertSingleEffectiveOwner(page,'pdf','resource PDF modal '+vp.width,'#resourcePdf');
-    await wheel(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
-    const resourceZoom=page.locator('#resourcePdf .pdf-zoombar:visible');if(await resourceZoom.count())await wheel(page,'#resourcePdf .pdf-zoombar','pdf','resource pdf zoombar '+vp.width,'#resourcePdf');
-    await wheel(page,'#resourcePdf .pdf-findbar','pdf','resource pdf findbar '+vp.width,'#resourcePdf');
-    await wheel(page,'#resourcePdf .pdf-evidence-host','pdf','resource pdf canvas host '+vp.width,'#resourcePdf');
-    await horizontalWheelSafe(page,'#resourcePdf .pdf-evidence-host','pdf','resource pdf canvas host '+vp.width,'#resourcePdf');
-    await diagonalTrackpad(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
-    await boundaryWheelSafe(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
-    const resourcePager=page.locator('#resourcePdf .pdf-pager:visible');if(await resourcePager.count())await wheel(page,'#resourcePdf .pdf-pager','pdf','resource pdf pager '+vp.width,'#resourcePdf');
-    if(vp.isMobile)await touchBridge(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header touch '+vp.width,'#resourcePdf');
-    await page.locator('#resourcePdf [data-resource-pdf-close]').click();
+      await openResourcePdf(page);
+      await assertSingleEffectiveOwner(page,'pdf','resource PDF modal '+vp.width,'#resourcePdf');
+      await wheel(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
+      const resourceZoom=page.locator('#resourcePdf .pdf-zoombar:visible');if(await resourceZoom.count())await wheel(page,'#resourcePdf .pdf-zoombar','pdf','resource pdf zoombar '+vp.width,'#resourcePdf');
+      await wheel(page,'#resourcePdf .pdf-findbar','pdf','resource pdf findbar '+vp.width,'#resourcePdf');
+      await wheel(page,'#resourcePdf .pdf-evidence-host','pdf','resource pdf canvas host '+vp.width,'#resourcePdf');
+      await horizontalWheelSafe(page,'#resourcePdf .pdf-evidence-host','pdf','resource pdf canvas host '+vp.width,'#resourcePdf');
+      await diagonalTrackpad(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
+      await boundaryWheelSafe(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
+      const resourcePager=page.locator('#resourcePdf .pdf-pager:visible');if(await resourcePager.count())await wheel(page,'#resourcePdf .pdf-pager','pdf','resource pdf pager '+vp.width,'#resourcePdf');
+      if(vp.isMobile)await touchBridge(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header touch '+vp.width,'#resourcePdf');
+      await page.locator('#resourcePdf [data-resource-pdf-close]').click();
+    }
 
     for(const [route,owner] of [['notes','notes'],['wrong','wrong'],['stats','stats'],['resources','resources'],['suggestions','suggestions'],['settings','settings']]){
       await go(page,route);

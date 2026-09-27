@@ -16,6 +16,20 @@ try{
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.App,{timeout:60000});
 
+  const proxyHostPolicy=await page.evaluate(()=>{
+    const f=window.AITUTOR_V9?.SourceCatalog119?.isSameOriginDeploymentHost;
+    return{
+      helper:typeof f==='function',
+      canonical:typeof f==='function'&&f('fire-rescue-study-web.vercel.app'),
+      preview:typeof f==='function'&&f('fire-rescue-study-ffuretj68-seungjae3908-4607s-projects.vercel.app'),
+      unrelated:typeof f==='function'&&f('study-119-preview.vercel.app'),
+      wrongTeam:typeof f==='function'&&f('fire-rescue-study-ffuretj68-other-team.vercel.app')
+    };
+  });
+  if(!proxyHostPolicy.helper||!proxyHostPolicy.canonical||!proxyHostPolicy.preview||proxyHostPolicy.unrelated||proxyHostPolicy.wrongTeam){
+    throw new Error('PDF_PROXY_HOST_POLICY_MISMATCH '+JSON.stringify(proxyHostPolicy));
+  }
+
   const boot=[...new Set(requests.filter(x=>bundles.includes(x)))];
   const source=[...new Set(requests.filter(x=>canonical.has(x)))];
   const missing=bundles.filter(x=>!boot.includes(x)),extra=boot.filter(x=>!bundles.includes(x));
