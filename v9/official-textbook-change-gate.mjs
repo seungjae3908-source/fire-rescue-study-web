@@ -31,6 +31,8 @@ const items=(snapshot.items||[]).filter(x=>x?.sourceId==='nfsa-materials'&&x?.ki
 if(!items.length)fail('NO_OFFICIAL_TEXTBOOK_ITEMS');
 const groups=Array.isArray(baseline.groups)?baseline.groups:[];
 if(!groups.length)fail('BASELINE_GROUPS_EMPTY');
+const expectedBrowserCacheEpoch='119-official-pdf-cache-v1:'+groups.map(g=>String(g?.fingerprint||'')).join(':');
+if(baseline.browserCacheEpoch!==expectedBrowserCacheEpoch)fail('BASELINE_BROWSER_CACHE_EPOCH_MISMATCH',{expected:expectedBrowserCacheEpoch,actual:baseline.browserCacheEpoch||''});
 const scopeDocs=Array.isArray(baseline.scopeDocs)?baseline.scopeDocs:[];
 if(!scopeDocs.length)fail('BASELINE_SCOPE_DOCS_EMPTY');
 const scopeSet=new Set(scopeDocs);
