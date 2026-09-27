@@ -28,6 +28,21 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
+      - name: Materialize ten-PDF audit mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p official-pdf-mirror
+          base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          for doc in prevention1 prevention2 law1 law2 law3 law4 law5; do
+            curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/$doc.pdf" -o "official-pdf-mirror/$doc.pdf"
+          done
+          bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems
+          for doc in fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5; do
+            test "$(head -c 5 "official-pdf-mirror/$doc.pdf")" = "%PDF-"
+            test "$(wc -c < "official-pdf-mirror/$doc.pdf" | tr -d ' ')" -gt 100000
+          done
+
       - name: Start branch-only static runtime
         shell: bash
         run: |
