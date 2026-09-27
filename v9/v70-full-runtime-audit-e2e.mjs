@@ -227,8 +227,9 @@ async function sourceTabAudit(page,doc){
   if(await close.count())await close.click();
   await page.waitForSelector('#pdfEvidence',{state:'detached',timeout:10000}).catch(()=>{});
   const focusReturned=await page.waitForFunction(id=>{
-    const el=document.querySelector('[data-source-concept="'+CSS.escape(id)+'"]:not([hidden])');
-    return !!el&&document.activeElement===el;
+    const rows=[...document.querySelectorAll('[data-source-concept="'+CSS.escape(id)+'"]')];
+    const visible=rows.find(el=>el instanceof HTMLElement&&el.offsetParent!==null&&el.getClientRects().length);
+    return !!visible&&document.activeElement===visible;
   },id,{timeout:1000}).then(()=>true).catch(()=>false);
   check(focusReturned,'concept source '+doc+' focus returns to opener after close');
 }
