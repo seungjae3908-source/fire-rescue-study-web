@@ -1,5 +1,9 @@
 import { chromium } from 'playwright';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createRequire } from 'node:module';
+
+const require=createRequire(import.meta.url);
+const OfficialPdfProxy=require('./api/official-pdf.js');
 
 const base=process.env.STUDY_119_BRANCH_URL||'http://127.0.0.1:4173/v9/index.html';
 const browser=await chromium.launch({headless:true});
@@ -47,8 +51,18 @@ try{
         last='HTTP_'+r.status;
       }catch(err){last=String(err?.message||err)}
     }
-    if(!res)throw new Error('NODE_STATIC_AND_PROXY_FAILED_'+last);
-    const bytes=new Uint8Array(await res.arrayBuffer());
+    let bytes;
+    if(res){
+      bytes=new Uint8Array(await res.arrayBuffer());
+    }else{
+      try{
+        const direct=await OfficialPdfProxy.fetchPdfWith(doc,{method:'GET',headers:{}},false,{maxRefresh:4});
+        bytes=new Uint8Array(await direct.upstream.arrayBuffer());
+        used='direct-nfa-official';
+      }catch(err){
+        throw new Error('NODE_STATIC_PROXY_AND_NFA_FAILED_'+last+' | '+String(err?.message||err));
+      }
+    }
     if(bytes.length<5||String.fromCharCode(...bytes.slice(0,5))!=='%PDF-')throw new Error('NODE_STATIC_NOT_PDF');
     const task=pdfjsLib.getDocument({data:bytes});
     const pdf=await task.promise,out={};
@@ -60,7 +74,7 @@ try{
         const pg=await pdf.getPage(pdfPage),tc=await pg.getTextContent(),text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
         out[token]={pdfPage,text,invalid:false};
       }
-      return{origin:used===cat.directPdf?'node-static-mirror-fallback':'node-official-proxy-fallback',numPages:pdf.numPages,pages:out}
+      return{origin:used==='direct-nfa-official'?'node-direct-nfa-fallback':used===cat.directPdf?'node-static-mirror-fallback':'node-official-proxy-fallback',numPages:pdf.numPages,pages:out}
     }finally{await task.destroy().catch(()=>{})}
   }
   const pageText={},docMeta={},sourceIssues=[];
