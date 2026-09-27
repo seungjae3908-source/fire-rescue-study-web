@@ -1,0 +1,80 @@
+name: 119 Official Textbook Integrity
+
+on:
+  pull_request:
+    paths:
+      - 'v9/data/official-textbook-baseline.json'
+      - 'v9/official-textbook-change-gate.mjs'
+      - 'v9/api/official-pdf.js'
+      - 'v9/source-catalog-119.js'
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/official-textbook-integrity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'v9/data/official-textbook-baseline.json'
+      - 'v9/official-textbook-change-gate.mjs'
+      - 'v9/api/official-pdf.js'
+      - 'v9/source-catalog-119.js'
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/official-textbook-integrity.yml'
+  schedule:
+    - cron: '47 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: 119-official-textbook-integrity-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  official_textbook_change_gate:
+    name: official_textbook_change_gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Compare official textbook snapshot to approved baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot="/tmp/official-monitor.json"
+          curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors \
+            "https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json" \
+            -o "$snapshot"
+          node v9/official-textbook-change-gate.mjs --snapshot "$snapshot" --max-age-hours 6
+
+  official_pdf_mirror_integrity:
+    name: official_pdf_mirror_integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Verify deployed Pages mirror SHA256 + sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          cd "$tmpdir"
+          curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/SHA256SUMS.txt" -o SHA256SUMS.txt
+          curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/SIZES.txt" -o SIZES.txt
+          test "$(wc -l < SHA256SUMS.txt | tr -d ' ')" = "7"
+          test "$(wc -l < SIZES.txt | tr -d ' ')" = "8"
+          for doc in prevention1 prevention2 law1 law2 law3 law4 law5; do
+            grep -Eq "^[0-9a-fA-F]{64}  ${doc}\\.pdf$" SHA256SUMS.txt
+            curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/$doc.pdf" -o "$doc.pdf"
+            test "$(head -c 5 "$doc.pdf")" = "%PDF-"
+            expected="$(awk -v f="$doc.pdf" '$2==f {print $1}' SIZES.txt)"
+            actual="$(wc -c < "$doc.pdf" | tr -d ' ')"
+            test -n "$expected"
+            test "$actual" = "$expected"
+          done
+          sha256sum -c SHA256SUMS.txt
+          echo "OFFICIAL_PDF_MIRROR_INTEGRITY_SUCCESS"
