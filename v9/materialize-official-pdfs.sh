@@ -9,12 +9,18 @@ else
   docs=(fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5)
 fi
 
+min_bytes=100000
 mkdir -p "$out_dir"
 for doc in "${docs[@]}"; do
   out="$out_dir/$doc.pdf"
-  if [[ -s "$out" ]] && [[ "$(head -c 5 "$out" 2>/dev/null || true)" == "%PDF-" ]]; then
-    echo "OFFICIAL_PDF_MATERIALIZE_CACHE_HIT doc=$doc bytes=$(wc -c < "$out" | tr -d ' ')"
+  cached_bytes="$(wc -c < "$out" 2>/dev/null | tr -d ' ' || echo 0)"
+  if [[ -s "$out" ]] && [[ "$(head -c 5 "$out" 2>/dev/null || true)" == "%PDF-" ]] && [[ "$cached_bytes" -gt "$min_bytes" ]]; then
+    echo "OFFICIAL_PDF_MATERIALIZE_CACHE_HIT doc=$doc bytes=$cached_bytes"
     continue
+  fi
+  if [[ -e "$out" ]]; then
+    echo "OFFICIAL_PDF_MATERIALIZE_CACHE_REJECT doc=$doc bytes=$cached_bytes"
+    rm -f "$out"
   fi
   tmp="${out}.tmp"
   rm -f "$tmp"
