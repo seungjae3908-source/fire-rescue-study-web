@@ -1,0 +1,48 @@
+name: V70 Full Runtime Audit
+
+on:
+  pull_request:
+    paths:
+      - 'v9/**'
+      - '.github/workflows/v70-full-runtime-audit.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: v70-full-runtime-audit-\${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  full_runtime_audit:
+    name: scroll PDF original-source full audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Install browser audit dependencies
+        run: |
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Start branch-only static runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/study119-v70-full-http.log 2>&1 &
+          echo $! > /tmp/study119-v70-full-http.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/study119-v70-full-http.log
+          exit 1
+      - name: Full mobile tablet desktop scroll PDF original-source audit
+        env:
+          STUDY_119_V70_AUDIT_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v70-full-runtime-audit-e2e.mjs
