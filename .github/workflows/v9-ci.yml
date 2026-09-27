@@ -232,7 +232,8 @@ jobs:
           set -euo pipefail
           headers="$(mktemp)"
           body="$(mktemp)"
-          code="$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "$STUDY_119_PREVIEW_URL/api/runtime-head" || true)"
+          endpoint="${STUDY_119_PREVIEW_URL%/}/api/runtime-head"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "$endpoint" || true)"
           if [[ "$code" == "200" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -316,7 +317,8 @@ jobs:
           set -euo pipefail
           headers="$(mktemp)"
           body="$(mktemp)"
-          code="$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "$STUDY_119_PRODUCTION_URL/api/runtime-head" || true)"
+          endpoint="${STUDY_119_PRODUCTION_URL%/}/api/runtime-head"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "$endpoint" || true)"
           if [[ "$code" == "200" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
             exit 0
