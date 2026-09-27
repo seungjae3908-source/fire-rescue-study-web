@@ -3,7 +3,7 @@ window.AITUTOR_V9_CONFIG={
   supabasePublishableKey:'sb_publishable_CxNMo2idqoaYJvbm8FTX8w_hre1kQ-c',
   enableCloudSync:true,
   officialPdfProxyBase:'https://study-119-pdf-proxy.vercel.app',
-  officialPdfMirrorBase:'https://study-119-official-pdf.vercel.app',
-  officialPdfMirrorDocs:['fire1','fire2','ems'],
+  officialPdfMirrorBase:'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',
+  officialPdfMirrorDocs:['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'],
   study119:true
 };
