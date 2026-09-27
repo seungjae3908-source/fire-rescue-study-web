@@ -1,36 +1,25 @@
 import { chromium } from 'playwright';
-import http from 'node:http';
-import { createRequire } from 'node:module';
-
-const require=createRequire(import.meta.url);
-const pdfHandler=require('./api/official-pdf.js');
+import { startLocalPdfMirror } from './v70-local-pdf-mirror-server.mjs';
 const appUrl=process.env.STUDY_119_FIRE_AUDIT_URL||'http://127.0.0.1:4173/v9/index.html';
-const proxyOrigin='http://127.0.0.1:4174';
+const mirror=await startLocalPdfMirror({port:4174});
+const proxyOrigin=mirror.origin,mirrorBase=mirror.base;
 const docs=['fire1','fire2','ems'];
 function assert(v,m,meta={}){if(!v)throw new Error(m+' '+JSON.stringify(meta));console.log('PASS',m,JSON.stringify(meta))}
-const server=http.createServer(async(req,res)=>{
-  const u=new URL(req.url||'/',proxyOrigin);
-  let doc=u.searchParams.get('doc')||'';
-  if(!doc&&/\.pdf$/i.test(u.pathname))doc=u.pathname.split('/').pop().replace(/\.pdf$/i,'');
-  req.query={doc,meta:u.searchParams.get('meta')||''};
-  try{await pdfHandler(req,res)}catch(e){if(!res.headersSent)res.statusCode=500;try{res.end(String(e?.message||e))}catch{}}
-});
-await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(4174,'127.0.0.1',resolve)});
 async function directRange(doc){
   const started=Date.now();
-  const r=await fetch(proxyOrigin+'/api/official-pdf?doc='+doc,{headers:{range:'bytes=0-65535','cache-control':'no-cache'}});
+  const r=await fetch(mirrorBase+'/'+doc+'.pdf',{headers:{range:'bytes=0-65535','cache-control':'no-cache'}});
   const ab=await r.arrayBuffer(),cr=r.headers.get('content-range')||'',transport=r.headers.get('x-119-official-transport')||'';
   console.log('FIRE_RANGE_DIAG',JSON.stringify({doc,status:r.status,bytes:ab.byteLength,contentRange:cr,transport,ms:Date.now()-started}));
-  assert(r.status===206,'fire PDF direct proxy returns 206',{doc,status:r.status});
-  assert(ab.byteLength===65536,'fire PDF direct proxy returns exact 64KB',{doc,bytes:ab.byteLength});
-  assert(/^bytes 0-65535\/\d+$/.test(cr),'fire PDF direct proxy has Content-Range',{doc,cr});
-  assert(Buffer.from(ab).subarray(0,5).toString('latin1')==='%PDF-','fire PDF direct proxy begins with PDF magic',{doc});
+  assert(r.status===206,'fire PDF static mirror returns 206',{doc,status:r.status});
+  assert(ab.byteLength===65536,'fire PDF static mirror returns exact 64KB',{doc,bytes:ab.byteLength});
+  assert(/^bytes 0-65535\/\d+$/.test(cr),'fire PDF static mirror has Content-Range',{doc,cr});
+  assert(Buffer.from(ab).subarray(0,5).toString('latin1')==='%PDF-','fire PDF static mirror begins with PDF magic',{doc});
 }
 async function rewrite(page){
   const fn=async route=>{
     const response=await route.fetch();
     let body=await response.text();
-    body=body.replaceAll('https://study-119-pdf-proxy.vercel.app',proxyOrigin).replaceAll('https://study-119-official-pdf.vercel.app',proxyOrigin);
+    body=body.replaceAll('https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',mirrorBase).replaceAll('https://study-119-official-pdf.vercel.app',mirrorBase).replaceAll('https://study-119-pdf-proxy.vercel.app',proxyOrigin);
     await route.fulfill({response,body});
   };
   await page.route('**/v9/config.js*',fn);
@@ -83,5 +72,5 @@ try{
   console.log('V70_FIRE_PDF_FOCUS_SUCCESS');
 }finally{
   await browser.close();
-  await new Promise(resolve=>server.close(resolve));
+  await new Promise(resolve=>mirror.server.close(resolve));
 }
