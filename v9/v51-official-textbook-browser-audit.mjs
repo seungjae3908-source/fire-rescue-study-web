@@ -81,6 +81,7 @@ try{
   for(const [doc,set] of pageNeeds){
     const cat=catalogMeta[doc];
     if(!cat){sourceIssues.push({doc,type:'CATALOG_MISSING'});continue}
+    const requested=[...set].map(token=>{const [space,value]=String(token).split(':');return{space,value:Number(value)}}).sort((a,b)=>a.value-b.value||a.space.localeCompare(b.space));
     if(cat.transport!=='range-static'){
       const raw=cat.proxyPdf||cat.directPdf||'';
       if(!raw){sourceIssues.push({doc,type:'PROXY_URL_MISSING'});docMeta[doc]={...cat,mode:'contract',contractOk:false};continue}
@@ -98,11 +99,21 @@ try{
           if(attempt<3)await new Promise(r=>setTimeout(r,1000*attempt));
         }
       }
-      docMeta[doc]={...cat,mode:'proxy-contract',contractOk:ok,...last};
-      if(!ok)sourceIssues.push({doc,type:'PROXY_CONTRACT_FAILED_AFTER_RETRY',...last});
+      if(ok){
+        docMeta[doc]={...cat,mode:'proxy-contract',contractOk:true,...last};
+        continue;
+      }
+      try{
+        const result=await nodeStaticSample(doc,cat,requested);
+        docMeta[doc]={...cat,mode:'text-sampled',contractOk:true,origin:result.origin,numPages:result.numPages,proxyError:last};
+        for(const [sourceKey,row] of Object.entries(result.pages))pageText[doc+':'+sourceKey]=row;
+      }catch(nodeErr){
+        const error='proxy='+JSON.stringify(last)+' | nfa='+String(nodeErr?.message||nodeErr);
+        docMeta[doc]={...cat,mode:'text-sampled',contractOk:false,error};
+        sourceIssues.push({doc,type:'PROXY_AND_NFA_PDF_READ_ERROR',error});
+      }
       continue;
     }
-    const requested=[...set].map(token=>{const [space,value]=String(token).split(':');return{space,value:Number(value)}}).sort((a,b)=>a.value-b.value||a.space.localeCompare(b.space));
     try{
       const result=await page.evaluate(async ({doc,pages})=>{
         const V=window.AITUTOR_V9,entry=await V.SourcePDF.openPdf(doc,{timeoutMs:45000}),out={};
