@@ -795,7 +795,25 @@ function evidenceQueries(c,p){const q=p?.studySchema||{};return[...sourceAnchorQ
 function hasAnchorEvidence(r,a){const l=(r?.evidenceLines||[]).map(studyNorm),t=(a||[]).map(studyNorm).filter(x=>x.length>=2);return t.some(x=>l.some(y=>y.includes(x)))}
 function sourceModal(id){return openPdfEvidence(id)}
 async function downloadOfficialPdf(key){if(!key||!V.SourcePDF?.download)return toast('다운로드할 PDF가 없습니다.');try{const r=await V.SourcePDF.download(key,{timeoutMs:120000});toast(`PDF 다운로드 시작 · ${r?.name||key}`)}catch(err){toast('PDF 다운로드 실패 · '+String(err?.message||err).slice(0,46))}}
-const sourceOverlay=()=>document.querySelector('#pdfEvidence,#resourcePdf,#sourceModal');function sourceOpen(){history.pushState({...history.state,sourceView:1},'')}function sourceClose(pop=false){const x=sourceOverlay();if(!x)return false;x.remove();if(!pop&&history.state?.sourceView)history.back();return true}
+const sourceOverlay=()=>document.querySelector('#pdfEvidence,#resourcePdf,#sourceModal');
+let sourceFocusReturn=null,sourceDialogSeq=0;
+const sourceFocusable=root=>[...root.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0});
+function sourceOpen(){
+const overlay=sourceOverlay();if(!overlay)return false;
+if(document.activeElement instanceof HTMLElement&&!overlay.contains(document.activeElement))sourceFocusReturn=document.activeElement;
+const modal=overlay.querySelector('.modal')||overlay;
+modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('tabindex','-1');
+const heading=modal.querySelector('h1,h2,h3');if(heading){if(!heading.id)heading.id='source-dialog-title-'+(++sourceDialogSeq);modal.setAttribute('aria-labelledby',heading.id)}
+history.pushState({...history.state,sourceView:1},'');
+requestAnimationFrame(()=>{const first=sourceFocusable(modal)[0]||modal;try{first.focus({preventScroll:true})}catch{first.focus?.()}});
+return true
+}
+function sourceClose(pop=false){
+const x=sourceOverlay();if(!x)return false;
+x.remove();const focus=sourceFocusReturn;sourceFocusReturn=null;
+requestAnimationFrame(()=>{if(focus?.isConnected){try{focus.focus({preventScroll:true})}catch{focus.focus?.()}}});
+if(!pop&&history.state?.sourceView)history.back();return true
+}
 /* V66 real interaction scroll bridge: keep one owner while eliminating fixed-chrome wheel/touch dead zones. */
 function interactionScrollOwner(target){
   if(!(target instanceof Element))return null;
@@ -873,7 +891,14 @@ if(!root)return;const pages=pdfSearchPages(root),index=Math.max(0,Math.min(Numbe
 if(!box)return;if(pages.length){box.classList.remove('hidden');if(label)label.textContent=`검색 ${index+1}/${pages.length}`;if(prev)prev.disabled=index<=0;if(next)next.disabled=index>=pages.length-1}else box.classList.add('hidden')
 }
 addEventListener('popstate',()=>sourceClose(true));addEventListener('keydown',e=>{
-if(e.key==='Escape'&&sourceOverlay()){e.preventDefault();sourceClose();return}
+const overlay=sourceOverlay();
+if(e.key==='Escape'&&overlay){e.preventDefault();sourceClose();return}
+if(e.key==='Tab'&&overlay){
+const modal=overlay.querySelector('.modal')||overlay,items=sourceFocusable(modal);if(!items.length){e.preventDefault();modal.focus();return}
+const first=items[0],last=items[items.length-1],active=document.activeElement;
+if(e.shiftKey&&(active===first||!modal.contains(active))){e.preventDefault();last.focus();return}
+if(!e.shiftKey&&(active===last||!modal.contains(active))){e.preventDefault();first.focus();return}
+}
 if(e.key!=='Enter'||!(e.target instanceof Element))return;
 if(e.target.matches('[data-pdf-search-input]')){e.preventDefault();document.querySelector('[data-pdf-search]')?.click()}
 else if(e.target.matches('[data-resource-pdf-search-input]')){e.preventDefault();document.querySelector('[data-resource-pdf-search]')?.click()}
