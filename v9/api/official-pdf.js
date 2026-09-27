@@ -157,7 +157,7 @@ async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
   const range=meta?'bytes=0-63':(clientRange||((req.method||'GET')==='GET'?'bytes=0-':''));
   if(range)baseHeaders.range=range;
   if(req.headers&&req.headers['if-range'])baseHeaders['if-range']=req.headers['if-range'];
-  let lastStatus=0;
+  let lastStatus=0,fallback200Url='';
   for(const url of row.urls||[]){
     let upstream;
     try{upstream=await fetchImpl(url,{method:req.method||'GET',headers:baseHeaders,redirect:'follow'})}
@@ -177,7 +177,20 @@ async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
         continue;
       }
     }
+    if(clientRange&&!meta&&upstream.status!==206){
+      if(!fallback200Url)fallback200Url=url;
+      try{await upstream.body?.cancel?.()}catch{}
+      continue;
+    }
     return{row:{...row,url,urls:[url,...(row.urls||[]).filter(x=>x!==url)]},upstream};
+  }
+  if(fallback200Url){
+    const upstream=await fetchImpl(fallback200Url,{method:req.method||'GET',headers:baseHeaders,redirect:'follow'});
+    lastStatus=upstream.status||0;
+    if((upstream.ok||upstream.status===206)&&typeLooksPdf(upstream)){
+      return{row:{...row,url:fallback200Url,urls:[fallback200Url,...(row.urls||[]).filter(x=>x!==fallback200Url)]},upstream};
+    }
+    try{await upstream.body?.cancel?.()}catch{}
   }
   throw new Error('OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_'+lastStatus);
 }
