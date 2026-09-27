@@ -5,9 +5,15 @@ import { fileURLToPath } from 'node:url';
 
 const DEFAULT_DIR=fileURLToPath(new URL('../official-pdf-mirror/',import.meta.url));
 
-function safeDocFromPath(pathname){
-  const m=String(pathname||'').match(/^\/official-pdf-mirror\/(fire1|fire2|ems|prevention1|prevention2|law1|law2|law3|law4|law5)\.pdf$/);
-  return m?m[1]:'';
+const DOC_RE=/^(fire1|fire2|ems|prevention1|prevention2|law1|law2|law3|law4|law5)$/;
+function safeDocFromRequest(u){
+  const m=String(u?.pathname||'').match(/^\/official-pdf-mirror\/(fire1|fire2|ems|prevention1|prevention2|law1|law2|law3|law4|law5)\.pdf$/);
+  if(m)return m[1];
+  if(u?.pathname==='/api/official-pdf'){
+    const q=String(u.searchParams.get('doc')||'');
+    return DOC_RE.test(q)?q:'';
+  }
+  return '';
 }
 function parseRange(value,total){
   const m=String(value||'').trim().match(/^bytes=(\d+)-(\d*)$/i);
@@ -22,15 +28,19 @@ export async function startLocalPdfMirror({port=4174,dir=DEFAULT_DIR}={}){
   const server=http.createServer((req,res)=>{
     try{
       const u=new URL(req.url||'/','http://127.0.0.1:'+port);
-      const doc=safeDocFromPath(u.pathname);
+      res.setHeader('Access-Control-Allow-Origin','*');
+      res.setHeader('Access-Control-Allow-Methods','GET, HEAD, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers','Range, If-Range, Content-Type');
+      res.setHeader('Access-Control-Expose-Headers','Content-Length, Content-Range, Accept-Ranges, X-119-Official-Transport');
+      if(req.method==='OPTIONS'){res.statusCode=204;return res.end()}
+      const doc=safeDocFromRequest(u);
       if(!doc){res.statusCode=404;return res.end('NOT_FOUND')}
       const file=path.join(root,doc+'.pdf');
       if(!file.startsWith(root+path.sep)){res.statusCode=400;return res.end('BAD_PATH')}
       const stat=fs.statSync(file),total=stat.size;
-      res.setHeader('Access-Control-Allow-Origin','*');
-      res.setHeader('Access-Control-Expose-Headers','Content-Length, Content-Range, Accept-Ranges');
       res.setHeader('Accept-Ranges','bytes');
       res.setHeader('Content-Type','application/pdf');
+      res.setHeader('X-119-Official-Transport','pages-mirror');
       res.setHeader('Cache-Control','no-store');
       const range=parseRange(req.headers.range,total);
       if(req.headers.range&&!range){
