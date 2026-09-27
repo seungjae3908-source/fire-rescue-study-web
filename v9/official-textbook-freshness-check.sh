@@ -19,36 +19,49 @@ age_seconds(){
   if [[ "$epoch" -le 0 ]]; then echo 999999999; else echo $((now-epoch)); fi
 }
 
+snapshot_material_ok="false"
+snapshot_material_error=""
 if curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$snapshot_url" -o "$snapshot"; then
   age="$(age_seconds "$snapshot")"
-  if [[ "$age" -ge 0 && "$age" -le "$fresh_seconds" ]]; then
+  snapshot_material_ok="$(jq -r '.sourceStatus[]? | select(.id=="nfsa-materials") | .ok // false' "$snapshot" | tail -1)"
+  snapshot_material_error="$(jq -r '.sourceStatus[]? | select(.id=="nfsa-materials") | .errorCode // empty' "$snapshot" | tail -1)"
+  if [[ "$age" -ge 0 && "$age" -le "$fresh_seconds" && "$snapshot_material_ok" == "true" ]]; then
     node v9/official-textbook-change-gate.mjs --snapshot "$snapshot" --max-age-hours 6
     echo "OFFICIAL_TEXTBOOK_FRESHNESS_SUCCESS source=snapshot age_seconds=$age"
     exit 0
   fi
-  echo "OFFICIAL_TEXTBOOK_SNAPSHOT_STALE age_seconds=$age"
+  if [[ "$age" -ge 0 && "$age" -le "$fresh_seconds" && "$snapshot_material_error" == "WAF_CHALLENGE" ]]; then
+    echo "OFFICIAL_TEXTBOOK_FRESH_WAF_SNAPSHOT age_seconds=$age"
+    material_error="WAF_CHALLENGE"
+  else
+    echo "OFFICIAL_TEXTBOOK_SNAPSHOT_NOT_USABLE age_seconds=$age source_ok=$snapshot_material_ok error_code=$snapshot_material_error"
+    material_error=""
+  fi
 else
   echo "OFFICIAL_TEXTBOOK_SNAPSHOT_UNAVAILABLE"
-fi
-
-node v9/official-monitor-sync.mjs \
-  --output "$live" \
-  --health-output "$health" \
-  --last-good-output "$last_live_good"
-
-material_ok="$(jq -r '.sourceStatus[]? | select(.id=="nfsa-materials") | .ok // false' "$live" | tail -1)"
-material_error="$(jq -r '.sourceStatus[]? | select(.id=="nfsa-materials") | .errorCode // empty' "$live" | tail -1)"
-
-if [[ "$material_ok" == "true" ]]; then
-  node v9/official-textbook-change-gate.mjs --snapshot "$live" --max-age-hours 6
-  echo "OFFICIAL_TEXTBOOK_FRESHNESS_SUCCESS source=live"
-  exit 0
+  material_error=""
 fi
 
 if [[ "$material_error" != "WAF_CHALLENGE" ]]; then
-  echo "OFFICIAL_TEXTBOOK_LIVE_SOURCE_UNHEALTHY error_code=$material_error"
-  cat "$health" || true
-  exit 2
+  node v9/official-monitor-sync.mjs \
+    --output "$live" \
+    --health-output "$health" \
+    --last-good-output "$last_live_good"
+
+  material_ok="$(jq -r '.sourceStatus[]? | select(.id=="nfsa-materials") | .ok // false' "$live" | tail -1)"
+  material_error="$(jq -r '.sourceStatus[]? | select(.id=="nfsa-materials") | .errorCode // empty' "$live" | tail -1)"
+
+  if [[ "$material_ok" == "true" ]]; then
+    node v9/official-textbook-change-gate.mjs --snapshot "$live" --max-age-hours 6
+    echo "OFFICIAL_TEXTBOOK_FRESHNESS_SUCCESS source=live"
+    exit 0
+  fi
+
+  if [[ "$material_error" != "WAF_CHALLENGE" ]]; then
+    echo "OFFICIAL_TEXTBOOK_LIVE_SOURCE_UNHEALTHY error_code=$material_error"
+    cat "$health" || true
+    exit 2
+  fi
 fi
 
 curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$last_good_url" -o "$fallback"
