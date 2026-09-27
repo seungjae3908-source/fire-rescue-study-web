@@ -289,26 +289,30 @@ jobs:
           test -n "$content_range"
           test -n "$acao"
 
-      - name: Probe law2 GitHub Pages PDF Range + CORS
+      - name: Probe all 7 GitHub Pages PDF Range + CORS
         shell: bash
         run: |
           set -euo pipefail
-          url="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror/law2.pdf"
-          headers="$(mktemp)"
-          body="$(mktemp)"
-          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' -H 'Range: bytes=0-65535' -H 'Origin: https://fire-rescue-study-web.vercel.app' "$url")"
-          bytes="$(wc -c < "$body" | tr -d ' ')"
-          content_range="$(grep -i '^content-range:' "$headers" | tail -1 | tr -d '\r' || true)"
-          accept_ranges="$(grep -i '^accept-ranges:' "$headers" | tail -1 | tr -d '\r' || true)"
-          acao="$(grep -i '^access-control-allow-origin:' "$headers" | tail -1 | tr -d '\r' || true)"
-          magic="$(head -c 5 "$body")"
-          echo "V70_LAW2_PAGES_RANGE_PROBE status=$code bytes=$bytes magic=$magic $content_range $accept_ranges $acao"
-          test "$code" = "206"
-          test "$bytes" = "65536"
-          test "$magic" = "%PDF-"
-          test -n "$content_range"
-          test -n "$accept_ranges"
-          test -n "$acao"
+          base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          for doc in prevention1 prevention2 law1 law2 law3 law4 law5; do
+            url="$base/$doc.pdf"
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' -H 'Range: bytes=0-65535' -H 'Origin: https://fire-rescue-study-web.vercel.app' "$url")"
+            bytes="$(wc -c < "$body" | tr -d ' ')"
+            content_range="$(grep -i '^content-range:' "$headers" | tail -1 | tr -d '\r' || true)"
+            accept_ranges="$(grep -i '^accept-ranges:' "$headers" | tail -1 | tr -d '\r' || true)"
+            acao="$(grep -i '^access-control-allow-origin:' "$headers" | tail -1 | tr -d '\r' || true)"
+            magic="$(head -c 5 "$body")"
+            echo "V70_PAGES_PDF_RANGE_PROBE doc=$doc status=$code bytes=$bytes magic=$magic $content_range $accept_ranges $acao"
+            test "$code" = "206"
+            test "$bytes" = "65536"
+            test "$magic" = "%PDF-"
+            test -n "$content_range"
+            test -n "$accept_ranges"
+            test -n "$acao"
+            rm -f "$headers" "$body"
+          done
 
       - name: Probe current Production availability
         id: production_access
