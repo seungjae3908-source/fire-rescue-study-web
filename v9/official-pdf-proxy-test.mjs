@@ -204,6 +204,33 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
 
 
 {
+  const row={
+    doc:'fire1',
+    name:'10. 소방전술1(화재1).pdf',
+    detailUrl:'https://www.nfa.go.kr/detail',
+    cookie:'',
+    urls:[
+      'https://www.nfa.go.kr/board/file/bbs/1/FIRST/fire1',
+      'https://www.nfa.go.kr/board/file/bbs/1/SECOND/fire1'
+    ]
+  };
+  const seen=[];
+  const result=await P.fetchFirstWorkingCandidate(
+    row,
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    async url=>{
+      seen.push(url);
+      if(url.includes('/FIRST/'))return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(58)),{status:200,headers:{'content-type':'application/pdf','content-length':'68'}});
+      return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(55)),{status:206,headers:{'content-type':'application/pdf','content-range':'bytes 0-63/1000','accept-ranges':'bytes','content-length':'64'}});
+    }
+  );
+  assert.equal(result.upstream.status,206,'explicit browser Range prefers a true HTTP 206 candidate over an earlier PDF 200 candidate');
+  assert.match(result.row.url,/\/SECOND\//,'true Range candidate is promoted to the front of the cached URL order');
+  assert.equal(seen.length,2,'explicit Range probes additional candidate after a valid but non-range 200 response');
+}
+
+{
   const raw=Buffer.from('%PDF-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   const upstream=new Response(raw,{status:200,headers:{'content-type':'application/pdf','content-length':String(raw.length)}});
   const ranged=P.syntheticRangeResponse(upstream,'bytes=5-14');
