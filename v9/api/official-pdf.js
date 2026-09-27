@@ -20,6 +20,8 @@ const SOURCES=Object.freeze({
   law5:{cntId:'106806',name:'7. 소방법령5.pdf'}
 });
 const cache=new Map();
+const PAGES_MIRROR_BASE='https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror';
+const PAGES_MIRROR_DOCS=new Set(['prevention1','prevention2','law1','law2','law3','law4','law5']);
 
 function one(v){return Array.isArray(v)?v[0]:v}
 function norm(s){return String(s||'').toLowerCase().replace(/&nbsp;|\s|_|-/g,'').replace(/[^0-9a-z가-힣().]/g,'')}
@@ -123,6 +125,30 @@ function officialCandidateUrls(paths){
 function typeLooksPdf(res){
   const type=String((res&&res.headers&&res.headers.get&&res.headers.get('content-type'))||'').toLowerCase();
   return type.includes('pdf')||type.includes('octet-stream');
+}
+function pagesMirrorUrl(doc){
+  return PAGES_MIRROR_DOCS.has(doc)?PAGES_MIRROR_BASE+'/'+encodeURIComponent(doc)+'.pdf':'';
+}
+async function fetchPagesMirror(doc,req,meta=false,fetchImpl=fetch){
+  const url=pagesMirrorUrl(doc);if(!url)throw new Error('PAGES_MIRROR_NOT_CONFIGURED');
+  const headers={'user-agent':UA,'accept':'application/pdf,*/*;q=0.8','cache-control':'no-cache'};
+  const clientRange=(req.headers&&req.headers.range)||'';
+  const range=meta?'bytes=0-63':(clientRange||((req.method||'GET')==='GET'?'bytes=0-':''));
+  if(range)headers.range=range;
+  if(req.headers&&req.headers['if-range'])headers['if-range']=req.headers['if-range'];
+  const upstream=await fetchImpl(url,{method:req.method||'GET',headers,redirect:'follow'});
+  if(![200,206].includes(upstream.status)||!typeLooksPdf(upstream))throw new Error('PAGES_MIRROR_HTTP_'+(upstream.status||0));
+  if(clientRange&&!meta&&upstream.status!==206)throw new Error('PAGES_MIRROR_RANGE_UNSUPPORTED_'+upstream.status);
+  const canCheckMagic=(req.method||'GET')!=='HEAD'&&(!range||/^bytes=0-/i.test(range));
+  if(canCheckMagic){
+    let magicOk=false;try{magicOk=await pdfProbe(upstream.clone())}catch{}
+    if(!magicOk)throw new Error('PAGES_MIRROR_NOT_PDF');
+  }
+  return{
+    row:{doc,name:SOURCES[doc].name,url,urls:[url],detailUrl:url,cookie:''},
+    upstream,
+    transport:'pages-mirror'
+  };
 }
 async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
   const baseHeaders={'user-agent':UA,'accept':'application/pdf,*/*;q=0.8','referer':row.detailUrl,'cache-control':'no-cache'};
@@ -231,15 +257,29 @@ async function fetchPdfWith(doc,req,meta=false,deps={}){
   }
   throw new Error('OFFICIAL_SOURCE_REFRESH_EXHAUSTED');
 }
+async function fetchPdfWithPagesFirst(doc,req,meta=false,deps={}){
+  const pagesImpl=deps.pagesImpl||fetchPagesMirror;
+  const nfaImpl=deps.nfaImpl||((d,r,m)=>fetchPdfWith(d,r,m));
+  if(PAGES_MIRROR_DOCS.has(doc)){
+    try{return await pagesImpl(doc,req,meta)}
+    catch(e){
+      const msg=String((e&&e.message)||e||'PAGES_MIRROR_FAILED').slice(0,180);
+      if(typeof deps.onMirrorError==='function')deps.onMirrorError(msg);
+      else console.warn('OFFICIAL_PDF_PAGES_MIRROR_FALLBACK',JSON.stringify({doc,error:msg}));
+    }
+  }
+  const result=await nfaImpl(doc,req,meta);
+  return{...result,transport:result?.transport||'nfa-origin'};
+}
 async function fetchPdf(doc,req,meta=false){
-  return fetchPdfWith(doc,req,meta);
+  return fetchPdfWithPagesFirst(doc,req,meta);
 }
 
 module.exports=async function handler(req,res){
   res.setHeader('Access-Control-Allow-Origin','*');
   res.setHeader('Access-Control-Allow-Methods','GET, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers','Range, If-Range, Content-Type');
-  res.setHeader('Access-Control-Expose-Headers','Content-Length, Content-Range, Accept-Ranges, ETag, Last-Modified, X-119-Official-Source');
+  res.setHeader('Access-Control-Expose-Headers','Content-Length, Content-Range, Accept-Ranges, ETag, Last-Modified, X-119-Official-Source, X-119-Official-Transport');
   if((req.method||'GET')==='OPTIONS'){res.statusCode=204;return res.end()}
   if(!['GET','HEAD'].includes(req.method||'GET')){
     res.statusCode=405;res.setHeader('Allow','GET, HEAD, OPTIONS');return res.end('Method Not Allowed');
@@ -255,7 +295,7 @@ module.exports=async function handler(req,res){
     console.error('OFFICIAL_PDF_PROXY_ERROR',JSON.stringify({doc,meta,error:msg}));
     res.statusCode=502;return res.end(msg)
   }
-  const {row,upstream}=result;
+  const {row,upstream,transport}=result;
   if(!upstream.ok&&upstream.status!==206){
     res.statusCode=upstream.status||502;
     try{await upstream.body?.cancel?.()}catch{}
@@ -287,6 +327,7 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('X-119-Official-Source','nfa');
+  res.setHeader('X-119-Official-Transport',transport||'nfa-origin');
   if(req.method==='HEAD'||!upstream.body)return res.end();
   try{
     await pipeline(Readable.fromWeb(upstream.body),res);
@@ -308,4 +349,8 @@ module.exports.fetchFirstWorkingCandidate=fetchFirstWorkingCandidate;
 module.exports.fetchDetailWithSession=fetchDetailWithSession;
 module.exports.isRefreshableCandidateError=isRefreshableCandidateError;
 module.exports.fetchPdfWith=fetchPdfWith;
+module.exports.fetchPagesMirror=fetchPagesMirror;
+module.exports.fetchPdfWithPagesFirst=fetchPdfWithPagesFirst;
+module.exports.pagesMirrorUrl=pagesMirrorUrl;
+module.exports.PAGES_MIRROR_DOCS=PAGES_MIRROR_DOCS;
 module.exports.pdfProbe=pdfProbe;
