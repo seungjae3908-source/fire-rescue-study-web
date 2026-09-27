@@ -255,6 +255,23 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
 }
 
 {
+  let calls=0;
+  const row={doc:'fire1',name:'10. 소방전술1(화재1).pdf',detailUrl:'https://www.nfa.go.kr/detail',cookie:'',urls:['https://www.nfa.go.kr/board/file/bbs/1/ONE_TIME/fire1']};
+  const result=await P.fetchFirstWorkingCandidate(
+    row,
+    {method:'GET',headers:{range:'bytes=0-63'}},
+    false,
+    async ()=>{
+      calls++;
+      if(calls>1)return new Response('gone',{status:404,headers:{'content-type':'text/plain'}});
+      return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(58)),{status:200,headers:{'content-type':'application/pdf','content-length':'68'}});
+    }
+  );
+  assert.equal(calls,1,'one-time valid PDF 200 response is not discarded and refetched after Range probing');
+  assert.equal(result.upstream.status,200,'one-time valid 200 response remains available for synthetic/buffered Range serving');
+}
+
+{
   const raw=Buffer.from('%PDF-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   const upstream=new Response(raw,{status:200,headers:{'content-type':'application/pdf','content-length':String(raw.length)}});
   const ranged=P.syntheticRangeResponse(upstream,'bytes=5-14');
