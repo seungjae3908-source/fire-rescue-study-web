@@ -4,8 +4,13 @@ const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const base='https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/';
 const cfg=window.AITUTOR_V9_CONFIG||{};
 const host=typeof location!=='undefined'?String(location.hostname||''):'';
-const sameOriginProduction=/^fire-rescue-study-web(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(host);
-const proxyBase=String(sameOriginProduction?(location.origin||''):(cfg.officialPdfProxyBase||'')).replace(/\/$/,'');
+function isSameOriginDeploymentHost(value){
+  const h=String(value||'').toLowerCase();
+  if(/^fire-rescue-study-web(?:-[a-z0-9-]+)?\.vercel\.app$/.test(h))return true;
+  return /^fire-rescue-study-[a-z0-9]{6,}-seungjae3908-4607s-projects\.vercel\.app$/.test(h);
+}
+const sameOriginDeployment=isSameOriginDeploymentHost(host);
+const proxyBase=String(sameOriginDeployment?(location.origin||''):(cfg.officialPdfProxyBase||'')).replace(/\/$/,'');
 const mirrorBase=String(cfg.officialPdfMirrorBase||'').replace(/\/$/,'');
 const mirrorDocs=new Set(Array.isArray(cfg.officialPdfMirrorDocs)?cfg.officialPdfMirrorDocs:[]);
 const mirrored=doc=>!!mirrorBase&&mirrorDocs.has(doc);
@@ -45,5 +50,5 @@ function resolveForConcept(id){const c=V.curriculum?.byId?.[id],r=c?.sourceRange
 function canDirect(key){return !!get(key)?.directPdf}
 function withDirect(key,url,meta={}){if(!C[key])return false;C[key]={...C[key],directPdf:url||'',...meta};return true}
 function audit(){const rows=Object.values(C);return{total:rows.length,direct:rows.filter(x=>x.directPdf).length,fallback:rows.filter(x=>!x.directPdf).length,licenseOk:rows.every(x=>x.license==='KOGL-1'),rows}}
-V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true,sameOriginProxy:!proxyBase,crossOriginProxy:!!proxyBase,arbitraryUrlProxy:false,allCatalogDocsProxyable:true,staticMirrorEnabled:!!mirrorBase,staticMirrorDocs:[...mirrorDocs]}};
+V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,isSameOriginDeploymentHost,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true,sameOriginProxy:!proxyBase,crossOriginProxy:!!proxyBase,arbitraryUrlProxy:false,allCatalogDocsProxyable:true,staticMirrorEnabled:!!mirrorBase,staticMirrorDocs:[...mirrorDocs]}};
 })();
