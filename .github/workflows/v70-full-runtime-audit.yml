@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: v70-full-runtime-audit-\${{ github.event.pull_request.number || github.ref }}
+  group: v70-full-runtime-audit-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
