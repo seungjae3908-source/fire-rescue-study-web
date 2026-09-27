@@ -47,6 +47,18 @@ jobs:
           curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors \
             "https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json" \
             -o "$snapshot"
+          generated="$(jq -r '.generatedAt // empty' "$snapshot")"
+          generated_epoch="$(date -u -d "$generated" +%s 2>/dev/null || echo 0)"
+          now_epoch="$(date -u +%s)"
+          age_seconds=$((now_epoch-generated_epoch))
+          if [[ "$generated_epoch" -le 0 || "$age_seconds" -gt 21600 ]]; then
+            echo "OFFICIAL_TEXTBOOK_SNAPSHOT_STALE age_seconds=$age_seconds -- collecting live snapshot"
+            node v9/official-monitor-sync.mjs \
+              --output /tmp/official-monitor-live.json \
+              --health-output /tmp/official-monitor-live-health.json \
+              --last-good-output /tmp/official-monitor-live-last-good.json
+            snapshot="/tmp/official-monitor-live.json"
+          fi
           node v9/official-textbook-change-gate.mjs --snapshot "$snapshot" --max-age-hours 6
 
   official_pdf_mirror_integrity:
