@@ -21,13 +21,13 @@ assert(blocking.length===0,'all initial external scripts are non-parser-blocking
 assert(lazy.includes('Promise.all(QUESTION_FILES.map(loadScript))'),'deferred question packs are inserted together for parallel network fetch');
 assert(!lazy.includes('for(const file of QUESTION_FILES)await loadScript(file)'),'question packs are no longer inserted one-by-one');
 assert(lazy.includes("s.async=false"),'parallel question fetch preserves canonical classic-script execution order');
-assert(catalog.includes("mirrored(doc)?'range-static':'range-proxy'"),'non-mirrored official textbooks select range-proxy');
+assert(catalog.includes("mirrored(doc)?'range-static':'range-proxy'"),'catalog keeps range-proxy fallback available behind static mirrors');
 assert(pdf.includes("catalog?.transport==='range-proxy'&&catalog?.proxyPdf?'proxy':''"),'PDF viewer recognizes range-proxy transport');
 assert(pdf.includes("origin=rangeMode==='mirror'?'official-static-range':'official-proxy-range'"),'PDF viewer records static and proxy range origins separately');
 assert(pdf.includes('disableRange:false')&&pdf.includes('disableStream:false')&&pdf.includes('disableAutoFetch:true')&&pdf.includes('rangeChunkSize:65536'),'range viewer requests only required PDF byte ranges');
 assert(pdf.includes("official-proxy-full-cache-fallback"),'full PDF blob download remains a bounded fallback instead of the primary proxy path');
 assert(proxy.includes("const clientRange=(req.headers&&req.headers.range)||''")&&proxy.includes("res.setHeader('Access-Control-Allow-Headers','Range, If-Range, Content-Type')"),'official proxy forwards browser byte-range requests');
-assert(/officialPdfMirrorDocs:\['fire1','fire2','ems'\]/.test(config),'known fast static mirrors remain unchanged');
+assert(config.includes("officialPdfMirrorDocs:['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5']"),'all ten official textbooks use the persistent Pages static mirror');
 assert(perf.includes('noParserBlockingScripts:parserBlockingScripts.length===0')&&perf.includes('jsCount:16'),'performance budget prevents parser-blocking and high-request bootstrap regression');
 const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
