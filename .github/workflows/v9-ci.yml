@@ -362,34 +362,81 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
-      - name: Probe official PDF provider availability
+      - name: Restore branch PDF audit cache
+        uses: actions/cache@v4
+        with:
+          path: official-pdf-mirror
+          key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
+      - name: Materialize branch ten-PDF mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p official-pdf-mirror
+          pages_base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          for doc in prevention1 prevention2 law1 law2 law3 law4 law5; do
+            out="official-pdf-mirror/$doc.pdf"
+            bytes="$(wc -c < "$out" 2>/dev/null | tr -d ' ' || echo 0)"
+            if [[ -s "$out" && "$(head -c 5 "$out" 2>/dev/null || true)" == "%PDF-" && "$bytes" -gt 100000 ]]; then
+              echo "V9_BROWSER_PDF_CACHE_HIT doc=$doc bytes=$bytes"
+              continue
+            fi
+            rm -f "$out"
+            curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$pages_base/$doc.pdf" -o "$out"
+          done
+          bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems
+          for doc in fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5; do
+            test "$(head -c 5 "official-pdf-mirror/$doc.pdf")" = "%PDF-"
+            test "$(wc -c < "official-pdf-mirror/$doc.pdf" | tr -d ' ')" -gt 100000
+          done
+      - name: Start branch-local official PDF provider
         id: remote_pdf
         shell: bash
         run: |
           set -euo pipefail
-          headers="$(mktemp)"
-          body="$(mktemp)"
-          source_url="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror/fire1.pdf"
-          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Range: bytes=0-63' -H 'Cache-Control: no-cache' "$source_url" || true)"
-          magic="$(head -c 5 "$body" 2>/dev/null || true)"
-          if [[ "$code" == "200" || "$code" == "206" ]]; then
-            if [[ "$magic" != "%PDF-" ]]; then
-              echo "PDF_SOURCE_MAGIC_INVALID status=$code magic=$magic"
-              exit 1
+          nohup node --input-type=module -e "import { startLocalPdfMirror } from './v9/v70-local-pdf-mirror-server.mjs'; await startLocalPdfMirror({port:4174}); await new Promise(()=>{});" > /tmp/study119-branch-pdf.log 2>&1 &
+          echo $! > /tmp/study119-branch-pdf.pid
+          source_url="http://127.0.0.1:4174/official-pdf-mirror/fire1.pdf"
+          for attempt in $(seq 1 30); do
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' --max-time 5 -H 'Range: bytes=0-63' "$source_url" || true)"
+            magic="$(head -c 5 "$body" 2>/dev/null || true)"
+            rm -f "$headers" "$body"
+            if [[ "$code" == "206" && "$magic" == "%PDF-" ]]; then
+              echo "available=true" >> "$GITHUB_OUTPUT"
+              echo "provider=branch-local" >> "$GITHUB_OUTPUT"
+              echo "V9_BRANCH_PDF_PROVIDER_READY"
+              exit 0
             fi
-            echo "available=true" >> "$GITHUB_OUTPUT"
-            echo "provider=github-pages" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "PDF_SOURCE_GITHUB_PAGES_UNAVAILABLE status=$code"
-          cat "$body"
+            sleep 1
+          done
+          cat /tmp/study119-branch-pdf.log
           exit 1
+      - name: Rewrite branch runtime to local PDF provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('v9/boot-v69-1.js')
+          text=path.read_text()
+          text=text.replace(
+            'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',
+            'http://127.0.0.1:4174/official-pdf-mirror'
+          )
+          text=text.replace(
+            'https://study-119-pdf-proxy.vercel.app',
+            'http://127.0.0.1:4174'
+          )
+          path.write_text(text)
+          PY
+          grep -q "http://127.0.0.1:4174/official-pdf-mirror" v9/boot-v69-1.js
       - name: Install browser QA dependency
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
@@ -470,6 +517,8 @@ jobs:
         run: node v9/v53-tablet-ux-e2e.mjs
       - name: V54 tablet-PC + medium desktop + PDF range QA
         if: steps.remote_pdf.outputs.available == 'true'
+        env:
+          STUDY_119_PDF_MIRROR_BASE: http://127.0.0.1:4174/official-pdf-mirror
         run: node v9/v54-tablet-pc-e2e.mjs
       - name: V55 core/detail precision + navigation QA
         run: node v9/v55-core-detail-precision-e2e.mjs
