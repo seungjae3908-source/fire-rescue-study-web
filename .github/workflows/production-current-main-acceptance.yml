@@ -88,7 +88,7 @@ jobs:
         env:
           STUDY_119_PRODUCTION_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
           STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
-          STUDY_119_REQUIRE_LAW2_STATIC: '1'
+          STUDY_119_REQUIRE_LAW2_PROXY_RANGE: '1'
         run: node v9/v70-production-performance-e2e.mjs
 
 
