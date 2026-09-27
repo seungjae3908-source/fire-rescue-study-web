@@ -636,8 +636,6 @@ jobs:
           done
           cat /tmp/study119-v51-http.log
           exit 1
-      - name: Diagnose F02-C02 official source anchors
-        run: node v9/v70-f02-source-anchor-diagnostic-e2e.mjs
       - name: Audit all 183 concepts against mapped official textbook sources
         run: node v9/v51-official-textbook-browser-audit.mjs
 
