@@ -816,7 +816,7 @@ return true
 function sourceClose(pop=false){
 const x=sourceOverlay();if(!x)return false;
 x.remove();const focus=sourceFocusReturn;sourceFocusReturn=null;
-requestAnimationFrame(()=>{if(focus?.isConnected){try{focus.focus({preventScroll:true})}catch{focus.focus?.()}}});
+if(focus?.isConnected){try{focus.focus({preventScroll:true})}catch{focus.focus?.()}}
 if(!pop&&history.state?.sourceView)history.back();return true
 }
 /* V66 real interaction scroll bridge: keep one owner while eliminating fixed-chrome wheel/touch dead zones. */
