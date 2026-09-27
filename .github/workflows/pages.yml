@@ -50,41 +50,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p official-pdf-mirror
-          docs=(fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5)
-          for doc in "${docs[@]}"; do
-            out="official-pdf-mirror/${doc}.pdf"
-            if [[ -s "$out" ]] && [[ "$(head -c 5 "$out" 2>/dev/null || true)" == '%PDF-' ]]; then
-              echo "MIRROR_CACHE_HIT $doc $(wc -c < "$out" | tr -d ' ')"
-              continue
-            fi
-            meta="/tmp/${doc}-materialize.json"
-            node v9/official-pdf-materialize-resolve.mjs "$doc" "$meta"
-            referer="$(jq -r '.detailUrl' "$meta")"
-            cookie="$(jq -r '.cookie' "$meta")"
-            ok=0
-            while IFS= read -r url; do
-              tmp="${out}.tmp"
-              rm -f "$tmp"
-              args=(-fsSL --retry 4 --retry-delay 2 --retry-all-errors --connect-timeout 20 --max-time 240
-                -A 'Mozilla/5.0 (compatible; 119Study/1.0)'
-                -H 'Accept: application/pdf,*/*;q=0.8'
-                -H 'Cache-Control: no-cache'
-                -e "$referer")
-              if [[ -n "$cookie" ]]; then args+=(-H "Cookie: $cookie"); fi
-              if curl "${args[@]}" "$url" -o "$tmp"; then
-                magic="$(head -c 5 "$tmp" 2>/dev/null || true)"
-                bytes="$(wc -c < "$tmp" | tr -d ' ')"
-                if [[ "$magic" == "%PDF-" && "$bytes" -gt 100000 ]]; then
-                  mv "$tmp" "$out"
-                  ok=1
-                  break
-                fi
-              fi
-              rm -f "$tmp"
-            done < <(jq -r '.urls[]' "$meta")
-            test "$ok" = "1"
-            echo "MIRROR_FETCH_DONE $doc $(wc -c < "$out" | tr -d ' ')"
-          done
+          bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5
           (
             cd official-pdf-mirror
             sha256sum fire1.pdf fire2.pdf ems.pdf prevention1.pdf prevention2.pdf law1.pdf law2.pdf law3.pdf law4.pdf law5.pdf > SHA256SUMS.txt
