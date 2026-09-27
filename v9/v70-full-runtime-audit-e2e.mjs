@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import fs from 'node:fs/promises';
 import { startLocalPdfMirror } from './v70-local-pdf-mirror-server.mjs';
 const base=process.env.STUDY_119_V70_AUDIT_URL||'http://127.0.0.1:4173/v9/index.html';
 const mirror=await startLocalPdfMirror({port:4174});
@@ -88,10 +89,74 @@ async function waitPdfReady(page,selector,timeout=120000){
   },selector,{timeout});
   return page.locator(selector).evaluate(root=>({state:root.dataset.renderState||'',doc:root.dataset.docKey||'',page:root.dataset.page||'',pages:root.dataset.pages||'',text:root.innerText.slice(0,500)}));
 }
+async function auditPdfDialogA11y(page,selector,label){
+  const dialog=page.locator(selector+' .modal').first();
+  const meta=await dialog.evaluate(el=>({
+    role:el.getAttribute('role')||'',
+    ariaModal:el.getAttribute('aria-modal')||'',
+    labelledby:el.getAttribute('aria-labelledby')||'',
+    headingId:el.querySelector('h1,h2,h3')?.id||'',
+    activeInside:!!el.contains(document.activeElement),
+    focusables:[...el.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0}).length
+  }));
+  check(meta.role==='dialog'&&meta.ariaModal==='true',label+' exposes modal dialog semantics',meta);
+  check(!!meta.labelledby&&meta.labelledby===meta.headingId,label+' dialog has accessible label binding',meta);
+  check(meta.activeInside,label+' focus enters dialog on open',meta);
+  if(meta.focusables>1){
+    const trap=await dialog.evaluate(el=>{
+      const items=[...el.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0});
+      items[0]?.focus();return{first:items[0]?.outerHTML.slice(0,100)||'',last:items.at(-1)?.outerHTML.slice(0,100)||''};
+    });
+    await page.keyboard.press('Shift+Tab');
+    const wrappedLast=await dialog.evaluate(el=>{const items=[...el.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0});return document.activeElement===items.at(-1)});
+    check(wrappedLast,label+' Shift+Tab wraps to last control',{trap});
+    await page.keyboard.press('Tab');
+    const wrappedFirst=await dialog.evaluate(el=>{const items=[...el.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0});return document.activeElement===items[0]});
+    check(wrappedFirst,label+' Tab wraps back to first control',{trap});
+  }
+}
+async function auditResourceSearchJump(page,selector,label,doc){
+  const search=page.locator(selector+' [data-resource-pdf-search-input]');
+  const searchBtn=page.locator(selector+' [data-resource-pdf-search]');
+  if(await search.count()&&await searchBtn.count()){
+    await search.fill('소방');
+    await searchBtn.click();
+    await page.waitForFunction(sel=>{const r=document.querySelector(sel);return r?.dataset?.renderState==='ready'&&!!r.dataset.searchResults&&r.dataset.searchResults!=='[]'},selector,{timeout:120000});
+    const searchState=await page.locator(selector).evaluate(root=>({query:root.dataset.searchQuery||'',results:JSON.parse(root.dataset.searchResults||'[]'),label:root.querySelector('[data-resource-pdf-search-label]')?.textContent||''}));
+    check(searchState.query==='소방'&&searchState.results.length>0,label+' original-text search returns results',searchState);
+    const nextResult=page.locator(selector+' [data-resource-pdf-search-next]');
+    if(await nextResult.count()&&!(await nextResult.isDisabled())){
+      const before=Number(await page.locator(selector).getAttribute('data-page')||0);
+      await nextResult.click();
+      await page.waitForFunction(({selector,before})=>{const r=document.querySelector(selector);return r?.dataset?.renderState==='ready'&&Number(r.dataset.page||0)!==before},{selector,before},{timeout:120000});
+      check(true,label+' next search-result navigation works');
+    }
+  }
+  const jump=page.locator(selector+' [data-resource-pdf-jump-input]');
+  const jumpBtn=page.locator(selector+' [data-resource-pdf-jump]');
+  if(await jump.count()&&await jumpBtn.count()){
+    const expected=await page.evaluate(doc=>window.AITUTOR_V9.SourcePDF.pdfPage?.(doc,1)||1,doc);
+    await jump.fill('1');await jumpBtn.click();
+    await page.waitForFunction(({selector,expected})=>{const r=document.querySelector(selector);return r?.dataset?.renderState==='ready'&&Number(r.dataset.page||0)===expected},{selector,expected},{timeout:120000});
+    check(true,label+' textbook-page jump maps to the expected PDF page',{doc,expected});
+  }
+}
+async function auditResourceDownload(page,selector,label,doc){
+  const btn=page.locator(selector+' [data-resource-download="'+doc+'"]').first();
+  if(!(await btn.count())){check(false,label+' exposes download control',{doc});return}
+  const [download]=await Promise.all([page.waitForEvent('download',{timeout:120000}),btn.click()]);
+  const p=await download.path(),name=download.suggestedFilename();
+  check(!!p&&/\.pdf$/i.test(name),label+' download produces a PDF filename',{name,path:!!p});
+  if(p){
+    const handle=await fs.open(p,'r');const head=Buffer.alloc(5);await handle.read(head,0,5,0);const stat=await handle.stat();await handle.close();
+    check(head.toString('latin1')==='%PDF-'&&stat.size>100000,label+' downloaded file has PDF magic and nontrivial size',{name,size:stat.size});
+  }
+}
 async function checkPdfModal(page,selector,label,{exercise=false}={}){
   const state=await waitPdfReady(page,selector);
   check(state.state==='ready',label+' PDF render ready',state);
   if(state.state!=='ready')return false;
+  await auditPdfDialogA11y(page,selector,label);
   const metrics=await page.locator(selector).evaluate(root=>{
     const host=root.querySelector('.pdf-evidence-host[data-scroll-owner="pdf"]'),canvas=root.querySelector('canvas');
     const h=host?.getBoundingClientRect();
@@ -122,10 +187,11 @@ async function checkPdfModal(page,selector,label,{exercise=false}={}){
       await page.waitForFunction(selector=>{const x=document.querySelector(selector+' [data-resource-zoom-label],'+selector+' [data-pdf-zoom-label]');return !!x&&x.textContent!=='100%'},selector,{timeout:120000});
       check(true,label+' zoom control works');
     }
+    if(selector==='#resourcePdf')await auditResourceSearchJump(page,selector,label,state.doc);
   }
   return true;
 }
-async function resourcePdfAudit(page,doc,{exercise=false}={}){
+async function resourcePdfAudit(page,doc,{exercise=false,download=false}={}){
   await go(page,'resources');
   const btn=page.locator('[data-resource-doc="'+doc+'"]:visible').first();
   check(await btn.count()>0,'resources exposes '+doc+' PDF button');
@@ -134,9 +200,12 @@ async function resourcePdfAudit(page,doc,{exercise=false}={}){
   await checkPdfModal(page,'#resourcePdf','resource '+doc,{exercise});
   const official=await page.evaluate(doc=>window.AITUTOR_V9.SourceCatalog119.get(doc)?.officialPage||'',doc);
   check(/^https:\/\/www\.nfa\.go\.kr\//.test(official),'resource '+doc+' retains official NFA source URL',{official});
+  if(download)await auditResourceDownload(page,'#resourcePdf','resource '+doc,doc);
   const close=page.locator('#resourcePdf [data-resource-pdf-close]');
   if(await close.count())await close.click();
   await page.waitForSelector('#resourcePdf',{state:'detached',timeout:10000}).catch(()=>{});
+  const focusReturned=await btn.evaluate(el=>document.activeElement===el);
+  check(focusReturned,'resource '+doc+' focus returns to opener after close');
 }
 async function sourceTabAudit(page,doc){
   const id=await docConcept(page,doc);
@@ -154,6 +223,8 @@ async function sourceTabAudit(page,doc){
   const close=page.locator('#pdfEvidence [data-pdf-close]');
   if(await close.count())await close.click();
   await page.waitForSelector('#pdfEvidence',{state:'detached',timeout:10000}).catch(()=>{});
+  const focusReturned=await button.evaluate(el=>document.activeElement===el);
+  check(focusReturned,'concept source '+doc+' focus returns to opener after close');
 }
 
 for(const doc of docs){
@@ -166,10 +237,13 @@ for(const doc of docs){
 const browser=await chromium.launch({headless:true});
 try{
   const viewports=[
+    {width:360,height:800,mobile:true,label:'mobile360'},
     {width:390,height:844,mobile:true,label:'mobile390'},
+    {width:412,height:915,mobile:true,label:'mobile412'},
     {width:768,height:1024,mobile:false,label:'tablet768'},
     {width:1024,height:768,mobile:false,label:'tablet1024'},
-    {width:1440,height:900,mobile:false,label:'desktop1440'}
+    {width:1440,height:900,mobile:false,label:'desktop1440'},
+    {width:1920,height:1080,mobile:false,label:'desktop1920'}
   ];
   for(const vp of viewports){
     const ctx=await browser.newContext({viewport:{width:vp.width,height:vp.height},isMobile:vp.mobile,hasTouch:vp.mobile,serviceWorkers:'block'});
@@ -185,10 +259,10 @@ try{
       await auditPage(page,vp.label+' study-'+tab);
     }
     if(vp.width===390){
-      for(const doc of docs)await resourcePdfAudit(page,doc,{exercise:doc==='law2'});
+      for(const doc of docs)await resourcePdfAudit(page,doc,{exercise:doc==='law2',download:doc==='law2'});
       for(const doc of representative)await sourceTabAudit(page,doc);
-    }else if(vp.width===768||vp.width===1440){
-      for(const doc of representative)await resourcePdfAudit(page,doc,{exercise:doc==='law2'});
+    }else if([360,412,768,1440,1920].includes(vp.width)){
+      for(const doc of representative)await resourcePdfAudit(page,doc);
       for(const doc of ['fire1','law2'])await sourceTabAudit(page,doc);
     }
     check(errors.length===0,vp.label+' runtime/console errors = 0',{errors});
@@ -202,4 +276,4 @@ if(failures.length){
   console.error('V70_FULL_RUNTIME_AUDIT_FAILURES',JSON.stringify(failures));
   process.exit(1);
 }
-console.log('V70_FULL_RUNTIME_AUDIT_SUCCESS',JSON.stringify({passes:passes.length,docs,viewports:['390','768','1024','1440']}));
+console.log('V70_FULL_RUNTIME_AUDIT_SUCCESS',JSON.stringify({passes:passes.length,docs,viewports:['360','390','412','768','1024','1440','1920'],accessibility:'dialog-focus-trap-return',pdfActions:'search-jump-download'}));
