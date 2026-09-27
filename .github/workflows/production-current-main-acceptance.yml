@@ -92,6 +92,11 @@ jobs:
         env:
           STUDY_119_V67_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
         run: node v9/v67-whole-app-real-ux-e2e.mjs
+      - name: Production V68 detail + AI interaction acceptance
+        env:
+          STUDY_119_V68_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
+        run: node v9/v68-detail-source-brand-e2e.mjs
+
       - name: Production V70 exact-main PDF performance acceptance
         env:
           STUDY_119_PRODUCTION_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
