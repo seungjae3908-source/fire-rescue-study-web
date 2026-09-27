@@ -231,6 +231,30 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
 }
 
 {
+  const row={
+    doc:'fire1',
+    name:'10. 소방전술1(화재1).pdf',
+    detailUrl:'https://www.nfa.go.kr/detail',
+    cookie:'',
+    urls:['https://www.nfa.go.kr/board/file/bbs/1/FALLBACK/fire1']
+  };
+  const seen=[];
+  const result=await P.fetchFirstWorkingCandidate(
+    row,
+    {method:'GET',headers:{range:'bytes=65536-131071'}},
+    false,
+    async (_url,options)=>{
+      seen.push(options.headers.range||'');
+      if(options.headers.range)return new Response('missing',{status:404,headers:{'content-type':'text/plain'}});
+      return new Response(Buffer.from('%PDF-1.7\n'+'.'.repeat(2048)),{status:200,headers:{'content-type':'application/pdf','content-length':'2057'}});
+    }
+  );
+  assert.equal(result.upstream.status,200,'Range-only 404 falls back to a full PDF candidate request');
+  assert.deepEqual(seen,['bytes=65536-131071',''],'fallback removes the Range header on the second candidate pass');
+  assert.match(await result.upstream.text(),/^%PDF-/,'full candidate fallback still validates as PDF');
+}
+
+{
   const raw=Buffer.from('%PDF-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   const upstream=new Response(raw,{status:200,headers:{'content-type':'application/pdf','content-length':String(raw.length)}});
   const ranged=P.syntheticRangeResponse(upstream,'bytes=5-14');
