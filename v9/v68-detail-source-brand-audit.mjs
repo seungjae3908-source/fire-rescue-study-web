@@ -20,6 +20,7 @@ ok(index.includes('content="소방합격"'),'description is 소방합격');
 ok(manifest.name==='소방합격'&&manifest.short_name==='소방합격','PWA name is 소방합격');
 ok(catalog.includes('isSameOriginDeploymentHost')&&catalog.includes('sameOriginDeployment')&&catalog.includes("(location.origin||'')"),'production source catalog prefers same-origin PDF API for proxy fallback');
 ok(catalog.includes('seungjae3908-4607s-projects')&&catalog.includes('vercel\\.app'),'Vercel generated preview hosts use the same-origin PDF API');
+ok(catalog.includes('sameOriginProxy:sameOriginDeployment')&&catalog.includes('crossOriginProxy:!sameOriginDeployment&&!!proxyBase'),'proxy policy metadata matches routing truth');
 ok(catalog.includes("const mirrorBase=String(cfg.officialPdfMirrorBase||'')")&&catalog.includes("const mirrorDocs=new Set(Array.isArray(cfg.officialPdfMirrorDocs)"),'production keeps verified static mirror documents enabled');
 ok(source.includes("origin='official-proxy-full-cache'"),'proxy PDF uses reliable full-cache path');
 ok(!source.includes('proxyRange=!staticRange'),'legacy proxy-range path removed');
