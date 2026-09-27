@@ -375,18 +375,19 @@ jobs:
           set -euo pipefail
           headers="$(mktemp)"
           body="$(mktemp)"
-          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Range: bytes=0-63' -H 'Cache-Control: no-cache' 'https://study-119-official-pdf.vercel.app/fire1.pdf' || true)"
+          source_url="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror/fire1.pdf"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Range: bytes=0-63' -H 'Cache-Control: no-cache' "$source_url" || true)"
+          magic="$(head -c 5 "$body" 2>/dev/null || true)"
           if [[ "$code" == "200" || "$code" == "206" ]]; then
+            if [[ "$magic" != "%PDF-" ]]; then
+              echo "PDF_SOURCE_MAGIC_INVALID status=$code magic=$magic"
+              exit 1
+            fi
             echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "provider=github-pages" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if [[ "$code" == "402" ]] && grep -q 'DEPLOYMENT_DISABLED' "$body"; then
-            echo "::warning::PDF_SOURCE_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "blocker=VERCEL_DEPLOYMENT_DISABLED" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "UNEXPECTED_PDF_SOURCE_STATUS=$code"
+          echo "PDF_SOURCE_GITHUB_PAGES_UNAVAILABLE status=$code"
           cat "$body"
           exit 1
       - name: Install browser QA dependency
