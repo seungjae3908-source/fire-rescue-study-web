@@ -801,7 +801,7 @@ function hasAnchorEvidence(r,a){const l=(r?.evidenceLines||[]).map(studyNorm),t=
 function sourceModal(id){return openPdfEvidence(id)}
 async function downloadOfficialPdf(key){if(!key||!V.SourcePDF?.download)return toast('다운로드할 PDF가 없습니다.');try{const r=await V.SourcePDF.download(key,{timeoutMs:120000});toast(`PDF 다운로드 시작 · ${r?.name||key}`)}catch(err){toast('PDF 다운로드 실패 · '+String(err?.message||err).slice(0,46))}}
 const sourceOverlay=()=>document.querySelector('#pdfEvidence,#resourcePdf,#sourceModal');
-let sourceFocusReturn=null,sourceDialogSeq=0;
+let sourceFocusReturn=null,sourceDialogSeq=0,sourceFocusGeneration=0;
 const sourceFocusable=root=>[...root.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0});
 function sourceFocusRef(el){
 if(!(el instanceof HTMLElement))return null;
@@ -814,12 +814,15 @@ return{element:el,selector}
 function sourceFocusTarget(ref){
 if(ref?.element?.isConnected)return ref.element;
 if(ref?.selector){
-const el=document.querySelector(ref.selector);
-if(el instanceof HTMLElement)return el
+const rows=[...document.querySelectorAll(ref.selector)];
+const visible=rows.find(el=>el instanceof HTMLElement&&el.offsetParent!==null&&el.getClientRects().length);
+if(visible instanceof HTMLElement)return visible;
+const el=rows.find(el=>el instanceof HTMLElement);if(el instanceof HTMLElement)return el
 }
 return null
 }
 function sourceOpen(opener=null){
+sourceFocusGeneration++;
 const overlay=sourceOverlay();if(!overlay)return false;
 if(opener instanceof HTMLElement&&!overlay.contains(opener))sourceFocusReturn=sourceFocusRef(opener);
 else if(document.activeElement instanceof HTMLElement&&!overlay.contains(document.activeElement))sourceFocusReturn=sourceFocusRef(document.activeElement);
@@ -833,7 +836,9 @@ return true
 function restoreSourceFocus(){
 const ref=sourceFocusReturn;sourceFocusReturn=null;
 if(!ref)return false;
+const generation=sourceFocusGeneration;
 const apply=()=>{
+if(generation!==sourceFocusGeneration)return false;
 const focus=sourceFocusTarget(ref);if(!focus)return false;
 try{focus.focus({preventScroll:true})}catch{focus.focus?.()}
 return document.activeElement===focus
