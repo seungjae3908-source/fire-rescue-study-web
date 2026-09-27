@@ -813,11 +813,16 @@ history.pushState({...history.state,sourceView:1},'');
 requestAnimationFrame(()=>{const first=sourceFocusable(modal)[0]||modal;try{first.focus({preventScroll:true})}catch{first.focus?.()}});
 return true
 }
-function sourceClose(pop=false){
-const x=sourceOverlay();if(!x)return false;
-x.remove();const focus=sourceFocusReturn;sourceFocusReturn=null;
+function restoreSourceFocus(){
+const focus=sourceFocusReturn;sourceFocusReturn=null;
 if(focus?.isConnected){try{focus.focus({preventScroll:true})}catch{focus.focus?.()}}
-if(!pop&&history.state?.sourceView)history.back();return true
+}
+function sourceClose(pop=false){
+const x=sourceOverlay();
+if(!x){if(pop)restoreSourceFocus();return false}
+x.remove();
+if(!pop&&history.state?.sourceView){history.back();return true}
+restoreSourceFocus();return true
 }
 /* V66 real interaction scroll bridge: keep one owner while eliminating fixed-chrome wheel/touch dead zones. */
 function interactionScrollOwner(target){
