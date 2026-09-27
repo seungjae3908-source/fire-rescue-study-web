@@ -566,34 +566,68 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
-      - name: Probe official PDF provider availability
-        id: remote_pdf
+      - name: Restore V51 official PDF audit cache
+        uses: actions/cache@v4
+        with:
+          path: official-pdf-mirror
+          key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
+      - name: Materialize V51 branch ten-PDF mirror
         shell: bash
         run: |
           set -euo pipefail
-          headers="$(mktemp)"
-          body="$(mktemp)"
-          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Range: bytes=0-63' -H 'Cache-Control: no-cache' 'https://study-119-official-pdf.vercel.app/fire1.pdf' || true)"
-          if [[ "$code" == "200" || "$code" == "206" ]]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [[ "$code" == "402" ]] && grep -q 'DEPLOYMENT_DISABLED' "$body"; then
-            echo "::warning::PDF_SOURCE_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "blocker=VERCEL_DEPLOYMENT_DISABLED" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "UNEXPECTED_PDF_SOURCE_STATUS=$code"
-          cat "$body"
-          exit 1
+          mkdir -p official-pdf-mirror
+          pages_base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          for doc in prevention1 prevention2 law1 law2 law3 law4 law5; do
+            out="official-pdf-mirror/$doc.pdf"
+            bytes="$(wc -c < "$out" 2>/dev/null | tr -d ' ' || echo 0)"
+            if [[ -s "$out" && "$(head -c 5 "$out" 2>/dev/null || true)" == "%PDF-" && "$bytes" -gt 100000 ]]; then
+              echo "V51_PDF_CACHE_HIT doc=$doc bytes=$bytes"
+              continue
+            fi
+            rm -f "$out"
+            curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$pages_base/$doc.pdf" -o "$out"
+          done
+          bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems
+          for doc in fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5; do
+            test "$(head -c 5 "official-pdf-mirror/$doc.pdf")" = "%PDF-"
+            test "$(wc -c < "official-pdf-mirror/$doc.pdf" | tr -d ' ')" -gt 100000
+          done
+      - name: Start V51 branch-local PDF provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup node --input-type=module -e "import { startLocalPdfMirror } from './v9/v70-local-pdf-mirror-server.mjs'; await startLocalPdfMirror({port:4174}); await new Promise(()=>{});" > /tmp/study119-v51-pdf.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            body="$(mktemp)"
+            code="$(curl -sS -o "$body" -w '%{http_code}' --max-time 5 -H 'Range: bytes=0-63' 'http://127.0.0.1:4174/official-pdf-mirror/fire1.pdf' || true)"
+            magic="$(head -c 5 "$body" 2>/dev/null || true)"
+            rm -f "$body"
+            if [[ "$code" == "206" && "$magic" == "%PDF-" ]]; then
+              echo "V51_BRANCH_PDF_PROVIDER_READY"
+              break
+            fi
+            if [[ "$attempt" == "30" ]]; then cat /tmp/study119-v51-pdf.log; exit 1; fi
+            sleep 1
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('v9/boot-v69-1.js')
+          text=path.read_text()
+          text=text.replace(
+            'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',
+            'http://127.0.0.1:4174/official-pdf-mirror'
+          )
+          text=text.replace(
+            'https://study-119-pdf-proxy.vercel.app',
+            'http://127.0.0.1:4174'
+          )
+          path.write_text(text)
+          PY
       - name: Install V51 official textbook audit browser
-        if: steps.remote_pdf.outputs.available == 'true'
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149
           npx playwright install --with-deps chromium
       - name: Start branch-only static server
-        if: steps.remote_pdf.outputs.available == 'true'
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/study119-v51-http.log 2>&1 &
           for i in $(seq 1 30); do
@@ -603,7 +637,6 @@ jobs:
           cat /tmp/study119-v51-http.log
           exit 1
       - name: Audit all 183 concepts against mapped official textbook sources
-        if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v51-official-textbook-browser-audit.mjs
 
 
