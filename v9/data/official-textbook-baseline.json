@@ -36,18 +36,18 @@
       "fingerprint": "1696d7f1cb3c8d151ced",
       "cntId": "106809",
       "docs": [
-        "fire1"
+        "fire1",
+        "fire2"
       ]
     },
     {
-      "key": "fire2",
+      "key": "tactics2-monitor",
       "title": "2026년 공통교재 [소방전술2]",
       "id": "e5f966bd8c51e95a236c724c",
       "fingerprint": "5b0ead2b24e9ffbee975",
       "cntId": "106810",
-      "docs": [
-        "fire2"
-      ]
+      "docs": [],
+      "monitorOnly": true
     },
     {
       "key": "ems",
