@@ -54,8 +54,16 @@ jobs:
           set -euo pipefail
           endpoint="${STUDY_119_PRODUCTION_URL%/}/api/runtime-head"
           for attempt in $(seq 1 90); do
-            body="$(curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$endpoint" 2>/dev/null || true)"
-            if [[ "$body" == *"\"sha\":\"$STUDY_119_EXPECTED_RUNTIME_HEAD\""* && "$body" == *"\"environment\":\"production\""* ]]; then
+            headers="$(mktemp)"
+            body_file="$(mktemp)"
+            code="$(curl -sS -L -D "$headers" -o "$body_file" -w '%{http_code}' --max-time 15 -H 'Cache-Control: no-cache' "$endpoint" || true)"
+            body="$(cat "$body_file")"
+            rm -f "$headers" "$body_file"
+            if [[ "$code" == "402" && "$body" == *"DEPLOYMENT_DISABLED"* ]]; then
+              echo "PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
+              exit 1
+            fi
+            if [[ "$code" == "200" && "$body" == *"\"sha\":\"$STUDY_119_EXPECTED_RUNTIME_HEAD\""* && "$body" == *"\"environment\":\"production\""* ]]; then
               echo "PRODUCTION_EXACT_HEAD_READY $STUDY_119_EXPECTED_RUNTIME_HEAD"
               exit 0
             fi
