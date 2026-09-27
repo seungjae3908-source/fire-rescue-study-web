@@ -10,6 +10,7 @@ window.AITUTOR_V9_CONFIG={
   officialPdfProxyBase:'https://study-119-pdf-proxy.vercel.app',
   officialPdfMirrorBase:'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',
   officialPdfMirrorDocs:['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'],
+  officialPdfCacheEpoch:'119-official-pdf-cache-v1:c3a6d772977f90ec4e09:1696d7f1cb3c8d151ced:5b0ead2b24e9ffbee975:9f131c25171602b3ad2a:85b1a2c04c97237d5870',
   study119:true
 };
 
