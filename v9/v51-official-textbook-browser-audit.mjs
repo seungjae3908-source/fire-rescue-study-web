@@ -38,8 +38,16 @@ try{
   },docs);
   const pageOffsets=await page.evaluate(()=>({...window.AITUTOR_V9.SourcePDF.pageOffsets}));
   async function nodeStaticSample(doc,cat,requested){
-    const res=await fetch(cat.directPdf,{headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(90000)});
-    if(!res.ok)throw new Error('NODE_STATIC_HTTP_'+res.status);
+    const urls=[cat.directPdf,cat.proxyPdf].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
+    let res=null,used='',last='';
+    for(const url of urls){
+      try{
+        const r=await fetch(url,{headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(120000)});
+        if(r.ok){res=r;used=url;break}
+        last='HTTP_'+r.status;
+      }catch(err){last=String(err?.message||err)}
+    }
+    if(!res)throw new Error('NODE_STATIC_AND_PROXY_FAILED_'+last);
     const bytes=new Uint8Array(await res.arrayBuffer());
     if(bytes.length<5||String.fromCharCode(...bytes.slice(0,5))!=='%PDF-')throw new Error('NODE_STATIC_NOT_PDF');
     const task=pdfjsLib.getDocument({data:bytes});
@@ -52,7 +60,7 @@ try{
         const pg=await pdf.getPage(pdfPage),tc=await pg.getTextContent(),text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
         out[token]={pdfPage,text,invalid:false};
       }
-      return{origin:'node-static-mirror-fallback',numPages:pdf.numPages,pages:out}
+      return{origin:used===cat.directPdf?'node-static-mirror-fallback':'node-official-proxy-fallback',numPages:pdf.numPages,pages:out}
     }finally{await task.destroy().catch(()=>{})}
   }
   const pageText={},docMeta={},sourceIssues=[];
