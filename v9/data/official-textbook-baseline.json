@@ -1,0 +1,74 @@
+{
+  "version": "119-official-textbook-baseline-v1",
+  "baselineYear": 2026,
+  "sourceId": "nfsa-materials",
+  "scopeDocs": [
+    "prevention1",
+    "prevention2",
+    "law1",
+    "law2",
+    "law3",
+    "law4",
+    "law5",
+    "fire1",
+    "fire2",
+    "ems"
+  ],
+  "groups": [
+    {
+      "key": "law1-5",
+      "title": "2026년 공통교재 [소방법령1~5]",
+      "id": "ca6997cc3211a79fc3525d15",
+      "fingerprint": "c3a6d772977f90ec4e09",
+      "cntId": "106806",
+      "docs": [
+        "law1",
+        "law2",
+        "law3",
+        "law4",
+        "law5"
+      ]
+    },
+    {
+      "key": "fire1",
+      "title": "2026년 공통교재 [소방전술1]",
+      "id": "e738f5d6f153f72f32fb50f8",
+      "fingerprint": "1696d7f1cb3c8d151ced",
+      "cntId": "106809",
+      "docs": [
+        "fire1"
+      ]
+    },
+    {
+      "key": "fire2",
+      "title": "2026년 공통교재 [소방전술2]",
+      "id": "e5f966bd8c51e95a236c724c",
+      "fingerprint": "5b0ead2b24e9ffbee975",
+      "cntId": "106810",
+      "docs": [
+        "fire2"
+      ]
+    },
+    {
+      "key": "ems",
+      "title": "2026년 공통교재 [소방전술3]",
+      "id": "e359cc57c0b29f37f0cc638c",
+      "fingerprint": "9f131c25171602b3ad2a",
+      "cntId": "106811",
+      "docs": [
+        "ems"
+      ]
+    },
+    {
+      "key": "prevention1-2",
+      "title": "2026년 공통교재 [예방실무1/예방실무2]",
+      "id": "8530e2fae88a3fffde515804",
+      "fingerprint": "85b1a2c04c97237d5870",
+      "cntId": "106805",
+      "docs": [
+        "prevention1",
+        "prevention2"
+      ]
+    }
+  ]
+}
