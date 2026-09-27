@@ -16,31 +16,32 @@ const targets={
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:1280,height:900}});
-  const page=await ctx.newPage();page.setDefaultTimeout(120000);
+  const page=await ctx.newPage();page.setDefaultTimeout(180000);
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
-  await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF?.findPages,{timeout:60000});
+  await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF?.openPdf,{timeout:60000});
   const result=await page.evaluate(async targets=>{
-    const V=window.AITUTOR_V9,out={};
-    for(const [id,t] of Object.entries(targets)){
-      out[id]={};
-      for(const doc of t.docs){
-        const entry=await V.SourcePDF.openPdf(doc,{timeoutMs:120000});
-        const seen=new Set(),candidates=[];
-        for(const q of t.queries){
-          const r=await V.SourcePDF.findPages(doc,q,{limit:12});
-          for(const hit of r.results||[]){
-            const key=String(hit.page);
-            if(seen.has(key))continue;
-            seen.add(key);
-            const pg=await entry.pdf.getPage(hit.page),tc=await pg.getTextContent();
-            const text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
-            candidates.push({query:q,pdfPage:hit.page,bookPage:V.SourcePDF.bookPage(doc,hit.page),score:hit.score,text:text.slice(0,2600)});
-            if(candidates.length>=12)break;
-          }
-          if(candidates.length>=12)break;
+    const V=window.AITUTOR_V9,norm=s=>String(s||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
+    const out=Object.fromEntries(Object.keys(targets).map(id=>[id,{}]));
+    const docs=[...new Set(Object.values(targets).flatMap(t=>t.docs))];
+    for(const doc of docs){
+      const entry=await V.SourcePDF.openPdf(doc,{timeoutMs:120000});
+      const watchers=Object.entries(targets).filter(([,t])=>t.docs.includes(doc)).map(([id,t])=>({id,queries:t.queries.map(q=>({raw:q,norm:norm(q)}))}));
+      for(let pdfPage=1;pdfPage<=entry.pdf.numPages;pdfPage++){
+        const pg=await entry.pdf.getPage(pdfPage),tc=await pg.getTextContent();
+        const text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim(),compact=norm(text);
+        if(!compact)continue;
+        for(const w of watchers){
+          const matched=w.queries.filter(q=>q.norm&&compact.includes(q.norm)).map(q=>q.raw);
+          if(!matched.length)continue;
+          const score=matched.reduce((n,q)=>n+norm(q).length,0);
+          (out[w.id][doc]||(out[w.id][doc]=[])).push({
+            pdfPage,bookPage:V.SourcePDF.bookPage(doc,pdfPage),score,matched,text:text.slice(0,2200)
+          });
         }
-        out[id][doc]=candidates;
       }
+    }
+    for(const docs of Object.values(out))for(const [doc,rows] of Object.entries(docs)){
+      docs[doc]=rows.sort((a,b)=>b.score-a.score||a.bookPage-b.bookPage).slice(0,10);
     }
     return out;
   },targets);
