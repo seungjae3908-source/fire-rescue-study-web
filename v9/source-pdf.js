@@ -76,6 +76,35 @@ async function fetchRangeChunk(url,start,end,{timeoutMs=20000,attempts=3}={}){
   }
   throw last;
 }
+async function openProxyPdfWithCustomRange(p,key,catalog,{timeoutMs=15000,onProgress}={}){
+  const url=catalog?.proxyPdf||'',Transport=p?.PDFDataRangeTransport;
+  if(!url||typeof Transport!=='function')throw Error('SOURCE_CUSTOM_RANGE_UNAVAILABLE');
+  const chunkSize=65536,first=await fetchRangeChunk(url,0,chunkSize-1,{timeoutMs:Math.min(12000,timeoutMs),attempts:3});
+  let aborted=false,loaded=first.buf.byteLength;
+  const transport=new Transport(first.total,first.buf,false,catalog.expectedNames?.[0]||catalog.label||key);
+  transport.requestDataRange=(begin,end)=>{
+    if(aborted)return;
+    const start=Math.max(0,Number(begin)||0),stop=Math.max(start,Math.min(first.total,Number(end)||start+chunkSize))-1;
+    fetchRangeChunk(url,start,stop,{timeoutMs:12000,attempts:3}).then(part=>{
+      if(aborted)return;
+      loaded=Math.max(loaded,part.end+1);
+      transport.onDataRange(start,part.buf);
+      transport.onDataProgress?.(loaded,first.total);
+      onProgress?.({loaded,total:first.total,percent:Math.min(100,Math.round(loaded/first.total*100)),transport:'proxy-custom-range'});
+    }).catch(err=>{
+      if(!aborted)console.warn('SOURCE_CUSTOM_RANGE_CHUNK_FAILED',key,start,stop,String(err?.message||err).slice(0,120));
+    });
+  };
+  transport.abort=()=>{aborted=true};
+  const task=p.getDocument({range:transport,disableRange:false,disableStream:true,disableAutoFetch:true,rangeChunkSize:chunkSize});
+  try{
+    const pdf=await waitPdfTask(task,timeoutMs);
+    onProgress?.({ready:true,transport:'proxy-custom-range'});
+    return{key,pdf,task,name:catalog.expectedNames?.[0]||catalog.label||key,origin:'official-proxy-custom-range'};
+  }catch(err){
+    aborted=true;await task.destroy?.().catch?.(()=>{});throw err
+  }
+}
 async function cacheOfficialByRange(key,{timeoutMs=120000,onProgress,chunkSize=1024*1024}={}){
   const local=await get(key);if(local?.blob)return{...local,origin:'local-cache'};
   const catalog=V.SourceCatalog119?.get?.(key),url=catalog?.proxyPdf||'';
@@ -131,14 +160,12 @@ async function openPdf(key,{timeoutMs=90000,onProgress}={}){
       await task.destroy?.().catch?.(()=>{});
       onProgress?.({fallback:true,transport:rangeMode});
       if(rangeMode==='mirror'&&catalog?.proxyPdf){
-        const proxyTimeout=Math.min(12000,Math.max(7000,timeoutMs-fastTimeout));
-        const proxyTask=p.getDocument({url:catalog.proxyPdf,withCredentials:false,disableRange:false,disableStream:false,disableAutoFetch:true,rangeChunkSize:65536});
+        const proxyTimeout=Math.min(18000,Math.max(9000,timeoutMs-fastTimeout));
         try{
-          const pdf=await waitPdfTask(proxyTask,proxyTimeout),entry={key,pdf,task:proxyTask,name:catalog.expectedNames?.[0]||catalog.label||key,origin:'official-proxy-range-fallback'};
-          pdfCache.set(key,entry);onProgress?.({ready:true,transport:'proxy-range-fallback'});return entry
+          const entry=await openProxyPdfWithCustomRange(p,key,catalog,{timeoutMs:proxyTimeout,onProgress});
+          pdfCache.set(key,entry);return entry
         }catch{
-          await proxyTask.destroy?.().catch?.(()=>{});
-          onProgress?.({fallback:true,transport:'proxy-range-fallback'});
+          onProgress?.({fallback:true,transport:'proxy-custom-range'});
         }
       }
       let row;
@@ -276,5 +303,5 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
   return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v14-range-remote-anchor-context-lines'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',privacy:{localCacheAllowed:true,persistentOfficialCache:true,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v14-range-remote-anchor-context-lines'};
 })();
