@@ -319,7 +319,7 @@ async function bufferedRangeBody(response,maxBytes=2*1024*1024){
 }
 const nfaPdfBufferCache=new Map();
 const NFA_BUFFER_DOCS=new Set(['fire1','fire2','ems']);
-async function nfaFullPdfBuffer(doc,upstream,{ttlMs=10*60*1000,maxBytes=128*1024*1024}={}){
+async function nfaFullPdfBuffer(doc,upstream,{ttlMs=10*60*1000,maxBytes=128*1024*1024,timeoutMs=35000}={}){
   const now=Date.now(),hit=nfaPdfBufferCache.get(doc);
   if(hit&&hit.expires>now){
     try{await upstream?.body?.cancel?.()}catch{}
@@ -328,8 +328,28 @@ async function nfaFullPdfBuffer(doc,upstream,{ttlMs=10*60*1000,maxBytes=128*1024
   const expected=Number(upstream?.headers?.get?.('content-length')||0);
   if(expected>maxBytes)throw new Error('NFA_PDF_TOO_LARGE_'+expected);
   const promise=(async()=>{
-    const ab=await upstream.arrayBuffer(),buf=Buffer.from(ab);
-    if(!buf.length||buf.length>maxBytes)throw new Error('NFA_PDF_BUFFER_SIZE_'+buf.length);
+    const reader=upstream?.body?.getReader?.();
+    if(!reader)throw new Error('NFA_PDF_BUFFER_NO_BODY');
+    const chunks=[];let size=0;const deadline=Date.now()+timeoutMs;
+    try{
+      while(true){
+        const remain=deadline-Date.now();
+        if(remain<=0)throw new Error('NFA_PDF_BUFFER_TIMEOUT');
+        let timer;
+        const step=await Promise.race([
+          reader.read(),
+          new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('NFA_PDF_BUFFER_TIMEOUT')),remain)})
+        ]).finally(()=>clearTimeout(timer));
+        if(step.done)break;
+        if(step.value){
+          size+=step.value.byteLength;
+          if(size>maxBytes)throw new Error('NFA_PDF_BUFFER_SIZE_'+size);
+          chunks.push(Buffer.from(step.value));
+        }
+      }
+    }catch(err){try{await reader.cancel(err)}catch{};throw err}
+    const buf=Buffer.concat(chunks,size);
+    if(!buf.length)throw new Error('NFA_PDF_BUFFER_EMPTY');
     if(expected>0&&buf.length!==expected)throw new Error('NFA_PDF_BUFFER_LENGTH_'+buf.length+'_'+expected);
     if(buf.subarray(0,5).toString('latin1')!=='%PDF-')throw new Error('NFA_PDF_BUFFER_NOT_PDF');
     return buf;
