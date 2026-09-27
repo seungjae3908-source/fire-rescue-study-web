@@ -27,7 +27,9 @@ assert(pdf.includes("origin=rangeMode==='mirror'?'official-static-range':'offici
 assert(pdf.includes('disableRange:false')&&pdf.includes('disableStream:false')&&pdf.includes('disableAutoFetch:true')&&pdf.includes('rangeChunkSize:65536'),'range viewer requests only required PDF byte ranges');
 assert(pdf.includes("official-proxy-full-cache-fallback"),'full PDF blob download remains a bounded fallback instead of the primary proxy path');
 assert(proxy.includes("const clientRange=(req.headers&&req.headers.range)||''")&&proxy.includes("res.setHeader('Access-Control-Allow-Headers','Range, If-Range, Content-Type')"),'official proxy forwards browser byte-range requests');
-assert(/officialPdfMirrorDocs:\['fire1','fire2','ems'\]/.test(config),'known fast static mirrors remain unchanged');
+assert(/officialPdfMirrorDocs:\['fire1','fire2','ems'\]/.test(config),'known Vercel static mirrors remain unchanged');
+assert(/officialPdfPagesMirrorDocs:\['prevention1','prevention2','law1','law2','law3','law4','law5'\]/.test(config),'all seven law/prevention textbooks use the persistent Pages mirror');
+assert(catalog.includes('pagesMirrorBase')&&catalog.includes('pagesMirrorDocs')&&catalog.includes("pagesMirrorBase&&pagesMirrorDocs.has(doc)"),'catalog supports the second static mirror origin without removing the proxy fallback');
 assert(perf.includes('noParserBlockingScripts:parserBlockingScripts.length===0')&&perf.includes('jsCount:16'),'performance budget prevents parser-blocking and high-request bootstrap regression');
 const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
