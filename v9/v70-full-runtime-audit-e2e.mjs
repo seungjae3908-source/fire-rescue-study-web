@@ -28,14 +28,16 @@ const proxyServer=http.createServer(async(req,res)=>{
 await new Promise((resolve,reject)=>{proxyServer.once('error',reject);proxyServer.listen(4174,'127.0.0.1',resolve)});
 
 async function installConfigRewrite(page){
-  await page.route('**/v9/config.js',async route=>{
+  const rewrite=async route=>{
     const response=await route.fetch();
     let body=await response.text();
     body=body
       .replace('https://study-119-pdf-proxy.vercel.app',proxyOrigin)
       .replace('https://study-119-official-pdf.vercel.app',proxyOrigin);
     await route.fulfill({response,body});
-  });
+  };
+  await page.route('**/v9/config.js*',rewrite);
+  await page.route('**/v9/boot-v69-1.js*',rewrite);
 }
 async function boot(ctx){
   const page=await ctx.newPage();
@@ -57,7 +59,7 @@ async function go(page,route){
 }
 async function auditPage(page,label){
   const x=await page.evaluate(()=>{
-    const visible=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0};
+    const visible=el=>{if(el.closest('.outline:not(.open),.backdrop:not(.on),[hidden],.hidden'))return false;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0};
     const owners=[...document.querySelectorAll('.page [data-scroll-owner]')].filter(visible).map(el=>({owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight,top:el.scrollTop,cls:String(el.className||'').slice(0,100)}));
     const doc={html:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]};
     const outside=[];
@@ -168,6 +170,11 @@ async function sourceTabAudit(page,doc){
   const close=page.locator('#pdfEvidence [data-pdf-close]');
   if(await close.count())await close.click();
   await page.waitForSelector('#pdfEvidence',{state:'detached',timeout:10000}).catch(()=>{});
+}
+
+for(const doc of docs){
+  const r=await fetch(proxyOrigin+'/api/official-pdf?doc='+encodeURIComponent(doc)+'&meta=1',{headers:{'cache-control':'no-cache'}});
+  check(r.ok,'local audit proxy meta ready '+doc,{status:r.status,body:r.ok?'':await r.text()});
 }
 
 const browser=await chromium.launch({headless:true});
