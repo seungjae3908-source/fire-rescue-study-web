@@ -48,6 +48,7 @@ const checks={
   pdfAllowlistedProxy:sourceCatalog.includes('arbitraryUrlProxy:false')&&sourceCatalog.includes('allCatalogDocsProxyable:true'),
   runtimeHeadRoute:runtimeHead.includes('VERCEL_GIT_COMMIT_SHA')&&runtimeHead.includes('RUNTIME_GIT_SHA_UNAVAILABLE')&&runtimeHead.includes("Cache-Control','no-store, max-age=0"),
   postDeployProductionAcceptance:productionAcceptance.includes('workflow_run:')&&productionAcceptance.includes('V9 Development CI')&&productionAcceptance.includes('PRODUCTION_EXACT_HEAD_READY')&&productionAcceptance.includes('live-student-ux-smoke.mjs'),
+  postDeployV68Acceptance:productionAcceptance.includes('Production V68 detail + AI interaction acceptance')&&productionAcceptance.includes('v68-detail-source-brand-e2e.mjs'),
   postDeployAcceptanceVercelBlockerFailFast:productionAcceptance.includes('PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED')&&productionAcceptance.includes('DEPLOYMENT_DISABLED')&&productionAcceptance.includes('code')&&productionAcceptance.includes('402'),
   postDeployAcceptanceExactHead:productionAcceptance.includes('github.event.workflow_run.head_sha')&&liveStudentSmoke.includes("fetch('/api/runtime-head'")&&liveStudentSmoke.includes('runtime.sha===expected'),
   productionRuntimeDepsNoLocalProbe:runtimeDeps.includes("const local=()=>")&&runtimeDeps.includes("deps('../node_modules/pdfjs-dist/build/pdf.min.mjs'")&&runtimeDeps.includes("deps('../node_modules/tesseract.js/dist/tesseract.esm.min.js'"),
