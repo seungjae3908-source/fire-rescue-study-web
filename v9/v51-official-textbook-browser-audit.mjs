@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 const base=process.env.STUDY_119_BRANCH_URL||'http://127.0.0.1:4173/v9/index.html';
 const browser=await chromium.launch({headless:true});
@@ -19,14 +20,14 @@ try{
     const V=window.AITUTOR_V9;
     return V.curriculum.concepts.map(c=>{
       const p=V.contentPacks.get(c.id)||{},ranges=(c.sourceRanges||[]).map(r=>({doc:r.doc,from:Number(r.from),to:Number(r.to),label:String(r.label||'')})),links=(p.officialLinks||[]).filter(x=>x?.url).map(x=>x.url);
-      return{id:c.id,title:c.title,subject:c.subject,scopeId:c.scopeId,ranges,links,terms:V.ConceptArchitecture119.termsFor(c.id),summary:String(p.summary||''),queries:[p.summary,...(p.must||[]),...(p.detail||[])].filter(Boolean).slice(0,8)};
+      return{id:c.id,title:c.title,subject:c.subject,scopeId:c.scopeId,sourcePrecision:String(p.sourcePrecision||''),ranges,links,terms:V.ConceptArchitecture119.termsFor(c.id),summary:String(p.summary||''),queries:[p.summary,...(p.must||[]),...(p.detail||[])].filter(Boolean).slice(0,8)};
     });
   });
   const pageNeeds=new Map();
   for(const row of plan)for(const r of row.ranges||[]){
     if(!r.doc)continue;
-    const set=pageNeeds.get(r.doc)||new Set;
-    for(const bookPage of samplePages(r.from,r.to))set.add(bookPage);
+    const set=pageNeeds.get(r.doc)||new Set,space=row.sourcePrecision==='exact-pdf-page-anchor'?'pdf':'book';
+    for(const sourcePage of samplePages(r.from,r.to))set.add(space+':'+sourcePage);
     pageNeeds.set(r.doc,set);
   }
   const docs=[...pageNeeds.keys()];
@@ -35,6 +36,25 @@ try{
     for(const doc of docs){const x=V.SourceCatalog119?.get?.(doc);out[doc]=x?{transport:x.transport||'',directPdf:x.directPdf||'',mirrorPdf:x.mirrorPdf||'',proxyPdf:x.proxyPdf||'',officialPage:x.officialPage||''}:null}
     return out;
   },docs);
+  const pageOffsets=await page.evaluate(()=>({...window.AITUTOR_V9.SourcePDF.pageOffsets}));
+  async function nodeStaticSample(doc,cat,requested){
+    const res=await fetch(cat.directPdf,{headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(90000)});
+    if(!res.ok)throw new Error('NODE_STATIC_HTTP_'+res.status);
+    const bytes=new Uint8Array(await res.arrayBuffer());
+    if(bytes.length<5||String.fromCharCode(...bytes.slice(0,5))!=='%PDF-')throw new Error('NODE_STATIC_NOT_PDF');
+    const task=pdfjsLib.getDocument({data:bytes});
+    const pdf=await task.promise,out={};
+    try{
+      for(const sourcePage of requested){
+        const token=sourcePage.space+':'+sourcePage.value;
+        const offset=Number(pageOffsets[doc]||0),pdfPage=sourcePage.space==='pdf'?sourcePage.value:sourcePage.value+offset;
+        if(pdfPage<1||pdfPage>pdf.numPages){out[token]={pdfPage,text:'',invalid:true};continue}
+        const pg=await pdf.getPage(pdfPage),tc=await pg.getTextContent(),text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
+        out[token]={pdfPage,text,invalid:false};
+      }
+      return{origin:'node-static-mirror-fallback',numPages:pdf.numPages,pages:out}
+    }finally{await task.destroy().catch(()=>{})}
+  }
   const pageText={},docMeta={},sourceIssues=[];
   for(const [doc,set] of pageNeeds){
     const cat=catalogMeta[doc];
@@ -60,28 +80,37 @@ try{
       if(!ok)sourceIssues.push({doc,type:'PROXY_CONTRACT_FAILED_AFTER_RETRY',...last});
       continue;
     }
+    const requested=[...set].map(token=>{const [space,value]=String(token).split(':');return{space,value:Number(value)}}).sort((a,b)=>a.value-b.value||a.space.localeCompare(b.space));
     try{
       const result=await page.evaluate(async ({doc,pages})=>{
         const V=window.AITUTOR_V9,entry=await V.SourcePDF.openPdf(doc,{timeoutMs:45000}),out={};
-        for(const bookPage of pages){
-          const pdfPage=V.SourcePDF.pdfPage(doc,bookPage);
-          if(pdfPage<1||pdfPage>entry.pdf.numPages){out[bookPage]={pdfPage,text:'',invalid:true};continue}
+        for(const sourcePage of pages){
+          const pdfPage=V.SourcePDF.rangePdfPage?V.SourcePDF.rangePdfPage(doc,sourcePage.value,sourcePage.space):(sourcePage.space==='pdf'?sourcePage.value:V.SourcePDF.pdfPage(doc,sourcePage.value));
+          const token=sourcePage.space+':'+sourcePage.value;
+          if(pdfPage<1||pdfPage>entry.pdf.numPages){out[token]={pdfPage,text:'',invalid:true};continue}
           const pg=await entry.pdf.getPage(pdfPage),tc=await pg.getTextContent(),text=(tc.items||[]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
-          out[bookPage]={pdfPage,text,invalid:false};
+          out[token]={pdfPage,text,invalid:false};
         }
         return{origin:entry.origin,numPages:entry.pdf.numPages,pages:out};
-      },{doc,pages:[...set].sort((a,b)=>a-b)});
+      },{doc,pages:requested});
       docMeta[doc]={...cat,mode:'text-sampled',contractOk:true,origin:result.origin,numPages:result.numPages};
-      for(const [bookPage,row] of Object.entries(result.pages))pageText[doc+':'+bookPage]=row;
+      for(const [sourceKey,row] of Object.entries(result.pages))pageText[doc+':'+sourceKey]=row;
     }catch(err){
-      docMeta[doc]={...cat,mode:'text-sampled',contractOk:false,error:String(err?.message||err)};
-      sourceIssues.push({doc,type:'STATIC_PDF_READ_ERROR',error:String(err?.message||err)});
+      try{
+        const result=await nodeStaticSample(doc,cat,requested);
+        docMeta[doc]={...cat,mode:'text-sampled',contractOk:true,origin:result.origin,numPages:result.numPages,browserError:String(err?.message||err)};
+        for(const [sourceKey,row] of Object.entries(result.pages))pageText[doc+':'+sourceKey]=row;
+      }catch(nodeErr){
+        const error='browser='+String(err?.message||err)+' | node='+String(nodeErr?.message||nodeErr);
+        docMeta[doc]={...cat,mode:'text-sampled',contractOk:false,error};
+        sourceIssues.push({doc,type:'STATIC_PDF_READ_ERROR',error});
+      }
     }
   }
 
   const issues=[...sourceIssues],anchorReview=[],rows=[];
   for(const row of plan){
-    const terms=[row.title,...(row.terms||[])].flatMap(x=>String(x||'').split(/[·,/()\s\-]+/)).map(x=>x.trim()).filter(x=>x.length>=2&&!generic.has(x)).sort((a,b)=>b.length-a.length).slice(0,18);
+    const terms=[row.title,...(row.terms||[])].flatMap(x=>String(x||'').split(/[·,/()\s\-]+/)).map(x=>x.trim()).filter(x=>x.length>=2&&!generic.has(x)).sort((a,b)=>b.length-a.length).slice(0,18),rangeSpace=row.sourcePrecision==='exact-pdf-page-anchor'?'pdf':'book';
     let sampled=0,readable=0,anchorHits=0,renderHits=0,invalid=0,contractRanges=0,contractOk=0;const matches=[];
     for(const r of row.ranges||[]){
       const dm=docMeta[r.doc];
@@ -92,7 +121,7 @@ try{
       }
       for(const bookPage of samplePages(r.from,r.to)){
         sampled++;
-        const p=pageText[r.doc+':'+bookPage];
+        const p=pageText[r.doc+':'+rangeSpace+':'+bookPage];
         if(!p){continue}
         if(p.invalid){invalid++;continue}
         if(String(p.text||'').trim().length>=20)readable++;
@@ -112,15 +141,15 @@ try{
           const candidates=samplePages(r.from,r.to).slice(0,3);
           for(const bookPage of candidates){
             try{
-              const rendered=await page.evaluate(async ({doc,bookPage,queries,anchorTerms})=>{
+              const rendered=await page.evaluate(async ({doc,bookPage,rangeSpace,queries,anchorTerms})=>{
                 const V=window.AITUTOR_V9,host=document.createElement('div');
                 host.style.width='900px';host.style.position='fixed';host.style.left='-5000px';document.body.appendChild(host);
                 try{
-                  const pdfPage=V.SourcePDF.pdfPage(doc,bookPage);
+                  const pdfPage=V.SourcePDF.rangePdfPage?V.SourcePDF.rangePdfPage(doc,bookPage,rangeSpace):(rangeSpace==='pdf'?bookPage:V.SourcePDF.pdfPage(doc,bookPage));
                   const out=await V.SourcePDF.render(doc,pdfPage,host,queries,{anchorTerms});
                   return{hits:Number(out?.hits)||0,bookPage:Number(out?.bookPage)||0,pdfPage:Number(out?.page)||0,evidence:(out?.evidenceLines||[]).slice(0,4)};
                 }finally{host.remove()}
-              },{doc:r.doc,bookPage,queries:row.queries||[],anchorTerms:[row.title,...(row.terms||[])]});
+              },{doc:r.doc,bookPage,rangeSpace,queries:row.queries||[],anchorTerms:[row.title,...(row.terms||[])]});
               if(rendered.hits>0){
                 renderHits+=rendered.hits;
                 matches.push({doc:r.doc,bookPage:rendered.bookPage||bookPage,pdfPage:rendered.pdfPage,terms:['render-evidence'],evidence:rendered.evidence});
