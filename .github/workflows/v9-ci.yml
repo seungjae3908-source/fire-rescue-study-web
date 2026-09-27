@@ -241,28 +241,31 @@ jobs:
     timeout-minutes: 15
     env:
       STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
-      STUDY_119_EXPECTED_RUNTIME_HEAD: cd5a23bd0aa0f42ec5ef26261ac1b5c99e617376
+      STUDY_119_EXPECTED_RUNTIME_HEAD: 8367f8c5312b14be134379ab4529ae608c96edfa
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
-      - name: Probe GitHub Pages static Range + CORS
+      - name: Probe deployed law2 Pages mirror Range + CORS
         shell: bash
         run: |
           set -euo pipefail
-          url="https://seungjae3908-source.github.io/fire-rescue-study-web/v9/boot-v69-4.js"
+          url="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror/law2.pdf"
           headers="$(mktemp)"
           body="$(mktemp)"
-          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' -H 'Range: bytes=0-99' -H 'Origin: https://fire-rescue-study-web.vercel.app' "$url")"
+          code="$(curl -sS -L -D "$headers" -o "$body" -w '%{http_code}' -H 'Range: bytes=0-65535' -H 'Origin: https://fire-rescue-study-web.vercel.app' "$url")"
           bytes="$(wc -c < "$body" | tr -d ' ')"
           content_range="$(grep -i '^content-range:' "$headers" | tail -1 | tr -d '\r' || true)"
           accept_ranges="$(grep -i '^accept-ranges:' "$headers" | tail -1 | tr -d '\r' || true)"
           acao="$(grep -i '^access-control-allow-origin:' "$headers" | tail -1 | tr -d '\r' || true)"
-          echo "V70_PAGES_RANGE_PROBE status=$code bytes=$bytes $content_range $accept_ranges $acao"
+          magic="$(head -c 5 "$body")"
+          echo "V70_LAW2_PAGES_RANGE_PROBE status=$code bytes=$bytes magic=$magic $content_range $accept_ranges $acao"
           test "$code" = "206"
-          test "$bytes" -le 128
-          test -n "$content_range"
+          test "$bytes" = "65536"
+          test "$magic" = "%PDF-"
+          echo "$content_range" | grep -qi 'bytes 0-65535/5438067'
+          test -n "$accept_ranges"
           test -n "$acao"
 
       - name: Install V70 Production performance browser
