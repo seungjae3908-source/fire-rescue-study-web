@@ -31,8 +31,27 @@ const items=(snapshot.items||[]).filter(x=>x?.sourceId==='nfsa-materials'&&x?.ki
 if(!items.length)fail('NO_OFFICIAL_TEXTBOOK_ITEMS');
 const groups=Array.isArray(baseline.groups)?baseline.groups:[];
 if(!groups.length)fail('BASELINE_GROUPS_EMPTY');
-const seenDocs=new Set(groups.flatMap(g=>Array.isArray(g.docs)?g.docs:[]));
-for(const doc of baseline.scopeDocs||[])if(!seenDocs.has(doc))fail('BASELINE_SCOPE_DOC_UNMAPPED',{doc});
+const scopeDocs=Array.isArray(baseline.scopeDocs)?baseline.scopeDocs:[];
+if(!scopeDocs.length)fail('BASELINE_SCOPE_DOCS_EMPTY');
+const scopeSet=new Set(scopeDocs);
+if(scopeSet.size!==scopeDocs.length)fail('BASELINE_SCOPE_DOC_DUPLICATE',{scopeDocs});
+const docOwners=new Map();
+for(const group of groups){
+  const docs=Array.isArray(group.docs)?group.docs:[];
+  if(!docs.length&&!group.monitorOnly)fail('BASELINE_GROUP_SCOPE_ROLE_MISSING',{key:group.key});
+  if(group.monitorOnly&&docs.length)fail('BASELINE_MONITOR_ONLY_HAS_SCOPE_DOCS',{key:group.key,docs});
+  for(const doc of docs){
+    if(!scopeSet.has(doc))fail('BASELINE_GROUP_UNKNOWN_SCOPE_DOC',{key:group.key,doc});
+    const owners=docOwners.get(doc)||[];
+    owners.push(group.key);
+    docOwners.set(doc,owners);
+  }
+}
+for(const doc of scopeDocs){
+  const owners=docOwners.get(doc)||[];
+  if(!owners.length)fail('BASELINE_SCOPE_DOC_UNMAPPED',{doc});
+  if(owners.length!==1)fail('BASELINE_SCOPE_DOC_MULTI_MAPPED',{doc,owners});
+}
 const mismatches=[];
 for(const group of groups){
   const row=items.find(x=>x.id===group.id)||items.find(x=>String(x.url||'').includes('cntId='+group.cntId))||items.find(x=>x.title===group.title);
