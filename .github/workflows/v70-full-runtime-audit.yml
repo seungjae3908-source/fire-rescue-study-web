@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: official-pdf-mirror
-          key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs') }}
+          key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
       - name: Install browser audit dependencies
         run: |
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
