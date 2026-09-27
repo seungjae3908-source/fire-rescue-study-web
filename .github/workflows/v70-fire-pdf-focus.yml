@@ -1,0 +1,48 @@
+name: V70 Fire PDF Focus Audit
+
+on:
+  pull_request:
+    paths:
+      - 'v9/api/official-pdf.js'
+      - 'v9/source-pdf.js'
+      - 'v9/boot-v69-7b.js'
+      - 'v9/v70-fire-pdf-focus-e2e.mjs'
+      - '.github/workflows/v70-fire-pdf-focus.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: v70-fire-pdf-focus-\${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fire_pdf_focus:
+    name: fire1 fire2 ems PDF fallback audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149
+          npx playwright install --with-deps chromium
+      - name: Start branch static runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/study119-fire-focus-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/v9/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/study119-fire-focus-http.log
+          exit 1
+      - name: Audit fire and EMS PDFs through real fallback path
+        env:
+          STUDY_119_FIRE_AUDIT_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v70-fire-pdf-focus-e2e.mjs
