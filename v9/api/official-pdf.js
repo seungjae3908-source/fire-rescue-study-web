@@ -282,6 +282,19 @@ function parseByteRange(value,total){
   const end=Math.min(total-1,rawEnd);
   return{start,end,length:end-start+1,total};
 }
+async function bufferedRangeBody(response,maxBytes=2*1024*1024){
+  const len=Number(response?.headers?.get?.('content-length')||0);
+  if(!response?.body||!Number.isFinite(len)||len<=0||len>maxBytes)return null;
+  try{
+    const ab=await response.arrayBuffer();
+    if(ab.byteLength!==len)throw new Error('RANGE_BODY_LENGTH_MISMATCH_'+ab.byteLength+'_'+len);
+    return Buffer.from(ab);
+  }catch(err){
+    const e=new Error('RANGE_BODY_BUFFER_FAILED_'+String(err?.message||err).slice(0,160));
+    e.cause=err;
+    throw e;
+  }
+}
 function syntheticRangeResponse(upstream,value){
   if(!upstream||upstream.status!==200)return null;
   const total=Number(upstream.headers?.get?.('content-length')||0),r=parseByteRange(value,total);
@@ -373,6 +386,20 @@ module.exports=async function handler(req,res){
   res.setHeader('X-119-Official-Source','nfa');
   res.setHeader('X-119-Official-Transport',transport||'nfa-origin');
   if(req.method==='HEAD'||!response.body)return res.end();
+  if(clientRange){
+    try{
+      const body=await bufferedRangeBody(response);
+      if(body){
+        res.setHeader('Content-Length',String(body.length));
+        return res.end(body);
+      }
+    }catch(e){
+      const msg=String(e?.message||e||'RANGE_BODY_BUFFER_FAILED').slice(0,200);
+      console.error('OFFICIAL_PDF_PROXY_RANGE_BUFFER_ERROR',JSON.stringify({doc,range:clientRange,error:msg}));
+      if(!res.headersSent){res.statusCode=502;return res.end('OFFICIAL_SOURCE_RANGE_BODY_FAILED')}
+      try{return res.destroy()}catch{return}
+    }
+  }
   try{
     await pipeline(Readable.fromWeb(response.body),res);
     return;
@@ -401,4 +428,5 @@ module.exports.pagesMirrorUrl=pagesMirrorUrl;
 module.exports.PAGES_MIRROR_DOCS=PAGES_MIRROR_DOCS;
 module.exports.parseByteRange=parseByteRange;
 module.exports.syntheticRangeResponse=syntheticRangeResponse;
+module.exports.bufferedRangeBody=bufferedRangeBody;
 module.exports.pdfProbe=pdfProbe;
