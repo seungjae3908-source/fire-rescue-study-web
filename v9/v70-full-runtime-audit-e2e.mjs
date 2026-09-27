@@ -1,11 +1,8 @@
 import { chromium } from 'playwright';
-import http from 'node:http';
-import { createRequire } from 'node:module';
-
-const require=createRequire(import.meta.url);
-const pdfHandler=require('./api/official-pdf.js');
+import { startLocalPdfMirror } from './v70-local-pdf-mirror-server.mjs';
 const base=process.env.STUDY_119_V70_AUDIT_URL||'http://127.0.0.1:4173/v9/index.html';
-const proxyOrigin='http://127.0.0.1:4174';
+const mirror=await startLocalPdfMirror({port:4174});
+const proxyOrigin=mirror.origin,mirrorBase=mirror.base;
 const docs=['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'];
 const representative=['fire1','ems','prevention1','law2'];
 const failures=[];
@@ -13,27 +10,14 @@ const passes=[];
 function check(v,m,meta={}){if(v){passes.push(m);console.log('PASS',m)}else{const row={message:m,...meta};failures.push(row);console.error('V70_FULL_AUDIT_FAIL',JSON.stringify(row))}return v}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-const proxyServer=http.createServer(async(req,res)=>{
-  try{
-    const u=new URL(req.url||'/',proxyOrigin);
-    let doc=u.searchParams.get('doc')||'';
-    if(!doc&&/\.pdf$/i.test(u.pathname))doc=u.pathname.split('/').pop().replace(/\.pdf$/i,'');
-    req.query={doc,meta:u.searchParams.get('meta')||''};
-    await pdfHandler(req,res);
-  }catch(err){
-    if(!res.headersSent){res.statusCode=500;res.setHeader('content-type','text/plain')}
-    try{res.end('LOCAL_AUDIT_PROXY_ERROR '+String(err?.message||err))}catch{}
-  }
-});
-await new Promise((resolve,reject)=>{proxyServer.once('error',reject);proxyServer.listen(4174,'127.0.0.1',resolve)});
-
 async function installConfigRewrite(page){
   const rewrite=async route=>{
     const response=await route.fetch();
     let body=await response.text();
     body=body
-      .replace('https://study-119-pdf-proxy.vercel.app',proxyOrigin)
-      .replace('https://study-119-official-pdf.vercel.app',proxyOrigin);
+      .replaceAll('https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror',mirrorBase)
+      .replaceAll('https://study-119-official-pdf.vercel.app',mirrorBase)
+      .replaceAll('https://study-119-pdf-proxy.vercel.app',proxyOrigin);
     await route.fulfill({response,body});
   };
   await page.route('**/v9/config.js*',rewrite);
@@ -173,8 +157,10 @@ async function sourceTabAudit(page,doc){
 }
 
 for(const doc of docs){
-  const r=await fetch(proxyOrigin+'/api/official-pdf?doc='+encodeURIComponent(doc)+'&meta=1',{headers:{'cache-control':'no-cache'}});
-  check(r.ok,'local audit proxy meta ready '+doc,{status:r.status,body:r.ok?'':await r.text()});
+  const r=await fetch(mirrorBase+'/'+encodeURIComponent(doc)+'.pdf',{headers:{range:'bytes=0-63','cache-control':'no-cache'}});
+  const ab=await r.arrayBuffer();
+  check(r.status===206&&ab.byteLength===64,'local Range mirror ready '+doc,{status:r.status,bytes:ab.byteLength,contentRange:r.headers.get('content-range')||''});
+  check(Buffer.from(ab).subarray(0,5).toString('latin1')==='%PDF-','local Range mirror PDF magic '+doc);
 }
 
 const browser=await chromium.launch({headless:true});
@@ -210,7 +196,7 @@ try{
   }
 }finally{
   await browser.close();
-  await new Promise(resolve=>proxyServer.close(resolve));
+  await new Promise(resolve=>mirror.server.close(resolve));
 }
 if(failures.length){
   console.error('V70_FULL_RUNTIME_AUDIT_FAILURES',JSON.stringify(failures));
