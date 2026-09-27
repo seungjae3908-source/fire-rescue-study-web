@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 
 const production=process.env.STUDY_119_PRODUCTION_URL||'https://fire-rescue-study-web.vercel.app/';
 const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
+const requireLaw2Static=process.env.STUDY_119_REQUIRE_LAW2_STATIC==='1';
 const now=()=>Date.now();
 const round=n=>Math.round(Number(n)||0);
 function assert(v,m){if(!v)throw new Error(m)}
@@ -120,9 +121,11 @@ try{
   const widthPct=Object.fromEntries(Object.entries(widths).map(([k,v])=>[k,{viewportPct:ratio(v.width,v.viewport),availablePct:ratio(v.width,v.available),width:round(v.width)}]));
   await cold.context.close();
 
-  const [law2Meta,fire1,law2]=await Promise.all([proxyMeta('law2'),measurePdf(browser,'fire1'),measurePdf(browser,'law2')]);
+  const [law2Meta,fire1,law2]=requireLaw2Static
+    ?[null,...await Promise.all([measurePdf(browser,'fire1'),measurePdf(browser,'law2')])]
+    :await Promise.all([proxyMeta('law2'),measurePdf(browser,'fire1'),measurePdf(browser,'law2')]);
 
-  const proxyRangeProbe={
+  const proxyRangeProbe=requireLaw2Static?null:{
     sameOrigin:await rangeProbe(new URL('/api/official-pdf?doc=law2',production)),
     external:await rangeProbe('https://study-119-pdf-proxy.vercel.app/api/official-pdf?doc=law2')
   };
@@ -146,7 +149,7 @@ try{
   assert(questionCold<3000,'QUESTION_COLD_TOO_SLOW_'+round(questionCold));
   const law2NeedsStaticMirror=law2.renderMs>=10000||law2.origin!=='official-static-range';
   console.log('V70_LAW2_MIRROR_REQUIRED',JSON.stringify({required:law2NeedsStaticMirror,renderMs:law2.renderMs,origin:law2.origin,rangeProbe:proxyRangeProbe}));
-  if(process.env.STUDY_119_REQUIRE_LAW2_STATIC==='1'){
+  if(requireLaw2Static){
     assert(law2.renderMs<10000,'LAW2_STATIC_RENDER_TOO_SLOW_'+law2.renderMs);
     assert(law2.origin==='official-static-range','LAW2_NOT_STATIC_RANGE_'+law2.origin);
   }
