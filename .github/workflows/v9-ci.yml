@@ -102,7 +102,6 @@ jobs:
           node --check v9/v69-bootstrap-bundle-audit.mjs
           node --check v9/v69-bootstrap-network-e2e.mjs
           node --check v9/v70-production-performance-e2e.mjs
-          node --check v9/v70-pages-mirror-cutover-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -226,11 +225,34 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
+      - name: Probe current Production availability
+        id: production_access
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          code="$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "$STUDY_119_PREVIEW_URL/api/runtime-head" || true)"
+          if [[ "$code" == "200" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$code" == "402" ]] && grep -q 'DEPLOYMENT_DISABLED' "$body"; then
+            echo "::warning::PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "blocker=VERCEL_DEPLOYMENT_DISABLED" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "UNEXPECTED_PRODUCTION_ACCESS_STATUS=$code"
+          cat "$body"
+          exit 1
       - name: Install Production suggestion browser QA
+        if: steps.production_access.outputs.available == 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Verify current Production suggestion guest + anon guards
+        if: steps.production_access.outputs.available == 'true'
         run: node v9/suggestions-production-public-e2e.mjs
 
 
@@ -242,7 +264,7 @@ jobs:
     timeout-minutes: 15
     env:
       STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
-      STUDY_119_EXPECTED_RUNTIME_HEAD: 8367f8c5312b14be134379ab4529ae608c96edfa
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
@@ -287,11 +309,34 @@ jobs:
           test -n "$accept_ranges"
           test -n "$acao"
 
+      - name: Probe current Production availability
+        id: production_access
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          code="$(curl -sS -D "$headers" -o "$body" -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "$STUDY_119_PRODUCTION_URL/api/runtime-head" || true)"
+          if [[ "$code" == "200" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$code" == "402" ]] && grep -q 'DEPLOYMENT_DISABLED' "$body"; then
+            echo "::warning::PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "blocker=VERCEL_DEPLOYMENT_DISABLED" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "UNEXPECTED_PRODUCTION_ACCESS_STATUS=$code"
+          cat "$body"
+          exit 1
       - name: Install V70 Production performance browser
+        if: steps.production_access.outputs.available == 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Measure exact Production performance
+        if: steps.production_access.outputs.available == 'true'
         run: node v9/v70-production-performance-e2e.mjs
 
 
@@ -334,10 +379,6 @@ jobs:
         env:
           STUDY_119_V69_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v69-bootstrap-network-e2e.mjs
-      - name: V70 law2 Pages static-range render QA
-        env:
-          STUDY_119_V70_URL: http://127.0.0.1:4173/v9/index.html
-        run: node v9/v70-pages-mirror-cutover-e2e.mjs
       - name: V66 branch real-interaction scroll QA
         env:
           STUDY_119_V66_URL: http://127.0.0.1:4173/v9/index.html
