@@ -192,6 +192,19 @@ async function fetchFirstWorkingCandidate(row,req,meta=false,fetchImpl=fetch){
     }
     try{await upstream.body?.cancel?.()}catch{}
   }
+  if(clientRange&&!meta&&(req.method||'GET')==='GET'){
+    const fullHeaders={...baseHeaders};delete fullHeaders.range;delete fullHeaders['if-range'];
+    for(const url of row.urls||[]){
+      let upstream;
+      try{upstream=await fetchImpl(url,{method:'GET',headers:fullHeaders,redirect:'follow'})}
+      catch{continue}
+      lastStatus=upstream.status||0;
+      if(!upstream.ok||!typeLooksPdf(upstream)){try{await upstream.body?.cancel?.()}catch{};continue}
+      let magicOk=false;try{magicOk=await pdfProbe(upstream.clone())}catch{}
+      if(!magicOk){try{await upstream.body?.cancel?.()}catch{};continue}
+      return{row:{...row,url,urls:[url,...(row.urls||[]).filter(x=>x!==url)]},upstream};
+    }
+  }
   throw new Error('OFFICIAL_SOURCE_CANDIDATES_UNREACHABLE_'+lastStatus);
 }
 async function seedSession(attempt){
