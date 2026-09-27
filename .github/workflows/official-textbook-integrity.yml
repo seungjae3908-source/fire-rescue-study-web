@@ -6,7 +6,6 @@ on:
       - 'v9/data/official-textbook-baseline.json'
       - 'v9/official-textbook-change-gate.mjs'
       - 'v9/official-textbook-freshness-check.sh'
-      - 'v9/official-textbook-freshness-check.sh'
       - 'v9/api/official-pdf.js'
       - 'v9/source-catalog-119.js'
       - '.github/workflows/pages.yml'
