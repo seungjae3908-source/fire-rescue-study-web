@@ -798,10 +798,26 @@ async function downloadOfficialPdf(key){if(!key||!V.SourcePDF?.download)return t
 const sourceOverlay=()=>document.querySelector('#pdfEvidence,#resourcePdf,#sourceModal');
 let sourceFocusReturn=null,sourceDialogSeq=0;
 const sourceFocusable=root=>[...root.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0});
+function sourceFocusRef(el){
+if(!(el instanceof HTMLElement))return null;
+let selector='';
+if(el.dataset?.resourceDoc)selector='[data-resource-doc="'+CSS.escape(el.dataset.resourceDoc)+'"]';
+else if(el.dataset?.sourceConcept)selector='[data-source-concept="'+CSS.escape(el.dataset.sourceConcept)+'"]';
+else if(el.id)selector='#'+CSS.escape(el.id);
+return{element:el,selector}
+}
+function sourceFocusTarget(ref){
+if(ref?.element?.isConnected)return ref.element;
+if(ref?.selector){
+const el=document.querySelector(ref.selector);
+if(el instanceof HTMLElement)return el
+}
+return null
+}
 function sourceOpen(opener=null){
 const overlay=sourceOverlay();if(!overlay)return false;
-if(opener instanceof HTMLElement&&!overlay.contains(opener))sourceFocusReturn=opener;
-else if(document.activeElement instanceof HTMLElement&&!overlay.contains(document.activeElement))sourceFocusReturn=document.activeElement;
+if(opener instanceof HTMLElement&&!overlay.contains(opener))sourceFocusReturn=sourceFocusRef(opener);
+else if(document.activeElement instanceof HTMLElement&&!overlay.contains(document.activeElement))sourceFocusReturn=sourceFocusRef(document.activeElement);
 const modal=overlay.querySelector('.modal')||overlay;
 modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('tabindex','-1');
 const heading=modal.querySelector('h1,h2,h3');if(heading){if(!heading.id)heading.id='source-dialog-title-'+(++sourceDialogSeq);modal.setAttribute('aria-labelledby',heading.id)}
@@ -810,10 +826,18 @@ requestAnimationFrame(()=>{const first=sourceFocusable(modal)[0]||modal;try{firs
 return true
 }
 function restoreSourceFocus(){
-const focus=sourceFocusReturn;sourceFocusReturn=null;
-if(!focus?.isConnected)return false;
-const apply=()=>{if(!focus.isConnected)return false;try{focus.focus({preventScroll:true})}catch{focus.focus?.()}return document.activeElement===focus};
-apply();requestAnimationFrame(()=>apply());return true
+const ref=sourceFocusReturn;sourceFocusReturn=null;
+if(!ref)return false;
+const apply=()=>{
+const focus=sourceFocusTarget(ref);if(!focus)return false;
+try{focus.focus({preventScroll:true})}catch{focus.focus?.()}
+return document.activeElement===focus
+};
+apply();
+requestAnimationFrame(()=>apply());
+setTimeout(()=>apply(),60);
+setTimeout(()=>apply(),240);
+return true
 }
 function sourceClose(pop=false){
 const x=sourceOverlay();
