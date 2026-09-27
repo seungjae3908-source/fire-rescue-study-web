@@ -1,11 +1,6 @@
 name: V70 Fire PDF Materialize Probe
 
 on:
-  pull_request:
-    paths:
-      - 'v9/api/official-pdf.js'
-      - 'v9/official-pdf-materialize-resolve.mjs'
-      - '.github/workflows/v70-fire-pdf-materialize-probe.yml'
   workflow_dispatch:
 
 concurrency:
