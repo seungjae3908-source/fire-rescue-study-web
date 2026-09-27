@@ -638,6 +638,8 @@ jobs:
           exit 1
       - name: Reconcile known source-anchor candidates
         run: node v9/v70-source-anchor-reconcile-e2e.mjs
+      - name: Inspect suspect source pages
+        run: node v9/v70-source-page-inspect-e2e.mjs
       - name: Audit all 183 concepts against mapped official textbook sources
         run: node v9/v51-official-textbook-browser-audit.mjs
 
