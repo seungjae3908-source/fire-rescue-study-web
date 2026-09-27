@@ -80,6 +80,17 @@ async function openPdf(key,{timeoutMs=90000,onProgress}={}){
     }catch{
       await task.destroy?.().catch?.(()=>{});
       onProgress?.({fallback:true,transport:rangeMode});
+      if(rangeMode==='mirror'&&catalog?.proxyPdf){
+        const proxyTimeout=Math.min(12000,Math.max(7000,timeoutMs-fastTimeout));
+        const proxyTask=p.getDocument({url:catalog.proxyPdf,withCredentials:false,disableRange:false,disableStream:false,disableAutoFetch:true,rangeChunkSize:65536});
+        try{
+          const pdf=await waitPdfTask(proxyTask,proxyTimeout),entry={key,pdf,task:proxyTask,name:catalog.expectedNames?.[0]||catalog.label||key,origin:'official-proxy-range-fallback'};
+          pdfCache.set(key,entry);onProgress?.({ready:true,transport:'proxy-range-fallback'});return entry
+        }catch{
+          await proxyTask.destroy?.().catch?.(()=>{});
+          onProgress?.({fallback:true,transport:'proxy-range-fallback'});
+        }
+      }
       const row=await cacheOfficial(key,{timeoutMs:Math.max(10000,timeoutMs-fastTimeout),onProgress,preferProxy:true});
       task=p.getDocument({data:await row.blob.arrayBuffer()});name=row.name||key;origin=rangeMode==='mirror'?'official-proxy-fallback':'official-proxy-full-cache-fallback'
     }
