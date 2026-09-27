@@ -483,7 +483,7 @@ function resolveForConcept(id){const c=V.curriculum?.byId?.[id],r=c?.sourceRange
 function canDirect(key){return !!get(key)?.directPdf}
 function withDirect(key,url,meta={}){if(!C[key])return false;C[key]={...C[key],directPdf:url||'',...meta};return true}
 function audit(){const rows=Object.values(C);return{total:rows.length,direct:rows.filter(x=>x.directPdf).length,fallback:rows.filter(x=>!x.directPdf).length,licenseOk:rows.every(x=>x.license==='KOGL-1'),rows}}
-V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,isSameOriginDeploymentHost,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true,sameOriginProxy:!proxyBase,crossOriginProxy:!!proxyBase,arbitraryUrlProxy:false,allCatalogDocsProxyable:true,staticMirrorEnabled:!!mirrorBase,staticMirrorDocs:[...mirrorDocs]}};
+V.SourceCatalog119={catalog:C,get,resolveForConcept,canDirect,withDirect,audit,isSameOriginDeploymentHost,policy:{officialOnly:true,noUserUploadRequired:true,attributionRequired:true,directWhenVerified:true,officialPageFallback:true,sameOriginProxy:sameOriginDeployment,crossOriginProxy:!sameOriginDeployment&&!!proxyBase,arbitraryUrlProxy:false,allCatalogDocsProxyable:true,staticMirrorEnabled:!!mirrorBase,staticMirrorDocs:[...mirrorDocs]}};
 })();
 
 ;
