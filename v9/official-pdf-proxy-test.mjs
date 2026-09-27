@@ -202,4 +202,23 @@ const html=(name,base)=>"<li class=\"file\"><span class=\"fileOnm\">"+name+"</sp
   assert.equal(nfaCalls,1,'fire1 continues through the existing proxy resolver when needed');
 }
 
+
+{
+  const raw=Buffer.from('%PDF-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  const upstream=new Response(raw,{status:200,headers:{'content-type':'application/pdf','content-length':String(raw.length)}});
+  const ranged=P.syntheticRangeResponse(upstream,'bytes=5-14');
+  assert.ok(ranged,'200 upstream can be converted to a synthetic range response');
+  assert.equal(ranged.status,206,'synthetic range returns HTTP 206');
+  assert.equal(ranged.headers.get('content-range'),'bytes 5-14/'+raw.length,'synthetic range reports exact Content-Range');
+  assert.equal(ranged.headers.get('content-length'),'10','synthetic range reports exact slice length');
+  assert.equal(ranged.headers.get('accept-ranges'),'bytes','synthetic range advertises byte ranges');
+  const body=Buffer.from(await ranged.arrayBuffer());
+  assert.deepEqual(body,raw.subarray(5,15),'synthetic range body matches the requested byte slice');
+}
+{
+  const parsed=P.parseByteRange('bytes=10-',100);
+  assert.deepEqual(parsed,{start:10,end:99,length:90,total:100},'open-ended browser range is normalized against upstream length');
+  assert.equal(P.parseByteRange('bytes=100-120',100),null,'out-of-bounds browser range is rejected');
+}
+
 console.log('PASS official PDF proxy deterministic candidate-selection contract');
