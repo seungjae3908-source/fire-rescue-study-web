@@ -41,9 +41,13 @@ try{
     const stale=await V.SourcePDF.get('fire1');
     const staleRaw=await raw('fire1');
 
-    await put({key:'ems',name:'local-user.pdf',mime:'application/pdf',blob,updatedAt:2});
+    await put({key:'ems',name:'local-user.pdf',mime:'application/pdf',blob,updatedAt:Date.now(),origin:'local-attachment',localAttachmentVersion:1});
     const local=await V.SourcePDF.get('ems');
     const localRaw=await raw('ems');
+
+    await put({key:'fire2',name:'legacy-user.pdf',mime:'application/pdf',blob,updatedAt:Date.now()});
+    const legacy=await V.SourcePDF.get('fire2');
+    const legacyRaw=await raw('fire2');
 
     await put({key:'law1',name:'current.pdf',mime:'application/pdf',blob,updatedAt:Date.now(),origin:'official-mirror-cache',cacheEpoch:epoch});
     const current=await V.SourcePDF.get('law1');
@@ -63,6 +67,8 @@ try{
       stalePersisted:!!staleRaw,
       localReturned:!!local?.blob,
       localPersisted:!!localRaw?.blob,
+      legacyReturned:!!legacy,
+      legacyPersisted:!!legacyRaw,
       currentReturned:!!current?.blob,
       currentPersisted:!!currentRaw?.blob,
       expiredReturned:!!expired,
@@ -73,7 +79,8 @@ try{
   assert(result.epoch.length>20,'runtime exposes non-empty official PDF cache epoch',result);
   assert(result.exportedEpoch===result.epoch,'SourcePDF exports the configured cache epoch',result);
   assert(!result.staleReturned&&!result.stalePersisted,'stale official IndexedDB PDF row is rejected and deleted',result);
-  assert(result.localReturned&&result.localPersisted,'local/user PDF row without official origin is preserved',result);
+  assert(result.localReturned&&result.localPersisted,'versioned local attachment row is preserved',result);
+  assert(!result.legacyReturned&&!result.legacyPersisted,'legacy unversioned official-key attachment row is deleted so it cannot shadow current textbooks',result);
   assert(result.currentReturned&&result.currentPersisted,'current official PDF row with matching epoch is preserved',result);
   assert(result.maxAgeMs===24*60*60*1000,'official persistent PDF cache TTL is exactly 24 hours',result);
   assert(!result.expiredReturned&&!result.expiredPersisted,'expired official PDF row is rejected and deleted even when epoch matches',result);
