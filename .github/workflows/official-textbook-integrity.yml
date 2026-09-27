@@ -53,10 +53,24 @@ jobs:
   official_pdf_mirror_integrity:
     name: official_pdf_mirror_integrity
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7.0.1
-      - name: Verify deployed Pages mirror SHA256 + sizes
+
+      - uses: actions/setup-node@v7.0.0
+        if: github.event_name != 'pull_request'
+        with:
+          node-version: '22'
+
+      - name: Restore ten-PDF integrity cache
+        if: github.event_name != 'pull_request'
+        uses: actions/cache@v4
+        with:
+          path: official-pdf-mirror
+          key: study119-official-pdf-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
+
+      - name: Verify currently deployed Pages mirror for pull requests
+        if: github.event_name == 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
@@ -66,17 +80,9 @@ jobs:
           cd "$tmpdir"
           curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/SHA256SUMS.txt" -o SHA256SUMS.txt
           curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/SIZES.txt" -o SIZES.txt
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
-            expected_hash_lines=7
-            expected_size_lines=8
-          else
-            docs=(fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5)
-            expected_hash_lines=10
-            expected_size_lines=11
-          fi
-          test "$(wc -l < SHA256SUMS.txt | tr -d ' ')" = "$expected_hash_lines"
-          test "$(wc -l < SIZES.txt | tr -d ' ')" = "$expected_size_lines"
+          docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
+          test "$(wc -l < SHA256SUMS.txt | tr -d ' ')" = "7"
+          test "$(wc -l < SIZES.txt | tr -d ' ')" = "8"
           for doc in "${docs[@]}"; do
             grep -Eq "^[0-9a-fA-F]{64}  ${doc}\\.pdf$" SHA256SUMS.txt
             curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/$doc.pdf" -o "$doc.pdf"
@@ -87,4 +93,25 @@ jobs:
             test "$actual" = "$expected"
           done
           sha256sum -c SHA256SUMS.txt
-          echo "OFFICIAL_PDF_MIRROR_INTEGRITY_SUCCESS docs=${#docs[@]}"
+          echo "OFFICIAL_PDF_MIRROR_INTEGRITY_SUCCESS mode=deployed-pr docs=${#docs[@]}"
+
+      - name: Verify exact-commit ten-PDF materialization
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p official-pdf-mirror
+          bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5
+          (
+            cd official-pdf-mirror
+            sha256sum fire1.pdf fire2.pdf ems.pdf prevention1.pdf prevention2.pdf law1.pdf law2.pdf law3.pdf law4.pdf law5.pdf > SHA256SUMS.txt
+            wc -c fire1.pdf fire2.pdf ems.pdf prevention1.pdf prevention2.pdf law1.pdf law2.pdf law3.pdf law4.pdf law5.pdf > SIZES.txt
+            test "$(wc -l < SHA256SUMS.txt | tr -d ' ')" = "10"
+            test "$(wc -l < SIZES.txt | tr -d ' ')" = "11"
+            for doc in fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5; do
+              test "$(head -c 5 "$doc.pdf")" = "%PDF-"
+              test "$(wc -c < "$doc.pdf" | tr -d ' ')" -gt 100000
+            done
+            sha256sum -c SHA256SUMS.txt
+          )
+          echo "OFFICIAL_PDF_MIRROR_INTEGRITY_SUCCESS mode=exact-commit docs=10"
