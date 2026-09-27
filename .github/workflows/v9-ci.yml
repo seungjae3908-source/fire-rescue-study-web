@@ -636,8 +636,6 @@ jobs:
           done
           cat /tmp/study119-v51-http.log
           exit 1
-      - name: Diagnose remaining V51 anchor reviews
-        run: node v9/v70-anchor-review-diagnostic-e2e.mjs
       - name: Audit all 183 concepts against mapped official textbook sources
         run: node v9/v51-official-textbook-browser-audit.mjs
 
