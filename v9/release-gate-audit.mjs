@@ -44,10 +44,14 @@ const officialTextbookIntegrityWorkflow=fs.readFileSync(new URL('../.github/work
 const officialTextbookChangeGate=fs.readFileSync(new URL('./official-textbook-change-gate.mjs',import.meta.url),'utf8');
 const officialTextbookFreshnessHelper=fs.readFileSync(new URL('./official-textbook-freshness-check.sh',import.meta.url),'utf8');
 const officialPdfMaterializer=fs.readFileSync(new URL('./materialize-official-pdfs.sh',import.meta.url),'utf8');
+const sourcePdfRuntime=fs.readFileSync(new URL('./source-pdf.js',import.meta.url),'utf8');
+const runtimeConfig=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
+const officialPdfCacheEpochE2E=fs.readFileSync(new URL('./v70-official-pdf-cache-epoch-e2e.mjs',import.meta.url),'utf8');
 const officialTextbookBaseline=JSON.parse(fs.readFileSync(new URL('./data/official-textbook-baseline.json',import.meta.url),'utf8'));
 const officialTextbookGroups=Array.isArray(officialTextbookBaseline.groups)?officialTextbookBaseline.groups:[];
 const fireScopeGroup=officialTextbookGroups.find(g=>String(g?.cntId||'')==='106809');
 const tactics2MonitorGroup=officialTextbookGroups.find(g=>String(g?.cntId||'')==='106810');
+const expectedOfficialPdfCacheEpoch='119-official-pdf-cache-v1:'+officialTextbookGroups.map(g=>String(g?.fingerprint||'')).join(':');
 
 const officialMonitorClient=fs.readFileSync(new URL('./official-monitor.js',import.meta.url),'utf8');
 const officialMonitorApi=fs.readFileSync(new URL('./api/official-monitor.js',import.meta.url),'utf8');
@@ -107,6 +111,7 @@ const checks={
   pagesUsesHardenedMaterializer:pagesWorkflow.includes('bash v9/materialize-official-pdfs.sh official-pdf-mirror fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5')&&!pagesWorkflow.includes('OFFICIAL_PDF_MATERIALIZE_SESSION doc=$doc refresh=$refresh')&&officialPdfMaterializer.includes('min_bytes=100000')&&officialPdfMaterializer.includes('OFFICIAL_PDF_MATERIALIZE_CACHE_REJECT'),
 
 
+  officialPdfBrowserCacheEpochContract:officialTextbookBaseline.browserCacheEpoch===expectedOfficialPdfCacheEpoch&&runtimeConfig.includes("officialPdfCacheEpoch:'"+expectedOfficialPdfCacheEpoch+"'")&&sourcePdfRuntime.includes('OFFICIAL_CACHE_EPOCH')&&sourcePdfRuntime.includes('staleOfficialCacheAutoDelete:true')&&sourcePdfRuntime.includes('row.cacheEpoch!==OFFICIAL_CACHE_EPOCH')&&workflow.includes('V70 official PDF browser cache epoch QA')&&officialPdfCacheEpochE2E.includes('V70_OFFICIAL_PDF_CACHE_EPOCH_E2E_SUCCESS'),
   accessibilitySmokeContract:workflow.includes('Keyboard and accessibility semantic smoke QA')&&accessibilitySmoke.includes('ACCESSIBILITY_SMOKE_COMPLETE')&&app.includes('aria-current="page"')&&app.includes('aria-live="polite"'),
   activeExamRecoveryContract:((examSession.includes("version:'119-active-exam-v1'")&&examSession.includes('questionIdsOnly:true'))||(examSession.includes("version:'119-active-exam-v2'")&&examSession.includes('variantSnapshots:true')&&examSession.includes('questionSnapshots')))&&app.includes('persistActiveExam()')&&app.includes('data-exam-timer')&&app.includes('data-exam-abandon')&&workflow.includes('Active exam reload recovery and timer QA')&&examSessionE2E.includes('EXAM_SESSION_RECOVERY_E2E_COMPLETE'),
   performanceWeaknessV61Contract:workflow.includes('V61 performance + weakness analytics audit')&&workflow.includes('V61 performance center + adaptive training QA')&&analyticsV61.includes("version:'119-v61-performance-weakness-center-v1'")&&analyticsV61.includes('localOnly:true')&&analyticsV61.includes('realMockUnchanged:true')&&app.includes('data-stats-weak-train')&&analyticsV61E2E.includes('V61_PERFORMANCE_WEAKNESS_E2E_SUCCESS'),
