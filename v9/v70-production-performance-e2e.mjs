@@ -122,7 +122,7 @@ try{
 
   const [law2Meta,fire1,law2]=await Promise.all([proxyMeta('law2'),measurePdf(browser,'fire1'),measurePdf(browser,'law2')]);
 
-  const pagesProxyDocs=['prevention1','prevention2','law1','law2','law3','law4','law5'];
+  const pagesProxyDocs=['fire1','fire2','ems','prevention1','prevention2','law1','law2','law3','law4','law5'];
   const sameOriginPagesRanges=Object.fromEntries(await Promise.all(
     pagesProxyDocs.map(async doc=>[doc,await rangeProbe(new URL('/api/official-pdf?doc='+encodeURIComponent(doc),production))])
   ));
