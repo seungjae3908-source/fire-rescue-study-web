@@ -128,6 +128,21 @@
   <script defer src="./boot-v69-7a.js"></script>
   <script defer src="./boot-v69-7b.js"></script>
   <script defer src="./boot-v69-8.js"></script>
-  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(reg=>reg.update()).catch(console.warn))}</script>
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',async()=>{
+        try{
+          const legacyScope=new URL('../',location.href).href;
+          const registrations=await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.filter(reg=>reg.scope===legacyScope).map(reg=>reg.unregister()));
+          if('caches' in window){
+            const keys=await caches.keys();
+            await Promise.all(keys.filter(key=>key.startsWith('ai-tutor-v8-')).map(key=>caches.delete(key)));
+          }
+        }catch{}
+        navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(reg=>reg.update()).catch(console.warn);
+      });
+    }
+  </script>
 </body>
 </html>
