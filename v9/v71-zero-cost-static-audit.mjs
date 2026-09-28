@@ -6,6 +6,7 @@ function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 const config=read('./config.js');
 const rootIndex=read('../index.html');
 const rootSw=read('../sw.js');
+const v9Index=read('./index.html');
 const catalog=read('./source-catalog-119.js');
 const monitor=read('./official-monitor.js');
 const boot1=read('./boot-v69-1.js');
@@ -19,6 +20,7 @@ const suggestionSmoke=read('./suggestions-production-public-e2e.mjs');
 assert(rootIndex.includes('http-equiv="refresh"')&&rootIndex.includes('url=./v9/')&&rootIndex.includes("location.replace(target)"),'GitHub Pages root routes directly to production V9');
 assert(rootIndex.includes("key.startsWith('ai-tutor-v8-')")&&rootIndex.includes('reg.scope === rootScope'),'root cutover unregisters only the legacy root worker and clears only V8 caches');
 assert(rootSw.includes("key.startsWith('ai-tutor-v8-')")&&rootSw.includes('self.registration.unregister()')&&!rootSw.includes("addEventListener('fetch'"),'legacy root service worker is a self-retiring migration worker and cannot intercept V9 traffic');
+assert(v9Index.includes("reg.scope===legacyScope")&&v9Index.includes("key.startsWith('ai-tutor-v8-')")&&v9Index.includes("register('./sw.js',{scope:'./',updateViaCache:'none'})"),'direct V9 entry retires the legacy root worker before registering the V9-scoped worker');
 assert(config.includes("officialPdfProxyBase:''"),'browser config disables Vercel PDF proxy');
 assert(config.includes("officialMonitorApiBase:''"),'browser config disables server monitor API');
 assert(config.includes("officialPdfMirrorBase:'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror'"),'browser config keeps GitHub Pages PDF mirror');
