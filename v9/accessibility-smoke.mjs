@@ -26,7 +26,7 @@ try{
   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,serviceWorkers:'block'});
   const page=await ctx.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.route('**/api/official-monitor**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(snapshot)}));
+  await page.route('https://raw.githubusercontent.com/**/official-monitor.json**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(snapshot)}));
   await page.goto(base,{waitUntil:'domcontentloaded'});
   await page.waitForSelector('.app');
   await page.waitForFunction(()=>window.AITUTOR_V9?.OfficialMonitor119?.summary?.().status==='ready');
