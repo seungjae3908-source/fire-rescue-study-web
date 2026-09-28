@@ -694,7 +694,7 @@ ok(configExample.includes('supabasePublishableKey'),'config example uses a publi
 ok(!/supabase(?:ServiceRole|Secret|Service)_?Key\s*:/i.test(configExample)&&!/sb_secret_[A-Za-z0-9]/.test(configExample),'config example never configures a privileged key');
 const config=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
 ok(config.includes('enableCloudSync:true'),'release-ready v9 config enables real Study cloud sync');
-ok(config.includes("officialPdfProxyBase:'https://study-119-pdf-proxy.vercel.app'"),'release-ready v9 config pins the verified official PDF proxy');
+ok(config.includes("officialPdfProxyBase:''")&&config.includes("officialPdfMirrorBase:'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror'"),'release-ready v9 config uses the ten-PDF GitHub Pages mirror without a paid runtime proxy');
 ok(!config.includes('bawcbkoyovbeajkrnduq'),'release-ready v9 config never points at Investment Production');
 ok(config.includes("supabaseUrl:'https://petlfbztqguuzkasfpug.supabase.co'"),'checked-in v9 config pins the approved shared Supabase URL');
 ok(/supabasePublishableKey:'sb_publishable_[A-Za-z0-9_-]+'/.test(config),'checked-in v9 config uses a browser-safe publishable key');
