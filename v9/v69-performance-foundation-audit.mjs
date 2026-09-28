@@ -21,7 +21,7 @@ assert(blocking.length===0,'all initial external scripts are non-parser-blocking
 assert(lazy.includes('Promise.all(QUESTION_FILES.map(loadScript))'),'deferred question packs are inserted together for parallel network fetch');
 assert(!lazy.includes('for(const file of QUESTION_FILES)await loadScript(file)'),'question packs are no longer inserted one-by-one');
 assert(lazy.includes("s.async=false"),'parallel question fetch preserves canonical classic-script execution order');
-assert(catalog.includes("mirrored(doc)?'range-static':'range-proxy'"),'catalog keeps range-proxy fallback available behind static mirrors');
+assert(catalog.includes("mirrored(doc)?'range-static':(proxyBase?'range-proxy':'official-page')"),'catalog keeps static Range primary while making the runtime proxy an optional fallback');
 assert(pdf.includes("catalog?.transport==='range-proxy'&&catalog?.proxyPdf?'proxy':''"),'PDF viewer recognizes range-proxy transport');
 assert(pdf.includes("origin=rangeMode==='mirror'?'official-static-range':'official-proxy-range'"),'PDF viewer records static and proxy range origins separately');
 assert(pdf.includes('disableRange:false')&&pdf.includes('disableStream:false')&&pdf.includes('disableAutoFetch:true')&&pdf.includes('rangeChunkSize:65536'),'range viewer requests only required PDF byte ranges');
