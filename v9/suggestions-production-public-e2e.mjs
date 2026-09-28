@@ -2,12 +2,13 @@ import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_PREVIEW_URL||'https://fire-rescue-study-web.vercel.app/';
 const configuredExpected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
+const runtimeHeadUrl=process.env.STUDY_119_RUNTIME_HEAD_URL||new URL('/api/runtime-head',base).href;
 const isPullRequest=process.env.GITHUB_EVENT_NAME==='pull_request';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 if(!/^[0-9a-f]{40}$/i.test(configuredExpected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitForGuardedRuntime(){
-  const url=new URL('/api/runtime-head',base);
+  const url=new URL(runtimeHeadUrl);
   let last={status:0,sha:'',error:''};
   for(let attempt=1;attempt<=36;attempt++){
     try{
@@ -42,11 +43,11 @@ try{
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.Suggestions,{timeout:60000});
   await page.waitForSelector('.app',{state:'visible',timeout:60000});
 
-  const runtime=await page.evaluate(async()=>{
-    const res=await fetch('/api/runtime-head',{cache:'no-store'});
+  const runtime=await page.evaluate(async runtimeHeadUrl=>{
+    const res=await fetch(runtimeHeadUrl,{cache:'no-store'});
     let body={};try{body=await res.json()}catch{}
     return{status:res.status,...body}
-  });
+  },runtimeHeadUrl);
   assert(runtime.status===200&&runtime.ok===true,'Production runtime identity endpoint healthy');
   assert(runtime.sha===pinnedRuntimeHead,'Production suggestion acceptance pinned runtime SHA '+pinnedRuntimeHead);
 
