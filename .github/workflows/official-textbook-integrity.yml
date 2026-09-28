@@ -80,9 +80,9 @@ jobs:
           cd "$tmpdir"
           curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/SHA256SUMS.txt" -o SHA256SUMS.txt
           curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/SIZES.txt" -o SIZES.txt
-          docs=(prevention1 prevention2 law1 law2 law3 law4 law5)
-          test "$(wc -l < SHA256SUMS.txt | tr -d ' ')" = "7"
-          test "$(wc -l < SIZES.txt | tr -d ' ')" = "8"
+          docs=(fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5)
+          test "$(wc -l < SHA256SUMS.txt | tr -d ' ')" = "10"
+          test "$(wc -l < SIZES.txt | tr -d ' ')" = "11"
           for doc in "${docs[@]}"; do
             grep -Eq "^[0-9a-fA-F]{64}  ${doc}\\.pdf$" SHA256SUMS.txt
             curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$base/$doc.pdf" -o "$doc.pdf"
@@ -93,7 +93,7 @@ jobs:
             test "$actual" = "$expected"
           done
           sha256sum -c SHA256SUMS.txt
-          echo "OFFICIAL_PDF_MIRROR_INTEGRITY_SUCCESS mode=deployed-pr docs=${#docs[@]}"
+          echo "OFFICIAL_PDF_MIRROR_INTEGRITY_SUCCESS mode=deployed-pr-ten-docs docs=${#docs[@]}"
 
       - name: Verify exact-commit ten-PDF materialization
         if: github.event_name != 'pull_request'
