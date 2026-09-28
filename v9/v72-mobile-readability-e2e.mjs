@@ -58,8 +58,12 @@ try{
   assert(notes.coreUnderline.includes('underline'),'saved core note visibly underlines key content');
 
   await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='study';V.Store.state.studyTab='ai';V.Store.save();V.App.render()});
-  await page.locator('[data-tutor-input]').fill('밥먹었니');
-  await page.locator('[data-tutor-send]').click();
+  const visibleTutor=page.locator('[data-tutor-input]:visible');
+  const visibleSend=page.locator('[data-tutor-send]:visible');
+  assert(await visibleTutor.count()===1,'mobile tutor exposes exactly one visible input');
+  assert(await visibleSend.count()===1,'mobile tutor exposes exactly one visible send button');
+  await visibleTutor.fill('밥먹었니');
+  await visibleSend.click();
   await page.waitForFunction(()=>[...document.querySelectorAll('.tutor-message.assistant')].some(x=>x.textContent.includes('학습 질문만 답합니다.')),{timeout:10000});
   const aiText=(await page.locator('.tutor-message.assistant').last().innerText()).trim();
   assert(aiText.includes('현재 개념과 직접 관련된 학습 질문만 답합니다.'),'off-topic tutor prompt is rejected clearly');
