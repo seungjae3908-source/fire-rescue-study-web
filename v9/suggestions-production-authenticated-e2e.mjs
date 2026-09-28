@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 
-const base=process.env.STUDY_119_PREVIEW_URL||'https://fire-rescue-study-web.vercel.app/';
+const base=process.env.STUDY_119_PREVIEW_URL||'https://seungjae3908-source.github.io/fire-rescue-study-web/v9/';
+const runtimeHeadUrl=process.env.STUDY_119_RUNTIME_HEAD_URL||new URL('runtime-head.json',base).href;
 const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
 const memberEmail=process.env.STUDY_119_MEMBER_EMAIL||'';
 const memberPassword=process.env.STUDY_119_MEMBER_PASSWORD||'';
@@ -20,11 +21,11 @@ async function boot(browser){
   page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('console:'+m.text())});
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.SupabaseLite&&!!window.AITUTOR_V9_CONFIG,{timeout:60000});
-  const runtime=await page.evaluate(async()=>{
-    const res=await fetch('/api/runtime-head',{cache:'no-store'});
+  const runtime=await page.evaluate(async runtimeHeadUrl=>{
+    const res=await fetch(runtimeHeadUrl,{cache:'no-store'});
     let body={};try{body=await res.json()}catch{}
     return{status:res.status,...body}
-  });
+  },runtimeHeadUrl);
   assert(runtime.status===200&&runtime.sha===expected,'authenticated suggestion test exact Production SHA');
   return{ctx,page,errors}
 }
