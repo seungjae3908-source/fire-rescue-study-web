@@ -499,14 +499,14 @@ blueprint:e.blueprint||null,partial,abandoned,completionRate:total?Math.round(an
 state().examHistory.push(rec);S.save();stopExamTicker();clearActiveExam();runtime.exam=null;runtime.examReportId=rec.id;
 toast(partial?`중단 결과 ${correct}/${answered} · ${rec.score}점`:`${correct}/${total} · ${rec.score}점`);go('stats')
 }
-function notePreviewHtml(n){
-const raw=String(n?.body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,14),star=String(n?.sourceType||'').startsWith('pass-star'),question=String(n?.sourceType||'')==='pass-question';
-let section='';
-return raw.map((line,i)=>{
-const heading=/^\[(핵심|숫자·단위·기준|비교·구분|주의·예외|원문 확인 필요|공식근거)\]$/.test(line);
-if(heading){section=line;return `<b class="note-section-head">${esc(line.replace(/^\[|\]$/g,''))}</b>`}
-const important=star&&i===0||question&&/^정답:/.test(line)||/^•/.test(line)&&/핵심|숫자|주의/.test(section);
-const cls=important?'note-important':'';
+function notePreviewHtml(n,bodyOverride){
+const raw=String(bodyOverride??n?.body??'').replace(/\r/g,'').split('\n'),star=String(n?.sourceType||'').startsWith('pass-star'),question=String(n?.sourceType||'')==='pass-question';
+let section=star?'핵심':'';
+return raw.map((rawLine,i)=>{
+const line=String(rawLine||'').trim();if(!line)return'<span class="note-preview-gap" aria-hidden="true"></span>';
+const m=line.match(/^\[(핵심|숫자·단위·기준|비교·구분|주의·예외|문제|정답|해설|원문 확인 필요|공식근거|내 메모)\]$/);
+if(m){section=m[1];return `<b class="note-section-head note-section-${section==='핵심'?'core':section==='숫자·단위·기준'?'number':section==='주의·예외'?'warning':'plain'}">${esc(section)}</b>`}
+const cls=section==='핵심'||star&&i===0?'note-core-line':section==='숫자·단위·기준'?'note-number-line':section==='주의·예외'?'note-warning-line':section==='정답'||question&&/^정답:/.test(line)?'note-answer-line':section==='공식근거'?'note-source-line':'';
 return `<span class="note-preview-line ${cls}">${esc(line)}</span>`
 }).join('')
 }
@@ -547,7 +547,7 @@ return defs.map(([k,label])=>{const n=k==='all'?all.length:all.filter(x=>noteKin
 }
 function noteRowsHtml(){
 const rows=filteredNotes();if(!rows.length)return `<div class="empty note-empty">저장한 ${runtime.noteSubject==='fire'?'소방학':'구급'} 합격노트가 없습니다.<br><small>학습 화면의 ☆를 눌러 핵심을 추가하거나 직접 메모를 작성하세요.</small></div>`;
-return rows.map(n=>{const parts=splitSourceNote(n);return runtime.noteEditId===n.id?`<div class="row note-edit-row"><input id="noteEditTitle" class="input" value="${esc(n.title||'')}">${sourceBackedNote(n)?`<div class="note-official-lock"><b>공식/문제 원문 · 잠금</b><p>${esc(parts.official)}</p></div><label class="note-user-memo-label">내 메모<textarea id="noteEditMemo" class="textarea" placeholder="내 암기법·추가 메모">${esc(parts.memo)}</textarea></label>`:`<textarea id="noteEditBody" class="textarea">${esc(n.body||'')}</textarea>`}<div class="toolbar"><button class="btn small primary" data-note-save="${esc(n.id)}">수정 저장</button><button class="btn small ghost" data-note-cancel>취소</button></div></div>`:`<div class="row note-row"><div><b>${esc(n.title||'내 합격노트')}</b><div class="note-preview">${notePreviewHtml(n)}</div><span class="tiny muted">${esc(noteSourceLabel(n))}</span></div><div class="toolbar"><button class="btn small" data-note-edit="${esc(n.id)}">수정</button><button class="btn small ghost danger" data-note-delete="${esc(n.id)}">삭제</button></div></div>`}).join('');
+return rows.map(n=>{const parts=splitSourceNote(n);return runtime.noteEditId===n.id?`<div class="row note-edit-row"><input id="noteEditTitle" class="input" value="${esc(n.title||'')}">${sourceBackedNote(n)?`<div class="note-official-lock"><b>공식/문제 원문 · 잠금</b><div class="note-preview note-official-preview">${notePreviewHtml(n,parts.official)}</div></div><label class="note-user-memo-label">내 메모<textarea id="noteEditMemo" class="textarea" placeholder="내 암기법·추가 메모">${esc(parts.memo)}</textarea></label>`:`<textarea id="noteEditBody" class="textarea">${esc(n.body||'')}</textarea>`}<div class="toolbar"><button class="btn small primary" data-note-save="${esc(n.id)}">수정 저장</button><button class="btn small ghost" data-note-cancel>취소</button></div></div>`:`<div class="row note-row"><div><b>${esc(n.title||'내 합격노트')}</b><div class="note-preview">${notePreviewHtml(n)}</div><span class="tiny muted">${esc(noteSourceLabel(n))}</span></div><div class="toolbar"><button class="btn small" data-note-edit="${esc(n.id)}">수정</button><button class="btn small ghost danger" data-note-delete="${esc(n.id)}">삭제</button></div></div>`}).join('');
 }
 function exportCard(mode,title){
 return `<div class="pass-export-card"><b>${title}</b><div><button class="btn small primary" data-pass-export="${mode}">PDF</button><button class="btn small" data-pass-editable="${mode}">편집본 .doc</button></div></div>`
@@ -622,6 +622,19 @@ const detectedTerms=[detected.title,...String(detected.title||'').split(/[·,/()
 const curated=detectedTerms.some(t=>allowedTerms.includes(t));
 return{allowed:curated,detected}
 }
+function tutorPromptRelevant(prompt,current,pack){
+const raw=String(prompt||'').trim(),previous=previousTutorQuestion(current,prompt);
+if(!raw)return false;
+if(previous&&/^(?:왜|왜요|그럼|그러면|그건|그거|그것|둘|둘은|기관들|더|예시|예를|어떻게|뭐가|차이|비교|근거|출처|원문|시험|함정|주의|정의|종류|특징|요약|자세히|상세)/.test(raw))return true;
+const words=tutorKeywords(raw);if(!words.length)return !!previous;
+const corpus=studyNorm([
+current?.title||'',pack?.summary||'',...(pack?.must||[]),...(pack?.detail||[]),
+...(pack?.compare||[]).flat(),...(pack?.traps||[]),
+...(pack?.deepSections||[]).flatMap(x=>[x?.title,x?.body,...(x?.bullets||[])]),
+...(V.ConceptArchitecture119?.termsFor?.(current?.id)||[])
+].filter(Boolean).join(' '));
+return words.some(w=>{const n=studyNorm(w);return n.length>=2&&corpus.includes(n)})
+}
 function aiChatBody(c){
 const chat=state().chat.filter(m=>m.conceptId===c.id).slice(-18);
 const arch=V.ConceptArchitecture119?.get?.(c.id);
@@ -640,14 +653,16 @@ const own=(state().chat||[]).filter(m=>m.conceptId===conceptId),drop=new Set(own
 }
 async function sendTutor(){
 const input=visibleTutorInput(),prompt=input?.value.trim();if(!prompt)return;
-const current=currentConcept(),pack=V.contentPacks.get(current.id),target=tutorTargetAllowed(prompt,current,pack),prior=(state().chat||[]).filter(m=>m.conceptId===current.id).slice(-8);
+const current=currentConcept(),pack=V.contentPacks.get(current.id),target=tutorTargetAllowed(prompt,current,pack),relevant=tutorPromptRelevant(prompt,current,pack),prior=(state().chat||[]).filter(m=>m.conceptId===current.id).slice(-8);
 const mkid=p=>crypto.randomUUID?crypto.randomUUID():p+Date.now()+Math.random().toString(36).slice(2);
 const userMsg={id:mkid('chat-u-'),role:'user',text:prompt,at:Date.now(),conceptId:current.id};
 const assistant={id:mkid('chat-a-'),role:'assistant',text:'생각 중…',at:Date.now(),conceptId:current.id};
 state().chat.push(userMsg,assistant);trimTutorChat(current.id,20);runtime.tutorForceLatest=true;S.save();render();
-if(!target.allowed){
-const out=`현재 학습 항목은 「${current.title}」입니다.\n이 AI는 현재 항목과 직접 등록된 비교 내용만 설명합니다.\n「${target.detected?.title||'다른 개념'}」은 해당 개념 페이지로 이동해서 질문해 주세요.`;
-const ix=state().chat.findIndex(x=>x.id===assistant.id);if(ix>=0)state().chat[ix]={...assistant,text:out,outOfScope:true,suggestedConceptId:target.detected?.id||''};S.save();render();return
+if(!target.allowed||!relevant){
+const out=!relevant&&(!target.detected||target.detected.id===current.id)
+?`현재 학습 항목은 「${current.title}」입니다.\n이 화면에서는 현재 개념과 직접 관련된 학습 질문만 답합니다.\n정의·비교·시험 포인트·원문 근거처럼 학습 내용으로 질문해 주세요.`
+:`현재 학습 항목은 「${current.title}」입니다.\n이 AI는 현재 항목과 직접 등록된 비교 내용만 설명합니다.\n「${target.detected?.title||'다른 개념'}」은 해당 개념 페이지로 이동해서 질문해 주세요.`;
+const ix=state().chat.findIndex(x=>x.id===assistant.id);if(ix>=0)state().chat[ix]={...assistant,text:out,outOfScope:true,suggestedConceptId:target.detected?.id&&target.detected.id!==current.id?target.detected.id:''};S.save();render();return
 }
 const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),compareRows=compare?(pack.compare||[]).slice(0,6):[];
 let out=fallbackTutor(prompt,current,pack),idx=state().chat.findIndex(x=>x.id===assistant.id);

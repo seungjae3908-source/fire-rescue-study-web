@@ -102,6 +102,11 @@ jobs:
           STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
         run: node v9/v71-static-production-e2e.mjs
 
+      - name: Production V72 390px mobile readability acceptance
+        env:
+          STUDY_119_V72_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
+        run: node v9/v72-mobile-readability-e2e.mjs
+
 
       - name: Production suggestion guest + anon Data API acceptance
         env:

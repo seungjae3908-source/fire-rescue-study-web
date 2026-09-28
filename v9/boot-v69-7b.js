@@ -243,10 +243,21 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     const left=Math.min(...its.map(x=>x.x)),right=Math.max(...its.map(x=>x.x+x.w)),top=Math.min(...its.map(x=>x.top)),bottom=Math.max(...its.map(x=>x.top+x.h));
     return{text,n,left,right,top,bottom};
   }).filter(x=>x.n.length>=4).sort((a,b)=>a.top-b.top);
+  const sentenceEnded=text=>/[.!?。！？](?:["'”’）)\]]*)?$/.test(String(text||'').trim());
+  const looksLikeNewBlock=text=>/^(?:제\s*\d+|\d+[.)]|[①②③④⑤⑥⑦⑧⑨⑩]|[가-하][.)]|[■□◆◇※])/u.test(String(text||'').trim());
+  const expandEvidence=(start,end,cap=6)=>{
+    let s=Math.max(0,start),e=Math.min(lines.length-1,end);
+    while(e+1<lines.length&&e-s+1<cap){
+      const cur=lines[e],next=lines[e+1],gap=Math.max(0,next.top-cur.bottom),h=Math.max(10,cur.bottom-cur.top,next.bottom-next.top);
+      if(sentenceEnded(cur.text)||looksLikeNewBlock(next.text)||gap>h*1.7||Math.abs(next.left-cur.left)>Math.max(90,viewport.width*.18))break;
+      e++;
+    }
+    return{start:s,end:e}
+  };
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
   if(anchorTokens.length){
     const e=lines.map((l,i)=>{const m=anchorTokens.filter(t=>l.n.includes(t));return{l,i,m,s:m.reduce((n,t)=>n+t.length,0)+m.length*10}}).filter(x=>x.m.length>1||x.m.some(t=>t.length>4)).sort((a,b)=>b.s-a.s||a.i-b.i);
-    if(e.length){const p=[];for(const h of e.slice(0,4)){if(!p.some(x=>x.l===h.l))p.push(h);for(let j=h.i+1;j<Math.min(lines.length,h.i+5)&&p.length<8;j++){const m=tokens.filter(t=>lines[j].n.includes(t));if((m.length>1||m.some(t=>t.length>5))&&!p.some(x=>x.l===lines[j]))p.push({l:{...lines[j],evidenceTitle:h.l.text+' · '+lines[j].text},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,8).map(x=>x.l)}
+    if(e.length){const p=[];for(const h of e.slice(0,3)){const block=expandEvidence(h.i,h.i,5),title=lines.slice(block.start,block.end+1).map(x=>x.text).join(' ');for(let j=block.start;j<=block.end&&p.length<10;j++){if(!p.some(x=>x.i===j))p.push({l:{...lines[j],evidenceTitle:title},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,10).map(x=>x.l)}
     const anchorBlocks=[];
     for(let i=0;i<lines.length;i++){
       let joinedN='',joinedText='';
@@ -263,10 +274,11 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     anchorBlocks.sort((a,b)=>b.score-a.score||(a.end-a.start)-(b.end-b.start)||a.start-b.start);
     const picked=[];
     for(const block of anchorBlocks){
-      if(picked.length>=8)break;
-      for(let i=block.start;i<=block.end&&picked.length<8;i++){
+      if(picked.length>=10)break;
+      const expanded=expandEvidence(block.start,block.end,6),title=lines.slice(expanded.start,expanded.end+1).map(x=>x.text).join(' ');
+      for(let i=expanded.start;i<=expanded.end&&picked.length<10;i++){
         if(picked.some(x=>x===lines[i]))continue;
-        picked.push({...lines[i],evidenceTitle:block.title})
+        picked.push({...lines[i],evidenceTitle:title||block.title})
       }
     }
     if(picked.length)return picked
@@ -306,8 +318,8 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     if(best&&(best.matched.length>=2||best.matched.some(t=>t.length>=7)))blocks.push({start:best.i,end:best.i,score:best.score,query:''});
   }
   const picked=[];
-  for(const b of blocks.sort((a,b)=>a.start-b.start))for(let i=b.start;i<=b.end;i++)if(!picked.includes(lines[i]))picked.push(lines[i]);
-  return picked;
+  for(const b of blocks.sort((a,b)=>a.start-b.start)){const expanded=expandEvidence(b.start,b.end,6),title=lines.slice(expanded.start,expanded.end+1).map(x=>x.text).join(' ');for(let i=expanded.start;i<=expanded.end;i++)if(!picked.some(x=>x===lines[i]||x.text===lines[i].text&&Math.abs(x.top-lines[i].top)<1))picked.push({...lines[i],evidenceTitle:title})}
+  return picked.slice(0,12);
 }
 function downloadName(key,row,catalog){const raw=row?.name||catalog?.expectedNames?.[0]||catalog?.label||key;return /\.pdf$/i.test(raw)?raw:`${raw}.pdf`}
 async function download(key,{timeoutMs=120000,onProgress}={}){const catalog=V.SourceCatalog119?.get?.(key);if(!catalog)throw Error('SOURCE_PDF_UNKNOWN');let row=await get(key);if(!row?.blob){try{row=await cacheOfficialByRange(key,{timeoutMs,onProgress})}catch{row=await cacheOfficial(key,{timeoutMs,onProgress})}}if(!row?.blob)throw Error('SOURCE_PDF_DOWNLOAD_UNAVAILABLE');const name=downloadName(key,row,catalog),url=URL.createObjectURL(row.blob),a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return{name,size:row.blob.size,key}}
@@ -857,6 +869,7 @@ const state=()=>V.Store.state;
 const subjectOf=c=>c?.subject==='fire'||String(c?.id||'').startsWith('F')?'fire':'ems';
 const subjectLabel=s=>s==='fire'?'소방학개론':'응급처치학개론';
 const normalize=s=>String(s||'').replace(/\s+/g,' ').trim();
+const normalizeBody=s=>String(s||'').replace(/\r\n?/g,'\n').split('\n').map(x=>x.replace(/[ \t]+/g,' ').trim()).join('\n').replace(/\n{3,}/g,'\n\n').trim();
 const uniq=arr=>{const out=[];for(const x of arr||[]){const t=normalize(x);if(t&&!out.includes(t))out.push(t)}return out};
 const emphasis=()=>{const E=V.StudyEmphasis119;if(!E)throw Error('STUDY_EMPHASIS_SSOT_MISSING');return E};
 
@@ -886,7 +899,7 @@ function conceptNoteFromKey(key){
   else rows=[p.summary];
   const text=rows[idx];if(!text)return null;
   const subj=subjectOf(c),source=emphasis().evidence(conceptId,p).source||'공식교재';
-  return{id:key,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:`${text}\n\n[공식근거]\n${source}`,sourceType:'pass-star',conceptId,subject:subj,sourceRef:source};
+  return{id:key,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:`[핵심]\n★ ${cleanStudentText(text)}\n\n[공식근거]\n${source}`,sourceType:'pass-star',conceptId,subject:subj,sourceRef:source};
 }
 async function toggleConcept(key){
   if(has(key)){await remove(key);return{saved:false,id:key}}
@@ -900,9 +913,9 @@ function cleanStudentText(v){return normalize(v)
 function conceptCoreNote(conceptId){
   const c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
   const E=emphasis(),summary=cleanStudentText(p?.studySchema?.quick30||p.summary||''),core=uniq([...E.mustRows(p),...E.featureRows(p)].map(cleanStudentText)).filter(x=>x&&x!==summary).slice(0,6),numbers=uniq(E.numberRows(p,12).map(cleanStudentText)).filter(Boolean),traps=uniq(E.trapRows(p).map(cleanStudentText)).filter(Boolean).slice(0,4),source=E.evidence(conceptId,p).source||'공식교재',parts=[];
-  if(summary||core.length)parts.push('[핵심]\n'+[summary,...core].filter(Boolean).join('\n'));
-  if(numbers.length)parts.push('[숫자·단위·기준]\n'+numbers.join('\n'));
-  if(traps.length)parts.push('[주의·예외]\n'+traps.join('\n'));
+  if(summary||core.length)parts.push('[핵심]\n'+[summary?'★ '+summary:'',...core.map(x=>'• '+x)].filter(Boolean).join('\n'));
+  if(numbers.length)parts.push('[숫자·단위·기준]\n'+numbers.map(x=>'• '+x).join('\n'));
+  if(traps.length)parts.push('[주의·예외]\n'+traps.map(x=>'• '+x).join('\n'));
   parts.push('[공식근거]\n'+source);
   const subj=subjectOf(c),id=conceptCoreKey(conceptId);return{id,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:parts.join('\n\n'),sourceType:'pass-star-concept',conceptId,subject:subj,sourceRef:source};
 }
@@ -911,11 +924,11 @@ async function toggleConceptCore(conceptId){const id=conceptCoreKey(conceptId);i
 function questionNote(qid){
   const q=V.questionById?.[qid],c=q&&V.curriculum?.byId?.[q.conceptId];if(!q||!c)return null;
   const subj=subjectOf(c),right=`${q.a+1}. ${q.choices?.[q.a]||''}`;
-  return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`${cleanStudentText(q.q)}\n\n정답: ${cleanStudentText(right)}\n\n해설: ${cleanStudentText(q.ex||'')}\n\n출처: ${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
+  return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`[문제]\n${cleanStudentText(q.q)}\n\n[정답]\n★ ${cleanStudentText(right)}\n\n[해설]\n${cleanStudentText(q.ex||'')}\n\n[공식근거]\n${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
 }
 async function toggleQuestion(qid){const id=questionKey(qid);if(has(id)){await remove(id);return{saved:false,id}}const note=questionNote(qid);if(!note)throw Error('PASS_QUESTION_NOT_FOUND');await persist(note);return{saved:true,id,note}}
 async function saveManual({id,title,body,sourceType='manual',subject=''}){
-  const text=normalize(body);if(!text)throw Error('NOTE_BODY_REQUIRED');
+  const text=normalizeBody(body);if(!text)throw Error('NOTE_BODY_REQUIRED');
   const subj=subject==='ems'?'ems':subject==='fire'?'fire':(V.Store.state.subject==='ems'?'ems':'fire');
   return persist({id:id||('note-'+now()+'-'+hash(text)),title:normalize(title)||'내 합격노트',body:text,sourceType,subject:subj});
 }
@@ -951,7 +964,11 @@ function conceptHtml(c,compact=false){
   const main=compact?must.slice(0,3):must,featureRows=compact?features.slice(0,2):features,nums=compact?allNums.slice(0,4):allNums;
   return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${featureRows.length?'<h3>핵심 특징</h3><ul class="important">'+featureRows.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${main.length?'<h3>시험 필수</h3><ul class="important">'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자 · 단위 · 기준</h3><ul class="numbers">'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>자주 틀리는 포인트</h3><ul class="traps">'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
 }
-function notesHtml(rows){return rows.map(n=>`<section class="c"><h2>${esc(n.title||'합격노트')}</h2><div class="note">${esc(n.body||'').replace(/\n/g,'<br>')}</div></section>`).join('')}
+function noteBodyHtml(note){
+  const rows=String(note?.body||'').replace(/\r/g,'').split('\n'),star=String(note?.sourceType||'').startsWith('pass-star'),question=String(note?.sourceType||'')==='pass-question';let section=star?'핵심':'';
+  return rows.map((raw,i)=>{const line=String(raw||'').trim();if(!line)return'<div class="note-gap"></div>';const m=line.match(/^\[(핵심|숫자·단위·기준|비교·구분|주의·예외|문제|정답|해설|원문 확인 필요|공식근거|내 메모)\]$/);if(m){section=m[1];return'<h3 class="note-sec">'+esc(section)+'</h3>'}const cls=section==='핵심'||star&&i===0?'note-core':section==='숫자·단위·기준'?'note-num':section==='주의·예외'?'note-warn':section==='정답'||question&&/^정답:/.test(line)?'note-answer':section==='공식근거'?'note-source':'';return'<p class="note-line '+cls+'">'+esc(line)+'</p>'}).join('')
+}
+function notesHtml(rows){return rows.map(n=>'<section class="c"><h2>'+esc(n.title||'합격노트')+'</h2><div class="note">'+noteBodyHtml(n)+'</div></section>').join('')}
 function rapidConceptHtml(c){
   const p=V.contentPacks?.get?.(c.id);if(!p)return'';
   const E=emphasis(),must=E.mustRows(p,3),nums=E.numberRows(p,3),traps=E.trapRows(p,2);
@@ -979,7 +996,7 @@ function printDocument(mode){
     body=(V.curriculum?.concepts||[]).filter(c=>subjectOf(c)===subject).map(c=>conceptHtml(c,true)).join('');
   }
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"><title>${esc(title)}</title><style>
-  @page{size:A4;margin:9mm}*{box-sizing:border-box}html{font-size:16px}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#17202b;font-size:14pt;line-height:1.68;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:24pt;color:#17202b;border-bottom:3px solid #3f6e9e;padding-bottom:8px;margin:18px 0 12px}h2{font-size:17pt;line-height:1.42;margin:18px 0 8px;color:#173c62;break-after:avoid-page}h3{font-size:13.5pt;line-height:1.42;margin:10px 0 5px;color:#385a78;break-after:avoid-page}ul{margin:5px 0 10px 20px;padding:0}.c{break-inside:auto;border-bottom:1px solid #d8e0e8;padding:0 0 10px;margin:0 0 10px}.summary{font-weight:720;background:#f5f8fb;border-left:3px solid #668fb8;padding:9px 11px;border-radius:4px}.important{border-left:3px solid #7fa6c8;padding-left:24px}.numbers{border-left:3px solid #c49a4e;padding-left:24px}.traps{border-left:3px solid #b8785b;padding-left:24px}.important li,.numbers li,.traps li{margin:4px 0;text-decoration:none;break-inside:avoid-page}.numbers li{font-weight:650}.src{font-size:10pt;color:#647283;margin-top:8px}.note{white-space:normal;line-height:1.74}.cover{min-height:255mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:31pt;color:#173c62}.cover p{color:#5f6d7b}.c li{margin:3px 0}.rapid h2{font-size:15.5pt}
+  @page{size:A4;margin:9mm}*{box-sizing:border-box}html{font-size:16px}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#17202b;font-size:14pt;line-height:1.68;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:24pt;color:#17202b;border-bottom:3px solid #3f6e9e;padding-bottom:8px;margin:18px 0 12px}h2{font-size:17pt;line-height:1.42;margin:18px 0 8px;color:#173c62;break-after:avoid-page}h3{font-size:13.5pt;line-height:1.42;margin:10px 0 5px;color:#385a78;break-after:avoid-page}ul{margin:5px 0 10px 20px;padding:0}.c{break-inside:auto;border-bottom:1px solid #d8e0e8;padding:0 0 10px;margin:0 0 10px}.summary{font-weight:720;background:#f5f8fb;border-left:3px solid #668fb8;padding:9px 11px;border-radius:4px}.important{border-left:3px solid #7fa6c8;padding-left:24px}.numbers{border-left:3px solid #c49a4e;padding-left:24px}.traps{border-left:3px solid #b8785b;padding-left:24px}.important li,.numbers li,.traps li{margin:4px 0;break-inside:avoid-page}.important li{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#668fb8}.numbers li{font-weight:650;text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#c49a4e}.traps li{text-decoration-line:underline;text-decoration-thickness:1.25px;text-underline-offset:3px;text-decoration-color:#b8785b}.src{font-size:10pt;color:#647283;margin-top:8px}.note{white-space:normal;line-height:1.74}.note-sec{margin:12px 0 5px}.note-line{margin:4px 0;line-height:1.72}.note-core,.note-num,.note-answer{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}.note-core{font-weight:700;text-decoration-color:#668fb8}.note-num{font-weight:650;text-decoration-color:#c49a4e}.note-answer{font-weight:750;text-decoration-color:#5e9b75}.note-warn{border-left:3px solid #b8785b;padding-left:8px}.note-source{color:#647283;font-size:.9em}.note-gap{height:7px}.cover{min-height:255mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:31pt;color:#173c62}.cover p{color:#5f6d7b}.c li{margin:3px 0}.rapid h2{font-size:15.5pt}
   @media screen and (min-width:721px) and (max-width:1180px){body{font-size:19px;line-height:1.76;padding:24px;max-width:920px;margin:0 auto}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}.src{font-size:14px}.cover{min-height:88vh}}
   @media screen and (max-width:720px){body{font-size:17px;padding:14px;line-height:1.78}h1{font-size:28px}h2{font-size:22px}h3{font-size:18px}.cover{min-height:88vh}.src{font-size:13px}}
   @media print{body{padding:0;font-size:14pt;line-height:1.64}.cover{min-height:255mm}.c{break-inside:auto}.c h2,.c h3{break-after:avoid-page}.c li{break-inside:avoid-page}}
