@@ -238,10 +238,21 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     const left=Math.min(...its.map(x=>x.x)),right=Math.max(...its.map(x=>x.x+x.w)),top=Math.min(...its.map(x=>x.top)),bottom=Math.max(...its.map(x=>x.top+x.h));
     return{text,n,left,right,top,bottom};
   }).filter(x=>x.n.length>=4).sort((a,b)=>a.top-b.top);
+  const sentenceEnded=text=>/[.!?。！？](?:["'”’）)\]]*)?$/.test(String(text||'').trim());
+  const looksLikeNewBlock=text=>/^(?:제\s*\d+|\d+[.)]|[①②③④⑤⑥⑦⑧⑨⑩]|[가-하][.)]|[■□◆◇※])/u.test(String(text||'').trim());
+  const expandEvidence=(start,end,cap=6)=>{
+    let s=Math.max(0,start),e=Math.min(lines.length-1,end);
+    while(e+1<lines.length&&e-s+1<cap){
+      const cur=lines[e],next=lines[e+1],gap=Math.max(0,next.top-cur.bottom),h=Math.max(10,cur.bottom-cur.top,next.bottom-next.top);
+      if(sentenceEnded(cur.text)||looksLikeNewBlock(next.text)||gap>h*1.7||Math.abs(next.left-cur.left)>Math.max(90,viewport.width*.18))break;
+      e++;
+    }
+    return{start:s,end:e}
+  };
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
   if(anchorTokens.length){
     const e=lines.map((l,i)=>{const m=anchorTokens.filter(t=>l.n.includes(t));return{l,i,m,s:m.reduce((n,t)=>n+t.length,0)+m.length*10}}).filter(x=>x.m.length>1||x.m.some(t=>t.length>4)).sort((a,b)=>b.s-a.s||a.i-b.i);
-    if(e.length){const p=[];for(const h of e.slice(0,4)){if(!p.some(x=>x.l===h.l))p.push(h);for(let j=h.i+1;j<Math.min(lines.length,h.i+5)&&p.length<8;j++){const m=tokens.filter(t=>lines[j].n.includes(t));if((m.length>1||m.some(t=>t.length>5))&&!p.some(x=>x.l===lines[j]))p.push({l:{...lines[j],evidenceTitle:h.l.text+' · '+lines[j].text},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,8).map(x=>x.l)}
+    if(e.length){const p=[];for(const h of e.slice(0,3)){const block=expandEvidence(h.i,h.i,5),title=lines.slice(block.start,block.end+1).map(x=>x.text).join(' ');for(let j=block.start;j<=block.end&&p.length<10;j++){if(!p.some(x=>x.i===j))p.push({l:{...lines[j],evidenceTitle:title},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,10).map(x=>x.l)}
     const anchorBlocks=[];
     for(let i=0;i<lines.length;i++){
       let joinedN='',joinedText='';
@@ -258,10 +269,11 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     anchorBlocks.sort((a,b)=>b.score-a.score||(a.end-a.start)-(b.end-b.start)||a.start-b.start);
     const picked=[];
     for(const block of anchorBlocks){
-      if(picked.length>=8)break;
-      for(let i=block.start;i<=block.end&&picked.length<8;i++){
+      if(picked.length>=10)break;
+      const expanded=expandEvidence(block.start,block.end,6),title=lines.slice(expanded.start,expanded.end+1).map(x=>x.text).join(' ');
+      for(let i=expanded.start;i<=expanded.end&&picked.length<10;i++){
         if(picked.some(x=>x===lines[i]))continue;
-        picked.push({...lines[i],evidenceTitle:block.title})
+        picked.push({...lines[i],evidenceTitle:title||block.title})
       }
     }
     if(picked.length)return picked
@@ -301,8 +313,8 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     if(best&&(best.matched.length>=2||best.matched.some(t=>t.length>=7)))blocks.push({start:best.i,end:best.i,score:best.score,query:''});
   }
   const picked=[];
-  for(const b of blocks.sort((a,b)=>a.start-b.start))for(let i=b.start;i<=b.end;i++)if(!picked.includes(lines[i]))picked.push(lines[i]);
-  return picked;
+  for(const b of blocks.sort((a,b)=>a.start-b.start)){const expanded=expandEvidence(b.start,b.end,6),title=lines.slice(expanded.start,expanded.end+1).map(x=>x.text).join(' ');for(let i=expanded.start;i<=expanded.end;i++)if(!picked.some(x=>x===lines[i]||x.text===lines[i].text&&Math.abs(x.top-lines[i].top)<1))picked.push({...lines[i],evidenceTitle:title})}
+  return picked.slice(0,12);
 }
 function downloadName(key,row,catalog){const raw=row?.name||catalog?.expectedNames?.[0]||catalog?.label||key;return /\.pdf$/i.test(raw)?raw:`${raw}.pdf`}
 async function download(key,{timeoutMs=120000,onProgress}={}){const catalog=V.SourceCatalog119?.get?.(key);if(!catalog)throw Error('SOURCE_PDF_UNKNOWN');let row=await get(key);if(!row?.blob){try{row=await cacheOfficialByRange(key,{timeoutMs,onProgress})}catch{row=await cacheOfficial(key,{timeoutMs,onProgress})}}if(!row?.blob)throw Error('SOURCE_PDF_DOWNLOAD_UNAVAILABLE');const name=downloadName(key,row,catalog),url=URL.createObjectURL(row.blob),a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return{name,size:row.blob.size,key}}
