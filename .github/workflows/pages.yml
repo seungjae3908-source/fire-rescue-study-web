@@ -69,6 +69,17 @@ jobs:
           EOF
           touch official-pdf-mirror/.nojekyll
 
+      - name: Write exact-main static runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          test "$sha" = "$GITHUB_SHA"
+          cat > v9/runtime-head.json <<EOF
+          {"ok":true,"sha":"$sha","ref":"main","environment":"production","transport":"github-pages"}
+          EOF
+          node -e "const fs=require('fs');const x=JSON.parse(fs.readFileSync('v9/runtime-head.json','utf8'));if(!x.ok||x.sha!==process.env.GITHUB_SHA||x.transport!=='github-pages')process.exit(1)"
+
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
