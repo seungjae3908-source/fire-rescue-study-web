@@ -369,7 +369,7 @@ jobs:
         with:
           node-version: '22'
       - name: Restore branch PDF audit cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: official-pdf-mirror
           key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
@@ -567,7 +567,7 @@ jobs:
         with:
           node-version: '22'
       - name: Restore V51 official PDF audit cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: official-pdf-mirror
           key: study119-v70-runtime-pdf-${{ runner.os }}-${{ hashFiles('v9/data/official-textbook-baseline.json', 'v9/materialize-official-pdfs.sh', 'v9/official-pdf-materialize-resolve.mjs', 'v9/api/official-pdf.js') }}
