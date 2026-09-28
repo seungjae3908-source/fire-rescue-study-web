@@ -4,6 +4,7 @@ function read(path){return fs.readFileSync(new URL(path,import.meta.url),'utf8')
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 
 const config=read('./config.js');
+const rootIndex=read('../index.html');
 const catalog=read('./source-catalog-119.js');
 const monitor=read('./official-monitor.js');
 const boot1=read('./boot-v69-1.js');
@@ -14,6 +15,7 @@ const authenticated=read('../.github/workflows/production-suggestions-authentica
 const liveSmoke=read('./live-student-ux-smoke.mjs');
 const suggestionSmoke=read('./suggestions-production-public-e2e.mjs');
 
+assert(rootIndex.includes('http-equiv="refresh"')&&rootIndex.includes('url=./v9/')&&rootIndex.includes("location.replace(target)"),'GitHub Pages root routes directly to production V9');
 assert(config.includes("officialPdfProxyBase:''"),'browser config disables Vercel PDF proxy');
 assert(config.includes("officialMonitorApiBase:''"),'browser config disables server monitor API');
 assert(config.includes("officialPdfMirrorBase:'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror'"),'browser config keeps GitHub Pages PDF mirror');
