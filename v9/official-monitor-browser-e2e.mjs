@@ -46,16 +46,15 @@ try{
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
 
-  await page.route('**/api/official-monitor**',route=>route.fulfill({
+  await page.route('https://raw.githubusercontent.com/**/official-monitor.json**',route=>route.fulfill({
     status:200,contentType:'application/json',headers:{'cache-control':'no-store'},body:JSON.stringify(snapshot)
   }));
   await page.goto(base,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.AITUTOR_V9?.OfficialMonitor119?.summary?.().status==='ready',{timeout:30000});
   let first=await page.evaluate(()=>window.AITUTOR_V9.OfficialMonitor119.summary());
-  assert(first.transport==='app-api'&&first.unseenCount===1,'monitor first loads through app API and stores one unseen official notice');
+  assert(first.transport==='snapshot-primary'&&first.unseenCount===1,'monitor first loads through static snapshot and stores one unseen official notice');
 
-  await page.unroute('**/api/official-monitor**');
-  await page.route('**/api/official-monitor**',route=>route.abort());
+  await page.unroute('https://raw.githubusercontent.com/**/official-monitor.json**');
   await page.route('https://raw.githubusercontent.com/**/official-monitor.json**',route=>route.abort());
 
   await page.evaluate(()=>window.AITUTOR_V9.OfficialMonitor119.refresh({force:true}));
