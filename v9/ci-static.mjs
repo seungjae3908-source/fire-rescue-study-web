@@ -771,5 +771,5 @@ ok(liveClosedLoop.includes("set_config('request.jwt.claim.sub', a::text, true)")
 ok(liveClosedLoop.includes('B_CAN_READ_A_DOC')&&liveClosedLoop.includes('B_CAN_INSERT_FOR_A'),'live closed-loop locks cross-owner negative cases');
 ok(liveClosedLoop.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),'live closed-loop includes explicit cleanup');
 const root=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
-ok(!root.includes('/v9/')&&!root.includes('v9/app.js'),'production root remains v8.6 during development');
+ok(root.includes('http-equiv="refresh"')&&root.includes('url=./v9/')&&root.includes('location.replace(target)'),'production root routes directly to the current V9 app on GitHub Pages');
 console.log(JSON.stringify({concepts:V.curriculum.totalConcepts,verifiedPacks:coverage.verified,enrichedPacks:Object.values(V.contentPacks.authored).filter(p=>p.depthEnriched).length,questions:V.questions.length,mock,studyTables},null,2));
