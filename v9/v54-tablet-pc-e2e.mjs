@@ -78,7 +78,7 @@ try{
     };
   });
   assert(strategy.total===10,'all ten official textbooks remain catalogued');
-  assert(strategy.mirrors.length===10&&strategy.mirrors.every(x=>x.transport==='range-static'&&!!x.mirrorPdf&&!!x.proxyPdf&&x.mirrorPdf.startsWith(expectedMirrorBase+'/')),'all ten textbooks use the configured static range mirror with proxy fallback');
+  assert(strategy.mirrors.length===10&&strategy.mirrors.every(x=>x.transport==='range-static'&&!!x.mirrorPdf&&!x.proxyPdf&&x.mirrorPdf.startsWith(expectedMirrorBase+'/')),'all ten textbooks use the configured static range mirror without a paid runtime proxy dependency');
   assert(strategy.fire1.mirror===true&&strategy.fire1.range===true&&strategy.fire1.rangeProxy===false&&!!strategy.fire1.rangeUrl,'mirrored textbook availability exposes the static range path');
   assert(strategy.law2.mirror===true&&strategy.law2.range===true&&strategy.law2.rangeProxy===false&&strategy.law2.rangeUrl===expectedMirrorBase+'/law2.pdf','large law textbook availability exposes the configured static range path');
   assert(strategy.runtime==='pdfjs-v15-range-remote-cache-epoch-anchor-context-lines','PDF runtime reports the cache-epoch range-first engine');

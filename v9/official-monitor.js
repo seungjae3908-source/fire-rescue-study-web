@@ -1,6 +1,7 @@
 'use strict';
 (()=>{
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
+const cfg=window.AITUTOR_V9_CONFIG||{};
 const KEY='aitutor9:official-monitor:v1';
 const SNAPSHOT_URL='https://raw.githubusercontent.com/seungjae3908-source/fire-rescue-study-web/chore/official-monitor-snapshot/v9/data/official-monitor.json';
 const START_AT='2026-09-20';
@@ -146,7 +147,7 @@ function cardHtml(){
   const completeSources=fresh&&m.coverageComplete===true&&requiredHealthy&&sourceTotal===totalSourceCount&&sourceOk===sourceTotal;
   const lastGood=m.lastSuccessfulAt?' · 마지막 정상 '+new Date(m.lastSuccessfulAt).toLocaleString('ko-KR'):'';
   const status=loading?'공식 사이트 확인 중':stale||!fresh?'최근 저장본 표시 · 연결 확인 필요'+lastGood:error?'공식 감시 연결 확인 필요':!completeSources?'시험 공고 감시 정상 · 교재/학교 보조소스 확인 필요':m.generatedAt?'최근 수집 '+new Date(m.generatedAt).toLocaleString('ko-KR'):'감시 데이터 준비 중';
-  const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
+  const transportLabel=m.transport==='app-api'?'앱 서버':m.transport==='snapshot-primary'||m.transport==='snapshot-fallback'?'공식 스냅샷':m.transport==='cached-snapshot'?'기기 저장본':'';
   const unseenRevisions=new Set(m.unseen.map(revisionKey));
   const items=latest.length?latest.map(x=>itemHtml(x,unseenRevisions.has(revisionKey(x)))).join(''):'<div class="empty official-monitor-empty">새 시험 관련 공식 공고가 없습니다.</div>';
   const notifyLabel=m.notificationPermission==='granted'?'앱 알림 켜짐':m.notificationPermission==='denied'?'앱 알림 차단됨':'앱 알림 켜기';
@@ -193,10 +194,9 @@ async function notifyUnseen(){
 
 async function fetchNetworkSnapshot(force){
   const suffix=force?'?t='+Date.now():'';
-  const candidates=[
-    {url:'/api/official-monitor'+suffix,transport:'app-api'},
-    {url:SNAPSHOT_URL+suffix,transport:'snapshot-fallback'}
-  ];
+  const apiBase=String(cfg.officialMonitorApiBase||'').replace(/\/$/,'');
+  const candidates=[{url:SNAPSHOT_URL+suffix,transport:'snapshot-primary'}];
+  if(apiBase)candidates.push({url:apiBase+'/api/official-monitor'+suffix,transport:'app-api'});
   let lastError=null;
   for(const candidate of candidates){
     try{
@@ -296,7 +296,7 @@ function start(){
 V.OfficialMonitor119={
   version:'119-official-monitor-client-v1',
   refresh,markSeen,enableNotifications,summary,start,
-  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,rootApiFirst:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,degradedSnapshotTruth:true,staleSnapshotNeverClaimsNoChange:true,wafBypassForbidden:true,machineFriendlyOfficialSources:true,requiredExamSourceCanStayHealthyWhileSupplementalSourceDegrades:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
+  policy:{officialOnly:true,firstRunStartAt:START_AT,noAutomaticCurriculumMutation:true,snapshotPrimary:true,optionalApiFallback:true,staticSnapshotFallback:true,cachedSnapshotFallback:true,backgroundServerMonitor:true,degradedSnapshotTruth:true,staleSnapshotNeverClaimsNoChange:true,wafBypassForbidden:true,machineFriendlyOfficialSources:true,requiredExamSourceCanStayHealthyWhileSupplementalSourceDegrades:true,detailScheduleDisplay:true,neverGuessMissingDates:true,officialAttachmentHint:true,scheduleDday:true,scheduleCalendarExport:true,devicePushWhenClosed:false}
 };
 window.addEventListener('load',()=>setTimeout(start,0),{once:true});
 })();

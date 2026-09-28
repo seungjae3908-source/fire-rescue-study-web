@@ -1,6 +1,20 @@
-const CACHE='ai-tutor-v8-6a-learning-pack-20260917';
-const BASE=new URL('./',self.location.href).pathname;
-const CORE=[BASE,BASE+'index.html',BASE+'manifest.webmanifest',BASE+'icon.svg'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin===location.origin&&e.request.mode==='navigate'){e.respondWith(fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(BASE,copy));return r}).catch(()=>caches.match(BASE)||caches.match(BASE+'index.html')));return}if(u.origin===location.origin){e.respondWith(fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r}).catch(()=>caches.match(e.request)));return}if(u.hostname==='cdn.jsdelivr.net'||u.hostname==='esm.sh'||u.hostname==='esm.run'){e.respondWith(caches.match(e.request).then(hit=>{const network=fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r}).catch(()=>hit);return hit||network}))}});
+'use strict';
+
+// V71 root-scope retirement worker.
+// The current application owns only /v9/. Existing V8 root registrations and
+// caches are removed so they cannot control or evict the V9 service-worker cache.
+self.addEventListener('install',event=>{
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate',event=>{
+  event.waitUntil((async()=>{
+    const keys=await caches.keys();
+    await Promise.all(keys.filter(key=>key.startsWith('ai-tutor-v8-')).map(key=>caches.delete(key)));
+    await self.registration.unregister();
+    const clients=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+    for(const client of clients){
+      try{client.postMessage({type:'study119-root-sw-retired'})}catch{}
+    }
+  })());
+});

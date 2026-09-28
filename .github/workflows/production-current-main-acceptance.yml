@@ -28,7 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      STUDY_119_PRODUCTION_URL: https://fire-rescue-study-web.vercel.app/
+      STUDY_119_PRODUCTION_URL: https://seungjae3908-source.github.io/fire-rescue-study-web/v9/
+      STUDY_119_RUNTIME_HEAD_URL: https://seungjae3908-source.github.io/fire-rescue-study-web/v9/runtime-head.json
       STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.expected_head }}
     steps:
       - name: Validate expected SHA
@@ -52,17 +53,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          endpoint="${STUDY_119_PRODUCTION_URL%/}/api/runtime-head"
+          endpoint="$STUDY_119_RUNTIME_HEAD_URL"
           for attempt in $(seq 1 90); do
             headers="$(mktemp)"
             body_file="$(mktemp)"
             code="$(curl -sS -L -D "$headers" -o "$body_file" -w '%{http_code}' --max-time 15 -H 'Cache-Control: no-cache' "$endpoint" || true)"
             body="$(cat "$body_file")"
             rm -f "$headers" "$body_file"
-            if [[ "$code" == "402" && "$body" == *"DEPLOYMENT_DISABLED"* ]]; then
-              echo "PRODUCTION_EXTERNAL_BLOCKER VERCEL_DEPLOYMENT_DISABLED"
-              exit 1
-            fi
             if [[ "$code" == "200" && "$body" == *"\"sha\":\"$STUDY_119_EXPECTED_RUNTIME_HEAD\""* && "$body" == *"\"environment\":\"production\""* ]]; then
               echo "PRODUCTION_EXACT_HEAD_READY $STUDY_119_EXPECTED_RUNTIME_HEAD"
               exit 0
@@ -81,6 +78,7 @@ jobs:
         env:
           STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
           STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
+          STUDY_119_RUNTIME_HEAD_URL: ${{ env.STUDY_119_RUNTIME_HEAD_URL }}
         run: node v9/live-student-ux-smoke.mjs
 
       - name: Production V66 real-interaction scroll acceptance
@@ -97,16 +95,17 @@ jobs:
           STUDY_119_V68_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
         run: node v9/v68-detail-source-brand-e2e.mjs
 
-      - name: Production V70 exact-main PDF performance acceptance
+      - name: Production V71 zero-cost static transport acceptance
         env:
           STUDY_119_PRODUCTION_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
+          STUDY_119_RUNTIME_HEAD_URL: ${{ env.STUDY_119_RUNTIME_HEAD_URL }}
           STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
-          STUDY_119_REQUIRE_LAW2_PROXY_RANGE: '1'
-        run: node v9/v70-production-performance-e2e.mjs
+        run: node v9/v71-static-production-e2e.mjs
 
 
       - name: Production suggestion guest + anon Data API acceptance
         env:
           STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
           STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
+          STUDY_119_RUNTIME_HEAD_URL: ${{ env.STUDY_119_RUNTIME_HEAD_URL }}
         run: node v9/suggestions-production-public-e2e.mjs

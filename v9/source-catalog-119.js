@@ -14,10 +14,10 @@ const proxyBase=String(sameOriginDeployment?(location.origin||''):(cfg.officialP
 const mirrorBase=String(cfg.officialPdfMirrorBase||'').replace(/\/$/,'');
 const mirrorDocs=new Set(Array.isArray(cfg.officialPdfMirrorDocs)?cfg.officialPdfMirrorDocs:[]);
 const mirrored=doc=>!!mirrorBase&&mirrorDocs.has(doc);
-const proxyPdf=doc=>`${proxyBase}/api/official-pdf?doc=${encodeURIComponent(doc)}`;
+const proxyPdf=doc=>proxyBase?`${proxyBase}/api/official-pdf?doc=${encodeURIComponent(doc)}`:'';
 const mirrorPdf=doc=>mirrored(doc)?`${mirrorBase}/${encodeURIComponent(doc)}.pdf`:'';
 const directPdf=doc=>mirrorPdf(doc)||proxyPdf(doc);
-const transport=doc=>mirrored(doc)?'range-static':'range-proxy';
+const transport=doc=>mirrored(doc)?'range-static':(proxyBase?'range-proxy':'official-page');
 const C={
   ems:{
     key:'ems',label:'2026 소방전술3(구급)',officialPage:base+'?boardId=bbs_0000000000000035&category=&cntId=106811&mode=view&pageIdx=&searchCondition=&searchKeyword=',

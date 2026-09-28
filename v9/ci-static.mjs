@@ -694,7 +694,7 @@ ok(configExample.includes('supabasePublishableKey'),'config example uses a publi
 ok(!/supabase(?:ServiceRole|Secret|Service)_?Key\s*:/i.test(configExample)&&!/sb_secret_[A-Za-z0-9]/.test(configExample),'config example never configures a privileged key');
 const config=fs.readFileSync(new URL('./config.js',import.meta.url),'utf8');
 ok(config.includes('enableCloudSync:true'),'release-ready v9 config enables real Study cloud sync');
-ok(config.includes("officialPdfProxyBase:'https://study-119-pdf-proxy.vercel.app'"),'release-ready v9 config pins the verified official PDF proxy');
+ok(config.includes("officialPdfProxyBase:''")&&config.includes("officialPdfMirrorBase:'https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror'"),'release-ready v9 config uses the ten-PDF GitHub Pages mirror without a paid runtime proxy');
 ok(!config.includes('bawcbkoyovbeajkrnduq'),'release-ready v9 config never points at Investment Production');
 ok(config.includes("supabaseUrl:'https://petlfbztqguuzkasfpug.supabase.co'"),'checked-in v9 config pins the approved shared Supabase URL');
 ok(/supabasePublishableKey:'sb_publishable_[A-Za-z0-9_-]+'/.test(config),'checked-in v9 config uses a browser-safe publishable key');
@@ -771,5 +771,5 @@ ok(liveClosedLoop.includes("set_config('request.jwt.claim.sub', a::text, true)")
 ok(liveClosedLoop.includes('B_CAN_READ_A_DOC')&&liveClosedLoop.includes('B_CAN_INSERT_FOR_A'),'live closed-loop locks cross-owner negative cases');
 ok(liveClosedLoop.includes("delete from public.study_document_chunks where id like '__liveqa_%'"),'live closed-loop includes explicit cleanup');
 const root=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
-ok(!root.includes('/v9/')&&!root.includes('v9/app.js'),'production root remains v8.6 during development');
+ok(root.includes('http-equiv="refresh"')&&root.includes('url=./v9/')&&root.includes('location.replace(target)'),'production root routes directly to the current V9 app on GitHub Pages');
 console.log(JSON.stringify({concepts:V.curriculum.totalConcepts,verifiedPacks:coverage.verified,enrichedPacks:Object.values(V.contentPacks.authored).filter(p=>p.depthEnriched).length,questions:V.questions.length,mock,studyTables},null,2));
