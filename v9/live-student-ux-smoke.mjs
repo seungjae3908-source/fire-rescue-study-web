@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_PREVIEW_URL||'https://study-119-preview.vercel.app/';
 const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
+const runtimeHeadUrl=process.env.STUDY_119_RUNTIME_HEAD_URL||'';
 if(!/^[0-9a-f]{40}$/i.test(expected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 async function noX(page,label){const r=await page.evaluate(()=>({doc:[document.documentElement.scrollWidth,document.documentElement.clientWidth],body:[document.body.scrollWidth,document.body.clientWidth]}));assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r))}
@@ -28,11 +29,11 @@ try{
     await page.waitForFunction(()=>!!window.AITUTOR_V9?.App,{timeout:60000});
     await page.waitForSelector('.app',{state:'visible',timeout:60000});
     assert(await page.locator('.boot').count()===0,'boot screen removed '+vp.width);
-    const runtime=await page.evaluate(async()=>{
-      const res=await fetch('/api/runtime-head',{cache:'no-store'});
+    const runtime=await page.evaluate(async runtimeHeadUrl=>{
+      const res=await fetch(runtimeHeadUrl||'/api/runtime-head',{cache:'no-store'});
       let body={};try{body=await res.json()}catch{}
       return{status:res.status,...body};
-    });
+    },runtimeHeadUrl);
     assert(runtime.status===200&&runtime.ok===true,'runtime identity endpoint is healthy '+vp.width);
     assert(runtime.sha===expected,'runtime head matches '+expected);
     await noX(page,'home '+vp.width);
