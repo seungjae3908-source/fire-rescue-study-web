@@ -16,6 +16,7 @@ const production=read('../.github/workflows/production-current-main-acceptance.y
 const authenticated=read('../.github/workflows/production-suggestions-authenticated-acceptance.yml');
 const liveSmoke=read('./live-student-ux-smoke.mjs');
 const suggestionSmoke=read('./suggestions-production-public-e2e.mjs');
+const authenticatedSuggestionSmoke=read('./suggestions-production-authenticated-e2e.mjs');
 
 assert(rootIndex.includes('http-equiv="refresh"')&&rootIndex.includes('url=./v9/')&&rootIndex.includes("location.replace(target)"),'GitHub Pages root routes directly to production V9');
 assert(rootIndex.includes("key.startsWith('ai-tutor-v8-')")&&rootIndex.includes('reg.scope === rootScope'),'root cutover unregisters only the legacy root worker and clears only V8 caches');
@@ -50,5 +51,6 @@ assert(!authenticated.includes('VERCEL_DEPLOYMENT_DISABLED'),'authenticated sugg
 
 assert(liveSmoke.includes('STUDY_119_RUNTIME_HEAD_URL'),'live learner smoke accepts static runtime identity URL');
 assert(suggestionSmoke.includes('STUDY_119_RUNTIME_HEAD_URL'),'suggestion smoke accepts static runtime identity URL');
+assert(authenticatedSuggestionSmoke.includes('STUDY_119_RUNTIME_HEAD_URL')&&!authenticatedSuggestionSmoke.includes("fetch('/api/runtime-head'"),'authenticated suggestion QA uses the static runtime identity URL and never the removed server API');
 
 console.log('V71_ZERO_COST_STATIC_AUDIT_SUCCESS');
