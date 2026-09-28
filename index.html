@@ -5,14 +5,25 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta http-equiv="refresh" content="0; url=./v9/">
+  <meta http-equiv="refresh" content="3; url=./v9/">
   <title>소방합격</title>
 </head>
 <body>
   <p><a href="./v9/">소방합격 열기</a></p>
   <script>
-    (() => {
+    (async () => {
       const target = './v9/' + location.search + location.hash;
+      try {
+        const rootScope = new URL('./', location.href).href;
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.filter(reg => reg.scope === rootScope).map(reg => reg.unregister()));
+        }
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.filter(key => key.startsWith('ai-tutor-v8-')).map(key => caches.delete(key)));
+        }
+      } catch {}
       location.replace(target);
     })();
   </script>
