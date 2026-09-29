@@ -71,7 +71,7 @@ async function auditVisible(page,meta){
     }
     const action=document.querySelector('.page-study .actionbar'),nav=document.querySelector('.mobile-nav');
     let chromeOverlap=null;
-    if(action&&nav&&visible(action)&&visible(nav)){const a=action.getBoundingClientRect(),n=nav.getBoundingClientRect();if(a.bottom>n.top+1)chromeOverlap={type:'action-nav-overlap',actionBottom:a.bottom,navTop:n.top}}
+    if(action&&nav&&visible(action)&&visible(nav)){const a=action.getBoundingClientRect(),n=nav.getBoundingClientRect(),ix=Math.max(0,Math.min(a.right,n.right)-Math.max(a.left,n.left)),iy=Math.max(0,Math.min(a.bottom,n.bottom)-Math.max(a.top,n.top));if(ix>1&&iy>1)chromeOverlap={type:'action-nav-overlap',actionTop:a.top,actionBottom:a.bottom,navTop:n.top,navBottom:n.bottom}}
     const nestedScroll=[],density=[];
     if(innerWidth<=720){
       const primary=document.querySelector('.page-study .study-body-unified,.page-study .study-body-mobile');
