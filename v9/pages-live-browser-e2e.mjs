@@ -25,6 +25,17 @@ async function noX(page,label){
   }));
   assert(r.doc[0]<=r.doc[1]+1&&r.body[0]<=r.body[1]+1,label+' no horizontal overflow '+JSON.stringify(r));
 }
+async function singleVerticalOwner(page,label){
+  const rows=await page.locator('.page').evaluate(root=>{
+    const visible=el=>{
+      if(el.closest('.outline,.modal-wrap,.backdrop'))return false;
+      const cs=getComputedStyle(el),r=el.getBoundingClientRect();
+      return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;
+    };
+    return [root,...root.querySelectorAll('*')].filter(visible).filter(el=>!el.matches('textarea,input,select,[contenteditable="true"]')&&['auto','scroll'].includes(getComputedStyle(el).overflowY)&&(el.hasAttribute('data-scroll-owner')||el.scrollHeight>el.clientHeight+2)).map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,120),owner:el.getAttribute('data-scroll-owner')||'',sh:el.scrollHeight,ch:el.clientHeight}));
+  });
+  assert(rows.length<=1,label+' single vertical scroll owner '+JSON.stringify(rows));
+}
 async function injectMember(page){
   await page.evaluate(async()=>{
     const V=window.AITUTOR_V9,user={id:'qa-pages-member',email:'qa-pages-member@local.invalid'};
@@ -97,9 +108,12 @@ try{
       await page.waitForSelector('.main.page-'+route,{state:'visible',timeout:60000});
       assert((await page.locator('.page').innerText()).trim().length>0,vp.label+' '+route+' renders content');
       await noX(page,vp.label+' '+route);
+      await singleVerticalOwner(page,vp.label+' '+route);
+      const micro=await page.locator('.page small,.page .tiny,.page .tag,.page .pill,.page .eyebrow,.page .scope-label,.page .metric span,.page .hero p').evaluateAll(nodes=>nodes.filter(n=>{const cs=getComputedStyle(n),r=n.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0}).map(n=>({text:(n.textContent||'').trim().slice(0,60),fs:parseFloat(getComputedStyle(n).fontSize)||0})).filter(x=>x.text&&x.fs<12));
+      assert(micro.length===0,vp.label+' '+route+' keeps student microcopy >=12px '+JSON.stringify(micro.slice(0,4)));
       if(vp.width<=1024){
         const touch=await page.locator('.page .btn,.page .seg button,.page .confidence button,.page .book-jumpbar button,.page .tabbar button,.page .choice,.page .weak-chip,.page .detail-toc-chip,.top .btn,.mobile-nav button,.modal .btn').evaluateAll(nodes=>nodes.filter(n=>{const cs=getComputedStyle(n),r=n.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0&&!n.disabled}).map(n=>({text:(n.textContent||'').trim().slice(0,60),h:n.getBoundingClientRect().height})).filter(x=>x.h<43.5));
-        assert(touch.length===0,vp.label+' '+route+' primary touch targets >=44px '+JSON.stringify(touch.slice(0,4)));
+        assert(touch.length===0,vp.label+' '+route+' keeps primary touch targets >=44px '+JSON.stringify(touch.slice(0,4)));
       }
     }
 
