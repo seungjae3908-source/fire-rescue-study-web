@@ -913,9 +913,21 @@ owner.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(update)},
 function sourceAnchorQueries(c,p=V.contentPacks.get(c?.id)){const t=String(c?.title||'').trim(),a=[t,t.replace(/\s*(?:개론|원리|이론|기초|종류|구조|방법|개요)\s*$/,''),...t.split(/[·,/()\s-]+/),...(V.ConceptArchitecture119?.termsFor?.(c?.id)||[]),...(p?.compare||[]).flatMap(x=>x||[]),...(p?.must||[]).flatMap(x=>String(x||'').split(/\s*(?:→|:|=|·|\/|,)\s*/))],stop=/^(개념|기초|종류|이론|구조|원리|정리|방법|특징|설명|및)$/;return[...new Set(a.map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).filter(x=>x.length>=2&&x.length<=28&&!stop.test(x)))].sort((a,b)=>b.length-a.length).slice(0,18)}
 function evidenceQueries(c,p){const q=p?.studySchema||{};return[...sourceAnchorQueries(c,p),p?.summary,q.definition,...(q.conditions||[]),...(q.mechanisms||[]),...(p?.must||[]),...(p?.detail||[]),...(p?.compare||[]).flat()].filter(Boolean).slice(0,30)}
 function hasAnchorEvidence(r,a){const l=(r?.evidenceLines||[]).map(studyNorm),t=(a||[]).map(studyNorm).filter(x=>x.length>=2);return t.some(x=>l.some(y=>y.includes(x)))}
+const QUESTION_EVIDENCE_GENERIC=new Set(['정답','오답','교재','공식','내용','설명','해당','가장','것','이다','한다','된다','있다','제시한다','설명한다']);
+function questionEvidencePhraseCandidates(value){
+const clean=studentStudyText(value).replace(/^(?:정답|오답)\s*[.:：-]?\s*/,'').replace(/^(?:공식\s*)?교재(?:는|에서|상|에\s*따르면)?\s*/,'').replace(/\s+/g,' ').trim(),out=[],seen=new Set;
+const add=raw=>{const x=String(raw||'').replace(/^[,.;:·\s]+|[,.;:·\s]+$/g,'').trim(),k=studyNorm(x);if(k.length<4||k.length>48||QUESTION_EVIDENCE_GENERIC.has(k)||seen.has(k))return;seen.add(k);out.push(x)};
+add(clean);
+for(const part of clean.split(/[.;。!?！？]+/))add(part);
+const words=clean.split(/\s+/).filter(Boolean);
+for(let size=Math.min(4,words.length);size>=2;size--)for(let i=0;i+size<=words.length;i++){const phrase=words.slice(i,i+size).join(' ');if(!phrase.split(/\s+/).every(x=>QUESTION_EVIDENCE_GENERIC.has(studyNorm(x))))add(phrase)}
+return out.sort((a,b)=>studyNorm(b).length-studyNorm(a).length).slice(0,10)
+}
 function questionSourceEvidence(q){
-const c=V.curriculum.byId[q?.conceptId],p=V.contentPacks.get(q?.conceptId),correct=studentStudyText(q?.choices?.[q?.a]||''),choiceEx=studentStudyText(q?.choiceExplanations?.[q?.a]||''),ex=studentStudyText(q?.ex||''),anchors=correct.length>=2?[correct]:choiceEx.length>=4?[choiceEx]:[],queries=[correct,choiceEx,ex,...evidenceQueries(c,p)].filter(Boolean);
-return{anchors:[...new Set(anchors)].slice(0,3),queries:[...new Set(queries)].slice(0,30)}
+const c=V.curriculum.byId[q?.conceptId],p=V.contentPacks.get(q?.conceptId),correct=studentStudyText(q?.choices?.[q?.a]||''),choiceEx=studentStudyText(q?.choiceExplanations?.[q?.a]||''),ex=studentStudyText(q?.ex||''),rawAnchors=[...questionEvidencePhraseCandidates(correct),...questionEvidencePhraseCandidates(choiceEx),...questionEvidencePhraseCandidates(ex)],anchors=[],seen=new Set;
+for(const x of rawAnchors){const k=studyNorm(x);if(!k||seen.has(k))continue;seen.add(k);anchors.push(x);if(anchors.length>=10)break}
+const queries=[correct,choiceEx,ex,...anchors,...evidenceQueries(c,p)].filter(Boolean);
+return{anchors,queries:[...new Set(queries)].slice(0,36)}
 }
 function questionSourceBookPage(q,key,c){
 const m=String(q?.source||'').match(/(\d{1,4})\s*(?:쪽|페이지|p\.?)/i),n=Number(m?.[1]||0);if(!n)return 0;const ranges=(c?.sourceRanges||[]).filter(x=>x?.doc===key);if(!ranges.length)return n;return ranges.some(r=>n>=Number(r.from||0)&&n<=Number(r.to||r.from||0))?n:0
