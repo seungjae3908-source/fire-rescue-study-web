@@ -12,8 +12,8 @@ const boot7b=read('./boot-v69-7b.js');
 const checks=[
   ['home shortcut removed',!app.includes('<b>바로가기</b>')],
   ['compact single-column home',app.includes('dashboard-home-compact')&&css.includes('.page-home .dashboard-home-compact')],
-  ['member-only gate',app.includes('function loginGate()')&&app.includes("if(!V.Auth?.user)return loginGate()")&&app.includes('MEMBER ONLY')],
-  ['guest boot skips question bank',app.includes("await V.Auth?.init?.();")&&app.includes("if(V.Auth?.user){if(V.Lazy119")],
+  ['member-only gate',app.includes('function loginGate()')&&app.includes('function memberGateRequired()')&&app.includes('if(memberGateRequired())return loginGate()')&&app.includes('MEMBER ONLY')],
+  ['guest boot skips question bank',app.includes("await V.Auth?.init?.();")&&app.includes("if(!memberGateRequired()){if(V.Lazy119")],
   ['single study body',app.includes('study-body-unified')&&!app.includes('study-body-desktop')],
   ['one concept nav',(app.match(/class="actionbar concept-nav/g)||[]).length===1],
   ['distinct question pager',app.includes('← 이전 문제')&&app.includes('다음 문제 →')],
