@@ -1,0 +1,42 @@
+name: GitHub Pages Production Acceptance
+
+on:
+  pull_request:
+    paths:
+      - 'v9/pages-production-acceptance.mjs'
+      - '.github/workflows/pages-production-acceptance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'v9/**'
+      - 'index.html'
+      - '.github/workflows/pages-production-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pages-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Wait for GitHub Pages exact-main propagation
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..30}; do
+            if node v9/pages-production-acceptance.mjs; then
+              exit 0
+            fi
+            echo "Pages not exact-main yet; retry $i/30"
+            sleep 10
+          done
+          echo "GitHub Pages did not converge to expected main in time"
+          exit 1
