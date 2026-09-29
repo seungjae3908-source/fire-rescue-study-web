@@ -252,16 +252,23 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
   const markTokens=[...new Set((anchorTokens.length?anchorTokens:tokens).filter(x=>x.length>=2))].sort((a,b)=>b.length-a.length);
   const markLine=line=>{
-    const hits=[];
+    const parts=[];let offset=0;
     for(const item of line.items||[]){
-      for(const token of markTokens){
-        const i=item.n.indexOf(token);if(i<0)continue;
-        const len=Math.max(1,item.n.length),span=Math.max(2,item.right-item.left),left=item.left+span*(i/len),right=item.left+span*((i+token.length)/len);
-        hits.push({left,right});break
-      }
+      const n=String(item.n||'');if(!n)continue;
+      parts.push({item,start:offset,end:offset+n.length});offset+=n.length
     }
-    if(!hits.length)return{...line,markLeft:line.left,markRight:line.right,markExact:false};
-    return{...line,markLeft:Math.max(line.left,Math.min(...hits.map(x=>x.left))),markRight:Math.min(line.right,Math.max(...hits.map(x=>x.right))),markExact:true}
+    const joined=parts.map(x=>x.item.n).join('');
+    for(const token of markTokens){
+      const start=joined.indexOf(token);if(start<0)continue;
+      const end=start+token.length;let left=Infinity,right=-Infinity;
+      for(const part of parts){
+        const a=Math.max(start,part.start),b=Math.min(end,part.end);if(b<=a)continue;
+        const item=part.item,len=Math.max(1,item.n.length),span=Math.max(2,item.right-item.left),from=a-part.start,to=b-part.start;
+        left=Math.min(left,item.left+span*(from/len));right=Math.max(right,item.left+span*(to/len))
+      }
+      if(Number.isFinite(left)&&Number.isFinite(right)&&right>left)return{...line,markLeft:Math.max(line.left,left),markRight:Math.min(line.right,right),markExact:true}
+    }
+    return{...line,markLeft:line.left,markRight:line.right,markExact:false}
   };
   if(anchorTokens.length){
     const e=lines.map((l,i)=>{const m=anchorTokens.filter(t=>l.n.includes(t));return{l,i,m,s:m.reduce((n,t)=>n+t.length,0)+m.length*10}}).filter(x=>x.m.length>1||x.m.some(t=>t.length>4)).sort((a,b)=>b.s-a.s||a.i-b.i);
