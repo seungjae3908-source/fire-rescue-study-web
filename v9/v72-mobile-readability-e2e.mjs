@@ -3,6 +3,12 @@ import { chromium } from 'playwright';
 const base=process.env.STUDY_119_V72_URL||'http://127.0.0.1:4173/v9/index.html';
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 
+const swUrl=new URL('sw.js',base).href;
+const swRes=await fetch(swUrl,{headers:{'cache-control':'no-cache'}});
+assert(swRes.ok,'V72 service worker is publicly reachable');
+const swText=await swRes.text();
+assert(swText.includes("ai-tutor-v9-shell-20260929-v72-mobile-readability"),'V72 service-worker cache epoch is deployed');
+
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,serviceWorkers:'block'});

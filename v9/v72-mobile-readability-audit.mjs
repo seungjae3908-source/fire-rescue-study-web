@@ -9,6 +9,7 @@ const pdf=read('./source-pdf.js');
 const css=read('./v54-responsive.css');
 const boot7b=read('./boot-v69-7b.js');
 const boot8=read('./boot-v69-8.js');
+const sw=read('./sw.js');
 
 assert(pass.includes('const normalizeBody=')&&pass.includes("replace(/\\n{3,}/g,'\\n\\n')"),'manual pass-note body preserves intentional line breaks');
 assert(pass.includes("[핵심]\\n'+[summary?'★ '+summary")&&pass.includes("numbers.map(x=>'• '+x)")&&pass.includes("traps.map(x=>'• '+x)"),'concept core notes are sectioned with readable bullets');
@@ -30,5 +31,7 @@ assert(css.includes('.note-core-line,.note-number-line,.note-answer-line')&&css.
 
 assert(boot7b.includes('const expandEvidence=')&&boot7b.includes('const normalizeBody='),'runtime source bundle 7b contains V72 PDF and pass-note logic');
 assert(boot8.includes('function tutorPromptRelevant(')&&boot8.includes('note-core-line'),'runtime source bundle 8 contains V72 tutor and note-preview logic');
+assert(sw.includes("const CACHE='ai-tutor-v9-shell-20260929-v72-mobile-readability'"),'V72 service-worker cache epoch invalidates pre-V72 cached boot and responsive assets');
+assert(sw.includes("keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k))"),'V72 service worker deletes older V9 shell caches on activation');
 
 console.log('V72_MOBILE_READABILITY_AUDIT_SUCCESS');
