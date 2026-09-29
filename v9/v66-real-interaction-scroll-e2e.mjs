@@ -271,6 +271,8 @@ try{
       console.log('SKIP V66 remote PDF modal interactions: external PDF provider unavailable');
     }else{
       await openPdf(page);
+      const pdfTools=page.locator('#pdfEvidence .pdf-mobile-tools').first();
+      if(await pdfTools.count()&&!(await page.locator('#pdfEvidence .pdf-findbar:visible').count()))await pdfTools.evaluate(el=>{el.open=true});
       await assertSingleEffectiveOwner(page,'pdf','PDF modal '+vp.width,'#pdfEvidence');
       await wheel(page,'#pdfEvidence .pdf-modal-head','pdf','pdf header '+vp.width,'#pdfEvidence');
       const zoom=page.locator('#pdfEvidence .pdf-zoombar:visible');if(await zoom.count())await wheel(page,'#pdfEvidence .pdf-zoombar','pdf','pdf zoombar '+vp.width,'#pdfEvidence');
@@ -284,6 +286,8 @@ try{
       await page.locator('#pdfEvidence [data-pdf-close]').click();
 
       await openResourcePdf(page);
+      const resourceTools=page.locator('#resourcePdf .pdf-mobile-tools').first();
+      if(await resourceTools.count()&&!(await page.locator('#resourcePdf .pdf-findbar:visible').count()))await resourceTools.evaluate(el=>{el.open=true});
       await assertSingleEffectiveOwner(page,'pdf','resource PDF modal '+vp.width,'#resourcePdf');
       await wheel(page,'#resourcePdf .pdf-modal-head','pdf','resource pdf header '+vp.width,'#resourcePdf');
       const resourceZoom=page.locator('#resourcePdf .pdf-zoombar:visible');if(await resourceZoom.count())await wheel(page,'#resourcePdf .pdf-zoombar','pdf','resource pdf zoombar '+vp.width,'#resourcePdf');
