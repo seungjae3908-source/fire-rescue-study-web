@@ -156,7 +156,7 @@ if(pack?.detailCriteriaOwner==='detail')return[];
 const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),compareBodies=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[1]).map(x=>studentStudyText(x[1])).filter(Boolean),rows=[];
 for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){
  const text=studentStudyText(raw);
- if(!text||seeds.some(x=>sameStudyFact(x,text))||compareBodies.some(x=>sameStudyText(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;
+ if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text)||seeds.some(x=>sameStudyFact(x,text))||compareBodies.some(x=>sameStudyText(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;
  rows.push(text);if(rows.length>=6)break
 }
 return rows
@@ -195,11 +195,31 @@ function isCoreStudyText(v,seeds=[]){
 const text=studentStudyText(v);if(!text)return false;
 return seeds.some(seed=>sameStudyFactCross(text,seed))
 }
+function detailSeedCovers(text,seed){
+const a=studyNorm(text),b=studyNorm(seed);if(!a||!b)return false;
+if(a===b)return true;
+if(a.length>=12&&b.includes(a))return true;
+return a.length<=b.length&&sameStudyFactCross(text,seed)
+}
+function trimCoveredLeadClause(text,seeds=[]){
+const parts=studentStudyText(text).split(/,\s+/).filter(Boolean);
+if(parts.length<2)return studentStudyText(text);
+for(let i=1;i<Math.min(parts.length,3);i++){
+ const prefix=parts.slice(0,i).join(', ');
+ const covered=seeds.some(seed=>detailSeedCovers(prefix,seed)&&!addsNumericCriterion(seed,prefix));
+ if(covered)return parts.slice(i).join(', ').trim()
+}
+return studentStudyText(text)
+}
 function detailOnlyText(v,seeds=[]){
-const text=studentStudyText(v);if(!text||isCoreStudyText(text,seeds))return'';
-const sentences=text.split(/(?<=[.!?。])\s+/).map(studentStudyText).filter(Boolean);
-if(sentences.length<2)return text;
-return sentences.filter(x=>!isCoreStudyText(x,seeds)).join(' ').trim()
+const text=studentStudyText(v);if(!text)return'';
+const sentences=text.split(/(?<=[.!?。])\s+/).map(studentStudyText).filter(Boolean),kept=[];
+for(const sentence of sentences.length?sentences:[text]){
+ const part=trimCoveredLeadClause(sentence,seeds);if(!part)continue;
+ const covered=seeds.some(seed=>detailSeedCovers(part,seed)&&!addsNumericCriterion(seed,part));
+ if(!covered)kept.push(part)
+}
+return kept.join(' ').trim()
 }
 const DETAIL_TYPE_RULES={
 hazmat:[['품명 · 분류',/품명|제[1-6]류|분류|산화성|가연성|금수성|인화성|자기반응성/],['성질 · 위험성',/성질|위험|발화|폭발|산화|환원|혼촉|증기/],['저장 · 취급',/저장|취급|보관|격리|용기|누설|습기|점화원/],['소화 · 대응',/소화|주수|냉각|질식|포|분말|마른모래|대응/],['지정수량 · 기준',/지정수량|기준수량|수량|kg|㎥|\bL\b|배수/],['예외 · 주의',/예외|주의|금지|함정|피해야|혼동/]],
@@ -273,19 +293,15 @@ return rows
 }
 function detailExamPointBlock(rows=[]){if(!rows.length)return'';return `<section class="detail-exam-points" data-detail-section="traps"><h3>시험 포인트 · 함정/주의</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
 function detailCriterionText(raw,seeds=[]){
-const text=studentStudyText(raw);if(!text)return'';
-const sentences=text.split(/(?<=[.!?。])\s+/).map(studentStudyText).filter(Boolean),parts=sentences.length?sentences:[text],kept=[];
-for(const sentence of parts){
- const repeated=seeds.some(seed=>sameStudyFactCross(seed,sentence)&&!addsNumericCriterion(seed,sentence));
- if(!repeated)kept.push(sentence)
-}
-const result=kept.join(' ').trim();
-if(result)return result;
-return seeds.some(seed=>sameStudyFactCross(seed,text)&&!addsNumericCriterion(seed,text))?'':text
+const text=detailOnlyText(raw,seeds);
+if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text))return'';
+return text
 }
 function detailCriteriaRows(pack,seeds=[]){
-const out=[];for(const raw of uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,20)||[]).map(studentStudyText).filter(Boolean))){
- const text=detailCriterionText(raw,[...seeds,...out]);if(!text||out.some(x=>sameStudyFact(x,text)))continue;
+const compareBodies=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[1]).map(x=>studentStudyText(x[1])).filter(Boolean),out=[];
+for(const raw of uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,20)||[]).map(studentStudyText).filter(Boolean))){
+ const text=detailCriterionText(raw,[...seeds,...out]);
+ if(!text||compareBodies.some(x=>sameStudyText(x,text))||out.some(x=>sameStudyFact(x,text)))continue;
  out.push(text);if(out.length>=12)break
 }
 return out
@@ -344,6 +360,7 @@ function detailComparisonRows(pack,seeds=[]){
 const out=[];for(const raw of pack?.compare||[]){
  if(!Array.isArray(raw)||!raw[0]||!raw[1])continue;
  const row=[studentStudyText(raw[0]),studentStudyText(raw[1])],fact=row.join(' ');
+ if(pack?.hazmatOfficialCommon&&/^\s*\d[\d,.]*\s*(?:kg|L|㎥)?\s*$/i.test(row[1]))continue;
  const repeated=seeds.some(x=>(sameStudyFactCross(x,row[1])||sameStudyFactCross(x,fact))&&!addsNumericCriterion(x,row[1]));
  if(repeated)continue;
  if(out.some(x=>sameStudyText(x[0],row[0])&&sameStudyText(x[1],row[1])))continue;
