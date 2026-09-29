@@ -146,6 +146,7 @@ rows.push({...row,text});if(rows.length>=5)break
 return rows
 }
 function coreNumberRows(pack){
+if(pack?.detailCriteriaOwner==='detail')return[];
 const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),rows=[];
 for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){const text=studentStudyText(raw);if(!text||seeds.some(x=>sameStudyFact(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;rows.push(text);if(rows.length>=6)break}
 return rows
