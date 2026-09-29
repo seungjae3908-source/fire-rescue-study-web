@@ -254,8 +254,9 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     }
     return{start:s,end:e}
   };
+  const anchorPhrases=[...new Set((options.anchorTerms||[]).map(norm).filter(x=>x.length>=4))].sort((a,b)=>b.length-a.length);
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
-  const markTokens=[...new Set((anchorTokens.length?anchorTokens:tokens).filter(x=>x.length>=2))].sort((a,b)=>b.length-a.length);
+  const exactMarkTerms=anchorPhrases.length?anchorPhrases:[...new Set(tokens.filter(x=>x.length>=5))].sort((a,b)=>b.length-a.length);
   const markLine=line=>{
     const parts=[];let offset=0;
     for(const item of line.items||[]){
@@ -263,15 +264,15 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
       parts.push({item,start:offset,end:offset+n.length});offset+=n.length
     }
     const joined=parts.map(x=>x.item.n).join('');
-    for(const token of markTokens){
-      const start=joined.indexOf(token);if(start<0)continue;
-      const end=start+token.length;let left=Infinity,right=-Infinity;
+    for(const phrase of exactMarkTerms){
+      const start=joined.indexOf(phrase);if(start<0)continue;
+      const end=start+phrase.length;let left=Infinity,right=-Infinity;
       for(const part of parts){
         const a=Math.max(start,part.start),b=Math.min(end,part.end);if(b<=a)continue;
         const item=part.item,len=Math.max(1,item.n.length),span=Math.max(2,item.right-item.left),from=a-part.start,to=b-part.start;
         left=Math.min(left,item.left+span*(from/len));right=Math.max(right,item.left+span*(to/len))
       }
-      if(Number.isFinite(left)&&Number.isFinite(right)&&right>left)return{...line,markLeft:Math.max(line.left,left),markRight:Math.min(line.right,right),markExact:true}
+      if(Number.isFinite(left)&&Number.isFinite(right)&&right>left)return{...line,markLeft:Math.max(line.left,left),markRight:Math.min(line.right,right),markExact:true,matchedPhrase:phrase}
     }
     return{...line,markLeft:line.left,markRight:line.right,markExact:false}
   };
