@@ -47,6 +47,7 @@ jobs:
           done
 
           printf '{"sha":"%s","source":"github-pages-actions"}\n' "$GITHUB_SHA" > _site/v9/pages-runtime.json
+          printf '{"ok":true,"sha":"%s","environment":"production","transport":"github-pages"}\n' "$GITHUB_SHA" > _site/v9/runtime-head.json
           test -s _site/v9/index.html
           test -s _site/v9/app.js
           test -s _site/v9/v54-responsive.css

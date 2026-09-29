@@ -4,6 +4,7 @@ const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const e2e=fs.readFileSync(new URL('./v66-real-interaction-scroll-e2e.mjs',import.meta.url),'utf8');
 const ci=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
 const prod=fs.readFileSync(new URL('../.github/workflows/production-current-main-acceptance.yml',import.meta.url),'utf8');
+const pagesAcceptance=fs.readFileSync(new URL('./pages-production-acceptance.mjs',import.meta.url),'utf8');
 assert(app.includes('function interactionScrollOwner(target)'),'V66 interaction owner resolver exists');
 assert(app.includes("target.closest('.pdf-evidence-modal')")&&app.includes('data-scroll-owner="pdf"'),'PDF fixed chrome delegates to PDF owner');
 assert(app.includes("target.closest('.page-study')")&&app.includes("study[data-scroll-owner=\"study\"]")&&app.includes("target.closest('.outline,.backdrop')"),'study uses native route scrolling while preserving outline isolation');
@@ -20,7 +21,8 @@ assert(e2e.includes('effectiveVerticalOwners')&&e2e.includes("querySelectorAll('
 assert(e2e.includes('Input.dispatchTouchEvent')&&e2e.includes('newCDPSession'),'mobile audit uses Chromium trusted touch input');
 assert(ci.includes('V66 fixed-chrome interaction scroll audit'),'deterministic V66 audit is wired to development CI');
 assert(ci.includes('V66 branch real-interaction scroll QA')&&ci.includes('http://127.0.0.1:4173/v9/index.html'),'branch browser gate targets exact branch runtime');
-assert(prod.includes('Production V66 real-interaction scroll acceptance'),'V66 is wired to exact-main Production acceptance');
+assert(prod.includes('node v9/pages-live-browser-e2e.mjs'),'V66 branch-proven behavior is followed by the Pages live acceptance');
+assert(pagesAcceptance.includes('PAGES_DRIFT')&&pagesAcceptance.includes("'v9/app.js'"),'Production Pages acceptance byte-pins app.js to exact main before live QA');
 console.log('V66_INTERACTION_SCROLL_AUDIT_SUCCESS');
 
 // V66 Ready gate refresh: exact-head CI only; no runtime behavior change.

@@ -6,6 +6,8 @@ on:
       - 'v9/pages-production-acceptance.mjs'
       - '.github/workflows/pages-production-acceptance.yml'
       - '.github/workflows/pages-deploy.yml'
+      - 'v9/pages-live-browser-e2e.mjs'
+      - 'v9/suggestions-production-public-e2e.mjs'
   push:
     branches: [main]
     paths:
@@ -20,7 +22,7 @@ permissions:
 jobs:
   pages-production:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
     steps:
@@ -41,3 +43,23 @@ jobs:
           done
           echo "GitHub Pages did not converge to expected main in time"
           exit 1
+
+
+      - name: Install live Pages browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Live Pages member-gate and learner UX acceptance
+        env:
+          STUDY_119_PRODUCTION_URL: https://seungjae3908-source.github.io/fire-rescue-study-web/v9/
+          STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.BASE_SHA }}
+          STUDY_119_RUNTIME_HEAD_URL: https://seungjae3908-source.github.io/fire-rescue-study-web/v9/pages-runtime.json
+        run: node v9/pages-live-browser-e2e.mjs
+
+      - name: Live Pages guest suggestion guard acceptance
+        env:
+          STUDY_119_PREVIEW_URL: https://seungjae3908-source.github.io/fire-rescue-study-web/v9/
+          STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.BASE_SHA }}
+          STUDY_119_RUNTIME_HEAD_URL: https://seungjae3908-source.github.io/fire-rescue-study-web/v9/pages-runtime.json
+        run: node v9/suggestions-production-public-e2e.mjs

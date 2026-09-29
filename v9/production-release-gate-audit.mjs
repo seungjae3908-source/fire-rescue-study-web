@@ -10,6 +10,8 @@ const rootPdf=read('api/official-pdf.js');
 const runtimeHead=read('api/runtime-head.js');
 const productionAcceptance=read('.github/workflows/production-current-main-acceptance.yml');
 const liveStudentSmoke=read('v9/live-student-ux-smoke.mjs');
+const pagesLiveBrowser=read('v9/pages-live-browser-e2e.mjs');
+const pagesProductionAcceptance=read('v9/pages-production-acceptance.mjs');
 const runtimeDeps=read('v9/runtime-deps.js');
 const productionSuggestionsPublic=read('v9/suggestions-production-public-e2e.mjs');
 const v70Performance=read('v9/v70-production-performance-e2e.mjs');
@@ -48,11 +50,11 @@ const checks={
   pdfClientRoute:sourceCatalog.includes("/api/official-pdf?doc="),
   pdfAllowlistedProxy:sourceCatalog.includes('arbitraryUrlProxy:false')&&sourceCatalog.includes('allCatalogDocsProxyable:true'),
   runtimeHeadRoute:runtimeHead.includes('VERCEL_GIT_COMMIT_SHA')&&runtimeHead.includes('RUNTIME_GIT_SHA_UNAVAILABLE')&&runtimeHead.includes("Cache-Control','no-store, max-age=0"),
-  postDeployProductionAcceptance:productionAcceptance.includes('workflow_run:')&&productionAcceptance.includes('V9 Development CI')&&productionAcceptance.includes('PRODUCTION_EXACT_HEAD_READY')&&productionAcceptance.includes('live-student-ux-smoke.mjs'),
-  postDeployV68Acceptance:productionAcceptance.includes('Production V68 detail + AI interaction acceptance')&&productionAcceptance.includes('v68-detail-source-brand-e2e.mjs'),
+  postDeployProductionAcceptance:productionAcceptance.includes('workflow_run:')&&productionAcceptance.includes('V9 Development CI')&&productionAcceptance.includes('PRODUCTION_EXACT_HEAD_READY')&&productionAcceptance.includes('pages-live-browser-e2e.mjs'),
+  postDeployV68Acceptance:developmentCi.includes('V68 detail active state + tutor Enter QA')&&developmentCi.includes('v68-detail-source-brand-e2e.mjs')&&productionAcceptance.includes('pages-live-browser-e2e.mjs')&&pagesProductionAcceptance.includes('PAGES_DRIFT')&&pagesProductionAcceptance.includes("'v9/app.js'"),
   postDeployV71StaticTransport:productionAcceptance.includes('v71-static-production-e2e.mjs')&&productionAcceptance.includes('https://seungjae3908-source.github.io/fire-rescue-study-web/v9/')&&productionAcceptance.includes('runtime-head.json'),
   postDeployAcceptanceNoVercelDependency:!productionAcceptance.includes('fire-rescue-study-web.vercel.app')&&!productionAcceptance.includes('VERCEL_DEPLOYMENT_DISABLED'),
-  postDeployAcceptanceExactHead:productionAcceptance.includes('github.event.workflow_run.head_sha')&&liveStudentSmoke.includes('STUDY_119_RUNTIME_HEAD_URL')&&liveStudentSmoke.includes('runtime.sha===expected'),
+  postDeployAcceptanceExactHead:productionAcceptance.includes('github.event.workflow_run.head_sha')&&pagesLiveBrowser.includes('STUDY_119_RUNTIME_HEAD_URL')&&pagesLiveBrowser.includes('runtime.sha===expected')&&pagesProductionAcceptance.includes('PAGES_RUNTIME_IDENTITY_MISMATCH'),
   productionRuntimeDepsNoLocalProbe:runtimeDeps.includes("const local=()=>")&&runtimeDeps.includes("deps('../node_modules/pdfjs-dist/build/pdf.min.mjs'")&&runtimeDeps.includes("deps('../node_modules/tesseract.js/dist/tesseract.esm.min.js'"),
   postDeploySuggestionPublicAcceptance:productionAcceptance.includes('suggestions-production-public-e2e.mjs')&&productionSuggestionsPublic.includes('LOGIN_REQUIRED')&&productionSuggestionsPublic.includes('study_suggestions')&&productionSuggestionsPublic.includes('study_admins')&&productionSuggestionsPublic.includes('anonymous Data API read is blocked'),
   prSuggestionPublicProbe:developmentCi.includes('suggestions_public_production_probe')&&developmentCi.includes('github.event.pull_request.base.sha')&&developmentCi.includes('suggestions-production-public-e2e.mjs'),

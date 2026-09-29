@@ -3,6 +3,7 @@ function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 const e2e=fs.readFileSync(new URL('./v67-whole-app-real-ux-e2e.mjs',import.meta.url),'utf8');
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
 const production=fs.readFileSync(new URL('../.github/workflows/production-current-main-acceptance.yml',import.meta.url),'utf8');
+const pagesAcceptance=fs.readFileSync(new URL('./pages-production-acceptance.mjs',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 assert(['390','768','1024','1440'].every(x=>e2e.includes('width:'+x)),'V67 covers 390/768/1024/1440');
@@ -19,5 +20,6 @@ assert(css.includes('.page-study .tutor-answer-text')&&css.includes('.exam-quali
 const cacheGeneration=Number(sw.match(/ai-tutor-v9-shell-\d{8}-v(\d+)-/)?.[1]||0);
 assert(cacheGeneration>=67,'V67-or-newer PWA cache generation ships the UX CSS');
 assert(workflow.includes('V67 whole-app real UX + layout audit')&&workflow.includes('node v9/v67-whole-app-real-ux-e2e.mjs'),'branch CI runs V67 browser audit');
-assert(production.includes('Production V67 whole-app real UX acceptance')&&production.includes('node v9/v67-whole-app-real-ux-e2e.mjs'),'Production acceptance runs V67 after deploy');
+assert(production.includes('node v9/pages-live-browser-e2e.mjs'),'Production acceptance runs the GitHub Pages whole-app live smoke after deploy');
+assert(pagesAcceptance.includes('PAGES_DRIFT')&&pagesAcceptance.includes("'v9/app.js'"),'Pages production is byte-pinned to the branch-proven app before live UX smoke');
 console.log('V67_WHOLE_APP_REAL_UX_CONTRACT_SUCCESS');
