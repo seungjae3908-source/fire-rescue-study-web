@@ -392,7 +392,12 @@ try{
   assert(mobileSourceHead.position==='sticky'&&mobileSourceHead.top==='0px','mobile original navigation stays sticky while reading long source pages');
   const pdfVisual=await m.locator('#pdfEvidence').evaluate(root=>{const canvas=root.querySelector('canvas'),box=canvas?.getBoundingClientRect(),lines=[...root.querySelectorAll('.pdf-evidence-line')];return{pixelWidth:canvas?.width||0,cssWidth:box?.width||0,evidence:lines.length,lineHeights:lines.map(x=>x.getBoundingClientRect().height),lineStyles:lines.map(x=>({bg:getComputedStyle(x).backgroundColor,shadow:getComputedStyle(x).boxShadow})),legacy:[...root.querySelectorAll('.pdf-highlight-box')].filter(x=>getComputedStyle(x).display!=='none').length,label:root.querySelector('[data-pdf-page-label]')?.textContent||''}});
   assert(pdfVisual.pixelWidth>=pdfVisual.cssWidth*1.8,'mobile PDF canvas renders at high device-pixel density for crisp text');
-  assert(await m.locator('#pdfEvidence [data-pdf-zoom]').count()===2&&await m.locator('#pdfEvidence [data-pdf-fit]').count()===1,'mobile original view exposes zoom and fit-width controls');
+  const mobilePdfTools=m.locator('#pdfEvidence .pdf-mobile-tools').first();
+  assert(await mobilePdfTools.count()===1,'mobile original view groups zoom/search/page tools in one compact disclosure');
+  assert(!(await mobilePdfTools.evaluate(el=>el.open)),'mobile original view keeps secondary PDF tools collapsed by default');
+  await mobilePdfTools.locator('summary').tap();
+  assert(await mobilePdfTools.evaluate(el=>el.open),'mobile PDF tools expand on touch');
+  assert(await m.locator('#pdfEvidence [data-pdf-zoom]').count()===2&&await m.locator('#pdfEvidence [data-pdf-fit]').count()===1,'mobile expanded tools expose zoom and fit-width controls');
   await m.locator('#pdfEvidence [data-pdf-zoom="0.25"]').click();
   await m.waitForFunction(()=>document.querySelector('#pdfEvidence [data-pdf-zoom-label]')?.textContent==='125%',null,{timeout:30000});
   const mobileZoomVisual=await m.locator('#pdfEvidence canvas').evaluate(c=>({css:c.getBoundingClientRect().width,pixel:c.width}));
