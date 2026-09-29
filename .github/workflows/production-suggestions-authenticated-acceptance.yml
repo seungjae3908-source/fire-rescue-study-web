@@ -1,6 +1,10 @@
 name: Production Suggestion Authenticated Acceptance
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/production-suggestions-authenticated-acceptance.yml'
+      - 'v9/pages-authenticated-live-e2e.mjs'
   workflow_run:
     workflows: ["Production Current-Main Acceptance"]
     types: [completed]
@@ -25,13 +29,14 @@ jobs:
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_branch == 'main') ||
+      github.event_name == 'pull_request' ||
       (github.event_name == 'workflow_dispatch' && inputs.expected_head != '')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       STUDY_119_PRODUCTION_URL: https://seungjae3908-source.github.io/fire-rescue-study-web/v9/
       STUDY_119_RUNTIME_HEAD_URL: https://seungjae3908-source.github.io/fire-rescue-study-web/v9/runtime-head.json
-      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.expected_head }}
+      STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event_name == 'pull_request' && github.event.pull_request.base.sha || inputs.expected_head }}
       STUDY_119_ACCEPTANCE_BROKER: https://petlfbztqguuzkasfpug.supabase.co/functions/v1/study-119-acceptance-broker
       STUDY_119_OIDC_AUDIENCE: study-119-production-acceptance
     steps:
@@ -107,6 +112,13 @@ jobs:
             fs.appendFileSync(process.env.GITHUB_ENV,`${name}=${value}\n`);
           }
           NODE
+
+      - name: Production member UI login/logout acceptance
+        env:
+          STUDY_119_PRODUCTION_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
+          STUDY_119_RUNTIME_HEAD_URL: ${{ env.STUDY_119_RUNTIME_HEAD_URL }}
+          STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
+        run: node v9/pages-authenticated-live-e2e.mjs
 
       - name: Production member-admin suggestion closed-loop acceptance
         env:
