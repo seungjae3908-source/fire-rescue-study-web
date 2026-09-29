@@ -112,6 +112,7 @@ return `<div class="backdrop ${state().outline?'on':''}" data-outline-close></di
 function sectionTitle(v){const raw=String(v||'개념').trim();return /개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/.test(raw)?'개념':raw}
 function studentStudyText(v){return String(v||'')
 .replace(/개념\s*구조와\s*읽는\s*순서/gi,'')
+.replace(/^세부\s*\d+\s*[:：.\-]\s*/i,'')
 .replace(/\(?\s*(?:교재|원문)\s*\d+(?:\s*[~–-]\s*\d+)?\s*(?:p|페이지|쪽)\s*\)?\s*[·,:;-]?\s*/gi,'')
 .replace(/\(?\s*(?:20\d{2}\s*)?(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:교재\s*)?\d+(?:\s*[~–-]\s*\d+)?\s*(?:p|페이지|쪽)\s*\)?\s*[·,:;-]?\s*/gi,'')
 .replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
@@ -152,8 +153,12 @@ return rows
 }
 function coreNumberRows(pack){
 if(pack?.detailCriteriaOwner==='detail')return[];
-const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),rows=[];
-for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){const text=studentStudyText(raw);if(!text||seeds.some(x=>sameStudyFact(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;rows.push(text);if(rows.length>=6)break}
+const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),compareBodies=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[1]).map(x=>studentStudyText(x[1])).filter(Boolean),rows=[];
+for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){
+ const text=studentStudyText(raw);
+ if(!text||seeds.some(x=>sameStudyFact(x,text))||compareBodies.some(x=>sameStudyText(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;
+ rows.push(text);if(rows.length>=6)break
+}
 return rows
 }
 function coreTrapRows(pack){
@@ -267,11 +272,21 @@ for(const row of all.map((text,index)=>({text,...detailTrapPriority(text,index)}
 return rows
 }
 function detailExamPointBlock(rows=[]){if(!rows.length)return'';return `<section class="detail-exam-points" data-detail-section="traps"><h3>시험 포인트 · 함정/주의</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
+function detailCriterionText(raw,seeds=[]){
+const text=studentStudyText(raw);if(!text)return'';
+const sentences=text.split(/(?<=[.!?。])\s+/).map(studentStudyText).filter(Boolean),parts=sentences.length?sentences:[text],kept=[];
+for(const sentence of parts){
+ const repeated=seeds.some(seed=>sameStudyFactCross(seed,sentence)&&!addsNumericCriterion(seed,sentence));
+ if(!repeated)kept.push(sentence)
+}
+const result=kept.join(' ').trim();
+if(result)return result;
+return seeds.some(seed=>sameStudyFactCross(seed,text)&&!addsNumericCriterion(seed,text))?'':text
+}
 function detailCriteriaRows(pack,seeds=[]){
 const out=[];for(const raw of uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,20)||[]).map(studentStudyText).filter(Boolean))){
- const repeated=seeds.some(x=>sameStudyFactCross(x,raw)&&!addsNumericCriterion(x,raw));
- if(repeated||out.some(x=>sameStudyFact(x,raw)))continue;
- out.push(raw);if(out.length>=12)break
+ const text=detailCriterionText(raw,[...seeds,...out]);if(!text||out.some(x=>sameStudyFact(x,text)))continue;
+ out.push(text);if(out.length>=12)break
 }
 return out
 }
