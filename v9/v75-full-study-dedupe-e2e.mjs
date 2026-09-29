@@ -79,6 +79,15 @@ try{
  });
  assert(org.valid119===false,'119 emergency-service identifiers are not treated as numeric criteria');
  assert(!org.numbers.some(x=>/119안전센터|119구조대|119구급대/.test(x)),'organization names stay out of 숫자·단위·기준');
+
+ await page.evaluate(()=>{
+   const V=window.AITUTOR_V9,c=V.curriculum.byId['F07-C14'],s=V.Store.state;
+   s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=c.id;s.studyTab='detail';s.outline=false;V.Store.save();V.App.render()
+ });
+ await page.waitForSelector('.page-study .detail-view');
+ const waterDetail=await page.locator('.page-study .detail-view').innerText();
+ for(const term of ['소화수조','저수조','채수구','흡수관투입구','2m','20㎥','0.6m','65mm','0.5m','1m'])assert(waterDetail.includes(term),'F07-C14 detail preserves distinct fire-water fact: '+term);
+
  console.log('V75_FULL_STUDY_DEDUPE_STATS',JSON.stringify(stats));
  if(issues.length){console.error('V75_FULL_STUDY_DEDUPE_ISSUES',JSON.stringify(issues.slice(0,80),null,2));throw new Error('V75_FULL_STUDY_DEDUPE_FAILED '+issues.length)}
  assert(stats.crossDup===0&&stats.coreDup===0&&stats.detailDup===0,'all visible core/detail study facts are non-duplicated under the V75 semantic policy');
