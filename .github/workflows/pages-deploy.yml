@@ -1,0 +1,62 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout exact main
+        uses: actions/checkout@v7.0.1
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build static artifact and preserve official PDF mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          git archive HEAD | tar -x -C _site
+          find _site -type l -delete
+
+          mkdir -p _site/official-pdf-mirror
+          pages_base="https://seungjae3908-source.github.io/fire-rescue-study-web/official-pdf-mirror"
+          for doc in fire1 fire2 ems prevention1 prevention2 law1 law2 law3 law4 law5; do
+            out="_site/official-pdf-mirror/$doc.pdf"
+            curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors               "$pages_base/$doc.pdf?preserve=$GITHUB_SHA" -o "$out"
+            test "$(head -c 5 "$out")" = "%PDF-"
+            test "$(wc -c < "$out" | tr -d ' ')" -gt 100000
+            echo "PAGES_PDF_READY doc=$doc bytes=$(wc -c < "$out" | tr -d ' ')"
+          done
+
+          printf '{"sha":"%s","source":"github-pages-actions"}\n' "$GITHUB_SHA" > _site/v9/pages-runtime.json
+          test -s _site/v9/index.html
+          test -s _site/v9/app.js
+          test -s _site/v9/v54-responsive.css
+          test -s _site/v9/sw.js
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
