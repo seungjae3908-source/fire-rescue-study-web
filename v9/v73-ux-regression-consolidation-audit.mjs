@@ -14,7 +14,7 @@ const checks=[
   ['compact single-column home',app.includes('dashboard-home-compact')&&css.includes('.page-home .dashboard-home-compact')],
   ['member-only gate',app.includes('function loginGate()')&&app.includes('function memberGateRequired()')&&app.includes('if(memberGateRequired())return loginGate()')&&app.includes('MEMBER ONLY')],
   ['guest boot skips question bank',app.includes("await V.Auth?.init?.();")&&app.includes("if(!memberGateRequired()){if(V.Lazy119")],
-  ['single study body',app.includes('study-body-unified')&&!app.includes('study-body-desktop')],
+  ['single study body',(app.match(/study-body-unified/g)||[]).length===1&&(app.match(/class="actionbar concept-nav/g)||[]).length===1],
   ['one concept nav',(app.match(/class="actionbar concept-nav/g)||[]).length===1],
   ['distinct question pager',app.includes('← 이전 문제')&&app.includes('다음 문제 →')],
   ['core textbook page scrub',app.includes("(?:교재|원문)\\\\s*\\\\d+")&&app.includes('(?:p|페이지|쪽)')],
