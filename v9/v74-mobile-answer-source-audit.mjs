@@ -21,6 +21,7 @@ const checks=[
   ['underline tokens prefer anchors',sourcePdf.includes('anchorTokens.length?anchorTokens:tokens')],
   ['split PDF spans retain exact underline geometry',sourcePdf.includes("const joined=parts.map(x=>x.item.n).join('')")&&sourcePdf.includes('const a=Math.max(start,part.start),b=Math.min(end,part.end)')],
   ['mobile PDF tools collapsed',app.includes('<details class="pdf-mobile-tools">')&&css.includes('.pdf-mobile-tools:not([open])>.pdf-mobile-tools-body{display:none!important}')],
+  ['tablet desktop PDF tools auto-expand',app.includes("function syncPdfToolsDisclosure(root=document)")&&app.includes("matchMedia('(min-width:721px)').matches")&&app.includes("syncPdfToolsDisclosure(document.querySelector('#resourcePdf'))")&&app.includes("syncPdfToolsDisclosure(document.querySelector('#pdfEvidence'))")],
   ['mobile scroll safe area',css.includes('padding-bottom:calc(var(--mobile-nav) + 16px + env(safe-area-inset-bottom))!important')],
   ['correct answer explanation not duplicated',app.includes('q.choiceExplanations&&')===false&&app.includes('ans!==q.a&&q.choiceExplanations[ans]')],
   ['known exact-page fixture',questions.includes("['119-gov-f01-01b'")&&questions.includes("source:id==='119-gov-f01-01b'?'소방법령2 · 소방기본법 46쪽'")],
