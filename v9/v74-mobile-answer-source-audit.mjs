@@ -15,7 +15,7 @@ const checks=[
   ['quiz removes concept pager',app.includes("${tab==='quiz'?'':`<footer class=\"actionbar concept-nav concept-nav-single mobile-study-nav\">")],
   ['answered question can retry',app.includes('data-question-retry="${esc(q.id)}"')&&app.includes('if(b.dataset.questionRetry)')],
   ['question identity reaches source viewer',app.includes('data-source-question="${esc(q.id)}"')&&app.includes('data-question-id="${esc(questionId)}"')&&app.includes('questionSourceEvidence(question)')],
-  ['question source page parser',app.includes('function questionSourceBookPage')&&app.includes('questionBookPage=questionSourceBookPage(question,key,c)')],
+  ['question source page parser',app.includes('function questionSourceBookPage')&&app.includes('questionBookPage=questionSourceBookPage(question,key,c)')&&app.includes('questionBookFrom=questionSourceBookPage(question,key,c)')&&app.includes('targetBookFrom=questionBookFrom||bookFrom')],
   ['question evidence does not accept broad hit counts',app.includes("(!questionEvidenceMode&&result.hits>=2)")&&app.includes("(!question&&anchorResult.hits>=2)")],
   ['exact PDF underline only',sourcePdf.includes('exactEvidence=evidence.filter(x=>x.markExact)')&&sourcePdf.includes('for(const line of exactEvidence)')&&sourcePdf.includes("mark.dataset.exact='true'")],
   ['underline tokens prefer anchors',sourcePdf.includes('anchorTokens.length?anchorTokens:tokens')],
