@@ -66,7 +66,8 @@ try{
   assert(real.grades.every(g=>g==='A'||g==='B')&&real.family,'real round uses only verified A/B masters with family metadata');
   page.once('dialog',d=>d.accept());await page.locator('[data-exam-abandon]').click();
 
-  // Adaptive weakness lane gets 65 questions and safe variants, without altering real policy.
+  // Adaptive weakness lane lives in the separate training hub.
+  await page.locator('[data-exam-hub="training"]').click();
   await page.locator('[data-training-start="weak65"]').click();
   await page.waitForSelector('.exam-run-workspace');
   const weak=await page.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,n:e.qs.length,variant:e.qs.filter(q=>q.variantGenerated).length,key:e.trainingKey}});
