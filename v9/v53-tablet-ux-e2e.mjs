@@ -31,8 +31,8 @@ try{
       assert(flow.nodes.every(x=>x.width>=120),vp.width+' visual nodes stay readable after wrapping');
     }
 
-    const nav=await page.locator('.page-study .concept-nav').evaluate(el=>{const r=el.getBoundingClientRect();return{height:r.height,bottom:r.bottom,vh:innerHeight}});
-    assert(nav.height<=70&&nav.bottom<=nav.vh+1,vp.width+' previous/contents/next bar stays compact and inside viewport');
+    const nav=await page.locator('.page-study .concept-nav').evaluate(el=>{const r=el.getBoundingClientRect();return{height:r.height,position:getComputedStyle(el).position,count:document.querySelectorAll('.page-study .concept-nav').length}});
+    assert(nav.count===1&&nav.height<=70&&nav.position==='static',vp.width+' keeps one compact previous/contents/next bar in document flow without a duplicate sticky footer');
 
     await page.evaluate(()=>{const V=window.AITUTOR_V9,s=V.Store.state,c=V.curriculum.byId['F07-C14'];s.conceptId=c.id;s.scopeId=c.scopeId;s.studyTab='core';V.Store.save();V.App.render()});
     await page.waitForSelector('.page-study .study-body-desktop .core-view');
