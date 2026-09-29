@@ -17,7 +17,7 @@ const checks=[
   ['single study body',(app.match(/study-body-unified/g)||[]).length===1&&(app.match(/class="actionbar concept-nav/g)||[]).length===1],
   ['one concept nav',(app.match(/class="actionbar concept-nav/g)||[]).length===1],
   ['distinct question pager',app.includes('← 이전 문제')&&app.includes('다음 문제 →')],
-  ['core textbook page scrub',app.includes("(?:교재|원문)\\\\s*\\\\d+")&&app.includes('(?:p|페이지|쪽)')],
+  ['core textbook page scrub',app.includes("(?:교재|원문)\\s*\\d+")&&app.includes('(?:p|페이지|쪽)')],
   ['exam hub split',app.includes('data-exam-hub="mock"')&&app.includes('data-exam-hub="training"')],
   ['exam current PDF export',app.includes('data-exam-print=')&&app.includes('printExamRound')],
   ['exam editable round export',app.includes('data-exam-doc=')&&app.includes('downloadExamRoundDoc')],
