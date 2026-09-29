@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+// postmerge final probe 20260929
 
 const base='https://seungjae3908-source.github.io/fire-rescue-study-web';
 const repo='seungjae3908-source/fire-rescue-study-web';
