@@ -633,7 +633,7 @@ const auth=fs.readFileSync(new URL('./auth.js',import.meta.url),'utf8');
 const appCode=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const passNoteCode=fs.readFileSync(new URL('./pass-note.js',import.meta.url),'utf8');
 ok(appCode.includes('StudyEmphasis119')&&passNoteCode.includes('StudyEmphasis119'),'study UI and pass notes both consume the emphasis SSOT');
-ok(!appCode.includes('personalFile')&&!appCode.includes('PrivateDocs')&&!appCode.includes('data-doc-list')&&!appCode.includes('data-doc-open')&&!appCode.includes('data-doc-pass'),'learner app exposes no personal document upload or private-doc action path');
+ok(appCode.includes('id="passNotePdf"')&&appCode.includes('V.PrivateDocs.ingest')&&appCode.includes('createFromPrivateDoc')&&appCode.includes('memberGateRequired()')&&!appCode.includes('data-doc-list')&&!appCode.includes('data-doc-open')&&!appCode.includes('data-doc-pass'),'member-only pass note restores private PDF upload without exposing a general private-doc browser/action path');
 ok(!appCode.includes('privateGrounding')&&!appCode.includes('[개인자료'),'study tutor stays grounded to official concept packs without private document injection');
 ok(auth.includes("event==='SIGNED_OUT'")&&auth.includes('V.Store.switchOwner(V.Store.guestId)'), 'SIGNED_OUT auth events switch runtime ownership back to the guest namespace');
 ok(auth.includes("'session-expired'")&&auth.includes("'manual-signout'"),'auth runtime distinguishes session expiry from explicit logout');
