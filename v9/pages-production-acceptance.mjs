@@ -47,6 +47,10 @@ for(const marker of [
   console.log('PASS static compatibility',marker);
 }
 
+const identity=JSON.parse(await get(`${base}/v9/pages-runtime.json?sha=${sha}`));
+if(identity.sha!==sha||identity.source!=='github-pages-actions')throw new Error(`PAGES_RUNTIME_IDENTITY_MISMATCH expected=${sha} actual=${identity.sha||''}`);
+console.log('PASS exact Pages runtime identity',identity.sha);
+
 const root=await get(`${base}/index.html?sha=${sha}`);
 if(!root.includes('./v9/'))throw new Error('ROOT_REDIRECT_MISSING');
 console.log('PASS root routes to /v9/');
