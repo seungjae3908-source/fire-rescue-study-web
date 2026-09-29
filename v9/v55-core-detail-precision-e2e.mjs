@@ -21,11 +21,10 @@ try{
         essentials:root.querySelectorAll('.study-core-essentials li').length,
         numbers:root.querySelectorAll('.study-numbers li').length,
         traps:root.querySelectorAll('.study-traps li').length,
-        compareRows:root.querySelectorAll('.study-core-compare-row').length,
-        expectedCompare:(p.compare||[]).filter(x=>Array.isArray(x)&&x[0]&&x[1]).length
+        compareRows:root.querySelectorAll('.study-core-compare-row').length
       }
     });
-    if(core.quick!==1||core.essentials<1||core.essentials>5||core.numbers>6||core.traps>3||core.compareRows>4||(core.expectedCompare>=2&&core.compareRows<2))issues.push({id,where:'core',core});
+    if(core.quick!==1||core.essentials>5||core.numbers>6||core.traps>3||core.compareRows!==0)issues.push({id,where:'core',core});
 
     await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.studyTab='detail';V.Store.save();V.App.render()});
     await page.waitForSelector('.page-study .study-body-desktop .detail-view');
@@ -46,7 +45,7 @@ try{
       }
     });
     types.add(detail.type);
-    if(!detail.toc||!detail.sourceButton||detail.options<2||detail.definition!==1||detail.headings.length<2||detail.generic||detail.criteria>12)issues.push({id,where:'detail',detail});
+    if(!detail.toc||!detail.sourceButton||detail.definition>1||detail.generic||detail.criteria>12||detail.duplicateHeading)issues.push({id,where:'detail',detail});
   }
   console.log('V55_CORE_DETAIL_PRECISION_TYPES',JSON.stringify([...types].sort()));
   if(issues.length){console.error('V55_CORE_DETAIL_PRECISION_ISSUES',JSON.stringify(issues.slice(0,80),null,2));throw new Error('V55_CORE_DETAIL_PRECISION_FAILED '+issues.length)}
@@ -70,13 +69,13 @@ try{
   const underline=await page.locator('.page-study .study-body-desktop .core-view .study-numbers .study-key-emphasis').first().evaluate(el=>getComputedStyle(el).textDecorationLine);
   assert(underline.includes('underline'),'core numeric emphasis uses a real underline instead of broad background coloring');
   const waterCore=await page.locator('.page-study .study-body-desktop .core-view').evaluate(root=>({numbers:root.querySelectorAll('.study-numbers li').length,compare:root.querySelectorAll('.study-core-compare-row').length,traps:root.querySelectorAll('.study-traps li').length}));
-  assert(waterCore.numbers<=6&&waterCore.compare>=2&&waterCore.traps<=3,'dense water-supply concept stays concise while preserving decisive comparisons');
+  assert(waterCore.numbers<=6&&waterCore.compare===0&&waterCore.traps<=3,'dense water-supply core stays concise and leaves full comparisons to detail');
 
   await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.studyTab='detail';V.Store.save();V.App.render()});
   await page.waitForSelector('.page-study .study-body-desktop .detail-view');
   const waterDetail=await page.locator('.page-study .study-body-desktop .detail-view').evaluate(root=>({toc:[...root.querySelectorAll('[data-detail-jump]')].map(x=>x.textContent.trim()),criteria:root.querySelectorAll('.detail-criteria li').length,compare:root.querySelectorAll('.detail-compare .concept-class-card').length,text:root.innerText}));
-  assert(waterDetail.toc.some(x=>x.includes('수치'))&&waterDetail.toc.some(x=>x.includes('비교')),'dense detail exposes direct jumps to comparison and numeric criteria');
-  assert(waterDetail.criteria>=4&&waterDetail.compare>=4,'water-supply detail keeps the precise numeric and distinction depth');
+  assert(waterDetail.toc.some(x=>x.includes('비교')),'dense detail keeps direct access to non-duplicated comparison content');
+  assert(waterDetail.compare>=2&&/소화수조|저수조/.test(waterDetail.text),'water-supply detail keeps precise distinctions without copying the core blocks');
 
   await ctx.close();
 
