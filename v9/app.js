@@ -133,14 +133,14 @@ function uniqueCriterionRows(rows=[]){const out=[];for(const row of rows){if(!ro
 const DETAIL_META_SECTION_RE=/^(?:개념\s*구조와\s*읽는\s*순서|핵심\s*포인트\s*연결|문제\s*적용과\s*난이도\s*대응|공식\s*원문으로\s*복귀하는\s*기준|회상\s*루프)$/;
 function uniqueSections(rows=[]){const out=[];for(const row of rows){if(!row?.body||DETAIL_META_SECTION_RE.test(String(row.title||'').trim()))continue;if(out.some(x=>sameStudyFact(x.body,row.body)))continue;out.push(row)}return out}
 function coreEssentialRows(pack){
-const quick=pack?.studySchema?.quick30||pack?.summary||'',numbers=(V.StudyEmphasis119?.numberRows?.(pack,16)||[]).map(studentStudyText).filter(Boolean);
+const quick=pack?.studySchema?.quick30||pack?.summary||'',numbers=(V.StudyEmphasis119?.numberRows?.(pack,16)||[]).map(studentStudyText).filter(Boolean),comparisonFacts=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[0]&&x[1]).map(x=>studentStudyText(x[0])+' '+studentStudyText(x[1]));
 const candidates=[
 ...(V.StudyEmphasis119?.mustRows?.(pack)||[]).map((text,index)=>({text,bucket:'must',index})),
 ...(V.StudyEmphasis119?.featureRows?.(pack)||[]).map((text,index)=>({text,bucket:'feature',index}))
 ],rows=[];
 for(const row of candidates){
 const text=studentStudyText(row.text);
-if(!text||sameStudyFact(text,quick)||numbers.some(n=>sameStudyFact(text,n))||rows.some(x=>sameStudyFact(x.text,text)))continue;
+if(!text||sameStudyFact(text,quick)||numbers.some(n=>sameStudyFact(text,n))||comparisonFacts.some(x=>sameStudyFactCross(text,x))||rows.some(x=>sameStudyFact(x.text,text)))continue;
 rows.push({...row,text});if(rows.length>=5)break
 }
 return rows
