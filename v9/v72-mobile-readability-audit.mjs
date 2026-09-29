@@ -31,7 +31,7 @@ assert(css.includes('.note-core-line,.note-number-line,.note-answer-line')&&css.
 
 assert(boot7b.includes('const expandEvidence=')&&boot7b.includes('const normalizeBody='),'runtime source bundle 7b contains V72 PDF and pass-note logic');
 assert(boot8.includes('function tutorPromptRelevant(')&&boot8.includes('note-core-line'),'runtime source bundle 8 contains V72 tutor and note-preview logic');
-assert(sw.includes("const CACHE='ai-tutor-v9-shell-20260929-v73-ux-regression-consolidation-v74-mobile-answer-source'"),'V74 service-worker cache epoch invalidates stale V73 boot and responsive assets');
+assert(sw.includes("const CACHE='ai-tutor-v9-shell-20260930-v75-full-study-dedupe'"),'V75 service-worker cache epoch invalidates stale V74 study assets');
 assert(sw.includes("keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k))"),'V72 service worker deletes older V9 shell caches on activation');
 
 console.log('V72_MOBILE_READABILITY_AUDIT_SUCCESS');
