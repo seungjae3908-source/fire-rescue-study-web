@@ -238,9 +238,10 @@
 }
 .page-home .dashboard-home-compact{
   grid-auto-rows:max-content!important;
-  height:auto!important;
-  min-height:100%!important;
-  overflow:visible!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
 }
 .page-home .dashboard-topline,
 .page-home .dashboard-titleline{
@@ -266,7 +267,7 @@
     overflow-y:auto!important;
     padding-bottom:calc(18px + env(safe-area-inset-bottom))!important;
   }
-  .page-home .dashboard-topline{min-height:auto!important}
+  .page-home .dashboard-topline{min-height:max-content!important}
   .page-study .study-single-scroll,
   .page-bank .bank-page{
     padding-bottom:calc(var(--mobile-nav) + 16px + env(safe-area-inset-bottom))!important;
