@@ -893,6 +893,7 @@ const overlay=sourceOverlay();if(!overlay)return false;
 if(opener instanceof HTMLElement&&!overlay.contains(opener))sourceFocusReturn=sourceFocusRef(opener);
 else if(document.activeElement instanceof HTMLElement&&!overlay.contains(document.activeElement))sourceFocusReturn=sourceFocusRef(document.activeElement);
 const modal=overlay.querySelector('.modal')||overlay;
+const pdfTools=modal.querySelector('.pdf-mobile-tools');if(pdfTools&&matchMedia('(min-width:721px)').matches)pdfTools.open=true;
 modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('tabindex','-1');
 const heading=modal.querySelector('h1,h2,h3');if(heading){if(!heading.id)heading.id='source-dialog-title-'+(++sourceDialogSeq);modal.setAttribute('aria-labelledby',heading.id)}
 history.pushState({...history.state,sourceView:1},'');
