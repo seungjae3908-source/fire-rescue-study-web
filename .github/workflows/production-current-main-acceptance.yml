@@ -74,26 +74,12 @@ jobs:
           npm install --no-save playwright@1.55.0 pdfjs-dist@5.4.149 tesseract.js@7.0.0
           npx playwright install --with-deps chromium
 
-      - name: Production exact-main mobile + desktop learner acceptance
+      - name: Production exact-main Pages member-gate + learner UX acceptance
         env:
-          STUDY_119_PREVIEW_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
+          STUDY_119_PRODUCTION_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
           STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
           STUDY_119_RUNTIME_HEAD_URL: ${{ env.STUDY_119_RUNTIME_HEAD_URL }}
-        run: node v9/live-student-ux-smoke.mjs
-
-      - name: Production V66 real-interaction scroll acceptance
-        env:
-          STUDY_119_V66_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
-        run: node v9/v66-real-interaction-scroll-e2e.mjs
-
-      - name: Production V67 whole-app real UX acceptance
-        env:
-          STUDY_119_V67_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
-        run: node v9/v67-whole-app-real-ux-e2e.mjs
-      - name: Production V68 detail + AI interaction acceptance
-        env:
-          STUDY_119_V68_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
-        run: node v9/v68-detail-source-brand-e2e.mjs
+        run: node v9/pages-live-browser-e2e.mjs
 
       - name: Production V71 zero-cost static transport acceptance
         env:
@@ -101,12 +87,6 @@ jobs:
           STUDY_119_RUNTIME_HEAD_URL: ${{ env.STUDY_119_RUNTIME_HEAD_URL }}
           STUDY_119_EXPECTED_RUNTIME_HEAD: ${{ env.STUDY_119_EXPECTED_RUNTIME_HEAD }}
         run: node v9/v71-static-production-e2e.mjs
-
-      - name: Production V72 390px mobile readability acceptance
-        env:
-          STUDY_119_V72_URL: ${{ env.STUDY_119_PRODUCTION_URL }}
-        run: node v9/v72-mobile-readability-e2e.mjs
-
 
       - name: Production suggestion guest + anon Data API acceptance
         env:
