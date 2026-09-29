@@ -228,7 +228,7 @@ try{
       }
       if(vp.isMobile){
         await touchBridge(page,'.concept-head',owner,'study '+tab+' header touch '+vp.width);
-        if(tab==='core')await horizontalTouchSafe(page,'.book-jumpbar',owner,'study mobile tabbar '+vp.width);
+        if(tab==='core')await horizontalTouchSafe(page,'.tabbar,.book-jumpbar',owner,'study mobile tabbar '+vp.width);
       }
       await wheel(page,'.study[data-scroll-owner="study"]',owner,'study '+tab+' body '+vp.width);
       if(tab==='detail'){
