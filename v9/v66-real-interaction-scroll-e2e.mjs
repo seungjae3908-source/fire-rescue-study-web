@@ -254,6 +254,8 @@ try{
     if(await bankActions.count())await wheel(page,'.bank-workspace .actionbar','bank','bank footer '+vp.width);
 
     await go(page,'exam');
+    const trainingTab=page.locator('[data-exam-hub="training"]');
+    if(await trainingTab.count())await trainingTab.click();
     const start=page.locator('[data-training-start="fire50"]');
     await start.waitFor({state:'visible',timeout:30000});await start.click();
     await page.waitForSelector('.exam-run-workspace',{timeout:30000});await settle(page);
