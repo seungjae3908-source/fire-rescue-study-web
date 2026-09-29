@@ -151,7 +151,7 @@ try{
   await p.locator('[data-training-start="all200"]').click();await p.waitForSelector('.exam-run-workspace');
   const all200=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,unique:new Set(e.qs.map(q=>q.id)).size}});
   assert(all200.mode==='training'&&all200.total===200&&all200.fire===77&&all200.ems===123&&all200.unique===200,'full-range 200 training preserves exam-like subject ratio with unique questions');
-  await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('.exam-start');
+  await p.evaluate(()=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.App.runtime.examHub='mock';V.App.go('exam')});await p.waitForSelector('.exam-start');
 
   await go(p,'stats');await cleanPage(p,'desktop stats');
   const desktopStatsLayout=await p.locator('.stats-page').evaluate(root=>{const main=root.querySelector('.home-main'),rr=root.getBoundingClientRect(),mr=main?.getBoundingClientRect();return{gridWidth:rr.width,mainWidth:mr?.width||0,columns:getComputedStyle(root).gridTemplateColumns}});
