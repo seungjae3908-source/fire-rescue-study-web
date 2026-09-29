@@ -127,10 +127,13 @@ try{
   const quality4HighYield=await p.evaluate(()=>window.AITUTOR_V9.Quality4HighYield119?.audit?.());
   assert(quality4HighYield?.ready&&quality4HighYield?.missing===0,'quality 4 high-yield semantic/visual contract is complete');
 
+  await p.locator('.tabbar [data-study-tab="detail"]').click();
+  await p.waitForFunction(()=>window.AITUTOR_V9.Store.state.studyTab==='detail');
   const before=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
+  assert(await p.locator('[data-study-next]').count()===1,'non-quiz learning tabs keep one next-concept control');
   await p.locator('[data-study-next]').click();
   const after=await p.evaluate(()=>({id:window.AITUTOR_V9.Store.state.conceptId,tab:window.AITUTOR_V9.Store.state.studyTab}));
-  assert(before.id!==after.id&&after.tab===before.tab,'next concept keeps whichever learning tab is currently selected without reopening TOC');
+  assert(before.id!==after.id&&after.tab===before.tab,'next concept keeps the selected non-quiz learning tab without reopening TOC');
 
   await go(p,'exam');await cleanPage(p,'desktop exam');
   const examText=await p.locator('.page').innerText();
