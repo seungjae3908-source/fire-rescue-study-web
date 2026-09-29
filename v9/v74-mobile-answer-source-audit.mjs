@@ -19,10 +19,11 @@ const checks=[
   ['question evidence does not accept broad hit counts',app.includes("(!questionEvidenceMode&&result.hits>=2)")&&app.includes("(!question&&anchorResult.hits>=2)")],
   ['exact PDF underline only',sourcePdf.includes('exactEvidence=evidence.filter(x=>x.markExact)')&&sourcePdf.includes('for(const line of exactEvidence)')&&sourcePdf.includes("mark.dataset.exact='true'")],
   ['underline tokens prefer anchors',sourcePdf.includes('anchorTokens.length?anchorTokens:tokens')],
+  ['split PDF spans retain exact underline geometry',sourcePdf.includes("const joined=parts.map(x=>x.item.n).join('')")&&sourcePdf.includes('const a=Math.max(start,part.start),b=Math.min(end,part.end)')],
   ['mobile PDF tools collapsed',app.includes('<details class="pdf-mobile-tools">')&&css.includes('.pdf-mobile-tools:not([open])>.pdf-mobile-tools-body{display:none!important}')],
   ['mobile scroll safe area',css.includes('padding-bottom:calc(var(--mobile-nav) + 16px + env(safe-area-inset-bottom))!important')],
   ['correct answer explanation not duplicated',app.includes('q.choiceExplanations&&')===false&&app.includes('ans!==q.a&&q.choiceExplanations[ans]')],
-  ['known exact-page fixture',questions.includes("id:'119-gov-f01-01b'")&&questions.includes("소방법령2 · 소방기본법 46쪽")],
+  ['known exact-page fixture',questions.includes("['119-gov-f01-01b'")&&questions.includes("source:id==='119-gov-f01-01b'?'소방법령2 · 소방기본법 46쪽'")],
   ['app bundle synced',boot8.includes('data-question-retry="${esc(q.id)}"')&&boot8.includes('questionSourceEvidence(question)')&&boot8.includes('<details class="pdf-mobile-tools">')],
   ['source bundle synced',boot7b.includes('exactEvidence=evidence.filter(x=>x.markExact)')&&boot7b.includes('anchorTokens.length?anchorTokens:tokens')],
   ['service-worker cache bumped',sw.includes('v73-ux-regression-consolidation-v74-mobile-answer-source')]
