@@ -20,23 +20,22 @@ for(const path of files){
   ]);
   if(digest(live)!==digest(raw)){
     if(path==='v9/app.js'){
-      const candidates=[];
-      for(let page=1;page<=3;page++){
-        try{
-          const r=await fetch(`https://api.github.com/repos/${repo}/branches?per_page=100&page=${page}`,{headers:{'accept':'application/vnd.github+json','user-agent':'pages-source-diagnostic'}});
-          if(!r.ok)break;
-          const rows=await r.json();
-          if(!Array.isArray(rows)||!rows.length)break;
-          candidates.push(...rows.map(x=>x.name).filter(Boolean));
-          if(rows.length<100)break;
-        }catch{break}
-      }
-      console.log('LIVE_SOURCE_SCAN_BRANCHES',candidates.length);
+      const candidates=['fix/v72-mobile-study-readability-20260928','fix/v72-service-worker-cache-epoch-20260929'];
+      const probeFiles=['v9/app.js','v9/v54-responsive.css','v9/sw.js','v9/config.js','v9/index.html','index.html'];
       for(const ref of candidates){
-        try{
-          const other=await get(`https://raw.githubusercontent.com/${repo}/${encodeURIComponent(ref).replaceAll('%2F','/')}/v9/app.js`);
-          if(other===live)console.log('LIVE_SOURCE_MATCH',ref);
-        }catch{}
+        let all=true;
+        for(const probe of probeFiles){
+          try{
+            const [liveProbe,rawProbe]=await Promise.all([
+              get(`${base}/${probe}?source=${encodeURIComponent(ref)}`),
+              get(`https://raw.githubusercontent.com/${repo}/${encodeURIComponent(ref).replaceAll('%2F','/')}/${probe}`)
+            ]);
+            const same=liveProbe===rawProbe;
+            console.log('LIVE_FILE_MATCH',ref,probe,same);
+            all=all&&same;
+          }catch{all=false}
+        }
+        if(all)console.log('LIVE_FULL_SOURCE_MATCH',ref);
       }
     }
     throw new Error(`PAGES_DRIFT ${path} live=${digest(live)} raw=${digest(raw)}`);
