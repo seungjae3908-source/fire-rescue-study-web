@@ -47,7 +47,7 @@ try{
   await page.waitForSelector('.workspace');
   await page.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),conceptId);
   await page.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,conceptId);
-  await page.waitForSelector('.book-mobile');
+  await page.waitForSelector('.study-body-unified');
   const count=await page.locator('#book-quiz .question-card').count();
   assert(count===6,'mobile electronic textbook renders six confirmation question cards');
 
