@@ -32,7 +32,7 @@ const Q=[
 ['119-gov-f02-07a','F02-C07','재난안전상황실의 핵심 기능으로 가장 적절한 것은?',['재난정보 수집·전파와 상황관리·초동조치·협조','소화약제 제조만','위험물 품명 지정만','피난기구 설치만'],0,'mid','기능형',['정답. 상황실은 정보·상황관리와 초기조치·기관협조의 허브다.','상황실 기능이 아니다.','위험물 제도와 다른 영역이다.','피난설비 설치업무로 한정되지 않는다.']],
 ['119-gov-f02-07b','F02-C07','재난안전상황실 설치체계로 가장 적절한 것은?',['행정안전부에 중앙상황실, 시·도와 시·군·구에 각 상황실','소방차마다 중앙상황실을 하나씩 설치','오직 중앙정부에만 상황실 설치','의용소방대에만 상황실 설치'],0,'low','설치체계형',['정답. 중앙과 지방 상황실이 연결되어 정보를 공유한다.','소방차 단위 설치개념이 아니다.','지방 상황실도 설치·운영한다.','의용소방대 전용체계가 아니다.']]
 ];
-const rows=Q.map(([id,conceptId,q,choices,a,difficulty,type,choiceExplanations])=>({id,grade:'B',subject:'fire',scopeId:conceptId.split('-')[0],conceptId,q,choices,a,difficulty,type,choiceExplanations,ex:choiceExplanations[a],source:V.contentPacks?.authored?.[conceptId]?.source||'2026 소방법령 공식교재'}));
+const rows=Q.map(([id,conceptId,q,choices,a,difficulty,type,choiceExplanations])=>({id,grade:'B',subject:'fire',scopeId:conceptId.split('-')[0],conceptId,q,choices,a,difficulty,type,choiceExplanations,ex:choiceExplanations[a],source:id==='119-gov-f01-01b'?'소방법령2 · 소방기본법 46쪽':(V.contentPacks?.authored?.[conceptId]?.source||'2026 소방법령 공식교재')}));
 const seen=new Set(V.questions.map(x=>x.id));for(const q of rows)if(!seen.has(q.id))V.questions.push(q);
 V.questionById=Object.fromEntries(V.questions.map(q=>[q.id,q]));V.questionsForConcept=id=>V.questions.filter(q=>q.conceptId===id);V.GovernanceQuestions119={added:rows.length};
 })();

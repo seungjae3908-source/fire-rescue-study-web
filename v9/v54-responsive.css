@@ -227,3 +227,83 @@
   .page-exam .exam-pane{padding:14px!important}.exam-pane-head h2{font-size:23px}.exam-secondary-actions{grid-template-columns:1fr}.exam-download-actions{grid-template-columns:1fr}.exam-download-actions .btn:last-child{grid-column:auto}.training-grid,.training-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .notes-page .note-upload-card{grid-template-columns:1fr}.note-upload-actions{display:grid;grid-template-columns:120px 1fr}.note-upload-button{justify-content:center}
 }
+
+
+/* V74 mobile interaction + exact question evidence */
+.login-gate-shell{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  width:100%!important;
+  max-width:none!important;
+}
+.page-home .dashboard-home-compact{
+  grid-auto-rows:max-content!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+.page-home .dashboard-topline,
+.page-home .dashboard-titleline{
+  height:auto!important;
+  min-height:max-content!important;
+  overflow:visible!important;
+}
+.answer-source{flex-wrap:wrap!important}
+.answer-source>.toolbar{margin-left:auto;justify-content:flex-end}
+.page-study .quiz-view .choice{
+  position:relative;
+  z-index:1;
+  pointer-events:auto!important;
+  touch-action:manipulation;
+}
+.pdf-mobile-tools{display:contents}
+.pdf-mobile-tools>summary{display:none}
+.pdf-mobile-tools>.pdf-mobile-tools-body{display:contents!important}
+@media(max-width:720px){
+  .page-home .dashboard-home-compact{
+    height:100%!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom))!important;
+  }
+  .page-home .dashboard-topline{min-height:max-content!important}
+  .page-study .study-single-scroll,
+  .page-bank .bank-page{
+    padding-bottom:calc(var(--mobile-nav) + 16px + env(safe-area-inset-bottom))!important;
+    scroll-padding-bottom:calc(var(--mobile-nav) + 16px + env(safe-area-inset-bottom))!important;
+  }
+  .page-study .study-body-unified{padding-bottom:16px!important}
+  .answer-source{display:grid!important;grid-template-columns:1fr!important;align-items:stretch!important}
+  .answer-source>.toolbar{display:grid!important;grid-template-columns:1fr 1fr!important;margin-left:0!important}
+  .answer-source>.toolbar .btn{width:100%!important;min-width:0!important}
+  .pdf-mobile-tools{
+    display:block!important;
+    flex:0 0 auto;
+    margin:6px 0;
+    border:1px solid var(--line);
+    border-radius:11px;
+    background:#081624;
+    overflow:hidden;
+  }
+  .pdf-mobile-tools>summary{
+    display:flex!important;
+    align-items:center;
+    justify-content:space-between;
+    min-height:44px;
+    padding:9px 11px;
+    cursor:pointer;
+    color:#dce7f3;
+    font-size:13px;
+    font-weight:850;
+    list-style:none;
+    touch-action:manipulation;
+  }
+  .pdf-mobile-tools>summary::-webkit-details-marker{display:none}
+  .pdf-mobile-tools>summary::after{content:'＋';color:var(--blue);font-size:18px}
+  .pdf-mobile-tools[open]>summary::after{content:'−'}
+  .pdf-mobile-tools:not([open])>.pdf-mobile-tools-body{display:none!important}
+  .pdf-mobile-tools[open]>.pdf-mobile-tools-body{display:grid!important;gap:7px;padding:0 9px 9px}
+  .pdf-mobile-tools .pdf-zoombar{position:static!important;margin:0!important;padding:0!important}
+  .pdf-mobile-tools .pdf-findbar{padding:0!important}
+}

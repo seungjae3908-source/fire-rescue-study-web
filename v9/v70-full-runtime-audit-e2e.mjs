@@ -174,6 +174,8 @@ async function checkPdfModal(page,selector,label,{exercise=false}={}){
     check(top>0,label+' wheel on PDF chrome bridges to PDF scroll owner',{top,metrics});
   }
   if(exercise){
+    const mobileTools=page.locator(selector+' .pdf-mobile-tools').first();
+    if(await mobileTools.count())await mobileTools.evaluate(el=>{el.open=true});
     const before=Number(state.page||1);
     const next=page.locator(selector+' [data-resource-pdf-page="1"],'+selector+' [data-pdf-page="1"]').first();
     if(await next.count()&&!(await next.isDisabled())){

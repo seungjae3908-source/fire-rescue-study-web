@@ -255,18 +255,25 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     return{start:s,end:e}
   };
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
-  const markTokens=[...new Set([...anchorTokens,...tokens].filter(x=>x.length>=2))].sort((a,b)=>b.length-a.length);
+  const markTokens=[...new Set((anchorTokens.length?anchorTokens:tokens).filter(x=>x.length>=2))].sort((a,b)=>b.length-a.length);
   const markLine=line=>{
-    const hits=[];
+    const parts=[];let offset=0;
     for(const item of line.items||[]){
-      for(const token of markTokens){
-        const i=item.n.indexOf(token);if(i<0)continue;
-        const len=Math.max(1,item.n.length),span=Math.max(2,item.right-item.left),left=item.left+span*(i/len),right=item.left+span*((i+token.length)/len);
-        hits.push({left,right});break
-      }
+      const n=String(item.n||'');if(!n)continue;
+      parts.push({item,start:offset,end:offset+n.length});offset+=n.length
     }
-    if(!hits.length)return{...line,markLeft:line.left,markRight:line.right,markExact:false};
-    return{...line,markLeft:Math.max(line.left,Math.min(...hits.map(x=>x.left))),markRight:Math.min(line.right,Math.max(...hits.map(x=>x.right))),markExact:true}
+    const joined=parts.map(x=>x.item.n).join('');
+    for(const token of markTokens){
+      const start=joined.indexOf(token);if(start<0)continue;
+      const end=start+token.length;let left=Infinity,right=-Infinity;
+      for(const part of parts){
+        const a=Math.max(start,part.start),b=Math.min(end,part.end);if(b<=a)continue;
+        const item=part.item,len=Math.max(1,item.n.length),span=Math.max(2,item.right-item.left),from=a-part.start,to=b-part.start;
+        left=Math.min(left,item.left+span*(from/len));right=Math.max(right,item.left+span*(to/len))
+      }
+      if(Number.isFinite(left)&&Number.isFinite(right)&&right>left)return{...line,markLeft:Math.max(line.left,left),markRight:Math.min(line.right,right),markExact:true}
+    }
+    return{...line,markLeft:line.left,markRight:line.right,markExact:false}
   };
   if(anchorTokens.length){
     const e=lines.map((l,i)=>{const m=anchorTokens.filter(t=>l.n.includes(t));return{l,i,m,s:m.reduce((n,t)=>n+t.length,0)+m.length*10}}).filter(x=>x.m.length>1||x.m.some(t=>t.length>4)).sort((a,b)=>b.s-a.s||a.i-b.i);
@@ -346,14 +353,14 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const overlay=document.createElement('div');overlay.className='pdf-highlight-layer';overlay.style.width=viewport.width+'px';overlay.style.height=viewport.height+'px';wrap.appendChild(overlay);host.appendChild(wrap);
   const ctx=canvas.getContext('2d',{alpha:false}),transform=outputScale===1?undefined:[outputScale,0,0,outputScale,0,0];
   await pg.render({canvasContext:ctx,viewport,transform}).promise;
-  const tc=await pg.getTextContent(),evidence=evidenceLines(tc.items||[],viewport,p,queries,{anchorTerms:opts.anchorTerms});
-  for(const line of evidence){
+  const tc=await pg.getTextContent(),evidence=evidenceLines(tc.items||[],viewport,p,queries,{anchorTerms:opts.anchorTerms}),exactEvidence=evidence.filter(x=>x.markExact);
+  for(const line of exactEvidence){
     const mark=document.createElement('div');mark.className='pdf-evidence-line';
-    const markLeft=Number.isFinite(line.markLeft)?line.markLeft:line.left,markRight=Number.isFinite(line.markRight)?line.markRight:line.right;mark.style.left=Math.max(0,markLeft-2)+'px';mark.style.top=Math.min(viewport.height-4,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-markLeft+2,markRight-markLeft+4))+'px';mark.style.height='3px';mark.dataset.exact=line.markExact?'true':'false';
+    const markLeft=Number.isFinite(line.markLeft)?line.markLeft:line.left,markRight=Number.isFinite(line.markRight)?line.markRight:line.right;mark.style.left=Math.max(0,markLeft-2)+'px';mark.style.top=Math.min(viewport.height-4,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-markLeft+2,markRight-markLeft+4))+'px';mark.style.height='3px';mark.dataset.exact='true';
     mark.title=line.evidenceTitle||line.text;overlay.appendChild(mark);
   }
-  const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
-  return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
+  const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${exactEvidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${exactEvidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
+  return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:exactEvidence.length,evidenceLines:exactEvidence.map(x=>x.evidenceTitle||x.text),candidateEvidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
 V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',officialCacheEpoch:OFFICIAL_CACHE_EPOCH,officialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,privacy:{localCacheAllowed:true,persistentOfficialCache:true,officialCacheEpochRequired:true,staleOfficialCacheAutoDelete:true,legacyUnversionedOfficialAttachmentAutoDelete:true,persistentOfficialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v16-range-remote-cache-epoch-precise-evidence-ranges'};
 })();
