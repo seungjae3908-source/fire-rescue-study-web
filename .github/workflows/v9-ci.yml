@@ -35,6 +35,8 @@ on:
       - '.github/workflows/official-monitor.yml'
       - '.github/workflows/production-current-main-acceptance.yml'
       - '.github/workflows/production-suggestions-authenticated-acceptance.yml'
+      - '.github/workflows/pages-deploy.yml'
+      - '.github/workflows/pages-production-acceptance.yml'
   pull_request:
     paths:
       - 'v9/**'
@@ -51,6 +53,8 @@ on:
       - '.github/workflows/official-monitor.yml'
       - '.github/workflows/production-current-main-acceptance.yml'
       - '.github/workflows/production-suggestions-authenticated-acceptance.yml'
+      - '.github/workflows/pages-deploy.yml'
+      - '.github/workflows/pages-production-acceptance.yml'
 
 concurrency:
   group: v9-development-${{ github.event.pull_request.number || github.ref }}
@@ -86,6 +90,7 @@ jobs:
           node --check v9/suggestions-production-public-e2e.mjs
           node --check v9/suggestions-production-authenticated-e2e.mjs
           node --check v9/live-student-ux-smoke.mjs
+          node --check v9/pages-live-browser-e2e.mjs
           node --check v9/v62-production-multidevice-audit.mjs
           node --check v9/v63-readability-touch-audit.mjs
           node --check v9/v64-correction-loop-audit.mjs
