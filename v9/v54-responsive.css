@@ -183,3 +183,43 @@
   .note-section-head{font-size:13px!important;margin-top:12px!important}
 }
 
+
+
+/* V73 UX regression consolidation: compact home, single study navigation, calm exam hub, member gate */
+.login-gate-shell{min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 0,rgba(57,109,164,.16),transparent 42%),#06111f;color:var(--text)}
+.login-gate-card{width:min(100%,470px);display:grid;gap:20px;padding:28px;border:1px solid var(--line);border-radius:20px;background:#091827;box-shadow:0 18px 60px rgba(0,0,0,.24)}
+.login-brand{display:flex;align-items:center;gap:11px}.login-brand>div{display:grid;gap:2px}.login-brand small{color:var(--muted);font-size:12px}.login-copy{display:grid;gap:7px}.login-copy h1{margin:0;font-size:28px;line-height:1.25}.login-copy p{margin:0;color:var(--muted);line-height:1.65}
+.login-form{display:grid;gap:11px}.login-form label{display:grid;gap:6px;font-size:13px;color:#dce7f3}.login-secondary{display:grid;grid-template-columns:1fr 1fr;gap:8px}.login-notice{margin:0}
+.page-home .dashboard-home-compact{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;align-content:start!important;width:100%;max-width:1180px;margin:0 auto;padding-bottom:18px;overflow:visible!important}
+.page-home .dashboard-topline{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:0;padding:13px 15px;border:1px solid var(--line);border-radius:15px;background:#0a192a}
+.page-home .dashboard-titleline{display:flex;align-items:baseline;gap:10px;min-width:0;flex-wrap:wrap}.page-home .dashboard-titleline .eyebrow{margin:0}.page-home .dashboard-titleline h2{margin:0;font-size:22px;line-height:1.25}.page-home .dashboard-dday-inline{color:var(--yellow);font-size:19px;white-space:nowrap}.page-home .dashboard-schedule-inline{color:var(--muted);font-size:13px;white-space:nowrap}
+.page-home .dashboard-actions-compact{display:flex;gap:7px;flex:0 0 auto}.page-home .dashboard-actions-compact .btn{min-height:42px;white-space:nowrap}
+.page-home .dashboard-statline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.page-home .dashboard-statline>span{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:#081624}.page-home .dashboard-statline small{color:var(--muted)}.page-home .dashboard-statline b{font-size:17px;font-variant-numeric:tabular-nums}
+.page-home .daily-goal-card{padding:14px!important}.page-home .daily-goal-list{gap:6px!important}.page-home .daily-goal-item{min-height:0!important}.page-home .home-side,.page-home .dashboard-quick,.page-home .motivation-card{display:none!important}
+.page-study .page{overflow:auto!important;overscroll-behavior:contain}.page-study .study-single-scroll{height:auto!important;min-height:0!important;overflow:visible!important;padding-bottom:8px!important}.page-study .study-workspace-single,.page-study .study-mainpane{height:auto!important;min-height:0!important;overflow:visible!important}
+.page-study .study-body-unified{display:block!important;width:100%;max-width:none;min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:16px 20px 18px!important}
+.page-study .study-body-unified>.lesson{width:100%;max-width:980px;margin:0 auto}.page-study .concept-nav-single{position:static!important;inset:auto!important;min-height:54px!important;margin-top:0;padding:8px 12px!important;grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr)!important;background:#081624!important;border-top:1px solid var(--line)!important;box-shadow:none!important}
+.page-study .concept-nav-single .btn{min-height:44px!important}.page-study .mobile-study-nav,.page-study .study-body-desktop,.page-study .study-body-mobile{display:none!important}
+.page-study .concept-visual .visual-flow.vertical-org{gap:7px!important}.page-study .concept-visual .visual-flow.vertical-org>.visual-node{min-height:64px!important;padding:12px!important}.page-study .concept-visual .visual-flow.vertical-org>i{min-height:18px!important}
+.page-study .lesson>section,.page-study .detail-view>section,.page-study .detail-view>details{margin-bottom:10px!important}.page-study .study-quick,.page-study .study-core-essentials,.page-study .study-core-compare,.page-study .study-numbers,.page-study .study-traps{padding:14px!important}
+.page-exam .exam-landing-single{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important;width:100%;max-width:980px;margin:0 auto;align-content:start!important;overflow:visible!important}
+.exam-hub-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:5px;border:1px solid var(--line);border-radius:14px;background:#071421}.exam-hub-tabs button{min-height:46px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:850}.exam-hub-tabs button.on{background:#173151;color:#fff;box-shadow:inset 0 2px 0 var(--blue)}
+.page-exam .exam-pane{width:100%;max-width:820px;margin:0 auto;padding:18px!important;display:grid;gap:13px}.exam-pane-head{display:flex;align-items:start;justify-content:space-between;gap:12px}.exam-pane-head h2{margin:3px 0 4px;font-size:27px}.exam-pane-head p{margin:0;color:var(--muted)}
+.exam-main-start{min-height:50px}.exam-secondary-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.exam-download-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:13px;background:#081624}.exam-download-card>div:first-child{display:grid;gap:4px}.exam-download-card small{color:var(--muted);line-height:1.5}.exam-download-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.official-past-exam-card.compact{padding:11px!important;min-height:0!important}
+.page-exam .training-center.exam-pane{max-width:820px}.page-exam .training-group{padding:11px!important;margin:0!important}.page-exam .training-grid{gap:7px!important}
+.notes-page .note-upload-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}.note-upload-copy{display:grid;gap:5px}.note-upload-copy p{margin:0;line-height:1.55}.note-upload-actions{display:flex;align-items:center;gap:8px}.note-upload-button{cursor:pointer;white-space:nowrap}.note-upload-status{grid-column:1/-1;color:var(--green);line-height:1.45}.notes-page .card{margin-bottom:0!important}
+.pdf-evidence-line{height:3px!important;border-radius:999px!important;background:rgba(255,188,36,.96)!important;box-shadow:0 0 0 1px rgba(255,188,36,.16)!important}
+.pdf-evidence-line[data-exact="true"]{background:rgba(255,165,48,.98)!important}
+@media(max-width:860px){
+  .page-home .dashboard-topline{align-items:stretch;flex-direction:column}.page-home .dashboard-actions-compact{display:grid;grid-template-columns:1fr 1fr}.page-home .dashboard-statline{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .exam-download-card{grid-template-columns:1fr}.exam-download-actions{display:grid;grid-template-columns:1fr 1fr}.exam-download-actions .btn:last-child{grid-column:1/-1}
+}
+@media(max-width:720px){
+  .login-gate-shell{padding:12px}.login-gate-card{padding:20px 16px;border-radius:16px}.login-copy h1{font-size:24px}.login-secondary{grid-template-columns:1fr}
+  .page-home .dashboard-home-compact{gap:8px!important}.page-home .dashboard-topline{padding:12px}.page-home .dashboard-titleline{gap:6px 9px}.page-home .dashboard-titleline h2{font-size:19px;width:100%}.page-home .dashboard-schedule-inline{white-space:normal}.page-home .dashboard-statline>span{padding:8px 10px;min-height:44px}.page-home .daily-goal-card{padding:12px!important}
+  .page-study .study-body-unified{padding:12px 10px 14px!important}.page-study .concept-nav-single{grid-template-columns:1fr 64px 1fr!important;padding:8px 6px!important}.page-study .concept-nav-single .btn{padding-inline:5px!important;font-size:12px!important}
+  .page-study .study-quick,.page-study .study-core-essentials,.page-study .study-core-compare,.page-study .study-numbers,.page-study .study-traps{padding:12px!important}
+  .page-exam .exam-pane{padding:14px!important}.exam-pane-head h2{font-size:23px}.exam-secondary-actions{grid-template-columns:1fr}.exam-download-actions{grid-template-columns:1fr}.exam-download-actions .btn:last-child{grid-column:auto}.training-grid,.training-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .notes-page .note-upload-card{grid-template-columns:1fr}.note-upload-actions{display:grid;grid-template-columns:120px 1fr}.note-upload-button{justify-content:center}
+}
