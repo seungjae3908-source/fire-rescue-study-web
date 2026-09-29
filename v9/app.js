@@ -216,8 +216,9 @@ return `<section class="detail-section detail-definition" data-detail-section="d
 }
 function detailTrapPriority(text,index=0){const t=String(text||'');let score=0;if(/[→←<>≈]|\d/.test(t))score+=4;if(/먼저|다음|순서|시각|시간|기준|비율|주기|분|초/.test(t))score+=5;if(/금지|않|주의|예외|구분|확인|배제|중단/.test(t))score+=2;return{score,index}}
 function detailExamPointBlock(pack){const all=uniqueTextRows([...(pack?.traps||[])]).map(studentStudyText).filter(Boolean),rows=all.map((text,index)=>({text,...detailTrapPriority(text,index)})).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,4).map(x=>x.text);if(!rows.length)return'';return `<section class="detail-exam-points" data-detail-section="traps"><h3>시험 포인트 · 함정/주의</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
+function detailCriteriaRows(pack){return uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,16)||[]).map(studentStudyText).filter(Boolean)).slice(0,12)}
 function detailCriteriaBlock(pack){
-const rows=uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,16)||[]).map(studentStudyText).filter(Boolean)).slice(0,12);
+const rows=detailCriteriaRows(pack);
 if(!rows.length)return'';
 return `<section class="detail-criteria" data-detail-section="criteria"><h3>수치 · 기준</h3><ul>${rows.map(x=>`<li>${numberHighlight(x)}</li>`).join('')}</ul></section>`
 }
@@ -235,7 +236,7 @@ const isOpen=detailSectionShouldOpen(title,index),opened=isOpen?' open':'';retur
 function detailToc(c,pack,rows=[]){
 const items=[['definition','정의']];
 if((pack?.compare||[]).length)items.push(['comparison','비교 · 구분']);
-if((V.StudyEmphasis119?.numberRows?.(pack,16)||[]).length)items.push(['criteria','수치 · 기준']);
+if(detailCriteriaRows(pack).length)items.push(['criteria','수치 · 기준']);
 if((pack?.traps||[]).length)items.push(['traps','시험 함정 · 주의']);
 for(let i=0;i<rows.length;i++){const row=rows[i],sample=detailOnlyText(row?.body,[])||(row?.bullets||[]).map(studentStudyText).filter(Boolean)[0]||'',title=detailSectionTitle(c,row?.title||'',sample);if(title)items.push([String(i),title])}
 const seen=new Set,uniq=items.filter(([,label])=>{const k=studyNorm(label);if(!k||seen.has(k))return false;seen.add(k);return true}).slice(0,8);
