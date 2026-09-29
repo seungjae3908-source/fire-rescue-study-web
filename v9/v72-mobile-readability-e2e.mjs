@@ -7,7 +7,7 @@ const swUrl=new URL('sw.js',base).href;
 const swRes=await fetch(swUrl,{headers:{'cache-control':'no-cache'}});
 assert(swRes.ok,'V72 service worker is publicly reachable');
 const swText=await swRes.text();
-assert(swText.includes("ai-tutor-v9-shell-20260929-v72-mobile-readability"),'V72 service-worker cache epoch is deployed');
+assert(swText.includes("ai-tutor-v9-shell-20260929-v73-ux-regression-consolidation"),'V73 service-worker cache epoch is deployed');
 
 const browser=await chromium.launch({headless:true});
 try{
@@ -20,28 +20,29 @@ try{
 
   await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='home';V.Store.save();V.App.render()});
   const home=await page.evaluate(()=>{
-    const root=document.querySelector('.dashboard-home'),main=root?.querySelector('.home-main'),last=main?.lastElementChild;
-    return root&&main&&last?{
+    const root=document.querySelector('.dashboard-home-compact'),last=root?.lastElementChild;
+    return root&&last?{
       rootOverflow:getComputedStyle(root).overflowY,
-      mainOverflow:getComputedStyle(main).overflowY,
       tail:Math.max(0,root.scrollHeight-(last.offsetTop+last.offsetHeight)),
-      display:getComputedStyle(root).display
+      display:getComputedStyle(root).display,
+      shortcuts:root.textContent.includes('바로가기')
     }:null
   });
-  assert(home&&home.rootOverflow==='auto','mobile home has one route-level vertical scroller');
-  assert(home.mainOverflow==='visible','mobile home child column does not own a second scroll');
-  assert(home.display==='block','mobile home avoids grid-track blank space');
+  assert(home&&['auto','scroll'].includes(home.rootOverflow),'mobile home has one route-level vertical scroller');
+  assert(home.display==='grid','mobile home keeps one compact grid flow');
+  assert(!home.shortcuts,'mobile home removes the shortcut rail');
   assert(home.tail<120,'mobile home has no large blank tail after final study card');
 
   await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='study';V.Store.state.studyTab='core';V.Store.save();V.App.render();const owner=document.querySelector('.page-study .study');if(owner)owner.scrollTop=owner.scrollHeight});
-  await page.waitForSelector('.mobile-study-nav');
+  await page.waitForSelector('.concept-nav-single');
   const nav=await page.evaluate(()=>{
-    const local=document.querySelector('.mobile-study-nav'),global=document.querySelector('.mobile-nav');
+    const local=document.querySelector('.concept-nav-single'),global=document.querySelector('.mobile-nav');
     const a=local.getBoundingClientRect(),b=global.getBoundingClientRect();
-    return{position:getComputedStyle(local).position,localBottom:a.bottom,globalTop:b.top}
+    return{position:getComputedStyle(local).position,localBottom:a.bottom,globalTop:b.top,count:document.querySelectorAll('.concept-nav').length}
   });
-  assert(nav.position==='static','mobile previous/toc/next stays in document flow');
-  assert(nav.localBottom<=nav.globalTop+2,'mobile concept navigation does not cover the global bottom navigation');
+  assert(nav.position==='static','single concept previous/toc/next stays in document flow');
+  assert(nav.count===1,'study renders exactly one concept navigation');
+  assert(nav.localBottom<=nav.globalTop+2,'single concept navigation does not cover the global bottom navigation');
 
   await page.evaluate(async()=>{
     const V=window.AITUTOR_V9;
