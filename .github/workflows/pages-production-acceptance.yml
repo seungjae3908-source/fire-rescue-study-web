@@ -1,10 +1,6 @@
 name: GitHub Pages Production Acceptance
 
 on:
-  pull_request:
-    paths:
-      - 'v9/pages-production-acceptance.mjs'
-      - '.github/workflows/pages-production-acceptance.yml'
   push:
     branches: [main]
     paths:
