@@ -1,38 +1,17 @@
 import { chromium } from 'playwright';
 
-const base=process.env.STUDY_119_PREVIEW_URL||'https://fire-rescue-study-web.vercel.app/';
-const configuredExpected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
-const runtimeHeadUrl=process.env.STUDY_119_RUNTIME_HEAD_URL||new URL('/api/runtime-head',base).href;
-const isPullRequest=process.env.GITHUB_EVENT_NAME==='pull_request';
+const base=process.env.STUDY_119_PREVIEW_URL||'https://seungjae3908-source.github.io/fire-rescue-study-web/v9/';
+const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
+const runtimeHeadUrl=process.env.STUDY_119_RUNTIME_HEAD_URL||new URL('runtime-head.json',base).href;
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
-if(!/^[0-9a-f]{40}$/i.test(configuredExpected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
-const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function waitForGuardedRuntime(){
-  const url=new URL(runtimeHeadUrl);
-  let last={status:0,sha:'',error:''};
-  for(let attempt=1;attempt<=36;attempt++){
-    try{
-      const res=await fetch(url,{cache:'no-store'});
-      let body={};try{body=await res.json()}catch{}
-      last={status:res.status,sha:String(body?.sha||''),ok:body?.ok===true,error:String(body?.error||'')};
-      if(res.status===200&&body?.ok===true&&/^[0-9a-f]{40}$/i.test(last.sha)){
-        if(last.sha===configuredExpected){
-          console.log('PRODUCTION_EXACT_BASE_READY',JSON.stringify({attempt,expected:configuredExpected}));
-          return last.sha;
-        }
-        if(isPullRequest){
-          console.warn('PRODUCTION_BASE_NOT_DEPLOYED_PIN_CURRENT',JSON.stringify({attempt,baseExpected:configuredExpected,currentProduction:last.sha}));
-          return last.sha;
-        }
-      }
-    }catch(error){last={status:0,sha:'',ok:false,error:String(error?.message||error)}}
-    console.log('WAIT_PRODUCTION_EXACT_BASE',JSON.stringify({attempt,expected:configuredExpected,last}));
-    if(attempt<36)await sleep(10000);
-  }
-  throw new Error('TIMEOUT_WAITING_FOR_PRODUCTION_EXACT_BASE '+JSON.stringify({expected:configuredExpected,last}));
-}
+if(!/^[0-9a-f]{40}$/i.test(expected))throw new Error('STUDY_119_EXPECTED_RUNTIME_HEAD_REQUIRED');
 
-const pinnedRuntimeHead=await waitForGuardedRuntime();
+const runtimeRes=await fetch(runtimeHeadUrl,{headers:{'cache-control':'no-cache'}});
+assert(runtimeRes.ok,'Production runtime identity HTTP '+runtimeRes.status);
+const runtime=await runtimeRes.json();
+assert(runtime.sha===expected,'Production runtime identity matches '+expected);
+assert(runtime.ok===true||runtime.source==='github-pages-actions','Production runtime identity is healthy');
+
 const browser=await chromium.launch({headless:true});
 try{
   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
@@ -41,28 +20,10 @@ try{
   page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push('console:'+m.text())});
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.Suggestions,{timeout:60000});
-  await page.waitForSelector('.app',{state:'visible',timeout:60000});
+  await page.waitForSelector('.login-gate-shell',{state:'visible',timeout:60000});
 
-  const runtime=await page.evaluate(async runtimeHeadUrl=>{
-    const res=await fetch(runtimeHeadUrl,{cache:'no-store'});
-    let body={};try{body=await res.json()}catch{}
-    return{status:res.status,...body}
-  },runtimeHeadUrl);
-  assert(runtime.status===200&&runtime.ok===true,'Production runtime identity endpoint healthy');
-  assert(runtime.sha===pinnedRuntimeHead,'Production suggestion acceptance pinned runtime SHA '+pinnedRuntimeHead);
-
-  await page.evaluate(()=>window.AITUTOR_V9.App.go('suggestions'));
-  await page.waitForSelector('.suggestions-page',{timeout:30000});
-  const guest=await page.evaluate(()=>({
-    text:document.querySelector('.suggestions-page')?.textContent||'',
-    submit:document.querySelectorAll('[data-suggest-submit]').length,
-    adminSave:document.querySelectorAll('[data-suggest-admin-save]').length,
-    rows:document.querySelectorAll('.suggestion-row').length,
-    login:document.querySelectorAll('.suggestions-page [data-account]').length
-  }));
-  assert(/회원 전용/.test(guest.text)&&/로그인/.test(guest.text),'guest sees member-only suggestion notice');
-  assert(guest.login===1,'guest suggestion view exposes one login/member button');
-  assert(guest.submit===0&&guest.adminSave===0&&guest.rows===0,'guest cannot see suggestion write/admin/data UI');
+  assert(await page.locator('.suggestions-page').count()===0,'guest cannot enter suggestion route UI before login');
+  assert(await page.locator('[data-signin]').count()===1,'member login action is visible at global gate');
 
   const apiGate=await page.evaluate(async()=>{
     const out={};
@@ -85,13 +46,10 @@ try{
     let body={};try{body=JSON.parse(text)}catch{}
     return{status:res.status,ok:res.ok,code:String(body?.code||''),message:String(body?.message||'')}
   }
-  const suggestions=await anonGet('study_suggestions');
-  const admins=await anonGet('study_admins');
-  console.log('ANON_DATA_API_RESULT',JSON.stringify({
-    study_suggestions:{status:suggestions.status,ok:suggestions.ok,code:suggestions.code},
-    study_admins:{status:admins.status,ok:admins.ok,code:admins.code}
-  }));
-  for(const [name,r] of Object.entries({study_suggestions:suggestions,study_admins:admins})){
+  for(const [name,r] of Object.entries({
+    study_suggestions:await anonGet('study_suggestions'),
+    study_admins:await anonGet('study_admins')
+  })){
     assert(!r.ok,name+' anonymous Data API read is blocked');
     assert([401,403].includes(r.status)||r.code==='42501',name+' anonymous denial is authorization/privilege based');
   }
