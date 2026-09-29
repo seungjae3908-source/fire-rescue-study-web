@@ -477,6 +477,8 @@ jobs:
         env:
           STUDY_119_V74_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v74-mobile-answer-source-e2e.mjs
+      - name: V75 full fire/EMS core-detail semantic dedupe QA
+        run: node v9/v75-full-study-dedupe-e2e.mjs
       - name: V69 bootstrap real-network request QA
         env:
           STUDY_119_V69_URL: http://127.0.0.1:4173/v9/index.html
@@ -548,8 +550,7 @@ jobs:
         run: node v9/v54-tablet-pc-e2e.mjs
       - name: V55 core/detail precision + navigation QA
         run: node v9/v55-core-detail-precision-e2e.mjs
-      - name: V75 full fire/EMS core-detail semantic dedupe QA
-        run: node v9/v75-full-study-dedupe-e2e.mjs
+
       - name: V56 study usability + answer integrity + PDF find QA
         if: steps.remote_pdf.outputs.available == 'true'
         run: node v9/v56-study-usability-integrity-e2e.mjs
