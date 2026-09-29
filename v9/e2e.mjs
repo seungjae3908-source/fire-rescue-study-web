@@ -295,9 +295,8 @@ try{
   assert(await m.locator('.study-body-unified .hazmat-class-card [data-concept="F05-C02"]').count()===1,'always-visible hazardous-material class links directly to its detailed concept');
 
   await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.study-body-unified .hazmat-class-grid');
-  assert(await m.locator('.study-body-unified .hazmat-class-card').count()===6,'hazardous-material detail keeps the six-class reference');
-  assert((await m.locator('.study-body-unified .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material detail visibly reaches class 6');
+  await m.waitForSelector('.study-body-unified .detail-view');
+  assert(await m.locator('.study-body-unified .detail-view .hazmat-class-grid').count()===0,'hazardous-material detail does not duplicate the six-class overview already shown in core');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
