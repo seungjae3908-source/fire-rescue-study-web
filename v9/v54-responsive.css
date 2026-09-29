@@ -216,6 +216,8 @@
   .exam-download-card{grid-template-columns:1fr}.exam-download-actions{display:grid;grid-template-columns:1fr 1fr}.exam-download-actions .btn:last-child{grid-column:1/-1}
 }
 @media(max-width:720px){
+  .page-home .dashboard-home-compact,.page-exam .exam-landing-single{padding-bottom:calc(76px + env(safe-area-inset-bottom))!important}
+  .page-study .study-single-scroll{padding-bottom:calc(76px + env(safe-area-inset-bottom))!important}
   .login-gate-shell{padding:12px}.login-gate-card{padding:20px 16px;border-radius:16px}.login-copy h1{font-size:24px}.login-secondary{grid-template-columns:1fr}
   .page-home .dashboard-home-compact{gap:8px!important}.page-home .dashboard-topline{padding:12px}.page-home .dashboard-titleline{gap:6px 9px}.page-home .dashboard-titleline h2{font-size:19px;width:100%}.page-home .dashboard-schedule-inline{white-space:normal}.page-home .dashboard-statline>span{padding:8px 10px;min-height:44px}.page-home .daily-goal-card{padding:12px!important}
   .page-study .study-body-unified{padding:12px 10px 14px!important}.page-study .concept-nav-single{grid-template-columns:1fr 64px 1fr!important;padding:8px 6px!important}.page-study .concept-nav-single .btn{padding-inline:5px!important;font-size:12px!important}
