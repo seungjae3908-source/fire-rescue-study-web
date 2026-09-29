@@ -41,19 +41,20 @@ try{
       assert(bodyFont>=14.5,vp.label+' keeps study prose at readable tablet/PC size');
     }
 
-    const nav=await page.locator('.page-study .concept-nav').evaluate(el=>{const r=el.getBoundingClientRect();return{height:r.height,bottom:r.bottom,vh:innerHeight}});
-    assert(nav.height<=66&&nav.bottom<=nav.vh+1,vp.label+' previous/contents/next bar stays compact and inside viewport');
+    const nav=await page.locator('.page-study .concept-nav').evaluate(el=>{const r=el.getBoundingClientRect();return{height:r.height,position:getComputedStyle(el).position,count:document.querySelectorAll('.page-study .concept-nav').length}});
+    assert(nav.count===1&&nav.height<=66&&nav.position==='static',vp.label+' keeps one compact previous/contents/next bar in the study document flow');
 
     if(vp.width<=1180){
       await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='home';V.Store.save();V.App.render()});
       await page.waitForSelector('.page-home .dashboard-home');
-      const home=await page.locator('.page-home .dashboard-home').evaluate(root=>{
-        const main=root.querySelector('.home-main')?.getBoundingClientRect(),side=root.querySelector('.home-side')?.getBoundingClientRect();
-        return{scrollWidth:root.scrollWidth,clientWidth:root.clientWidth,mainBottom:main?.bottom||0,sideTop:side?.top||0,sideDisplay:root.querySelector('.home-side')?getComputedStyle(root.querySelector('.home-side')).display:'none'};
-      });
+      const home=await page.locator('.page-home .dashboard-home').evaluate(root=>({
+        scrollWidth:root.scrollWidth,clientWidth:root.clientWidth,
+        columns:getComputedStyle(root).gridTemplateColumns.split(' ').filter(Boolean).length,
+        quick:root.querySelectorAll('.dashboard-quick,.home-side,.motivation-card').length,
+        actions:root.querySelectorAll('.dashboard-actions-compact .btn').length
+      }));
       assert(home.scrollWidth<=home.clientWidth+2,vp.label+' home dashboard has no horizontal overflow');
-      assert(home.sideDisplay!=='none',vp.label+' keeps schedule/motivation visible instead of hiding tablet content');
-      assert(home.sideTop>=home.mainBottom-2,vp.label+' stacks tablet dashboard secondary cards below the main learning column');
+      assert(home.columns===1&&home.quick===0&&home.actions===2,vp.label+' uses the compact one-column home without the removed shortcut/motivation rail');
 
       await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='exam';V.Store.save();V.App.render()});
       await page.waitForSelector('.page-exam .exam-landing');
@@ -81,7 +82,7 @@ try{
   assert(strategy.mirrors.length===10&&strategy.mirrors.every(x=>x.transport==='range-static'&&!!x.mirrorPdf&&!x.proxyPdf&&x.mirrorPdf.startsWith(expectedMirrorBase+'/')),'all ten textbooks use the configured static range mirror without a paid runtime proxy dependency');
   assert(strategy.fire1.mirror===true&&strategy.fire1.range===true&&strategy.fire1.rangeProxy===false&&!!strategy.fire1.rangeUrl,'mirrored textbook availability exposes the static range path');
   assert(strategy.law2.mirror===true&&strategy.law2.range===true&&strategy.law2.rangeProxy===false&&strategy.law2.rangeUrl===expectedMirrorBase+'/law2.pdf','large law textbook availability exposes the configured static range path');
-  assert(strategy.runtime==='pdfjs-v15-range-remote-cache-epoch-anchor-context-lines','PDF runtime reports the cache-epoch range-first engine');
+  assert(strategy.runtime==='pdfjs-v16-range-remote-cache-epoch-precise-evidence-ranges','PDF runtime reports the precise-evidence range-first engine');
   await ctx.close();
   console.log('V54_TABLET_PC_PDF_RANGE_ACCEPTANCE_SUCCESS');
 }finally{await browser.close()}

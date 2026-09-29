@@ -72,6 +72,7 @@ try{
     }
 
     await go(page,'exam');
+    await page.locator('[data-exam-hub="training"]').click();
     await page.locator('[data-training-start="fire50"]').click();
     await page.waitForSelector('.exam-run-workspace');
     await settle(page);

@@ -98,7 +98,7 @@ try{
   const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
   const mp=await mobile.newPage(),merr=collectErrors(mp);mp.setDefaultTimeout(90000);
   await boot(mp);await enter(mp,'F05-C01');await noX(mp,'release mobile study');
-  assert(await mp.locator('.book-mobile').isVisible(),'mobile uses one-scroll electronic textbook');
+  assert(await mp.locator('.study-body-unified').isVisible(),'mobile uses one-scroll electronic textbook');
   const mobileCalcTruth=await mp.evaluate(()=>{
     const V=window.AITUTOR_V9,s=V.Store.state,a=V.contentPacks.authored['F05-C01'],g=V.contentPacks.get('F05-C01');
     return{
@@ -107,9 +107,9 @@ try{
       getCalculations:(g?.calculations||[]).length,
       formula:String(g?.calculations?.[0]?.formula||''),
       hazmat2026:!!V.Hazmat2026,
-      calcLabs:document.querySelectorAll('.book-mobile .calc-lab').length,
+      calcLabs:document.querySelectorAll('.study-body-unified .calc-lab').length,
       currentHeading:document.querySelector('.concept-head h2')?.textContent||'',
-      bookHasCalcWord:(document.querySelector('.book-mobile')?.textContent||'').includes('계산문제')
+      bookHasCalcWord:(document.querySelector('.study-body-unified')?.textContent||'').includes('계산문제')
     };
   });
   console.log('MOBILE_CALC_TRUTH',JSON.stringify(mobileCalcTruth));

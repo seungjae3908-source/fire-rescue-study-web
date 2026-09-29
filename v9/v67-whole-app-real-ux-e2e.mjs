@@ -129,6 +129,8 @@ try{
     }
 
     await go(page,'exam');
+    const trainingTab=page.locator('[data-exam-hub="training"]');
+    if(await trainingTab.count())await trainingTab.click();
     const start=page.locator('[data-training-start="fire50"]:visible');
     if(await start.count()){
       await start.click();await page.waitForSelector('.exam-run-workspace',{timeout:30000});await settle(page);

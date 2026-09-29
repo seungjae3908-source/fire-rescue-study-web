@@ -71,10 +71,10 @@ async function auditVisible(page,meta){
     }
     const action=document.querySelector('.page-study .actionbar'),nav=document.querySelector('.mobile-nav');
     let chromeOverlap=null;
-    if(action&&nav&&visible(action)&&visible(nav)){const a=action.getBoundingClientRect(),n=nav.getBoundingClientRect();if(a.bottom>n.top+1)chromeOverlap={type:'action-nav-overlap',actionBottom:a.bottom,navTop:n.top}}
+    if(action&&nav&&visible(action)&&visible(nav)){const a=action.getBoundingClientRect(),n=nav.getBoundingClientRect(),owner=action.closest('[data-scroll-owner="study"]'),o=owner?.getBoundingClientRect(),aTop=o?Math.max(a.top,o.top):a.top,aBottom=o?Math.min(a.bottom,o.bottom):a.bottom,ix=Math.max(0,Math.min(a.right,n.right)-Math.max(a.left,n.left)),iy=Math.max(0,Math.min(aBottom,n.bottom)-Math.max(aTop,n.top));if(aBottom>aTop&&ix>1&&iy>1)chromeOverlap={type:'action-nav-overlap',actionTop:aTop,actionBottom:aBottom,navTop:n.top,navBottom:n.bottom}}
     const nestedScroll=[],density=[];
     if(innerWidth<=720){
-      const primary=document.querySelector('.page-study .study-body-mobile');
+      const primary=document.querySelector('.page-study .study-body-unified,.page-study .study-body-mobile');
       if(primary&&visible(primary)){
         for(const el of primary.querySelectorAll('*')){
           if(!visible(el))continue;
@@ -123,7 +123,7 @@ async function auditLearnerFraming(page,{id,tab,width}){
   if(!['core','detail','quiz'].includes(tab))return;
   const x=await page.evaluate(()=>{
     const visible=el=>{if(!el)return false;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
-    const root=[...document.querySelectorAll('.study-body-mobile,.study-body-desktop')].find(visible);
+    const root=[...document.querySelectorAll('.study-body-unified,.study-body-mobile,.study-body-desktop')].find(visible);
     const text=(root?.innerText||'').replace(/\s+/g,' ').trim();
     const sourceFraming=/(?:20\d{2}\s*)?(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)/i;
     const metaStudy=/개념\s*구조와\s*읽는\s*순서|핵심\s*포인트\s*연결|문제\s*적용과\s*난이도\s*대응|공식\s*원문으로\s*복귀하는\s*기준|회상\s*루프/;
@@ -136,7 +136,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
   if(!['core','detail'].includes(tab))return;
   const x=await page.evaluate(({tab,id})=>{
     const visible=el=>{if(!el)return false;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
-    const root=[...document.querySelectorAll('.study-body-mobile,.study-body-desktop')].find(visible);
+    const root=[...document.querySelectorAll('.study-body-unified,.study-body-mobile,.study-body-desktop')].find(visible);
     if(!root)return null;
     const V=window.AITUTOR_V9,pack=V.contentPacks.get(id)||{},norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');
     const rows=sel=>[...root.querySelectorAll(sel)].filter(visible).map(x=>norm(x.textContent)).filter(Boolean);
@@ -158,7 +158,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
       compareCards:compareCards.length,
       compareBodiesVisible:compareCards.every(el=>visible(el.querySelector('p'))&&(el.querySelector('p')?.textContent||'').trim().length>0),
       expandableCompare:root.querySelectorAll('details.concept-class-card').length,
-      expectedCriteria:(V.StudyEmphasis119?.numberRows?.(pack,16)||[]).length>0,
+      expectedCriteria:(V.StudyEmphasis119?.numberRows?.(pack,16)||[]).map(x=>V.App?.studentStudyText?.(x)||'').filter(Boolean).length>0,
       detailCriteria:root.querySelectorAll('.detail-criteria').length,
       coreFavoriteText:(root.querySelector('.study-core-save')?.textContent||'').trim(),
       separatePassOpen:root.querySelectorAll('[data-pass-note-open]').length,

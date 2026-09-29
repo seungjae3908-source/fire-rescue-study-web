@@ -24,6 +24,7 @@ async function openApp(browser,{width=1920,height=1080}={}){
   const started=now();
   await page.goto(production,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.Store,{timeout:60000});
+  await page.evaluate(()=>{const V=window.AITUTOR_V9;if(V?.Auth&&!V.Auth.user){try{Object.defineProperty(V.Auth,'user',{value:{id:'qa-member',email:'qa@local.invalid'},configurable:true})}catch{}V.App?.render?.()}});
   const appReadyMs=now()-started;
   const nav=await page.evaluate(()=>{
     const n=performance.getEntriesByType('navigation')[0];

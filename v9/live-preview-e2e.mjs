@@ -124,7 +124,7 @@ try{
   const mp=await mobile.newPage(),merr=collectErrors(mp);
   mp.setDefaultTimeout(60000);
   await boot(mp);await enterStudy(mp);await noX(mp,'live mobile');
-  assert(await mp.locator('.book-mobile').isVisible(),'live mobile uses one-scroll electronic textbook');
+  assert(await mp.locator('.study-body-unified').isVisible(),'live mobile uses one-scroll electronic textbook');
   assert(await mp.locator('.study-rail').isHidden(),'live mobile hides desktop rail');
 
   await openEvidence(mp,'E24-C03','ems',{anchored:true,pager:true});

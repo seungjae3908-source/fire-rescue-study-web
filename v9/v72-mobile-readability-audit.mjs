@@ -23,15 +23,15 @@ assert(pdf.includes('const expandEvidence=')&&pdf.includes('sentenceEnded(cur.te
 assert(pdf.includes('return picked.slice(0,12)'),'PDF evidence highlight remains bounded');
 
 assert(css.includes('V72 mobile field-report hardening'),'V72 mobile final-override block exists');
-assert(css.includes('.page-study .mobile-study-nav{')&&css.includes('position:static!important'),'mobile previous/toc/next navigation no longer overlays reading content');
+assert(css.includes('.page-study .concept-nav-single')&&css.includes('position:static!important'),'one concept previous/toc/next navigation stays in document flow');
 assert(css.includes('body:has(.pdf-evidence-modal) .mobile-nav'),'PDF evidence modal hides the global bottom navigation');
 assert(css.includes('.pdf-render-meta{')&&css.includes('position:static!important'),'PDF evidence meta label no longer overlays the PDF canvas');
-assert(css.includes('.page-home .dashboard-home{')&&css.includes('display:block!important'),'mobile home uses one predictable scroll flow');
+assert(css.includes('.page-home .dashboard-home-compact')&&css.includes('overflow-y:auto!important'),'mobile home uses one compact route-level scroll flow');
 assert(css.includes('.note-core-line,.note-number-line,.note-answer-line')&&css.includes('text-decoration-line:underline!important'),'pass-note core and number lines receive visible underline emphasis');
 
 assert(boot7b.includes('const expandEvidence=')&&boot7b.includes('const normalizeBody='),'runtime source bundle 7b contains V72 PDF and pass-note logic');
 assert(boot8.includes('function tutorPromptRelevant(')&&boot8.includes('note-core-line'),'runtime source bundle 8 contains V72 tutor and note-preview logic');
-assert(sw.includes("const CACHE='ai-tutor-v9-shell-20260929-v72-mobile-readability'"),'V72 service-worker cache epoch invalidates pre-V72 cached boot and responsive assets');
+assert(sw.includes("const CACHE='ai-tutor-v9-shell-20260929-v73-ux-regression-consolidation'"),'V73 service-worker cache epoch invalidates stale V72 boot and responsive assets');
 assert(sw.includes("keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k))"),'V72 service worker deletes older V9 shell caches on activation');
 
 console.log('V72_MOBILE_READABILITY_AUDIT_SUCCESS');

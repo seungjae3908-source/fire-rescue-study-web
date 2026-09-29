@@ -137,7 +137,8 @@ try{
   assert(examText.includes('65문항 · 65분')&&examText.includes('소방학개론 25문항')&&examText.includes('응급처치학개론 40문항'),'exam landing shows real 25+40 / 65-minute format');
   assert(!examText.includes('검증문제')&&!examText.includes('미검증'),'exam landing hides question-bank engineering state');
 
-  assert(await p.locator('[data-training-start]').count()===11,'exam landing exposes fire EMS full-range wrong-answer and weak-concept training modes');
+  await p.locator('[data-exam-hub="training"]').click();
+  assert(await p.locator('[data-training-start]').count()===11,'problem-training hub exposes fire EMS full-range wrong-answer and weak-concept modes');
   await p.locator('[data-training-start="fire50"]').click();await p.waitForSelector('.exam-run-workspace');
   const fire50=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,label:e.blueprint?.label}});
   assert(fire50.mode==='training'&&fire50.total===50&&fire50.fire===50&&fire50.ems===0&&/소방학 집중 50/.test(fire50.label||''),'fire 50 training builds fifty unique fire questions outside real mock mode');
@@ -145,11 +146,12 @@ try{
   assert(pcExamLayout.sideVisible&&pcExamLayout.q>pcExamLayout.s*2&&pcExamLayout.nav===50,'desktop active exam uses a wide question pane plus a narrower progress navigator');
   await p.locator('.exam-navigator [data-exam-jump="4"]').click();
   assert((await p.evaluate(()=>window.AITUTOR_V9.App.runtime.exam.i))===4,'desktop exam navigator jumps directly to the chosen question');
-  await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('.exam-start');
+  await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('[data-exam-hub="training"]');
+  if(!(await p.locator('[data-training-start="all200"]:visible').count()))await p.locator('[data-exam-hub="training"]').click();
   await p.locator('[data-training-start="all200"]').click();await p.waitForSelector('.exam-run-workspace');
   const all200=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,unique:new Set(e.qs.map(q=>q.id)).size}});
   assert(all200.mode==='training'&&all200.total===200&&all200.fire===77&&all200.ems===123&&all200.unique===200,'full-range 200 training preserves exam-like subject ratio with unique questions');
-  await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('.exam-start');
+  await p.evaluate(()=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.App.runtime.examHub='mock';V.App.go('exam')});await p.waitForSelector('.exam-start');
 
   await go(p,'stats');await cleanPage(p,'desktop stats');
   const desktopStatsLayout=await p.locator('.stats-page').evaluate(root=>{const main=root.querySelector('.home-main'),rr=root.getBoundingClientRect(),mr=main?.getBoundingClientRect();return{gridWidth:rr.width,mainWidth:mr?.width||0,columns:getComputedStyle(root).gridTemplateColumns}});
@@ -217,13 +219,13 @@ try{
   const todayTitleBox=await m.locator('.today-item').first().locator('b').boundingBox();
   assert(todayBox&&todayTitleBox&&todayTitleBox.width>Math.min(220,todayBox.width*.55),'today learning title receives the main row width instead of a narrow legacy score column');
 
-  await m.locator('.mobile-nav [data-go="study"]').click();await m.waitForSelector('.book-mobile');
+  await m.locator('.mobile-nav [data-go="study"]').click();await m.waitForSelector('.study-body-unified');
   await cleanPage(m,'mobile study');
   assert(await m.locator('.page-study .top').isHidden(),'mobile study removes duplicate global header');
-  assert(await m.locator('.page-study .concept-nav').isHidden(),'mobile study removes the duplicate concept footer above the primary app navigation');
-  assert(await m.locator('.book-jumpbar button').count()===5,'mobile study has five true content tabs');
-  assert((await m.locator('.book-jumpbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문 AI','mobile tabs are 핵심/상세/문제/원문/AI');
-  await m.locator('.book-jumpbar [data-study-tab="ai"]').click();
+  assert(await m.locator('.page-study .concept-nav').count()===1,'mobile study renders exactly one concept navigation');
+  assert(await m.locator('.concept-head .tabbar button').count()===5,'mobile study has five true content tabs');
+  assert((await m.locator('.concept-head .tabbar').innerText()).replace(/\s+/g,' ').trim()==='핵심 상세 문제 원문 AI','mobile tabs are 핵심/상세/문제/원문/AI');
+  await m.locator('.concept-head .tabbar [data-study-tab="ai"]').click();
   await m.evaluate(()=>{try{Object.defineProperty(navigator,'gpu',{value:undefined,configurable:true})}catch{}});
   const mobileAiInput=m.locator('.study-body-mobile [data-tutor-input]');
   const mobileCurrent=await m.evaluate(()=>window.AITUTOR_V9.Store.state.conceptId);
@@ -240,94 +242,94 @@ try{
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
-  await m.locator('.book-jumpbar [data-study-tab="quiz"]').click();
-  await m.waitForSelector('.book-section .question-card');
-  assert(await m.locator('.book-section .question-card').first().locator('.tag').count()===0,'practice question hides difficulty/evidence badges before the student answers');
-  assert(await m.locator('.book-section .question-card').count()===1,'concept practice shows exactly one question at a time instead of an infinite scroll list');
-  assert(await m.locator('.book-section .study-quiz-pager').count()===1,'concept practice exposes previous/current/next navigation');
-  const quizPagerPosition=await m.locator('.book-section .study-quiz-pager').evaluate(el=>getComputedStyle(el).position);
+  await m.locator('.concept-head .tabbar [data-study-tab="quiz"]').click();
+  await m.waitForSelector('.study-body-unified .question-card');
+  assert(await m.locator('.study-body-unified .question-card').first().locator('.tag').count()===0,'practice question hides difficulty/evidence badges before the student answers');
+  assert(await m.locator('.study-body-unified .question-card').count()===1,'concept practice shows exactly one question at a time instead of an infinite scroll list');
+  assert(await m.locator('.study-body-unified .study-quiz-pager').count()===1,'concept practice exposes previous/current/next navigation');
+  const quizPagerPosition=await m.locator('.study-body-unified .study-quiz-pager').evaluate(el=>getComputedStyle(el).position);
   assert(quizPagerPosition==='static','concept practice pager stays in document flow instead of creating a second sticky footer');
-  const firstPracticeQuestion=(await m.locator('.book-section .question-card h2').innerText()).trim();
-  const quizTotal=await m.locator('.book-section .study-quiz-progress b').innerText();
+  const firstPracticeQuestion=(await m.locator('.study-body-unified .question-card h2').innerText()).trim();
+  const quizTotal=await m.locator('.study-body-unified .study-quiz-progress b').innerText();
   assert(/^1\s*\/\s*\d+/.test(quizTotal),'concept practice starts at question 1 with an explicit total');
-  await m.locator('.book-section .question-card').first().locator('.choice').first().click();
-  assert(await m.locator('.book-section .question-card').first().locator('.question-result-meta .tag').count()===1,'practice question shows only compact difficulty feedback after answering');
+  await m.locator('.study-body-unified .question-card').first().locator('.choice').first().click();
+  assert(await m.locator('.study-body-unified .question-card').first().locator('.question-result-meta .tag').count()===1,'practice question shows only compact difficulty feedback after answering');
   const nextPractice=m.locator('.study-body-mobile [data-study-quiz-next]:not([disabled])');
   if(await nextPractice.count()){
     await nextPractice.click();
-    const secondPracticeQuestion=(await m.locator('.book-section .question-card h2').innerText()).trim();
+    const secondPracticeQuestion=(await m.locator('.study-body-unified .question-card h2').innerText()).trim();
     assert(secondPracticeQuestion!==firstPracticeQuestion,'concept practice next button advances to a different question');
   }
-  await m.locator('.book-jumpbar [data-study-tab="core"]').click();
-  await m.waitForSelector('.book-section .study-core-essentials');
-  assert(await m.locator('.book-section .study-quick').count()===1,'core keeps one concise summary only');
-  assert(await m.locator('.book-section .study-core-essentials li').count()>=1&&await m.locator('.book-section .study-core-essentials li').count()<=5,'core limits exam essentials to five concise points');
-  assert(await m.locator('.book-section .study-must,.book-section .study-schema,.book-section .detail-section').count()===0,'core excludes detailed/exam-full duplicate sections');
-  const coreDuplicateNumeric=await m.locator('.book-section .core-view').evaluate(root=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const essentials=[...root.querySelectorAll('.study-core-essentials li span')].map(x=>norm(x.textContent)).filter(Boolean),nums=[...root.querySelectorAll('.study-numbers li .study-key-text')].map(x=>norm(x.textContent)).filter(Boolean);return essentials.some(a=>nums.some(b=>a===b||(Math.min(a.length,b.length)>=18&&(a.includes(b)||b.includes(a)))))}); 
+  await m.locator('.concept-head .tabbar [data-study-tab="core"]').click();
+  await m.waitForSelector('.study-body-unified .study-core-essentials');
+  assert(await m.locator('.study-body-unified .study-quick').count()===1,'core keeps one concise summary only');
+  assert(await m.locator('.study-body-unified .study-core-essentials li').count()>=1&&await m.locator('.study-body-unified .study-core-essentials li').count()<=5,'core limits exam essentials to five concise points');
+  assert(await m.locator('.study-body-unified .study-must,.study-body-unified .study-schema,.study-body-unified .detail-section').count()===0,'core excludes detailed/exam-full duplicate sections');
+  const coreDuplicateNumeric=await m.locator('.study-body-unified .core-view').evaluate(root=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const essentials=[...root.querySelectorAll('.study-core-essentials li span')].map(x=>norm(x.textContent)).filter(Boolean),nums=[...root.querySelectorAll('.study-numbers li .study-key-text')].map(x=>norm(x.textContent)).filter(Boolean);return essentials.some(a=>nums.some(b=>a===b||(Math.min(a.length,b.length)>=18&&(a.includes(b)||b.includes(a)))))}); 
   assert(!coreDuplicateNumeric,'core keeps numeric facts in one dedicated block instead of repeating them in exam essentials');
   const starBefore=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
-  assert(await m.locator('.book-section .study-star-btn').count()===0,'core removes sentence-by-sentence favorite stars');
-  assert(await m.locator('.book-section .study-core-save').count()===1,'core exposes exactly one concept-level favorite control');
-  assert((await m.locator('.book-section .study-core-save').innerText()).trim()==='합격노트 ☆','unsaved concept favorite is labeled 합격노트 ☆');
-  assert(await m.locator('.book-section [data-pass-note-open]').count()===0,'core removes the separate 합격노트 보기 control');
-  await m.locator('.book-section .study-core-save').click();
+  assert(await m.locator('.study-body-unified .study-star-btn').count()===0,'core removes sentence-by-sentence favorite stars');
+  assert(await m.locator('.study-body-unified .study-core-save').count()===1,'core exposes exactly one concept-level favorite control');
+  assert((await m.locator('.study-body-unified .study-core-save').innerText()).trim()==='합격노트 ☆','unsaved concept favorite is labeled 합격노트 ☆');
+  assert(await m.locator('.study-body-unified [data-pass-note-open]').count()===0,'core removes the separate 합격노트 보기 control');
+  await m.locator('.study-body-unified .study-core-save').click();
   const starAfter=await m.evaluate(()=>{const V=window.AITUTOR_V9,n=V.PassNote.passNotes().find(x=>x.id===V.PassNote.conceptCoreKey(V.Store.state.conceptId));return{count:V.PassNote.passNotes().length,body:n?.body||'',type:n?.sourceType||''}});
   assert(starAfter.count===starBefore+1&&starAfter.type==='pass-star-concept'&&starAfter.body.includes('[핵심]'),'합격노트 ☆ saves the whole concept core as one pass note');
-  assert((await m.locator('.book-section .study-core-save.on').innerText()).trim()==='합격노트 ★','saved concept favorite changes to 합격노트 ★');
-  await m.locator('.book-section .study-core-save.on').click();
+  assert((await m.locator('.study-body-unified .study-core-save.on').innerText()).trim()==='합격노트 ★','saved concept favorite changes to 합격노트 ★');
+  await m.locator('.study-body-unified .study-core-save.on').click();
   const starRemoved=await m.evaluate(()=>window.AITUTOR_V9.PassNote.passNotes().length);
-  assert(starRemoved===starBefore&&(await m.locator('.book-section .study-core-save').innerText()).trim()==='합격노트 ☆','pressing 합격노트 ★ removes the whole concept note and restores ☆');
+  assert(starRemoved===starBefore&&(await m.locator('.study-body-unified .study-core-save').innerText()).trim()==='합격노트 ☆','pressing 합격노트 ★ removes the whole concept note and restores ☆');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
-  await m.waitForSelector('.book-section .core-view .hazmat-class-grid');
-  assert(await m.locator('.book-section .core-view .hazmat-class-card').count()===6,'hazardous-material core keeps all six class names visible');
-  const hazCore=await m.locator('.book-section .core-view .hazmat-class-grid').innerText();
+  await m.waitForSelector('.study-body-unified .core-view .hazmat-class-grid');
+  assert(await m.locator('.study-body-unified .core-view .hazmat-class-card').count()===6,'hazardous-material core keeps all six class names visible');
+  const hazCore=await m.locator('.study-body-unified .core-view .hazmat-class-grid').innerText();
   assert(hazCore.includes('제4류')&&hazCore.includes('제5류')&&hazCore.includes('제6류'),'hazardous-material core does not omit classes 4, 5 or 6');
-  assert(await m.locator('.book-section [data-hazmat-class-toggle]').count()===0,'hazardous-material classes require no expand toggle');
-  const hazVisible=await m.locator('.book-section .hazmat-class-card').first().innerText();
+  assert(await m.locator('.study-body-unified [data-hazmat-class-toggle]').count()===0,'hazardous-material classes require no expand toggle');
+  const hazVisible=await m.locator('.study-body-unified .hazmat-class-card').first().innerText();
   assert(hazVisible.includes('아염소산염류')&&hazVisible.includes('50 kg'),'class-1 item names and designated quantities are visible without tapping');
-  assert(await m.locator('.book-section .hazmat-class-card [data-concept="F05-C02"]').count()===1,'always-visible hazardous-material class links directly to its detailed concept');
+  assert(await m.locator('.study-body-unified .hazmat-class-card [data-concept="F05-C02"]').count()===1,'always-visible hazardous-material class links directly to its detailed concept');
 
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.book-section .hazmat-class-grid');
-  assert(await m.locator('.book-section .hazmat-class-card').count()===6,'hazardous-material detail keeps the six-class reference');
-  assert((await m.locator('.book-section .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material detail visibly reaches class 6');
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.study-body-unified .hazmat-class-grid');
+  assert(await m.locator('.study-body-unified .hazmat-class-card').count()===6,'hazardous-material detail keeps the six-class reference');
+  assert((await m.locator('.study-body-unified .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material detail visibly reaches class 6');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.book-section .detail-view');
-  const detailText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.study-body-unified .detail-view');
+  const detailText=await m.locator('.study-body-unified').innerText();
   assert(!detailText.includes('개념 구조와 읽는 순서')&&!detailText.includes('개념 이해'),'mobile detail simplifies meta headings to 개념');
-  assert(await m.locator('.book-section .detail-num').count()===0,'mobile detail has no detached numeric badges');
-  assert(await m.locator('.book-section .detail-view>.lead').count()===0,'detail tab does not repeat the core summary above structured detail');
-  assert(await m.locator('.book-section .detail-view .study-must,.book-section .detail-view .study-quick,.book-section .detail-view .study-core-essentials').count()===0,'detail contains detail content only, without core blocks');
+  assert(await m.locator('.study-body-unified .detail-num').count()===0,'mobile detail has no detached numeric badges');
+  assert(await m.locator('.study-body-unified .detail-view>.lead').count()===0,'detail tab does not repeat the core summary above structured detail');
+  assert(await m.locator('.study-body-unified .detail-view .study-must,.study-body-unified .detail-view .study-quick,.study-body-unified .detail-view .study-core-essentials').count()===0,'detail contains detail content only, without core blocks');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F01-C01',{keepTab:true}));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F01-C01');
-  const orgNode= m.locator('.book-section .vertical-org .org-node b').first();
+  const orgNode= m.locator('.study-body-unified .vertical-org .org-node b').first();
   await orgNode.waitFor();
   const orgStyle=await orgNode.evaluate(el=>({writingMode:getComputedStyle(el).writingMode,wordBreak:getComputedStyle(el).wordBreak,width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,text:el.textContent||''}));
   assert(orgStyle.writingMode==='horizontal-tb'&&orgStyle.width>orgStyle.height*1.4,'mobile fire-organization labels render horizontally instead of one Korean character per line');
-  const compareCard=m.locator('.book-section .concept-class-card.static').first();
+  const compareCard=m.locator('.study-body-unified .concept-class-card.static').first();
   await compareCard.waitFor();
   const cardLayout=await compareCard.evaluate(el=>{const b=el.querySelector('b'),p=el.querySelector('p'),r=el.getBoundingClientRect();return{width:r.width,label:b?.textContent||'',body:p?.textContent||'',bodyVisible:!!p&&getComputedStyle(p).display!=='none',hasDetails:!!el.closest('details')||el.tagName==='DETAILS'}});
   assert(cardLayout.width>250&&cardLayout.label&&cardLayout.body&&cardLayout.bodyVisible&&!cardLayout.hasDetails,'mobile comparison shows label and explanation immediately in a full-width static card');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03',{keepTab:true}));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
-  const keyLine= m.locator('.book-section .detail-view .study-key-text').first();
+  const keyLine= m.locator('.study-body-unified .detail-view .study-key-text').first();
   if(await keyLine.count()){const keyLineStyle=await keyLine.evaluate(el=>getComputedStyle(el).textDecorationLine);assert(!keyLineStyle.includes('underline'),'detail emphasis no longer makes normal study text look like links')}
-  const dup=await m.locator('.book-section .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
+  const dup=await m.locator('.study-body-unified .detail-section p').evaluateAll(nodes=>{const norm=s=>String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');const a=nodes.map(n=>norm(n.textContent)).filter(Boolean);return a.length!==new Set(a).size});
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.book-section .concept-visual .visual-node');
-  const visualLayouts=await m.locator('.book-section .concept-visual').evaluateAll(roots=>roots.map(root=>{const nodes=[...root.querySelectorAll('.visual-node')].map(x=>x.getBoundingClientRect()),labels=[...root.querySelectorAll('.visual-node b')].map(x=>({text:x.textContent||'',scroll:x.scrollWidth,client:x.clientWidth,wordBreak:getComputedStyle(x).wordBreak}));return{nodes,labels}}));
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.study-body-unified .concept-visual .visual-node');
+  const visualLayouts=await m.locator('.study-body-unified .concept-visual').evaluateAll(roots=>roots.map(root=>{const nodes=[...root.querySelectorAll('.visual-node')].map(x=>x.getBoundingClientRect()),labels=[...root.querySelectorAll('.visual-node b')].map(x=>({text:x.textContent||'',scroll:x.scrollWidth,client:x.clientWidth,wordBreak:getComputedStyle(x).wordBreak}));return{nodes,labels}}));
   assert(visualLayouts.length>=1&&visualLayouts.every(v=>v.nodes.every((n,i,a)=>i===0||n.y>=a[i-1].y+a[i-1].height-1)),'all mobile principle diagrams stack vertically without card collisions');
   assert(visualLayouts.every(v=>v.labels.every(x=>x.scroll<=x.client+2)),'all mobile principle-diagram labels stay inside their cards');
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
   const bodyHeight=await m.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
   assert(bodyHeight>=320,'mobile study keeps at least 320px for learning content');
 
@@ -336,24 +338,24 @@ try{
   assert(!/F\d\d-C\d\d/.test(mtoc)&&/1\.\s/.test(mtoc),'mobile TOC uses aligned numbered names without ids');
   await m.locator('.outline.open button[data-outline-close]').click();
 
-  const studyBodyBox=await m.locator('.study-body-mobile').boundingBox(),nav=await m.locator('.mobile-nav').boundingBox();
-  assert(studyBodyBox&&nav&&studyBodyBox.y+studyBodyBox.height<=nav.y+2,'learning content ends cleanly above the single bottom navigation');
+  const studyRouteBox=await m.locator('.study[data-scroll-owner="study"]').boundingBox(),nav=await m.locator('.mobile-nav').boundingBox();
+  assert(studyRouteBox&&nav&&studyRouteBox.y+studyRouteBox.height<=nav.y+2,'learning scroll viewport ends cleanly above the single bottom navigation');
   const scrollState=await m.evaluate(()=>{
     const route=document.querySelector('.page-study .study[data-scroll-owner="study"]'),body=document.querySelector('.page-study .study-body-mobile');
     const visibleOwners=[...document.querySelectorAll('.page-study [data-scroll-owner]')].filter(el=>el.offsetParent!==null).map(el=>el.getAttribute('data-scroll-owner'));
     return{routeOverflow:route?getComputedStyle(route).overflowY:'',bodyOverflow:body?getComputedStyle(body).overflowY:'',routeScrollHeight:route?.scrollHeight||0,routeClientHeight:route?.clientHeight||0,visibleOwners};
   });
   assert(['auto','scroll'].includes(scrollState.routeOverflow)&&!['auto','scroll'].includes(scrollState.bodyOverflow)&&scrollState.visibleOwners.length===1&&scrollState.visibleOwners[0]==='study','mobile study uses one route-level vertical scroller without a nested body scroller');
-  const mobileTabPosition=await m.locator('.book-jumpbar').evaluate(el=>getComputedStyle(el).position);
+  const mobileTabPosition=await m.locator('.concept-head .tabbar').evaluate(el=>getComputedStyle(el).position);
   assert(mobileTabPosition==='static','mobile study tabs do not stick over or cover the learning text');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C14',{keepTab:true}));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C14');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.book-section .detail-view');
-  const waterSupplyDetail=await m.locator('.book-section .detail-view').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.study-body-unified .detail-view');
+  const waterSupplyDetail=await m.locator('.study-body-unified .detail-view').innerText();
   for(const term of ['소화수조','저수조','채수구','흡수관투입구','2m','20㎥','0.6m','65mm','0.5m','1m'])assert(waterSupplyDetail.includes(term),'fire-water detail visibly contains '+term);
-  assert(await m.locator('.book-section .concept-class-card.static').count()>=4,'fire-water comparison facts are visible without any expand action');
+  assert(await m.locator('.study-body-unified .concept-class-card.static').count()>=4,'fire-water comparison facts are visible without any expand action');
 
   const fullDetailContract=await m.evaluate(()=>{
     const V=window.AITUTOR_V9,out={total:0,dupCompare:[],missingV50:[]};
@@ -375,7 +377,7 @@ try{
   assert(pageMap.fire1===30&&pageMap.fire2===362&&pageMap.ems===90&&pageMap.fire1Back===14&&pageMap.fire2Back===352&&pageMap.emsBack===72,'official textbook printed pages map to actual PDF pages for fire1/fire2/EMS');
   assert(pageMap.prevention1Pdf===17&&pageMap.prevention2Pdf===15&&pageMap.law1Pdf===7&&pageMap.law2Pdf===344&&pageMap.law3Pdf===11&&pageMap.law4Pdf===287&&pageMap.law5Pdf===513&&pageMap.prevention1Book===3&&pageMap.law2Book===332,'uploaded 2026 prevention/law textbooks use verified printed-page offsets for all seven new books');
 
-  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
+  await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
   await m.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
   assert(await m.locator('.study-body-mobile [data-source-download]').count()===1,'source tab exposes an explicit PDF download action');
   assert(await m.evaluate(()=>typeof window.AITUTOR_V9.SourcePDF.download==='function'),'official PDF subsystem exposes direct download from cache/mirror');
@@ -417,7 +419,7 @@ try{
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
-  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
+  await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
   await m.locator('.study-body-mobile .source-only [data-source-concept]').click();
   await m.waitForSelector('#pdfEvidence canvas',{timeout:60000});
   await m.waitForFunction(()=>document.querySelector('#pdfEvidence')?.dataset.renderState==='ready',{timeout:60000});
@@ -432,7 +434,9 @@ try{
   await cleanPage(m,'mobile exam');
   const mexam=await m.locator('.page').innerText();
   assert(mexam.includes('65문항 · 65분'),'mobile exam starts with real exam format instead of validation diagnostics');
-  assert(await m.locator('[data-calc-bank]').count()===1,'exam landing exposes a dedicated calculation practice action');
+  assert(await m.locator('[data-exam-hub="training"]').count()===1,'exam landing separates focused problem training from the real mock exam');
+  await m.locator('[data-exam-hub="training"]').click();
+  assert(await m.locator('[data-calc-bank]').count()===1,'problem-training hub exposes a dedicated calculation practice action');
   await m.locator('[data-calc-bank]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='bank');
   await m.waitForSelector('.question-card');
   const calcFilterLabel=await m.locator('.calc-filter-label').first().innerText();
@@ -464,7 +468,9 @@ try{
   assert(calcEvidence.drip.some(x=>x.tier==='standard-education-practice')&&calcEvidence.drip.some(x=>x.tier==='regulated-device-source-practice'&&/gtt\/min/.test(x.formula||'')),'IV-drip lesson keeps legacy education practice separate from regulated-device source calculation');
   assert(calcEvidence.oxygenQs.length===4&&calcEvidence.dripQs.length===4&&[...calcEvidence.oxygenQs,...calcEvidence.dripQs].every(x=>x==='P'),'legacy and newly source-backed oxygen/drip calculation drills all remain P-grade and cannot enter verified real-mock credit');
   assert(calcEvidence.staged.length===42&&calcEvidence.staged.every(x=>x.grade==='P'&&x.past===false),'all staged calculation drills remain P-grade and outside real-mock credit');
-  await go(m,'exam');await m.waitForSelector('.exam-start');
+  await go(m,'exam');
+  if(!(await m.locator('.exam-start:visible').count()))await m.locator('[data-exam-hub="mock"]').click();
+  await m.waitForSelector('.exam-start');
   const pastStart=m.locator('[data-exam-start="past2025"]');
   assert(await pastStart.count()===1,'exam landing exposes the NFA-attributed 2025 actual past-exam subset');
   await pastStart.click();await m.waitForSelector('.exam-run-workspace');
@@ -541,7 +547,7 @@ try{
   assert(await m.locator('[data-note-subject]').count()===2,'pass-note workspace separates fire and EMS into dedicated subject tabs');
   const noteSubjectLabels=(await m.locator('[data-note-subject]').allInnerTexts()).join(' ');
   assert(noteSubjectLabels.includes('소방학')&&noteSubjectLabels.includes('구급'),'pass-note subject tabs are clearly labeled fire and EMS');
-  assert(await m.locator('[data-note-filter]').count()===4&&await m.locator('[data-note-filter="fire"],[data-note-filter="ems"],[data-note-filter="doc"]').count()===0,'pass-note uses four type filters inside the selected subject without duplicate subject or upload-source filters');
+  assert(await m.locator('[data-note-filter]').count()===5&&await m.locator('[data-note-filter="doc"]').count()===1&&await m.locator('[data-note-filter="fire"],[data-note-filter="ems"]').count()===0,'pass-note uses five type filters inside the selected subject and exposes the restored PDF-material filter without duplicate subject filters');
   assert(await m.locator('#noteSearch').count()===1,'pass-note workspace exposes note search');
   const sourceNoteId=await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.find(n=>n.sourceType==='pass-star')?.id||'');
   if(sourceNoteId){
@@ -559,24 +565,25 @@ try{
     await m.locator('[data-note-filter="all"]').click();
   }
   await cleanPage(m,'mobile notes');
-  const notesText=await m.locator('.page').innerText();
-  assert(await m.locator('#personalFile').count()===0,'pass-note workspace has no user PDF/photo upload input');
-  const injectedUploadBlocked=await m.evaluate(async()=>{
-    let calls=0;
-    const pd=window.AITUTOR_V9.PrivateDocs,old=pd?.ingest;
-    if(!pd||typeof old!=='function')return true;
-    pd.ingest=async()=>{calls++;return{reviewPages:[]}};
-    const input=document.createElement('input');input.id='personalFile';input.type='file';
-    Object.defineProperty(input,'files',{value:[new File(['legacy'],'legacy.txt',{type:'text/plain'})]});
-    document.body.appendChild(input);
-    input.dispatchEvent(new Event('change',{bubbles:true}));
-    await new Promise(r=>setTimeout(r,60));
-    input.remove();pd.ingest=old;
-    return calls===0
+  let notesText=await m.locator('.page').innerText();
+  assert(await m.locator('#personalFile').count()===0,'legacy personalFile upload hook remains removed');
+  assert(await m.locator('#passNotePdf').count()===1&&await m.locator('#noteUploadSubject').count()===1,'pass-note workspace restores one explicit PDF upload control with subject routing');
+  await m.evaluate(()=>{
+    const V=window.AITUTOR_V9;
+    window.__v73UploadOld={ingest:V.PrivateDocs.ingest,create:V.PassNote.createFromPrivateDoc};
+    window.__v73UploadProbe={ingest:0,created:false,subject:'',name:'',options:null};
+    V.PrivateDocs.ingest=async(file,options)=>{window.__v73UploadProbe.ingest++;window.__v73UploadProbe.name=file?.name||'';window.__v73UploadProbe.options=options||null;return{doc:{id:'e2e-pass-doc'}}};
+    V.PassNote.createFromPrivateDoc=async(id,title,subject)=>{window.__v73UploadProbe.created=id==='e2e-pass-doc';window.__v73UploadProbe.subject=subject;return{id:'pass-doc-e2e'}};
   });
-  assert(injectedUploadBlocked,'learner app has no executable personal-file upload event path');
-  assert(!notesText.includes('PDF / 사진')&&!notesText.includes('내 자료')&&!notesText.includes('업로드'),'pass-note workspace does not expose user document upload flows');
-  assert(notesText.includes('직접 메모 추가')&&notesText.includes('저장된 합격노트'),'pass-note workspace stays focused on saved study notes and direct memos');
+  await m.locator('#passNotePdf').setInputFiles({name:'e2e-pass-note.pdf',mimeType:'application/pdf',buffer:fixture});
+  await m.waitForFunction(()=>window.__v73UploadProbe?.created===true);
+  const uploadProbe=await m.evaluate(()=>({probe:window.__v73UploadProbe,filter:window.AITUTOR_V9.App.runtime.noteFilter,status:window.AITUTOR_V9.App.runtime.noteUploadStatus}));
+  assert(uploadProbe.probe.ingest===1&&uploadProbe.probe.name==='e2e-pass-note.pdf','PDF upload dispatches exactly one private-document ingest');
+  assert(uploadProbe.probe.options?.kind==='personal'&&uploadProbe.probe.options?.keepOriginal===true,'PDF upload keeps the personal/private ingest contract');
+  assert(uploadProbe.probe.subject==='fire'&&uploadProbe.filter==='doc'&&/완료/.test(uploadProbe.status),'PDF upload routes the selected subject and lands on the PDF-material note filter');
+  await m.evaluate(()=>{const V=window.AITUTOR_V9,o=window.__v73UploadOld;if(o){V.PrivateDocs.ingest=o.ingest;V.PassNote.createFromPrivateDoc=o.create}delete window.__v73UploadOld;delete window.__v73UploadProbe});
+  notesText=await m.locator('.page').innerText();
+  assert(notesText.includes('PDF 업로드')&&notesText.includes('직접 메모 추가')&&notesText.includes('저장된 합격노트'),'pass-note workspace presents PDF upload, direct memo and saved notes as separate clear actions');
   assert(!notesText.includes('DRM')&&!notesText.includes('브라우저에서 텍스트/OCR 처리'),'notes page removes technical/copyright implementation prose');
   for(const internalCopy of ['정밀 추출','품질 %','OCR ','텍스트층','로컬 AI 보정'])assert(!notesText.includes(internalCopy),'notes page hides implementation jargon from learner-facing copy: '+internalCopy);
   for(const internalType of ['pass-star','pass-question','pass-doc','manual'])assert(!notesText.includes(internalType),'notes page hides internal note source types from learner-facing copy: '+internalType);
@@ -604,99 +611,99 @@ try{
   for(const [id,terms] of priorityStudyContracts){
     await m.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
     await m.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,id);
-    await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-    const priorityText=(await m.locator('.book-section').innerText()).replace(/\\s+/g,' ');
+    await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+    const priorityText=(await m.locator('.study-body-unified').innerText()).replace(/\\s+/g,' ');
     for(const term of terms)assert(priorityText.includes(term),id+' detail keeps high-priority exam distinction: '+term);
     await noX(m,'mobile priority detail '+id);
   }
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C06'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C06');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.book-section .hazmat-table tbody tr');
-  const hazRow=await m.locator('.book-section .hazmat-table tbody tr').first().evaluate(tr=>{const cells=[...tr.querySelectorAll('td')].map(td=>td.getBoundingClientRect());return{tr:tr.getBoundingClientRect().toJSON?.()||{x:tr.getBoundingClientRect().x,width:tr.getBoundingClientRect().width},cells:cells.map(x=>({x:x.x,y:x.y,width:x.width,height:x.height}))}});
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.study-body-unified .hazmat-table tbody tr');
+  const hazRow=await m.locator('.study-body-unified .hazmat-table tbody tr').first().evaluate(tr=>{const cells=[...tr.querySelectorAll('td')].map(td=>td.getBoundingClientRect());return{tr:tr.getBoundingClientRect().toJSON?.()||{x:tr.getBoundingClientRect().x,width:tr.getBoundingClientRect().width},cells:cells.map(x=>({x:x.x,y:x.y,width:x.width,height:x.height}))}});
   assert(hazRow.cells.length>=2&&Math.abs(hazRow.cells[0].y-hazRow.cells[1].y)<3,'hazardous-material name and designated quantity appear on the same mobile row');
   await noX(m,'mobile hazardous-material detail');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
   assert((await m.locator('.concept-head h2').innerText()).includes('특수가연물'),'hazardous-material curriculum exposes the special-combustible distinction');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
   await m.waitForSelector('.study-body-mobile .special-combustible-reference .hazmat-table tbody tr');
   assert(await m.locator('.study-body-mobile .special-combustible-reference .hazmat-table tbody tr').count()===11,'special-combustible detail renders all eleven current-law quantity rows');
   const specialText=await m.locator('.study-body-mobile .special-combustible-reference').innerText();
   assert(specialText.includes('면화류')&&specialText.includes('200 kg')&&specialText.includes('가연성액체류')&&specialText.includes('2 ㎥')&&specialText.includes('최소 6m'),'special-combustible lesson shows quantity units and outdoor storage distance');
-  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
-  assert(await m.locator('.book-section .source-law-links a').count()>=3,'special-combustible source tab links the current law article and annexes');
+  await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
+  assert(await m.locator('.study-body-unified .source-law-links a').count()>=3,'special-combustible source tab links the current law article and annexes');
   await noX(m,'mobile special-combustible law');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C01'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C01');
   assert((await m.locator('.concept-head h2').innerText()).includes('건축방재'),'facilities curriculum exposes building-fire fundamentals');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const buildingText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const buildingText=await m.locator('.study-body-unified').innerText();
   assert(buildingText.includes('방화구획')&&buildingText.includes('방화벽')&&buildingText.includes('내화구조')&&buildingText.includes('준불연재료')&&buildingText.includes('난연재료'),'building-fire lesson separates compartments, walls, fire resistance and material classes');
-  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
-  const buildingLinks=m.locator('.book-section .source-law-links a');
+  await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
+  const buildingLinks=m.locator('.study-body-unified .source-law-links a');
   assert(await buildingLinks.count()>=3,'building-fire source tab exposes official Building Act links');
   await noX(m,'mobile building-fire law');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C05'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C05');
   assert((await m.locator('.concept-head h2').innerText()).includes('건축구조'),'fire progression lesson exposes construction type comparison');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const constructionText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const constructionText=await m.locator('.study-body-unified').innerText();
   assert(constructionText.includes('목조건축물')&&constructionText.includes('내화구조 건축물')&&constructionText.includes('HVAC'),'wood vs fire-resistive construction lesson explains spread and smoke-path differences');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E11-C02'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E11-C02');
   assert((await m.locator('.concept-head h2').innerText()).includes('심전도 리듬'),'cardiac lesson exposes ECG rhythm study');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const ecgText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const ecgText=await m.locator('.study-body-unified').innerText();
   assert(ecgText.includes('좁은 QRS')&&ecgText.includes('넓은 QRS')&&ecgText.includes('2도')&&ecgText.includes('3도 방실차단'),'ECG lesson covers NFA rhythm categories and QRS-width approach');
-  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
-  const cprLinks=await m.locator('.book-section .source-law-links a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
+  await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
+  const cprLinks=await m.locator('.study-body-unified .source-law-links a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
   assert(cprLinks.some(x=>/^https:\/\/(www\.)?kacpr\.org\//.test(x)),'ECG source tab links the official 2020 KACPR guideline');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E11-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E11-C03');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const arrestDrugText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const arrestDrugText=await m.locator('.study-body-unified').innerText();
   assert(arrestDrugText.includes('1mg')&&arrestDrugText.includes('3~5분')&&arrestDrugText.includes('300mg')&&arrestDrugText.includes('150mg'),'adult arrest lesson includes 2020-guideline epinephrine and amiodarone anchors');
   assert(!arrestDrugText.includes('30초 핵심')&&!arrestDrugText.includes('시험 직전 핵심')&&!arrestDrugText.includes('★★ 숫자 · 단위 · 기준')&&!arrestDrugText.includes('⚠ 헷갈림 주의'),'detail tab excludes core-only summary blocks');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E11-C05'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E11-C05');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const rhythmDrugText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const rhythmDrugText=await m.locator('.study-body-unified').innerText();
   assert(rhythmDrugText.includes('아데노신')&&rhythmDrugText.includes('0.1mg/kg')&&rhythmDrugText.includes('아트로핀')&&rhythmDrugText.includes('0.02mg/kg'),'rhythm lesson includes 2020-guideline adenosine and atropine anchors');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E21-C04'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E21-C04');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const palsText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const palsText=await m.locator('.study-body-unified').innerText();
   assert(palsText.includes('0.01mg/kg')&&palsText.includes('3~5분')&&palsText.includes('0.1mg/kg')&&palsText.includes('0.2mg/kg')&&palsText.includes('0.5~1J/kg'),'pediatric ALS lesson includes official 2020 arrest brady/tachy algorithm anchors');
   const palsBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,qs=V.questions.filter(q=>/^119-pals-adv-/.test(q.id||''));return{n:qs.length,p:qs.every(q=>q.grade==='P'),source:qs.every(q=>/2020년 한국심폐소생술 가이드라인/.test(q.source||''))}});
   assert(palsBank.n===7&&palsBank.p&&palsBank.source,'advanced pediatric ALS practice stays P-grade and is bound to the official 2020 guideline');
-  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
-  const palsLinks=await m.locator('.book-section .source-law-links a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
+  await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
+  const palsLinks=await m.locator('.study-body-unified .source-law-links a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
   assert(palsLinks.some(x=>/^https:\/\/(www\.)?kacpr\.org\//.test(x)),'pediatric ALS source tab exposes the official KACPR guideline');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E03-C04'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E03-C04');
   assert((await m.locator('.concept-head h2').innerText()).includes('패혈증'),'infection curriculum surfaces sepsis caution without inventing a full treatment algorithm');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const infectionText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const infectionText=await m.locator('.study-body-unified').innerText();
   assert(infectionText.includes('손위생')&&infectionText.includes('PPE')&&infectionText.includes('패혈증')&&infectionText.includes('전신상태'),'infection lesson connects PPE, exposure control and conservative sepsis warning assessment');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E01-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E01-C03');
   assert((await m.locator('.concept-head h2').innerText()).includes('119구급대 법령'),'EMS curriculum exposes the current 119-law lesson');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const lawText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const lawText=await m.locator('.study-body-unified').innerText();
   assert(lawText.includes('구급차 운전과 구급 보조업무')&&lawText.includes('24시간')&&lawText.includes('항공구조구급대'),'119-law lesson teaches qualification limits, 24-hour situation center and air EMS');
-  await m.locator('.book-jumpbar [data-study-tab="source"]').click();
-  const lawLinks=m.locator('.book-section .source-law-links a');
+  await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
+  const lawLinks=m.locator('.study-body-unified .source-law-links a');
   assert(await lawLinks.count()>=4,'119-law source tab exposes current official law links');
   const lawHrefs=await lawLinks.evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')||''));
   assert(lawHrefs.every(x=>/^https:\/\/(?:www\.)?law\.go\.kr\//.test(x)),'119-law source links stay on the official National Law Information Center domain');
@@ -704,38 +711,38 @@ try{
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E05-C04'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E05-C04');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.book-section .detail-view');
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.study-body-unified .detail-view');
   const triageText=await m.locator('.page-study').innerText();
   assert(triageText.includes('기록지·중증도 분류')&&triageText.includes('START')&&/호흡\s*·\s*맥박\s*·\s*의식/.test(triageText),'START triage remains visible in detailed learner content without relying on the removed duplicate must block');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E20-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E20-C03');
   assert((await m.locator('.concept-head h2').innerText()).includes('신생아 초기처치'),'obstetric curriculum exposes newborn initial care in the lesson title');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const newbornText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const newbornText=await m.locator('.study-body-unified').innerText();
   assert(newbornText.includes('Apgar')&&newbornText.includes('출생 1분')&&newbornText.includes('5분'),'newborn lesson teaches Apgar timing');
   assert(newbornText.includes('입을 먼저')&&newbornText.includes('코를 흡인'),'newborn lesson teaches source-backed mouth-before-nose suction sequence');
   assert(newbornText.includes('8~10점')&&newbornText.includes('3~7점')&&newbornText.includes('0~2점'),'newborn lesson compares all three textbook Apgar score groups');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E14-C02'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E14-C02');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const chestText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const chestText=await m.locator('.study-body-unified').innerText();
   assert(chestText.includes('긴장성 기흉')&&chestText.includes('삼면드레싱')&&chestText.includes('저혈압'),'chest-trauma enrichment teaches deterioration after occlusive dressing and tension-pneumothorax warning signs');
   assert(chestText.includes('내장적출')&&chestText.includes('밀어 넣지')&&chestText.includes('골반골 골절'),'same trauma lesson adds abdominal evisceration and severe pelvic-trauma transport cues');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E14-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E14-C03');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.book-section .calc-lab');
-  const parklandText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.waitForSelector('.study-body-unified .calc-lab');
+  const parklandText=await m.locator('.study-body-unified').innerText();
   assert(parklandText.includes('Parkland')&&parklandText.includes('4 mL × 체중(kg) × 2·3도 화상 TBSA(%)')&&parklandText.includes('7,200mL'),'burn lesson exposes Parkland formula, timing and worked example');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C06'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C06');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const firePhenomenaText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const firePhenomenaText=await m.locator('.study-body-unified').innerText();
   for(const term of ['플레임오버','롤오버','플래시오버','백드래프트'])assert(firePhenomenaText.includes(term),'four-way fire comparison includes '+term);
 
   const tankPhenomena=[
@@ -746,8 +753,8 @@ try{
   for(const [id,title,terms] of tankPhenomena){
     await m.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
     await m.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,id);
-    await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-    const tankText=await m.locator('.book-section').innerText();
+    await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+    const tankText=await m.locator('.study-body-unified').innerText();
     assert((await m.locator('.concept-head h2').innerText()).trim()===title,'tank-fire phenomenon keeps its own lesson title: '+title);
     for(const term of terms)assert(tankText.includes(term),title+' detail keeps distinguishing clue/comparison: '+term);
   }
@@ -755,20 +762,20 @@ try{
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C10'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C10');
   assert((await m.locator('.concept-head h2').innerText()).trim()==='플레임오버','flameover has its own curriculum lesson title');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const flameoverText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const flameoverText=await m.locator('.study-body-unified').innerText();
   assert(flameoverText.includes('초기화재')&&flameoverText.includes('대류')&&flameoverText.includes('벽면')&&flameoverText.includes('천장')&&flameoverText.includes('롤오버'),'flameover lesson follows the official textbook definition and comparison set');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C07'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C07');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const smokeText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const smokeText=await m.locator('.study-body-unified').innerText();
   assert(smokeText.includes('굴뚝효과')&&smokeText.includes('역굴뚝효과')&&smokeText.includes('HVAC'),'smoke lesson adds stack-effect and smoke-movement comparison');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C08'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C08');
-  await m.locator('.book-jumpbar [data-study-tab="detail"]').click();
-  const explosionText=await m.locator('.book-section').innerText();
+  await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  const explosionText=await m.locator('.study-body-unified').innerText();
   assert(explosionText.includes('UVCE')&&explosionText.includes('BLEVE')&&explosionText.includes('폭연')&&explosionText.includes('폭굉'),'explosion lesson compares UVCE, BLEVE, deflagration and detonation');
 
   await m.locator('.mobile-nav [data-more]').click();
@@ -785,13 +792,13 @@ try{
     if((await m.evaluate(()=>window.AITUTOR_V9.Store.state.page))!=='study')await go(m,'study');
     await m.evaluate(tab=>{window.AITUTOR_V9.Store.state.studyTab=tab;window.AITUTOR_V9.Store.save();window.AITUTOR_V9.App.runtime.more=false;},tab);
     await m.evaluate(()=>window.AITUTOR_V9.App.go('study'));
-    await m.waitForSelector('.book-jumpbar');
+    await m.waitForSelector('.concept-head .tabbar');
     await noX(m,'mobile study tab '+tab);
   }
-  await m.locator('.book-jumpbar [data-study-tab="core"]').click();
-  assert(await m.locator('.book-section .lesson>h3').count()===0,'core tab avoids repeating the selected tab title as a body heading');
-  await m.locator('.book-jumpbar [data-study-tab="quiz"]').click();
-  assert(await m.locator('.book-section .lesson>h3').count()===0,'quiz tab avoids repeating the selected tab title as a body heading');
+  await m.locator('.concept-head .tabbar [data-study-tab="core"]').click();
+  assert(await m.locator('.study-body-unified .lesson>h3').count()===0,'core tab avoids repeating the selected tab title as a body heading');
+  await m.locator('.concept-head .tabbar [data-study-tab="quiz"]').click();
+  assert(await m.locator('.study-body-unified .lesson>h3').count()===0,'quiz tab avoids repeating the selected tab title as a body heading');
 
   await m.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='tutor';V.Store.state.studyTab='core';V.Store.save();V.App.render()});
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='study'&&window.AITUTOR_V9.Store.state.studyTab==='ai');
@@ -812,8 +819,12 @@ try{
   const settingFields=await m.locator('#profileDaily,#profileLevel').evaluateAll(nodes=>nodes.map(n=>{const b=n.closest('label')?.getBoundingClientRect();return b?{x:b.x,y:b.y,w:b.width}:null}).filter(Boolean));
   assert(settingFields.length===2&&settingFields[1].y>settingFields[0].y+20&&Math.abs(settingFields[0].w-settingFields[1].w)<4,'mobile settings form uses full-width stacked fields');
   await go(m,'exam');await m.waitForSelector('.exam-landing');
-  const examLandingCards=await m.locator('.exam-landing>.card').evaluateAll(nodes=>nodes.map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width}}));
-  assert(examLandingCards.length>=2&&examLandingCards[1].y>examLandingCards[0].y+20,'mobile exam landing stacks real mock and training center vertically');
+  if(!(await m.locator('.exam-start:visible').count()))await m.locator('[data-exam-hub="mock"]').click();
+  assert(await m.locator('.exam-hub-tabs button').count()===2&&await m.locator('.exam-start:visible').count()===1&&await m.locator('.training-center:visible').count()===0,'mobile exam landing shows one focused mock-exam pane instead of stacking competing sections');
+  await m.locator('[data-exam-hub="training"]').click();
+  assert(await m.locator('.training-center:visible').count()===1&&await m.locator('.exam-start:visible').count()===0,'mobile problem training opens as its own pane without the real-mock card underneath');
+  await noX(m,'mobile exam training hub');
+  await m.locator('[data-exam-hub="mock"]').click();
 
   const samplingTruth=await m.evaluate(()=>{
     const V=window.AITUTOR_V9,A=V.App,real=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B'),check=(subject,n,scopes)=>{
@@ -842,7 +853,7 @@ try{
     await noX(t,'tablet 768 home');
     await go(t,'study');await t.waitForSelector('.workspace');
     await noX(t,'tablet 768 study');
-    assert(await t.locator('.tabbar button').count()===5||await t.locator('.book-jumpbar button').count()===5,'tablet 768 keeps five learning tabs');
+    assert(await t.locator('.tabbar button').count()===5||await t.locator('.concept-head .tabbar button').count()===5,'tablet 768 keeps five learning tabs');
     await go(t,'exam');await noX(t,'tablet 768 exam');
     await t.locator('[data-exam-start="practice"]').click();await t.waitForSelector('.exam-run-workspace');
     assert(await t.locator('.exam-compact-status').isVisible()&&await t.locator('.exam-side').isHidden(),'tablet active exam uses compact horizontal progress instead of a cramped desktop sidebar');
@@ -866,11 +877,11 @@ try{
     const page=await ctx.newPage(),errs=collectErrors(page);
     await boot(page);
     await noX(page,`mobile ${width} home`);
-    await go(page,'study');await page.waitForSelector('.book-mobile');
+    await go(page,'study');await page.waitForSelector('.study-body-unified');
     await noX(page,`mobile ${width} study`);
-    assert(await page.locator('.book-jumpbar button').count()===5,`mobile ${width} keeps five study tabs`);
-    assert(await page.locator('.page-study .concept-nav').isHidden(),`mobile ${width} removes duplicate concept footer`);
-    const studyScroller=await page.locator('.study-body-mobile').boundingBox(),nav=await page.locator('.mobile-nav').boundingBox();
+    assert(await page.locator('.concept-head .tabbar button').count()===5,`mobile ${width} keeps five study tabs`);
+    assert(await page.locator('.page-study .concept-nav').count()===1,`mobile ${width} keeps exactly one concept navigation`);
+    const studyScroller=await page.locator('.study[data-scroll-owner="study"]').boundingBox(),nav=await page.locator('.mobile-nav').boundingBox();
     assert(studyScroller&&nav&&studyScroller.y+studyScroller.height<=nav.y+2,`mobile ${width} learning scroller ends above bottom navigation`);
     await go(page,'exam');await noX(page,`mobile ${width} exam`);
     assert(errs.length===0,`mobile ${width} runtime errors = 0 ${errs.join(' | ')}`);

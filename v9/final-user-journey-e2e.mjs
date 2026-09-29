@@ -39,6 +39,7 @@ try{
     const q=qs[0],wrong=(q.a+1)%4;V.Mastery.recordAnswer(q,wrong,'sure',1200);
     V.App.go('exam');return{conceptId,id:q.id,alternates:qs.length-1};
   });
+  await page.locator('[data-exam-hub="training"]').click();
   await page.waitForSelector('[data-training-start="wrong20"]');
   await page.locator('[data-training-start="wrong20"]').click();
   await page.waitForSelector('.exam-run-workspace');
@@ -46,6 +47,7 @@ try{
   assert(wrongSeed.alternates>=20&&retry.n===20&&retry.sameConcept&&!retry.containsOriginal,'wrong-answer retraining prefers 20 alternate questions from the same weak concept before repeating the missed item');
 
   await page.evaluate(()=>{const V=window.AITUTOR_V9;V.App.runtime.exam=null;V.ExamSession119?.clear?.(V.Store.ownerId);V.App.go('exam')});
+  if(!(await page.locator('[data-exam-start="practice"]:visible').count()))await page.locator('[data-exam-hub="mock"]').click();
   await page.locator('[data-exam-start="practice"]').click();await page.waitForSelector('.exam-run-workspace');
   const wrongIndex=await page.evaluate(()=>{const q=window.AITUTOR_V9.App.runtime.exam.qs[0];return(q.a+1)%4});
   await page.locator(`[data-exam-answer="${wrongIndex}"]`).click();

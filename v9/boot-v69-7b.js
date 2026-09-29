@@ -241,7 +241,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   const lines=rows.map(line=>{
     const its=line.items.sort((a,b)=>a.x-b.x),text=its.map(x=>x.raw).join(' ').replace(/\s+/g,' ').trim(),n=norm(text);
     const left=Math.min(...its.map(x=>x.x)),right=Math.max(...its.map(x=>x.x+x.w)),top=Math.min(...its.map(x=>x.top)),bottom=Math.max(...its.map(x=>x.top+x.h));
-    return{text,n,left,right,top,bottom};
+    return{text,n,left,right,top,bottom,items:its.map(x=>({raw:x.raw,n:x.n,left:x.x,right:x.x+x.w}))};
   }).filter(x=>x.n.length>=4).sort((a,b)=>a.top-b.top);
   const sentenceEnded=text=>/[.!?。！？](?:["'”’）)\]]*)?$/.test(String(text||'').trim());
   const looksLikeNewBlock=text=>/^(?:제\s*\d+|\d+[.)]|[①②③④⑤⑥⑦⑧⑨⑩]|[가-하][.)]|[■□◆◇※])/u.test(String(text||'').trim());
@@ -255,9 +255,22 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     return{start:s,end:e}
   };
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
+  const markTokens=[...new Set([...anchorTokens,...tokens].filter(x=>x.length>=2))].sort((a,b)=>b.length-a.length);
+  const markLine=line=>{
+    const hits=[];
+    for(const item of line.items||[]){
+      for(const token of markTokens){
+        const i=item.n.indexOf(token);if(i<0)continue;
+        const len=Math.max(1,item.n.length),span=Math.max(2,item.right-item.left),left=item.left+span*(i/len),right=item.left+span*((i+token.length)/len);
+        hits.push({left,right});break
+      }
+    }
+    if(!hits.length)return{...line,markLeft:line.left,markRight:line.right,markExact:false};
+    return{...line,markLeft:Math.max(line.left,Math.min(...hits.map(x=>x.left))),markRight:Math.min(line.right,Math.max(...hits.map(x=>x.right))),markExact:true}
+  };
   if(anchorTokens.length){
     const e=lines.map((l,i)=>{const m=anchorTokens.filter(t=>l.n.includes(t));return{l,i,m,s:m.reduce((n,t)=>n+t.length,0)+m.length*10}}).filter(x=>x.m.length>1||x.m.some(t=>t.length>4)).sort((a,b)=>b.s-a.s||a.i-b.i);
-    if(e.length){const p=[];for(const h of e.slice(0,3)){const block=expandEvidence(h.i,h.i,5),title=lines.slice(block.start,block.end+1).map(x=>x.text).join(' ');for(let j=block.start;j<=block.end&&p.length<10;j++){if(!p.some(x=>x.i===j))p.push({l:{...lines[j],evidenceTitle:title},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,10).map(x=>x.l)}
+    if(e.length){const p=[];for(const h of e.slice(0,3)){const block=expandEvidence(h.i,h.i,5),title=lines.slice(block.start,block.end+1).map(x=>x.text).join(' ');for(let j=block.start;j<=block.end&&p.length<10;j++){if(!p.some(x=>x.i===j))p.push({l:{...lines[j],evidenceTitle:title},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,10).map(x=>markLine(x.l))}
     const anchorBlocks=[];
     for(let i=0;i<lines.length;i++){
       let joinedN='',joinedText='';
@@ -281,7 +294,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
         picked.push({...lines[i],evidenceTitle:title||block.title})
       }
     }
-    if(picked.length)return picked
+    if(picked.length)return picked.map(markLine)
   }
   const candidates=[];
   const maxWindow=8;
@@ -319,7 +332,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   }
   const picked=[];
   for(const b of blocks.sort((a,b)=>a.start-b.start)){const expanded=expandEvidence(b.start,b.end,6),title=lines.slice(expanded.start,expanded.end+1).map(x=>x.text).join(' ');for(let i=expanded.start;i<=expanded.end;i++)if(!picked.some(x=>x===lines[i]||x.text===lines[i].text&&Math.abs(x.top-lines[i].top)<1))picked.push({...lines[i],evidenceTitle:title})}
-  return picked.slice(0,12);
+  return picked.slice(0,12).map(markLine);
 }
 function downloadName(key,row,catalog){const raw=row?.name||catalog?.expectedNames?.[0]||catalog?.label||key;return /\.pdf$/i.test(raw)?raw:`${raw}.pdf`}
 async function download(key,{timeoutMs=120000,onProgress}={}){const catalog=V.SourceCatalog119?.get?.(key);if(!catalog)throw Error('SOURCE_PDF_UNKNOWN');let row=await get(key);if(!row?.blob){try{row=await cacheOfficialByRange(key,{timeoutMs,onProgress})}catch{row=await cacheOfficial(key,{timeoutMs,onProgress})}}if(!row?.blob)throw Error('SOURCE_PDF_DOWNLOAD_UNAVAILABLE');const name=downloadName(key,row,catalog),url=URL.createObjectURL(row.blob),a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return{name,size:row.blob.size,key}}
@@ -336,13 +349,13 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const tc=await pg.getTextContent(),evidence=evidenceLines(tc.items||[],viewport,p,queries,{anchorTerms:opts.anchorTerms});
   for(const line of evidence){
     const mark=document.createElement('div');mark.className='pdf-evidence-line';
-    mark.style.left=Math.max(0,line.left-2)+'px';mark.style.top=Math.min(viewport.height-3,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-line.left+2,line.right-line.left+4))+'px';mark.style.height='2px';
+    const markLeft=Number.isFinite(line.markLeft)?line.markLeft:line.left,markRight=Number.isFinite(line.markRight)?line.markRight:line.right;mark.style.left=Math.max(0,markLeft-2)+'px';mark.style.top=Math.min(viewport.height-4,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-markLeft+2,markRight-markLeft+4))+'px';mark.style.height='3px';mark.dataset.exact=line.markExact?'true':'false';
     mark.title=line.evidenceTitle||line.text;overlay.appendChild(mark);
   }
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
   return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',officialCacheEpoch:OFFICIAL_CACHE_EPOCH,officialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,privacy:{localCacheAllowed:true,persistentOfficialCache:true,officialCacheEpochRequired:true,staleOfficialCacheAutoDelete:true,legacyUnversionedOfficialAttachmentAutoDelete:true,persistentOfficialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v15-range-remote-cache-epoch-anchor-context-lines'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',officialCacheEpoch:OFFICIAL_CACHE_EPOCH,officialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,privacy:{localCacheAllowed:true,persistentOfficialCache:true,officialCacheEpochRequired:true,staleOfficialCacheAutoDelete:true,legacyUnversionedOfficialAttachmentAutoDelete:true,persistentOfficialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v16-range-remote-cache-epoch-precise-evidence-ranges'};
 })();
 
 ;
@@ -941,7 +954,7 @@ function extractLines(text){
   };
   return rows.map((x,i)=>({x,i,s:score(x)})).sort((a,b)=>b.s-a.s||a.i-b.i).slice(0,14).sort((a,b)=>a.i-b.i).map(x=>x.x);
 }
-async function createFromPrivateDoc(docId,title){
+async function createFromPrivateDoc(docId,title,subject=''){
   const chunks=await V.PrivateDocs?.chunksFor?.(docId);if(!chunks?.length)throw Error('PRIVATE_DOC_TEXT_NOT_FOUND');
   const sorted=chunks.sort((a,b)=>(a.page||0)-(b.page||0)||(a.chunkIndex||0)-(b.chunkIndex||0)),text=sorted.map(x=>x.text||'').join('\n');
   const lines=extractLines(text),fallback=(lines.length?lines:['추출된 내용이 부족합니다. 원문을 확인해 직접 수정하세요.']).map(x=>'• '+x).join('\n');
@@ -953,7 +966,7 @@ async function createFromPrivateDoc(docId,title){
     }catch{}
   }
   const review=sorted.some(x=>x.needsReview)?'\n\n⚠ OCR 신뢰도가 낮은 페이지가 포함되어 있습니다. 해당 원문 페이지를 꼭 확인하세요.':'';
-  const note=await persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+`\n\n※ 자동으로 정리한 초안입니다. 원문과 대조해 수정하세요.`+review,sourceType:aiUsed?'pass-doc-ai':'pass-doc'});
+  const note=await persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+`\n\n※ 자동으로 정리한 초안입니다. 원문과 대조해 수정하세요.`+review,subject:subject==='ems'?'ems':subject==='fire'?'fire':undefined,sourceType:aiUsed?'pass-doc-ai':'pass-doc'});
   return{...note,aiUsed};
 }
 function passNotes(){return (state().notes||[]).filter(n=>/^pass-/.test(String(n.sourceType||''))||/^pass-/.test(String(n.id||'')))}
@@ -996,10 +1009,10 @@ function printDocument(mode){
     body=(V.curriculum?.concepts||[]).filter(c=>subjectOf(c)===subject).map(c=>conceptHtml(c,true)).join('');
   }
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"><title>${esc(title)}</title><style>
-  @page{size:A4;margin:9mm}*{box-sizing:border-box}html{font-size:16px}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#17202b;font-size:14pt;line-height:1.68;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:24pt;color:#17202b;border-bottom:3px solid #3f6e9e;padding-bottom:8px;margin:18px 0 12px}h2{font-size:17pt;line-height:1.42;margin:18px 0 8px;color:#173c62;break-after:avoid-page}h3{font-size:13.5pt;line-height:1.42;margin:10px 0 5px;color:#385a78;break-after:avoid-page}ul{margin:5px 0 10px 20px;padding:0}.c{break-inside:auto;border-bottom:1px solid #d8e0e8;padding:0 0 10px;margin:0 0 10px}.summary{font-weight:720;background:#f5f8fb;border-left:3px solid #668fb8;padding:9px 11px;border-radius:4px}.important{border-left:3px solid #7fa6c8;padding-left:24px}.numbers{border-left:3px solid #c49a4e;padding-left:24px}.traps{border-left:3px solid #b8785b;padding-left:24px}.important li,.numbers li,.traps li{margin:4px 0;break-inside:avoid-page}.important li{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#668fb8}.numbers li{font-weight:650;text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#c49a4e}.traps li{text-decoration-line:underline;text-decoration-thickness:1.25px;text-underline-offset:3px;text-decoration-color:#b8785b}.src{font-size:10pt;color:#647283;margin-top:8px}.note{white-space:normal;line-height:1.74}.note-sec{margin:12px 0 5px}.note-line{margin:4px 0;line-height:1.72}.note-core,.note-num,.note-answer{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}.note-core{font-weight:700;text-decoration-color:#668fb8}.note-num{font-weight:650;text-decoration-color:#c49a4e}.note-answer{font-weight:750;text-decoration-color:#5e9b75}.note-warn{border-left:3px solid #b8785b;padding-left:8px}.note-source{color:#647283;font-size:.9em}.note-gap{height:7px}.cover{min-height:255mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:31pt;color:#173c62}.cover p{color:#5f6d7b}.c li{margin:3px 0}.rapid h2{font-size:15.5pt}
+  @page{size:A4;margin:0}*{box-sizing:border-box}html{font-size:16px}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#17202b;font-size:14pt;line-height:1.68;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:24pt;color:#17202b;border-bottom:3px solid #3f6e9e;padding-bottom:8px;margin:18px 0 12px}h2{font-size:17pt;line-height:1.42;margin:18px 0 8px;color:#173c62;break-after:avoid-page}h3{font-size:13.5pt;line-height:1.42;margin:10px 0 5px;color:#385a78;break-after:avoid-page}ul{margin:5px 0 10px 20px;padding:0}.c{break-inside:auto;border-bottom:1px solid #d8e0e8;padding:0 0 10px;margin:0 0 10px}.summary{font-weight:720;background:#f5f8fb;border-left:3px solid #668fb8;padding:9px 11px;border-radius:4px}.important{border-left:3px solid #7fa6c8;padding-left:24px}.numbers{border-left:3px solid #c49a4e;padding-left:24px}.traps{border-left:3px solid #b8785b;padding-left:24px}.important li,.numbers li,.traps li{margin:4px 0;break-inside:avoid-page}.important li{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#668fb8}.numbers li{font-weight:650;text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#c49a4e}.traps li{text-decoration-line:underline;text-decoration-thickness:1.25px;text-underline-offset:3px;text-decoration-color:#b8785b}.src{font-size:10pt;color:#647283;margin-top:8px}.note{white-space:normal;line-height:1.74}.note-sec{margin:12px 0 5px}.note-line{margin:4px 0;line-height:1.72}.note-core,.note-num,.note-answer{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}.note-core{font-weight:700;text-decoration-color:#668fb8}.note-num{font-weight:650;text-decoration-color:#c49a4e}.note-answer{font-weight:750;text-decoration-color:#5e9b75}.note-warn{border-left:3px solid #b8785b;padding-left:8px}.note-source{color:#647283;font-size:.9em}.note-gap{height:7px}.cover{min-height:255mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:31pt;color:#173c62}.cover p{color:#5f6d7b}.c li{margin:3px 0}.rapid h2{font-size:15.5pt}
   @media screen and (min-width:721px) and (max-width:1180px){body{font-size:19px;line-height:1.76;padding:24px;max-width:920px;margin:0 auto}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}.src{font-size:14px}.cover{min-height:88vh}}
   @media screen and (max-width:720px){body{font-size:17px;padding:14px;line-height:1.78}h1{font-size:28px}h2{font-size:22px}h3{font-size:18px}.cover{min-height:88vh}.src{font-size:13px}}
-  @media print{body{padding:0;font-size:14pt;line-height:1.64}.cover{min-height:255mm}.c{break-inside:auto}.c h2,.c h3{break-after:avoid-page}.c li{break-inside:avoid-page}}
+  @media print{body{padding:9mm;font-size:14pt;line-height:1.64}.cover{min-height:255mm}.c{break-inside:auto}.c h2,.c h3{break-after:avoid-page}.c li{break-inside:avoid-page}}
   </style></head><body><section class="cover"><h1>${esc(title)}</h1><p>119 소방·구급 합격 학습 OS</p><p>생성일 ${new Date().toLocaleDateString('ko-KR')}</p><p>텍스트 기반 문서 · PDF 저장 후 확대해도 선명하게 볼 수 있습니다.</p></section>${body}</body></html>`;
 }
 function exportPdf(mode){
