@@ -69,7 +69,10 @@ const browser=await chromium.launch({headless:true});
 try{
   for(const vp of [
     {width:360,height:800,isMobile:true,label:'mobile-360'},
+    {width:390,height:844,isMobile:true,label:'mobile-390'},
+    {width:412,height:915,isMobile:true,label:'mobile-412'},
     {width:768,height:1024,isMobile:false,label:'tablet-768'},
+    {width:1024,height:1366,isMobile:false,label:'tablet-1024'},
     {width:1440,height:900,isMobile:false,label:'desktop-1440'}
   ]){
     const ctx=await browser.newContext({viewport:{width:vp.width,height:vp.height},isMobile:vp.isMobile});
@@ -94,6 +97,18 @@ try{
       await page.waitForSelector('.main.page-'+route,{state:'visible',timeout:60000});
       assert((await page.locator('.page').innerText()).trim().length>0,vp.label+' '+route+' renders content');
       await noX(page,vp.label+' '+route);
+      if(vp.width<=1024){
+        const touch=await page.locator('.page .btn,.page .seg button,.page .confidence button,.page .book-jumpbar button,.page .tabbar button,.page .choice,.page .weak-chip,.page .detail-toc-chip,.top .btn,.mobile-nav button,.modal .btn').evaluateAll(nodes=>nodes.filter(n=>{const cs=getComputedStyle(n),r=n.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0&&!n.disabled}).map(n=>({text:(n.textContent||'').trim().slice(0,60),h:n.getBoundingClientRect().height})).filter(x=>x.h<43.5));
+        assert(touch.length===0,vp.label+' '+route+' primary touch targets >=44px '+JSON.stringify(touch.slice(0,4)));
+      }
+    }
+
+    if(vp.width<=1024){
+      await page.evaluate(async()=>{await window.AITUTOR_V9.App.go('stats')});
+      await page.waitForSelector('.main.page-stats',{state:'visible',timeout:30000});
+      const statsTargets=await page.locator('.stats-next-action .toolbar .btn').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none').map(n=>n.getBoundingClientRect().height));
+      if(statsTargets.length)assert(statsTargets.every(h=>h>=44),vp.label+' stats touch layout keeps >=44px next-action buttons');
+      await noX(page,vp.label+' stats touch layout');
     }
 
     await page.evaluate(async()=>{await window.AITUTOR_V9.App.go('home')});
@@ -129,7 +144,7 @@ try{
     assert(await page.locator('[data-exam-doc]').count()===1,vp.label+' current round DOC action visible');
     assert(await page.locator('[data-exam-bundle]').count()===1,vp.label+' full ZIP action visible');
 
-    if(vp.width===1440){
+    if(vp.width===390){
       for(const doc of ['fire1','law2']){
         const opened=await page.evaluate(async doc=>{
           const p=await window.AITUTOR_V9.SourcePDF.openPdf(doc,{timeoutMs:60000});
