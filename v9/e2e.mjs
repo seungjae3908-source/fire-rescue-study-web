@@ -819,8 +819,12 @@ try{
   const settingFields=await m.locator('#profileDaily,#profileLevel').evaluateAll(nodes=>nodes.map(n=>{const b=n.closest('label')?.getBoundingClientRect();return b?{x:b.x,y:b.y,w:b.width}:null}).filter(Boolean));
   assert(settingFields.length===2&&settingFields[1].y>settingFields[0].y+20&&Math.abs(settingFields[0].w-settingFields[1].w)<4,'mobile settings form uses full-width stacked fields');
   await go(m,'exam');await m.waitForSelector('.exam-landing');
-  const examLandingCards=await m.locator('.exam-landing>.card').evaluateAll(nodes=>nodes.map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width}}));
-  assert(examLandingCards.length>=2&&examLandingCards[1].y>examLandingCards[0].y+20,'mobile exam landing stacks real mock and training center vertically');
+  if(!(await m.locator('.exam-start:visible').count()))await m.locator('[data-exam-hub="mock"]').click();
+  assert(await m.locator('.exam-hub-tabs button').count()===2&&await m.locator('.exam-start:visible').count()===1&&await m.locator('.training-center:visible').count()===0,'mobile exam landing shows one focused mock-exam pane instead of stacking competing sections');
+  await m.locator('[data-exam-hub="training"]').click();
+  assert(await m.locator('.training-center:visible').count()===1&&await m.locator('.exam-start:visible').count()===0,'mobile problem training opens as its own pane without the real-mock card underneath');
+  await noX(m,'mobile exam training hub');
+  await m.locator('[data-exam-hub="mock"]').click();
 
   const samplingTruth=await m.evaluate(()=>{
     const V=window.AITUTOR_V9,A=V.App,real=(V.questions||[]).filter(q=>q.grade==='A'||q.grade==='B'),check=(subject,n,scopes)=>{
