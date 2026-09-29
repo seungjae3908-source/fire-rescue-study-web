@@ -18,7 +18,27 @@ for(const path of files){
     get(`${base}/${path}?sha=${sha}`),
     get(`https://raw.githubusercontent.com/${repo}/${sha}/${path}`)
   ]);
-  if(digest(live)!==digest(raw))throw new Error(`PAGES_DRIFT ${path} live=${digest(live)} raw=${digest(raw)}`);
+  if(digest(live)!==digest(raw)){
+    if(path==='v9/app.js'){
+      const candidates=[
+        'feat/v71-free-static-production-20260928',
+        'audit/v70-production-performance-20260927',
+        'build/v70-all-ten-pages-mirror-20260927',
+        'feat/v69-production-ux-performance-20260926',
+        'feat/v69-performance-layout-20260926',
+        'feat/v67-whole-app-real-ux-audit-20260925',
+        'feat/v65-single-scroll-owner-20260924',
+        'feat/v62-production-multidevice-ux-gate-20260924'
+      ];
+      for(const ref of candidates){
+        try{
+          const other=await get(`https://raw.githubusercontent.com/${repo}/${encodeURIComponent(ref).replaceAll('%2F','/')}/v9/app.js`);
+          if(other===live)console.log('LIVE_SOURCE_MATCH',ref);
+        }catch{}
+      }
+    }
+    throw new Error(`PAGES_DRIFT ${path} live=${digest(live)} raw=${digest(raw)}`);
+  }
   console.log('PASS exact Pages asset',path,digest(live));
 }
 
