@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+// postmerge dd9700 live probe
 
 const base='https://seungjae3908-source.github.io/fire-rescue-study-web';
 const repo='seungjae3908-source/fire-rescue-study-web';
