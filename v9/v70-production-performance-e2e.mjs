@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 
 const production=process.env.STUDY_119_PRODUCTION_URL||'https://fire-rescue-study-web.vercel.app/';
 const expected=process.env.STUDY_119_EXPECTED_RUNTIME_HEAD||'';
+const browserUrl=(()=>{const u=new URL(production);u.searchParams.set('ci-member-preview','1');return u.href})();
 const now=()=>Date.now();
 const round=n=>Math.round(Number(n)||0);
 function assert(v,m){if(!v)throw new Error(m)}
@@ -22,7 +23,7 @@ async function openApp(browser,{width=1920,height=1080}={}){
   const req=[];
   page.on('request',r=>req.push(r.url()));
   const started=now();
-  await page.goto(production,{waitUntil:'domcontentloaded',timeout:60000});
+  await page.goto(browserUrl,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.Store,{timeout:60000});
   const appReadyMs=now()-started;
   const nav=await page.evaluate(()=>{
@@ -55,7 +56,7 @@ async function measurePdf(browser,key){
       });
     }
   });
-  await page.goto(production,{waitUntil:'domcontentloaded',timeout:60000});
+  await page.goto(browserUrl,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>!!window.AITUTOR_V9?.SourcePDF?.render,{timeout:60000});
   const result=await page.evaluate(async key=>{
     const host=document.createElement('div');host.style.width='1000px';host.style.position='fixed';host.style.left='0';host.style.top='0';host.style.zIndex='-1';document.body.appendChild(host);
