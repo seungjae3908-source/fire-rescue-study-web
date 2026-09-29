@@ -543,7 +543,7 @@ try{
   assert(await m.locator('[data-note-subject]').count()===2,'pass-note workspace separates fire and EMS into dedicated subject tabs');
   const noteSubjectLabels=(await m.locator('[data-note-subject]').allInnerTexts()).join(' ');
   assert(noteSubjectLabels.includes('소방학')&&noteSubjectLabels.includes('구급'),'pass-note subject tabs are clearly labeled fire and EMS');
-  assert(await m.locator('[data-note-filter]').count()===4&&await m.locator('[data-note-filter="fire"],[data-note-filter="ems"],[data-note-filter="doc"]').count()===0,'pass-note uses four type filters inside the selected subject without duplicate subject or upload-source filters');
+  assert(await m.locator('[data-note-filter]').count()===5&&await m.locator('[data-note-filter="doc"]').count()===1&&await m.locator('[data-note-filter="fire"],[data-note-filter="ems"]').count()===0,'pass-note uses five type filters inside the selected subject and exposes the restored PDF-material filter without duplicate subject filters');
   assert(await m.locator('#noteSearch').count()===1,'pass-note workspace exposes note search');
   const sourceNoteId=await m.evaluate(()=>window.AITUTOR_V9.Store.state.notes.find(n=>n.sourceType==='pass-star')?.id||'');
   if(sourceNoteId){
@@ -561,24 +561,25 @@ try{
     await m.locator('[data-note-filter="all"]').click();
   }
   await cleanPage(m,'mobile notes');
-  const notesText=await m.locator('.page').innerText();
-  assert(await m.locator('#personalFile').count()===0,'pass-note workspace has no user PDF/photo upload input');
-  const injectedUploadBlocked=await m.evaluate(async()=>{
-    let calls=0;
-    const pd=window.AITUTOR_V9.PrivateDocs,old=pd?.ingest;
-    if(!pd||typeof old!=='function')return true;
-    pd.ingest=async()=>{calls++;return{reviewPages:[]}};
-    const input=document.createElement('input');input.id='personalFile';input.type='file';
-    Object.defineProperty(input,'files',{value:[new File(['legacy'],'legacy.txt',{type:'text/plain'})]});
-    document.body.appendChild(input);
-    input.dispatchEvent(new Event('change',{bubbles:true}));
-    await new Promise(r=>setTimeout(r,60));
-    input.remove();pd.ingest=old;
-    return calls===0
+  let notesText=await m.locator('.page').innerText();
+  assert(await m.locator('#personalFile').count()===0,'legacy personalFile upload hook remains removed');
+  assert(await m.locator('#passNotePdf').count()===1&&await m.locator('#noteUploadSubject').count()===1,'pass-note workspace restores one explicit PDF upload control with subject routing');
+  await m.evaluate(()=>{
+    const V=window.AITUTOR_V9;
+    window.__v73UploadOld={ingest:V.PrivateDocs.ingest,create:V.PassNote.createFromPrivateDoc};
+    window.__v73UploadProbe={ingest:0,created:false,subject:'',name:'',options:null};
+    V.PrivateDocs.ingest=async(file,options)=>{window.__v73UploadProbe.ingest++;window.__v73UploadProbe.name=file?.name||'';window.__v73UploadProbe.options=options||null;return{doc:{id:'e2e-pass-doc'}}};
+    V.PassNote.createFromPrivateDoc=async(id,title,subject)=>{window.__v73UploadProbe.created=id==='e2e-pass-doc';window.__v73UploadProbe.subject=subject;return{id:'pass-doc-e2e'}};
   });
-  assert(injectedUploadBlocked,'learner app has no executable personal-file upload event path');
-  assert(!notesText.includes('PDF / 사진')&&!notesText.includes('내 자료')&&!notesText.includes('업로드'),'pass-note workspace does not expose user document upload flows');
-  assert(notesText.includes('직접 메모 추가')&&notesText.includes('저장된 합격노트'),'pass-note workspace stays focused on saved study notes and direct memos');
+  await m.locator('#passNotePdf').setInputFiles({name:'e2e-pass-note.pdf',mimeType:'application/pdf',buffer:fixture});
+  await m.waitForFunction(()=>window.__v73UploadProbe?.created===true);
+  const uploadProbe=await m.evaluate(()=>({probe:window.__v73UploadProbe,filter:window.AITUTOR_V9.App.runtime.noteFilter,status:window.AITUTOR_V9.App.runtime.noteUploadStatus}));
+  assert(uploadProbe.probe.ingest===1&&uploadProbe.probe.name==='e2e-pass-note.pdf','PDF upload dispatches exactly one private-document ingest');
+  assert(uploadProbe.probe.options?.kind==='personal'&&uploadProbe.probe.options?.keepOriginal===true,'PDF upload keeps the personal/private ingest contract');
+  assert(uploadProbe.probe.subject==='fire'&&uploadProbe.filter==='doc'&&/완료/.test(uploadProbe.status),'PDF upload routes the selected subject and lands on the PDF-material note filter');
+  await m.evaluate(()=>{const V=window.AITUTOR_V9,o=window.__v73UploadOld;if(o){V.PrivateDocs.ingest=o.ingest;V.PassNote.createFromPrivateDoc=o.create}delete window.__v73UploadOld;delete window.__v73UploadProbe});
+  notesText=await m.locator('.page').innerText();
+  assert(notesText.includes('PDF 업로드')&&notesText.includes('직접 메모 추가')&&notesText.includes('저장된 합격노트'),'pass-note workspace presents PDF upload, direct memo and saved notes as separate clear actions');
   assert(!notesText.includes('DRM')&&!notesText.includes('브라우저에서 텍스트/OCR 처리'),'notes page removes technical/copyright implementation prose');
   for(const internalCopy of ['정밀 추출','품질 %','OCR ','텍스트층','로컬 AI 보정'])assert(!notesText.includes(internalCopy),'notes page hides implementation jargon from learner-facing copy: '+internalCopy);
   for(const internalType of ['pass-star','pass-question','pass-doc','manual'])assert(!notesText.includes(internalType),'notes page hides internal note source types from learner-facing copy: '+internalType);
