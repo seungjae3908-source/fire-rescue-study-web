@@ -268,7 +268,12 @@ return rows
 }
 function detailExamPointBlock(rows=[]){if(!rows.length)return'';return `<section class="detail-exam-points" data-detail-section="traps"><h3>시험 포인트 · 함정/주의</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
 function detailCriteriaRows(pack,seeds=[]){
-const out=[];for(const raw of uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,20)||[]).map(studentStudyText).filter(Boolean))){if(seeds.some(x=>sameStudyFact(x,raw))||out.some(x=>sameStudyFact(x,raw)))continue;out.push(raw);if(out.length>=12)break}return out
+const out=[];for(const raw of uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,20)||[]).map(studentStudyText).filter(Boolean))){
+ const repeated=seeds.some(x=>sameStudyFactCross(x,raw)&&!addsNumericCriterion(x,raw));
+ if(repeated||out.some(x=>sameStudyFact(x,raw)))continue;
+ out.push(raw);if(out.length>=12)break
+}
+return out
 }
 function detailCriteriaBlock(rows=[]){
 if(!rows.length)return'';
