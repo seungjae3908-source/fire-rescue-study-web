@@ -468,7 +468,9 @@ try{
   assert(calcEvidence.drip.some(x=>x.tier==='standard-education-practice')&&calcEvidence.drip.some(x=>x.tier==='regulated-device-source-practice'&&/gtt\/min/.test(x.formula||'')),'IV-drip lesson keeps legacy education practice separate from regulated-device source calculation');
   assert(calcEvidence.oxygenQs.length===4&&calcEvidence.dripQs.length===4&&[...calcEvidence.oxygenQs,...calcEvidence.dripQs].every(x=>x==='P'),'legacy and newly source-backed oxygen/drip calculation drills all remain P-grade and cannot enter verified real-mock credit');
   assert(calcEvidence.staged.length===42&&calcEvidence.staged.every(x=>x.grade==='P'&&x.past===false),'all staged calculation drills remain P-grade and outside real-mock credit');
-  await go(m,'exam');await m.waitForSelector('.exam-start');
+  await go(m,'exam');
+  if(!(await m.locator('.exam-start:visible').count()))await m.locator('[data-exam-hub="mock"]').click();
+  await m.waitForSelector('.exam-start');
   const pastStart=m.locator('[data-exam-start="past2025"]');
   assert(await pastStart.count()===1,'exam landing exposes the NFA-attributed 2025 actual past-exam subset');
   await pastStart.click();await m.waitForSelector('.exam-run-workspace');
