@@ -20,16 +20,18 @@ for(const path of files){
   ]);
   if(digest(live)!==digest(raw)){
     if(path==='v9/app.js'){
-      const candidates=[
-        'feat/v71-free-static-production-20260928',
-        'audit/v70-production-performance-20260927',
-        'build/v70-all-ten-pages-mirror-20260927',
-        'feat/v69-production-ux-performance-20260926',
-        'feat/v69-performance-layout-20260926',
-        'feat/v67-whole-app-real-ux-audit-20260925',
-        'feat/v65-single-scroll-owner-20260924',
-        'feat/v62-production-multidevice-ux-gate-20260924'
-      ];
+      const candidates=[];
+      for(let page=1;page<=3;page++){
+        try{
+          const r=await fetch(`https://api.github.com/repos/${repo}/branches?per_page=100&page=${page}`,{headers:{'accept':'application/vnd.github+json','user-agent':'pages-source-diagnostic'}});
+          if(!r.ok)break;
+          const rows=await r.json();
+          if(!Array.isArray(rows)||!rows.length)break;
+          candidates.push(...rows.map(x=>x.name).filter(Boolean));
+          if(rows.length<100)break;
+        }catch{break}
+      }
+      console.log('LIVE_SOURCE_SCAN_BRANCHES',candidates.length);
       for(const ref of candidates){
         try{
           const other=await get(`https://raw.githubusercontent.com/${repo}/${encodeURIComponent(ref).replaceAll('%2F','/')}/v9/app.js`);
