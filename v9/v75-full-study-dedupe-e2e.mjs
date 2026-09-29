@@ -56,16 +56,22 @@ try{
     const rows=[
       ...[...root.querySelectorAll('.detail-definition p')].map(text),
       ...[...root.querySelectorAll('.detail-fold .detail-copy > p,.detail-fold .detail-copy li')].map(text),
-      ...[...root.querySelectorAll('.detail-compare .concept-class-card')].map(x=>[text(x.querySelector('b')),text(x.querySelector('p'))].filter(Boolean).join(' ')),
       ...[...root.querySelectorAll('.detail-criteria li')].map(text),
       ...[...root.querySelectorAll('.detail-exam-points li')].map(text)
     ].filter(Boolean);
-    return{facts:rows}
+    const compare=[...root.querySelectorAll('.detail-compare .concept-class-card')].map(x=>({label:text(x.querySelector('b')),body:text(x.querySelector('p'))})).filter(x=>x.label&&x.body);
+    return{facts:rows,compare}
   });
-  stats.detailFacts+=detail.facts.length;
+  stats.detailFacts+=detail.facts.length+detail.compare.length;
   const detailDup=pairDuplicates(detail.facts);if(detailDup.length){stats.detailDup+=detailDup.length;issues.push({id,type:'DETAIL_DUP',rows:detailDup.slice(0,4)})}
   const cross=[];for(const a of core.facts)for(const b of detail.facts)if(sameFact(a,b))cross.push([a,b]);
   if(cross.length){stats.crossDup+=cross.length;issues.push({id,type:'CORE_DETAIL_DUP',rows:cross.slice(0,5)})}
+  const labels=new Set;
+  for(const row of detail.compare){
+    const lk=norm(row.label);if(labels.has(lk))issues.push({id,type:'COMPARE_LABEL_DUP',label:row.label});labels.add(lk);
+    const related=[...core.facts,...detail.facts].find(seed=>sameFact(seed,row.body)&&!([...new Set((row.body.match(/\d+(?:[.,]\d+)?/g)||[]))].some(n=>!(seed.match(/\d+(?:[.,]\d+)?/g)||[]).includes(n))));
+    if(related)issues.push({id,type:'COMPARE_REPEAT',rows:[[related,row.label+' '+row.body]]});
+  }
  }
  const org=await page.evaluate(()=>{
   const V=window.AITUTOR_V9,p=V.contentPacks.get('F01-C01');
