@@ -130,6 +130,9 @@ function studyFactWords(v){const out=new Set;for(const raw of studentStudyText(v
 function studyTokenCoverage(a,b){const A=studyFactWords(a),B=studyFactWords(b);if(!A.size||!B.size)return 0;let hit=0;for(const x of A)if(B.has(x))hit++;return hit/Math.min(A.size,B.size)}
 function sameCriterionFact(a,b){const na=numericTokens(a),nb=numericTokens(b);return !!na&&na===nb&&studyGramDice(a,b)>=.46}
 function sameStudyFact(a,b){if(sameStudyText(a,b)||sameCriterionFact(a,b))return true;const x=studyNorm(a),y=studyNorm(b);if(!x||!y)return false;const min=Math.min(x.length,y.length);if(min>=14&&studyGramDice(a,b)>=.78)return true;return min>=10&&studyTokenCoverage(a,b)>=.78&&studyGramDice(a,b)>=.48}
+function sameStudyFactCross(a,b){if(sameStudyFact(a,b))return true;const x=studyNorm(a),y=studyNorm(b),min=Math.min(x.length,y.length);return min>=18&&studyTokenCoverage(a,b)>=.66&&studyGramDice(a,b)>=.42}
+function numericTokenSet(v){return new Set(numericTokens(v).split('|').filter(Boolean))}
+function addsNumericCriterion(base,detail){const a=numericTokenSet(base),b=numericTokenSet(detail);return [...b].some(x=>!a.has(x))}
 function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(!row||sameStudyFact(row,seed)||out.some(x=>sameStudyFact(x,row)))continue;out.push(row)}return out}
 function uniqueCriterionRows(rows=[]){const out=[];for(const row of rows){if(!row||out.some(x=>sameStudyFact(x,row)))continue;out.push(row)}return out}
 const DETAIL_META_SECTION_RE=/^(?:개념\s*구조와\s*읽는\s*순서|핵심\s*포인트\s*연결|문제\s*적용과\s*난이도\s*대응|공식\s*원문으로\s*복귀하는\s*기준|회상\s*루프)$/;
@@ -184,7 +187,7 @@ const i=t.indexOf(n);return esc(t.slice(0,i))+`<span class="study-key-emphasis s
 }
 function isCoreStudyText(v,seeds=[]){
 const text=studentStudyText(v);if(!text)return false;
-return seeds.some(seed=>sameStudyFact(text,seed))
+return seeds.some(seed=>sameStudyFactCross(text,seed))
 }
 function detailOnlyText(v,seeds=[]){
 const text=studentStudyText(v);if(!text||isCoreStudyText(text,seeds))return'';
@@ -317,7 +320,15 @@ const rows=coreTrapRows(pack);if(!rows.length)return'';
 return `<section class="study-traps"><div class="study-traps-title">자주 틀리는 포인트</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
 }
 function detailComparisonRows(pack,seeds=[]){
-const out=[];for(const raw of pack?.compare||[]){if(!Array.isArray(raw)||!raw[0]||!raw[1])continue;const row=[studentStudyText(raw[0]),studentStudyText(raw[1])],fact=row.join(' ');if(seeds.some(x=>sameStudyFact(x,fact))||out.some(x=>sameStudyFact(x.join(' '),fact)))continue;out.push(row)}return out
+const out=[];for(const raw of pack?.compare||[]){
+ if(!Array.isArray(raw)||!raw[0]||!raw[1])continue;
+ const row=[studentStudyText(raw[0]),studentStudyText(raw[1])],fact=row.join(' ');
+ const repeated=seeds.some(x=>(sameStudyFactCross(x,row[1])||sameStudyFactCross(x,fact))&&!addsNumericCriterion(x,row[1]));
+ if(repeated)continue;
+ if(out.some(x=>sameStudyText(x[0],row[0])&&sameStudyText(x[1],row[1])))continue;
+ out.push(row)
+}
+return out
 }
 function comparisonBlock(c,pack,rows=[]){
 if(!rows.length)return'';
