@@ -3,7 +3,7 @@ import fs from 'node:fs';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
-const smoke=fs.readFileSync(new URL('./live-student-ux-smoke.mjs',import.meta.url),'utf8');
+const smoke=fs.readFileSync(new URL('./pages-live-browser-e2e.mjs',import.meta.url),'utf8');
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
 
 assert(css.includes('/* V65 single vertical scroll owner */'),'V65 single-scroll CSS contract is present');
