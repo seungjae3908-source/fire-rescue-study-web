@@ -26,7 +26,7 @@ ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content comp
 ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style question quality gate is loaded');
 ok(V.VerifiedV52FireBreadth119?.added===14,'V52 fire breadth adds 14 manually source-reviewed third questions');
 ok(V.VerifiedV52BreadthBatch2?.verifiedAdded===14&&V.VerifiedV52BreadthBatch2?.practiceAdded===0,'V52 batch2 adds exactly 14 source-reviewed questions for the remaining canonical gaps');
-ok(V.StudyEmphasis119?.version==='119-study-emphasis-ssot-v1','study emphasis SSOT is loaded');
+ok(V.StudyEmphasis119?.version==='119-study-emphasis-ssot-v2-deduped-criteria','study emphasis SSOT is loaded');
 ok(V.Quality2StudySchema119?.version==='119-quality2-study-schema-v2','study schema consumes the emphasis SSOT');
 ok(V.VisibleDetailCoverage119?.version==='119-visible-detail-coverage-v50','V50 visible detail normalization and facility coverage layer is loaded');
 ok(V.VisibleDetailCoverage119?.normalizedConcepts===V.curriculum.concepts.length,'V50 normalization reaches every curriculum concept');
