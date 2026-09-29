@@ -398,7 +398,7 @@ try{
   const mobilePdfTools=m.locator('#pdfEvidence .pdf-mobile-tools').first();
   assert(await mobilePdfTools.count()===1,'mobile original view groups zoom/search/page tools in one compact disclosure');
   assert(!(await mobilePdfTools.evaluate(el=>el.open)),'mobile original view keeps secondary PDF tools collapsed by default');
-  await mobilePdfTools.locator('summary').tap();
+  await mobilePdfTools.locator('summary').click();
   assert(await mobilePdfTools.evaluate(el=>el.open),'mobile PDF tools expand on touch');
   assert(await m.locator('#pdfEvidence [data-pdf-zoom]').count()===2&&await m.locator('#pdfEvidence [data-pdf-fit]').count()===1,'mobile expanded tools expose zoom and fit-width controls');
   await m.locator('#pdfEvidence [data-pdf-zoom="0.25"]').click();
