@@ -23,10 +23,10 @@ assert(pdf.includes('const expandEvidence=')&&pdf.includes('sentenceEnded(cur.te
 assert(pdf.includes('return picked.slice(0,12)'),'PDF evidence highlight remains bounded');
 
 assert(css.includes('V72 mobile field-report hardening'),'V72 mobile final-override block exists');
-assert(css.includes('.page-study .mobile-study-nav{')&&css.includes('position:static!important'),'mobile previous/toc/next navigation no longer overlays reading content');
+assert(css.includes('.page-study .concept-nav-single')&&css.includes('position:static!important'),'one concept previous/toc/next navigation stays in document flow');
 assert(css.includes('body:has(.pdf-evidence-modal) .mobile-nav'),'PDF evidence modal hides the global bottom navigation');
 assert(css.includes('.pdf-render-meta{')&&css.includes('position:static!important'),'PDF evidence meta label no longer overlays the PDF canvas');
-assert(css.includes('.page-home .dashboard-home{')&&css.includes('display:block!important'),'mobile home uses one predictable scroll flow');
+assert(css.includes('.page-home .dashboard-home-compact')&&css.includes('overflow-y:auto!important'),'mobile home uses one compact route-level scroll flow');
 assert(css.includes('.note-core-line,.note-number-line,.note-answer-line')&&css.includes('text-decoration-line:underline!important'),'pass-note core and number lines receive visible underline emphasis');
 
 assert(boot7b.includes('const expandEvidence=')&&boot7b.includes('const normalizeBody='),'runtime source bundle 7b contains V72 PDF and pass-note logic');
