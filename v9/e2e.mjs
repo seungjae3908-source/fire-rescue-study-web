@@ -137,7 +137,8 @@ try{
   assert(examText.includes('65문항 · 65분')&&examText.includes('소방학개론 25문항')&&examText.includes('응급처치학개론 40문항'),'exam landing shows real 25+40 / 65-minute format');
   assert(!examText.includes('검증문제')&&!examText.includes('미검증'),'exam landing hides question-bank engineering state');
 
-  assert(await p.locator('[data-training-start]').count()===11,'exam landing exposes fire EMS full-range wrong-answer and weak-concept training modes');
+  await p.locator('[data-exam-hub="training"]').click();
+  assert(await p.locator('[data-training-start]').count()===11,'problem-training hub exposes fire EMS full-range wrong-answer and weak-concept modes');
   await p.locator('[data-training-start="fire50"]').click();await p.waitForSelector('.exam-run-workspace');
   const fire50=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,label:e.blueprint?.label}});
   assert(fire50.mode==='training'&&fire50.total===50&&fire50.fire===50&&fire50.ems===0&&/소방학 집중 50/.test(fire50.label||''),'fire 50 training builds fifty unique fire questions outside real mock mode');
@@ -145,7 +146,8 @@ try{
   assert(pcExamLayout.sideVisible&&pcExamLayout.q>pcExamLayout.s*2&&pcExamLayout.nav===50,'desktop active exam uses a wide question pane plus a narrower progress navigator');
   await p.locator('.exam-navigator [data-exam-jump="4"]').click();
   assert((await p.evaluate(()=>window.AITUTOR_V9.App.runtime.exam.i))===4,'desktop exam navigator jumps directly to the chosen question');
-  await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('.exam-start');
+  await p.evaluate(()=>{window.AITUTOR_V9.App.runtime.exam=null;window.AITUTOR_V9.App.go('exam')});await p.waitForSelector('[data-exam-hub="training"]');
+  if(!(await p.locator('[data-training-start="all200"]:visible').count()))await p.locator('[data-exam-hub="training"]').click();
   await p.locator('[data-training-start="all200"]').click();await p.waitForSelector('.exam-run-workspace');
   const all200=await p.evaluate(()=>{const e=window.AITUTOR_V9.App.runtime.exam;return{mode:e.mode,total:e.qs.length,fire:e.qs.filter(q=>q.subject==='fire').length,ems:e.qs.filter(q=>q.subject==='ems').length,unique:new Set(e.qs.map(q=>q.id)).size}});
   assert(all200.mode==='training'&&all200.total===200&&all200.fire===77&&all200.ems===123&&all200.unique===200,'full-range 200 training preserves exam-like subject ratio with unique questions');
