@@ -3,7 +3,7 @@ import fs from 'node:fs';
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 
 const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
-const smoke=fs.readFileSync(new URL('./live-student-ux-smoke.mjs',import.meta.url),'utf8');
+const smoke=fs.readFileSync(new URL('./pages-live-browser-e2e.mjs',import.meta.url),'utf8');
 const typography=fs.readFileSync(new URL('./global-typography-audit.mjs',import.meta.url),'utf8');
 const productionWorkflow=fs.readFileSync(new URL('../.github/workflows/production-current-main-acceptance.yml',import.meta.url),'utf8');
 
@@ -15,5 +15,5 @@ assert(smoke.includes('keeps student microcopy >=12px'),'Production smoke checks
 assert(smoke.includes('keeps primary touch targets >=44px'),'Production smoke checks computed primary touch targets');
 assert(typography.includes("type:'microcopy-under-12px'"),'branch typography audit blocks under-12px microcopy');
 assert(typography.includes("type:'touch-target-under-44px'"),'branch typography audit blocks under-44px primary touch targets');
-assert(productionWorkflow.includes('node v9/live-student-ux-smoke.mjs'),'Production Current-Main Acceptance exercises the V63 runtime checks');
+assert(productionWorkflow.includes('node v9/pages-live-browser-e2e.mjs'),'Production Current-Main Acceptance exercises the V63 runtime checks on GitHub Pages');
 console.log('V63_READABILITY_TOUCH_COMPLETE');
