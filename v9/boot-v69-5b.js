@@ -9,7 +9,7 @@ const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
 const uniq=arr=>{const out=[],seen=new Set();for(const raw of arr||[]){const x=norm(raw),k=x.toLowerCase();if(x&&!seen.has(k)){seen.add(k);out.push(x)}}return out};
 const SERVICE_ID_RE=/(?:119|112)(?=\s*(?:안전센터|구조대|구급대|지역대|출장소|구조구급센터|종합상황실|신고|구조|구급))/g;
-const NUMERIC_RE=/(?:\d+(?:[.,]\d+)?(?:\s*(?:~|–|-|:|×|\/)\s*\d+(?:[.,]\d+)?)?\s*(?:%|℃|°C|°|㎥|㎡|cm|mmHg|mm|kg\/㎠|kg|\bg\b|mg\/kg|mg|mL|L\/min|\bL\b|m\/s|\bm\b|psi|J\/kg|J|kW(?:\/㎡)?|회\/분|회|분|초|시간|일|개월|년|세|명|개|대|주기|배|단계|요소|류|급|종|쪽))|(?:\d+\s*:\s*\d+)/i;
+const NUMERIC_RE=/(?:\d+(?:[.,]\d+)?(?:\s*(?:~|–|-|:|×|\/)\s*\d+(?:[.,]\d+)?)?\s*(?:%|℃|°C|°|㎥|㎡|cm|mmHg|mm|kg\/㎠|kg|g|mg\/kg|mg|mL|L\/min|L|m\/s|m|psi|J\/kg|J|kW(?:\/㎡)?|회\/분|회|분|초|시간|일|개월|년|세|명|개|대|주기|배|단계|요소|류|급|종|쪽))|(?:\d+\s*:\s*\d+)/i;
 const CRITERION_CONTEXT_RE=/(?:이상|이하|미만|초과|이내|범위|간격|거리|높이|면적|깊이|속도|비율|주기|수량|지정수량|온도|압력|농도|용량|유량|기간|연령|단계|요소|횟수)/;
 function stripServiceIds(v){return norm(v).replace(SERVICE_ID_RE,'')}
 function stripSourceReferenceNumbers(v){
