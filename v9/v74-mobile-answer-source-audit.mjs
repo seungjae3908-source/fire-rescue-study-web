@@ -7,7 +7,7 @@ const sourcePdf=read('./source-pdf.js');
 const boot7b=read('./boot-v69-7b.js');
 const css=read('./v54-responsive.css');
 const sw=read('./sw.js');
-const questions=read('./questions.js');
+const questions=read('./questions-governance-depth-119.js');
 
 const checks=[
   ['login grid reset',css.includes('.login-gate-shell{')&&css.includes('grid-template-columns:minmax(0,1fr)!important')&&css.includes('grid-template-rows:minmax(0,1fr)!important')],
@@ -22,7 +22,7 @@ const checks=[
   ['mobile PDF tools collapsed',app.includes('<details class="pdf-mobile-tools">')&&css.includes('.pdf-mobile-tools:not([open])>.pdf-mobile-tools-body{display:none!important}')],
   ['mobile scroll safe area',css.includes('padding-bottom:calc(var(--mobile-nav) + 16px + env(safe-area-inset-bottom))!important')],
   ['correct answer explanation not duplicated',app.includes('q.choiceExplanations&&')===false&&app.includes('ans!==q.a&&q.choiceExplanations[ans]')],
-  ['known exact-page fixture',questions.includes("id:'b-f01-org-2'")&&questions.includes("소방법령2 · 소방기본법 46쪽")],
+  ['known exact-page fixture',questions.includes("id:'119-gov-f01-01b'")&&questions.includes("소방법령2 · 소방기본법 46쪽")],
   ['app bundle synced',boot8.includes('data-question-retry="${esc(q.id)}"')&&boot8.includes('questionSourceEvidence(question)')&&boot8.includes('<details class="pdf-mobile-tools">')],
   ['source bundle synced',boot7b.includes('exactEvidence=evidence.filter(x=>x.markExact)')&&boot7b.includes('anchorTokens.length?anchorTokens:tokens')],
   ['service-worker cache bumped',sw.includes('v73-ux-regression-consolidation-v74-mobile-answer-source')]
