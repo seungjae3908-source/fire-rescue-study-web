@@ -91,6 +91,13 @@ try{
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
     await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.Auth,{timeout:60000});
     await page.waitForSelector('.login-gate-shell',{state:'visible',timeout:60000});
+    if(vp.width<=412){
+      const g=await page.evaluate(()=>{
+        const r=x=>{const e=document.querySelector(x),b=e?.getBoundingClientRect(),cs=e?getComputedStyle(e):null;return b?{x:b.x,y:b.y,w:b.width,h:b.height,right:b.right,bottom:b.bottom,display:cs?.display,grid:cs?.gridTemplateColumns}:null};
+        return{vw:innerWidth,shell:r('.login-gate-shell'),card:r('.login-gate-card')};
+      });
+      console.log('VISUAL_GEOMETRY_LOGIN',vp.label,JSON.stringify(g));
+    }
 
     assert((await page.title()).includes('소방합격'),vp.label+' brand title');
     assert(await page.locator('.login-gate-card').count()===1,vp.label+' guest sees one member login gate');
@@ -127,6 +134,15 @@ try{
 
     await page.evaluate(async()=>{await window.AITUTOR_V9.App.go('home')});
     assert(await page.locator('.dashboard-home-compact').count()===1,vp.label+' compact home is live');
+    if(vp.width<=412){
+      const g=await page.evaluate(()=>{
+        const rect=s=>{const e=document.querySelector(s),b=e?.getBoundingClientRect();return b?{x:b.x,y:b.y,w:b.width,h:b.height,right:b.right,bottom:b.bottom}:null};
+        const overlap=(a,b)=>a&&b&&Math.max(0,Math.min(a.right,b.right)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y));
+        const top=rect('.dashboard-topline'),title=rect('.dashboard-titleline'),actions=rect('.dashboard-actions-compact'),stats=rect('.dashboard-statline'),correction=rect('.correction-v64-card'),nav=rect('.mobile-nav');
+        return{top,title,actions,stats,correction,nav,topStatsOverlap:overlap(top,stats),titleStatsOverlap:overlap(title,stats),actionsStatsOverlap:overlap(actions,stats)};
+      });
+      console.log('VISUAL_GEOMETRY_HOME',vp.label,JSON.stringify(g));
+    }
 
     await page.evaluate(async()=>{await window.AITUTOR_V9.App.go('study')});
     await page.waitForSelector('.study-body-unified',{state:'visible',timeout:60000});
@@ -141,6 +157,17 @@ try{
     assert(study.bodies===1,vp.label+' study uses one unified body');
     assert(study.conceptNav===1,vp.label+' study has one previous/next navigation');
     assert(study.tabs.length===5,vp.label+' study exposes five unique learning tabs '+JSON.stringify(study.tabs));
+    if(vp.width<=412){
+      await page.locator('[data-study-tab="quiz"]').first().click();
+      await page.waitForSelector('.quiz-view',{state:'visible',timeout:30000});
+      const g=await page.evaluate(()=>{
+        const rect=s=>{const e=document.querySelector(s),b=e?.getBoundingClientRect();return b?{x:b.x,y:b.y,w:b.width,h:b.height,right:b.right,bottom:b.bottom}:null};
+        const nav=rect('.mobile-nav'),quizPager=rect('.study-quiz-pager'),conceptNav=rect('.concept-nav'),card=rect('.quiz-view .question-card');
+        const hiddenByNav=x=>x&&nav?Math.max(0,x.bottom-nav.y):0;
+        return{quizPager,conceptNav,card,mobileNav:nav,quizPagerHidden:hiddenByNav(quizPager),conceptNavHidden:hiddenByNav(conceptNav),bothNavigationLayers:!!quizPager&&!!conceptNav};
+      });
+      console.log('VISUAL_GEOMETRY_QUIZ',vp.label,JSON.stringify(g));
+    }
 
     await page.evaluate(async()=>{await window.AITUTOR_V9.App.go('notes')});
     await page.waitForSelector('#passNotePdf',{state:'attached',timeout:30000});
