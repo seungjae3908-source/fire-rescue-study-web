@@ -78,14 +78,14 @@ try{
     if(vp.width===390){
       await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
       await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
-      await page.locator('.study-body-mobile .book-jumpbar [data-study-tab="detail"]').click();
-      await page.waitForSelector('.study-body-mobile .book-section .detail-view');
-      assert(await page.locator('.study-body-mobile .book-section .detail-view>.lead').count()===0,'detail summary is not duplicated above structured content');
+      await page.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+      await page.waitForSelector('.study-body-mobile .detail-view');
+      assert(await page.locator('.study-body-mobile .detail-view>.lead').count()===0,'detail summary is not duplicated above structured content');
       const bodyHeight=await page.locator('.study-body-mobile').evaluate(el=>el.clientHeight);
       assert(bodyHeight>=320,'mobile learning body keeps useful reading height');
-      assert(await page.locator('.study-body-mobile .book-jumpbar').evaluate(el=>getComputedStyle(el).position)==='static','mobile learning tabs do not cover scrolled content');
+      assert(await page.locator('.concept-head .tabbar').evaluate(el=>getComputedStyle(el).position)==='static','mobile learning tabs do not cover scrolled content');
 
-      await page.locator('.study-body-mobile .book-jumpbar [data-study-tab="core"]').click();
+      await page.locator('.concept-head .tabbar [data-study-tab="core"]').click();
       const passNote=page.locator('.study-body-mobile .study-core-save');
       await passNote.waitFor({state:'visible'});
       assert((await passNote.innerText()).trim()==='합격노트 ☆','Production core uses one 합격노트 ☆ toggle');
@@ -96,25 +96,25 @@ try{
 
       await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F05-C01'));
       await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F05-C01');
-      await page.waitForSelector('.study-body-mobile .book-section .hazmat-class-grid');
-      const hazmat=await page.locator('.study-body-mobile .book-section .hazmat-class-grid').evaluate(root=>({cards:root.querySelectorAll('.hazmat-class-card').length,toggles:root.querySelectorAll('[data-hazmat-class-toggle]').length,details:[...root.querySelectorAll('.hazmat-class-detail')].filter(x=>getComputedStyle(x).display!=='none').length,cols:getComputedStyle(root).gridTemplateColumns.split(/\s+/).filter(Boolean).length,text:root.innerText}));
+      await page.waitForSelector('.study-body-mobile .hazmat-class-grid');
+      const hazmat=await page.locator('.study-body-mobile .hazmat-class-grid').evaluate(root=>({cards:root.querySelectorAll('.hazmat-class-card').length,toggles:root.querySelectorAll('[data-hazmat-class-toggle]').length,details:[...root.querySelectorAll('.hazmat-class-detail')].filter(x=>getComputedStyle(x).display!=='none').length,cols:getComputedStyle(root).gridTemplateColumns.split(/\s+/).filter(Boolean).length,text:root.innerText}));
       assert(hazmat.cards===6&&hazmat.toggles===0&&hazmat.details===6&&hazmat.cols===1&&hazmat.text.includes('아염소산염류'),'Production hazardous-material classes are one-column and fully visible without expand');
 
       await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C04'));
       await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C04');
-      await page.locator('.study-body-mobile .book-jumpbar [data-study-tab="detail"]').click();
+      await page.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
       await page.waitForSelector('.study-body-mobile .concept-class-card.static');
-      const hydrantCompare=await page.locator('.study-body-mobile .book-section .detail-view').innerText();
+      const hydrantCompare=await page.locator('.study-body-mobile .detail-view').innerText();
       assert(hydrantCompare.includes('옥내소화전')&&hydrantCompare.includes('건물 내부')&&hydrantCompare.includes('옥외소화전')&&hydrantCompare.includes('건물 외부'),'Production hydrant comparison is visible without expansion');
 
       await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F07-C14',{keepTab:true}));
       await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F07-C14');
-      const waterDetail=await page.locator('.study-body-mobile .book-section .detail-view').innerText();
+      const waterDetail=await page.locator('.study-body-mobile .detail-view').innerText();
       for(const term of ['소화수조','저수조','채수구','흡수관투입구','20㎥','65mm'])assert(waterDetail.includes(term),'Production fire-water detail includes '+term);
 
       await page.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
       await page.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
-      await page.locator('.study-body-mobile .book-jumpbar [data-study-tab="source"]').click();
+      await page.locator('.concept-head .tabbar [data-study-tab="source"]').click();
       await page.waitForSelector('.study-body-mobile .source-only [data-source-concept]');
       const started=Date.now();
       await page.locator('.study-body-mobile .source-only [data-source-concept]').click();
@@ -138,7 +138,7 @@ try{
         assert(!!id,'found concept backed by mirrored '+doc+' textbook');
         await page.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
         await page.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,id);
-        await page.locator('.study-body-mobile .book-jumpbar [data-study-tab="source"]').click();
+        await page.locator('.concept-head .tabbar [data-study-tab="source"]').click();
         await page.locator('.study-body-mobile .source-only [data-source-concept]').click();
         await page.waitForSelector('#pdfEvidence canvas',{timeout:45000});
         const pdfOwners=await page.locator('#pdfEvidence').evaluate(root=>[root,...root.querySelectorAll('*')].filter(el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0&&['auto','scroll'].includes(cs.overflowY)}).map(el=>({cls:String(el.className||''),owner:el.getAttribute('data-scroll-owner')||''})));
