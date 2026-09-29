@@ -51,7 +51,7 @@ try{document.body?.setAttribute('aria-busy','true');await V.Lazy119.ensureQuesti
 async function go(page){if(memberGateRequired()){state().page='home';state().outline=false;S.save();runtime.more=false;runtime.account=false;render();return}const target=page==='tutor'?'study':page,tab=page==='tutor'?'ai':state().studyTab;if(!await ensurePageData(target,tab))return;if(target!=='bank'){runtime.retryQuestionId='';runtime.retryConfidence='none'}if(page==='tutor'){state().page='study';state().studyTab='ai'}else state().page=page;state().outline=false;S.save();runtime.more=false;render()}
 function chooseConcept(id,{keepTab=false}={}){const c=V.curriculum.byId[id];if(!c)return;state().conceptId=id;state().scopeId=c.scopeId;state().subject=c.subject;if(!keepTab)state().studyTab='core';state().outline=false;rememberStudyPosition(c.subject);S.save();go('study')}
 function navButton([id,ico,label]){const active=state().page===id;return `<button class="${active?'active':''}" ${active?'aria-current="page"':''} data-go="${id}"><span class="ico">${ico}</span><span>${label}</span></button>`}
-function memberGateBypass(){const h=String(location.hostname||'').toLowerCase();return h==='localhost'||h==='127.0.0.1'||h==='::1'||(navigator.webdriver&&new URLSearchParams(location.search).has('ci-member-preview'))}
+function memberGateBypass(){const h=String(location.hostname||'').toLowerCase();return h==='localhost'||h==='127.0.0.1'||h==='::1'}
 function memberGateRequired(){return !V.Auth?.user&&!memberGateBypass()}
 function loginGate(){
 const configured=V.Auth?.configured?.(),notice=runtime.authNotice,pending=runtime.pendingAuthEmail;
