@@ -337,11 +337,12 @@ const typeLike=rows.length>=2&&/원리|종류|분류|구분/.test(String(c?.titl
 return `<section class="detail-compare detail-compare-cards" data-detail-section="comparison"><h3>${esc(title)}</h3><div class="concept-class-grid">${rows.map(r=>`<article class="concept-class-card static"><b>${esc(r[0])}</b><p>${esc(r[1])}</p></article>`).join('')}</div></section>`
 }
 function buildDetailModel(c,pack){
-const coreSeeds=coreStudySeeds(pack),definition=detailDefinitionText(c,pack,coreSeeds),seen=[...coreSeeds];if(definition)seen.push(definition);
+const coreSeeds=coreStudySeeds(pack),definition=detailDefinitionText(c,pack,coreSeeds),seen=[...coreSeeds],criteriaFirst=pack?.detailCriteriaOwner==='detail';if(definition)seen.push(definition);
+let criteriaRows=criteriaFirst?detailCriteriaRows(pack,seen):[];if(criteriaFirst)seen.push(...criteriaRows);
 const detail=pack.detail||[],sections=uniqueSections(pack.deepSections||[]),rawRows=[...schemaDetailRows(c,pack),...detailGroups(c,detail,coreSeeds),...sections],sorted=detailSortRows(c,rawRows.filter(x=>detailHasUniqueContent(x,coreSeeds))),detailRows=dedupeDetailRows(sorted,seen);
 seen.push(...detailRowSeedTexts(detailRows));
 const compareRows=detailComparisonRows(pack,seen);seen.push(...compareRows.map(x=>x.join(' ')));
-const criteriaRows=detailCriteriaRows(pack,seen);seen.push(...criteriaRows);
+if(!criteriaFirst){criteriaRows=detailCriteriaRows(pack,seen);seen.push(...criteriaRows)}
 const trapRows=detailExamPointRows(pack,seen);
 return{coreSeeds,definition,detailRows,compareRows,criteriaRows,trapRows}
 }
