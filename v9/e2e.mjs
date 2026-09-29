@@ -434,7 +434,9 @@ try{
   await cleanPage(m,'mobile exam');
   const mexam=await m.locator('.page').innerText();
   assert(mexam.includes('65문항 · 65분'),'mobile exam starts with real exam format instead of validation diagnostics');
-  assert(await m.locator('[data-calc-bank]').count()===1,'exam landing exposes a dedicated calculation practice action');
+  assert(await m.locator('[data-exam-hub="training"]').count()===1,'exam landing separates focused problem training from the real mock exam');
+  await m.locator('[data-exam-hub="training"]').click();
+  assert(await m.locator('[data-calc-bank]').count()===1,'problem-training hub exposes a dedicated calculation practice action');
   await m.locator('[data-calc-bank]').click();await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.page==='bank');
   await m.waitForSelector('.question-card');
   const calcFilterLabel=await m.locator('.calc-filter-label').first().innerText();
