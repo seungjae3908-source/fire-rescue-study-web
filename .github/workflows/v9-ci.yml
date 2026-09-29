@@ -471,6 +471,11 @@ jobs:
           done
           cat /tmp/aitutor-v9-http.log
           exit 1
+      - name: V74 390px touch answer + exact source evidence QA
+        if: steps.remote_pdf.outputs.available == 'true'
+        env:
+          STUDY_119_V74_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v74-mobile-answer-source-e2e.mjs
       - name: V69 bootstrap real-network request QA
         env:
           STUDY_119_V69_URL: http://127.0.0.1:4173/v9/index.html
@@ -564,11 +569,6 @@ jobs:
         env:
           STUDY_119_V72_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v72-mobile-readability-e2e.mjs
-      - name: V74 390px touch answer + exact source evidence QA
-        if: steps.remote_pdf.outputs.available == 'true'
-        env:
-          STUDY_119_V74_URL: http://127.0.0.1:4173/v9/index.html
-        run: node v9/v74-mobile-answer-source-e2e.mjs
       - name: Active exam reload recovery and timer QA
         run: node v9/exam-session-e2e.mjs
       - name: Final learner journey backup wrong-answer exam source AI QA
