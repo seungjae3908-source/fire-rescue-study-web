@@ -236,7 +236,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   const lines=rows.map(line=>{
     const its=line.items.sort((a,b)=>a.x-b.x),text=its.map(x=>x.raw).join(' ').replace(/\s+/g,' ').trim(),n=norm(text);
     const left=Math.min(...its.map(x=>x.x)),right=Math.max(...its.map(x=>x.x+x.w)),top=Math.min(...its.map(x=>x.top)),bottom=Math.max(...its.map(x=>x.top+x.h));
-    return{text,n,left,right,top,bottom};
+    return{text,n,left,right,top,bottom,items:its.map(x=>({raw:x.raw,n:x.n,left:x.x,right:x.x+x.w}))};
   }).filter(x=>x.n.length>=4).sort((a,b)=>a.top-b.top);
   const sentenceEnded=text=>/[.!?。！？](?:["'”’）)\]]*)?$/.test(String(text||'').trim());
   const looksLikeNewBlock=text=>/^(?:제\s*\d+|\d+[.)]|[①②③④⑤⑥⑦⑧⑨⑩]|[가-하][.)]|[■□◆◇※])/u.test(String(text||'').trim());
@@ -250,9 +250,22 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
     return{start:s,end:e}
   };
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
+  const markTokens=[...new Set([...anchorTokens,...tokens].filter(x=>x.length>=2))].sort((a,b)=>b.length-a.length);
+  const markLine=line=>{
+    const hits=[];
+    for(const item of line.items||[]){
+      for(const token of markTokens){
+        const i=item.n.indexOf(token);if(i<0)continue;
+        const len=Math.max(1,item.n.length),span=Math.max(2,item.right-item.left),left=item.left+span*(i/len),right=item.left+span*((i+token.length)/len);
+        hits.push({left,right});break
+      }
+    }
+    if(!hits.length)return{...line,markLeft:line.left,markRight:line.right,markExact:false};
+    return{...line,markLeft:Math.max(line.left,Math.min(...hits.map(x=>x.left))),markRight:Math.min(line.right,Math.max(...hits.map(x=>x.right))),markExact:true}
+  };
   if(anchorTokens.length){
     const e=lines.map((l,i)=>{const m=anchorTokens.filter(t=>l.n.includes(t));return{l,i,m,s:m.reduce((n,t)=>n+t.length,0)+m.length*10}}).filter(x=>x.m.length>1||x.m.some(t=>t.length>4)).sort((a,b)=>b.s-a.s||a.i-b.i);
-    if(e.length){const p=[];for(const h of e.slice(0,3)){const block=expandEvidence(h.i,h.i,5),title=lines.slice(block.start,block.end+1).map(x=>x.text).join(' ');for(let j=block.start;j<=block.end&&p.length<10;j++){if(!p.some(x=>x.i===j))p.push({l:{...lines[j],evidenceTitle:title},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,10).map(x=>x.l)}
+    if(e.length){const p=[];for(const h of e.slice(0,3)){const block=expandEvidence(h.i,h.i,5),title=lines.slice(block.start,block.end+1).map(x=>x.text).join(' ');for(let j=block.start;j<=block.end&&p.length<10;j++){if(!p.some(x=>x.i===j))p.push({l:{...lines[j],evidenceTitle:title},i:j})}}return p.sort((a,b)=>a.i-b.i).slice(0,10).map(x=>markLine(x.l))}
     const anchorBlocks=[];
     for(let i=0;i<lines.length;i++){
       let joinedN='',joinedText='';
@@ -276,7 +289,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
         picked.push({...lines[i],evidenceTitle:title||block.title})
       }
     }
-    if(picked.length)return picked
+    if(picked.length)return picked.map(markLine)
   }
   const candidates=[];
   const maxWindow=8;
@@ -314,7 +327,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   }
   const picked=[];
   for(const b of blocks.sort((a,b)=>a.start-b.start)){const expanded=expandEvidence(b.start,b.end,6),title=lines.slice(expanded.start,expanded.end+1).map(x=>x.text).join(' ');for(let i=expanded.start;i<=expanded.end;i++)if(!picked.some(x=>x===lines[i]||x.text===lines[i].text&&Math.abs(x.top-lines[i].top)<1))picked.push({...lines[i],evidenceTitle:title})}
-  return picked.slice(0,12);
+  return picked.slice(0,12).map(markLine);
 }
 function downloadName(key,row,catalog){const raw=row?.name||catalog?.expectedNames?.[0]||catalog?.label||key;return /\.pdf$/i.test(raw)?raw:`${raw}.pdf`}
 async function download(key,{timeoutMs=120000,onProgress}={}){const catalog=V.SourceCatalog119?.get?.(key);if(!catalog)throw Error('SOURCE_PDF_UNKNOWN');let row=await get(key);if(!row?.blob){try{row=await cacheOfficialByRange(key,{timeoutMs,onProgress})}catch{row=await cacheOfficial(key,{timeoutMs,onProgress})}}if(!row?.blob)throw Error('SOURCE_PDF_DOWNLOAD_UNAVAILABLE');const name=downloadName(key,row,catalog),url=URL.createObjectURL(row.blob),a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return{name,size:row.blob.size,key}}
@@ -331,11 +344,11 @@ async function render(key,pageNum,host,queries=[],opts={}){
   const tc=await pg.getTextContent(),evidence=evidenceLines(tc.items||[],viewport,p,queries,{anchorTerms:opts.anchorTerms});
   for(const line of evidence){
     const mark=document.createElement('div');mark.className='pdf-evidence-line';
-    mark.style.left=Math.max(0,line.left-2)+'px';mark.style.top=Math.min(viewport.height-3,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-line.left+2,line.right-line.left+4))+'px';mark.style.height='2px';
+    const markLeft=Number.isFinite(line.markLeft)?line.markLeft:line.left,markRight=Number.isFinite(line.markRight)?line.markRight:line.right;mark.style.left=Math.max(0,markLeft-2)+'px';mark.style.top=Math.min(viewport.height-4,Math.max(0,line.bottom+1))+'px';mark.style.width=Math.max(8,Math.min(viewport.width-markLeft+2,markRight-markLeft+4))+'px';mark.style.height='3px';mark.dataset.exact=line.markExact?'true':'false';
     mark.title=line.evidenceTitle||line.text;overlay.appendChild(mark);
   }
   const officialBookPage=bookPage(key,pageNo),meta=document.createElement('div');meta.className='pdf-render-meta';meta.textContent=officialBookPage?`${name} · 교재 ${officialBookPage}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`:`${name} · PDF ${pageNo}/${pdf.numPages}쪽 · ${evidence.length?'공식 근거':'공식 원문'}`;host.prepend(meta);
   return{page:pageNo,bookPage:officialBookPage,pages:pdf.numPages,hits:evidence.length,evidenceLines:evidence.map(x=>x.evidenceTitle||x.text),name,origin,zoom,fitScale,outputScale,cssWidth:viewport.width,pixelWidth:canvas.width};
 }
-V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',officialCacheEpoch:OFFICIAL_CACHE_EPOCH,officialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,privacy:{localCacheAllowed:true,persistentOfficialCache:true,officialCacheEpochRequired:true,staleOfficialCacheAutoDelete:true,legacyUnversionedOfficialAttachmentAutoDelete:true,persistentOfficialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v15-range-remote-cache-epoch-anchor-context-lines'};
+V.SourcePDF={attach,get,has,remove,availability,resolveRow,remoteRow,cacheOfficial,cacheOfficialByRange,openProxyPdfWithCustomRange,openPdf,clearPdfCache,locate,findPages,download,render,pdfPage,bookPage,evidenceLinesForQA:evidenceLines,pageOffsets:PAGE_OFFSETS,mirrorUrl:key=>V.SourceCatalog119?.get?.(key)?.transport==='range-static'?V.SourceCatalog119.get(key).directPdf:'',sourcePage:key=>V.SourceCatalog119?.get?.(key)?.officialPage||SOURCE_PAGES[key]||'',officialCacheEpoch:OFFICIAL_CACHE_EPOCH,officialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,privacy:{localCacheAllowed:true,persistentOfficialCache:true,officialCacheEpochRequired:true,staleOfficialCacheAutoDelete:true,legacyUnversionedOfficialAttachmentAutoDelete:true,persistentOfficialCacheMaxAgeMs:OFFICIAL_CACHE_MAX_AGE_MS,serverUpload:false,userUploadRequired:false,originalUnmodified:true,officialRemotePreferred:true},runtime:'pdfjs-v16-range-remote-cache-epoch-precise-evidence-ranges'};
 })();
