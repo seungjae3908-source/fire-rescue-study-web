@@ -16,7 +16,7 @@ async function createOcrWorker(){
   const create=T.createWorker||T.default?.createWorker||window.Tesseract?.createWorker;
   if(!create)throw Error('OCR_ENGINE_UNAVAILABLE');
   const worker=await create('kor+eng');
-  try{await worker.setParameters?.({preserve_interword_spaces:'1'})}catch{}
+  try{await worker.setParameters?.({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}
   return worker
 }
 function normalizeText(s){return String(s||'').replace(/[\t\u00a0]+/g,' ').replace(/ *\n */g,'\n').replace(/[ ]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim()}
