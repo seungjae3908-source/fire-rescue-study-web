@@ -10,7 +10,7 @@ assert(css.includes('.page-stats .stats-page{width:100%!important;max-width:none
 assert(css.includes('.page-stats .stats-v61>*,.resources-119>.card,.suggestions-page>.card,.notes-page>.card,.settings-page>.card'),'major desktop pages share the same content-width rule');
 assert(css.includes('.page-exam.exam-active .exam-layout{width:100%!important;max-width:1280px!important;grid-template-columns:minmax(0,1fr) 300px!important}'),'active exam uses a consistent wide desktop grid');
 assert(css.includes('.page-study .concept-class-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))!important}'),'desktop detail comparison cards auto-balance without a 2+1 dead column');
-assert(css.includes('grid-template-rows:auto auto auto!important')&&css.includes('.page-exam.exam-active .exam-footer{width:100%!important;max-width:1280px!important;margin-inline:auto!important}'),'desktop exam footer follows content instead of being pinned below a large empty body');
+assert(css.includes('grid-template-rows:auto auto auto!important')&&css.includes('.page-exam.exam-active .exam-footer{width:min(calc(100% - 48px),1280px)!important;max-width:1280px!important;margin-inline:auto!important}'),'desktop exam footer follows content and aligns with the wide question grid');
 assert(css.includes('.suggestions-page section.card:has(.suggestion-list>.empty) .suggestion-pager{display:none!important}'),'empty suggestion UI hides meaningless pagination');
 assert(!base.includes('.stats-page{grid-template-columns:minmax(0,1fr);max-width:1080px;margin:0 auto}'),'legacy narrow stats cap removed');
 assert(!base.includes('.resources-119{display:grid;gap:12px;max-width:1180px;margin:0 auto;padding-bottom:18px}'),'legacy narrow resources cap removed');
