@@ -1,0 +1,7 @@
+{
+  "purpose": "manual-user-review-before-production",
+  "sourceSha": "6eac4b2987cabb966808c8c3d6758ecdef2ca576",
+  "pr": 123,
+  "productionBlocked": true,
+  "note": "preview-only trigger; application code matches sourceSha"
+}
