@@ -26,7 +26,7 @@ try{
  await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.StudyEmphasis119);
  const ids=await page.evaluate(()=>window.AITUTOR_V9.curriculum.concepts.map(x=>x.id));
  assert(ids.length===183,'V75 dedupe audit covers all 183 fire/EMS concepts');
- const issues=[],stats={coreFacts:0,detailFacts:0,numberRows:0,serviceNumberLeaks:0,crossDup:0,coreDup:0,detailDup:0};
+ const issues=[],stats={coreFacts:0,detailFacts:0,numberRows:0,serviceNumberLeaks:0,crossOverlapAllowed:0,coreDup:0,detailDup:0};
  for(const id of ids){
   await page.evaluate(id=>{const V=window.AITUTOR_V9,c=V.curriculum.byId[id],s=V.Store.state;s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=id;s.studyTab='core';s.outline=false;V.Store.save();V.App.render()},id);
   await page.waitForSelector('.page-study .core-view');
@@ -66,11 +66,11 @@ try{
   stats.detailFacts+=detail.facts.length+detail.compare.length;
   const detailDup=pairDuplicates(detail.facts);if(detailDup.length){stats.detailDup+=detailDup.length;issues.push({id,type:'DETAIL_DUP',rows:detailDup.slice(0,4).map(pair=>pair.map(text=>({text,source:detail.tagged.find(x=>x.text===text)?.source||'?'})))})}
   const cross=[];for(const a of core.facts)for(const b of detail.facts)if(sameFact(a,b))cross.push([a,b]);
-  if(cross.length){stats.crossDup+=cross.length;issues.push({id,type:'CORE_DETAIL_DUP',rows:cross.slice(0,5).map(([a,b])=>[a,{text:b,source:detail.tagged.find(x=>x.text===b)?.source||'?'}])})}
+  stats.crossOverlapAllowed+=cross.length;
   const labels=new Set;
   for(const row of detail.compare){
     const lk=norm(row.label);if(labels.has(lk))issues.push({id,type:'COMPARE_LABEL_DUP',label:row.label});labels.add(lk);
-    const related=[...core.facts,...detail.facts].find(seed=>sameFact(seed,row.body)&&!([...new Set((row.body.match(/\d+(?:[.,]\d+)?/g)||[]))].some(n=>!(seed.match(/\d+(?:[.,]\d+)?/g)||[]).includes(n))));
+    const related=detail.facts.find(seed=>sameFact(seed,row.body)&&!([...new Set((row.body.match(/\d+(?:[.,]\d+)?/g)||[]))].some(n=>!(seed.match(/\d+(?:[.,]\d+)?/g)||[]).includes(n))));
     if(related)issues.push({id,type:'COMPARE_REPEAT',rows:[[related,row.label+' '+row.body]]});
   }
  }
@@ -110,7 +110,8 @@ try{
 
  console.log('V75_FULL_STUDY_DEDUPE_STATS',JSON.stringify(stats));
  if(issues.length){console.error('V75_FULL_STUDY_DEDUPE_ISSUES',JSON.stringify(issues.slice(0,80),null,2));throw new Error('V75_FULL_STUDY_DEDUPE_FAILED '+issues.length)}
- assert(stats.crossDup===0&&stats.coreDup===0&&stats.detailDup===0,'all visible core/detail study facts are non-duplicated under the V75 semantic policy');
+ assert(stats.coreDup===0&&stats.detailDup===0,'core and detail are independently deduplicated without deleting detail because core summarizes it');
+ assert(stats.crossOverlapAllowed>0,'core-to-detail factual overlap is preserved by design');
  console.log('V75_FULL_STUDY_DEDUPE_SUCCESS');
  await ctx.close();
 }finally{await browser.close()}
