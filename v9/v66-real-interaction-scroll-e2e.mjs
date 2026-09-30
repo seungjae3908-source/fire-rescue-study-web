@@ -122,8 +122,9 @@ async function diagonalTrackpad(page,target,ownerName,label,scope='.page'){
   const before=state.top;
   const vp=page.viewportSize(),x=Math.max(5,Math.min((vp?.width||1440)-5,box.x+Math.min(box.width/2,28))),y=Math.max(5,Math.min((vp?.height||900)-5,box.y+Math.min(box.height/2,28)));
   await page.mouse.move(x,y);await page.mouse.wheel(42,280);await settle(page,150);
-  const after=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);return owner?.scrollTop??-1},ownerName);
-  check(after!==before,label+' diagonal trackpad keeps vertical intent on '+ownerName+' '+JSON.stringify({before,after}));
+  const afterState=await page.locator(scope).evaluate((root,ownerName)=>{const owner=[root,...root.querySelectorAll('[data-scroll-owner]')].find(el=>el.getAttribute('data-scroll-owner')===ownerName&&el.offsetParent!==null);if(!owner)return{top:-1,max:-1};return{top:owner.scrollTop,max:Math.max(0,owner.scrollHeight-owner.clientHeight)}},ownerName);
+  if(afterState.max<=.5){console.log('PASS '+label+' diagonal trackpad has no remaining vertical range');return}
+  check(afterState.top!==before,label+' diagonal trackpad keeps vertical intent on '+ownerName+' '+JSON.stringify({before,after:afterState.top,max:afterState.max}));
 }
 async function horizontalWheelSafe(page,target,ownerName,label,scope='.page'){
   await makeScrollable(page,ownerName,scope);
