@@ -1,0 +1,32 @@
+import { chromium } from 'playwright';
+const base=process.env.STUDY_119_V77_URL||'http://127.0.0.1:4173/v9/index.html';
+const failures=[];
+const check=(v,m,meta={})=>{if(v)console.log('PASS',m);else{failures.push({message:m,...meta});console.error('V77_FAIL',JSON.stringify({message:m,...meta}))}};
+const settle=page=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+async function renderStudy(page,id,tab){
+  await page.evaluate(({id,tab})=>{const V=window.AITUTOR_V9,c=V.curriculum.concepts.find(x=>x.id===id);V.Store.state.page='study';V.Store.state.subject=c.subject;V.Store.state.scopeId=c.scopeId;V.Store.state.conceptId=id;V.Store.state.studyTab=tab;V.Store.save();V.App.render()},{id,tab});await settle(page)
+}
+async function go(page,route){await page.evaluate(route=>window.AITUTOR_V9.App.go(route),route);await page.waitForFunction(route=>window.AITUTOR_V9.Store.state.page===route,route);await settle(page)}
+const browser=await chromium.launch({headless:true});
+try{
+ for(const vp of [{width:1366,height:768},{width:1680,height:900},{width:1920,height:1080}]){
+  const ctx=await browser.newContext({viewport:vp,serviceWorkers:'block'}),page=await ctx.newPage();page.setDefaultTimeout(45000);
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&!/favicon/i.test(m.text()))errors.push(m.text())});
+  await page.route('**/api/official-monitor**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,targetExamYear:'2027',contentBaselineYear:'2026',sources:[],items:[]})}));
+  await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V9?.curriculum?.concepts?.length);
+  const flowId=await page.evaluate(()=>{const V=window.AITUTOR_V9,old={...V.Store.state};let id='';for(const c of V.curriculum.concepts){V.Store.state.page='study';V.Store.state.subject=c.subject;V.Store.state.scopeId=c.scopeId;V.Store.state.conceptId=c.id;V.Store.state.studyTab='detail';V.App.render();const f=document.querySelector('.concept-visual .visual-flow:not(.vertical-org)');if(f?.querySelectorAll('.visual-node').length>=5){id=c.id;break}}Object.assign(V.Store.state,old);V.App.render();return id});
+  check(!!flowId,'finds five-step detail flow '+vp.width);
+  if(flowId){await renderStudy(page,flowId,'detail');const m=await page.evaluate(()=>{const ns=[...document.querySelectorAll('.concept-visual .visual-flow:not(.vertical-org)>.visual-node')].slice(0,5);return ns.map(n=>{const r=n.getBoundingClientRect(),b=n.querySelector('b')?.getBoundingClientRect(),s=n.querySelector('span')?.getBoundingClientRect();return{h:r.height,textCenter:b?b.top+b.height/2:null,nodeCenter:r.top+r.height/2,numCenter:s?s.top+s.height/2:null,textLeft:b?.left||0}})});check(m.every(x=>Math.abs(x.textCenter-x.nodeCenter)<=4&&Math.abs(x.numCenter-x.nodeCenter)<=4),'detail flow number and text share the vertical center '+vp.width,{m});check(Math.max(...m.map(x=>x.textLeft))-Math.min(...m.map(x=>x.textLeft))<=3,'detail flow text starts on one alignment line '+vp.width,{m})}
+  await page.evaluate(async()=>{const V=window.AITUTOR_V9;await V.Lazy119.ensureQuestions()});
+  const quizId=await page.evaluate(()=>{const V=window.AITUTOR_V9;return V.curriculum.concepts.map(c=>({id:c.id,n:V.QuestionQuality119?.forConcept(c.id)?.length||0})).sort((a,b)=>b.n-a.n)[0].id});
+  await renderStudy(page,quizId,'quiz');
+  const q=await page.evaluate(()=>{const v=document.querySelector('.quiz-view'),card=document.querySelector('.study-quiz-single .question-card'),j=document.querySelector('.study-quiz-jumps'),pager=document.querySelector('.study-quiz-pager'),tops=[...j.querySelectorAll('button')].map(x=>Math.round(x.getBoundingClientRect().top));return{vw:v.getBoundingClientRect().width,cw:card.getBoundingClientRect().width,pw:pager.getBoundingClientRect().width,scroll:j.scrollWidth-j.clientWidth,rows:new Set(tops).size}});
+  check(q.cw>=q.vw*.94,'study question card uses the available desktop width '+vp.width,q);check(q.pw>=q.vw*.94,'study question pager aligns with the question width '+vp.width,q);check(q.scroll<=2&&q.rows>=2,'desktop question number buttons wrap without horizontal scrolling '+vp.width,q);
+  await go(page,'stats');const st=await page.evaluate(()=>{const p=document.querySelector('.page'),o=document.querySelector('[data-scroll-owner="stats"]'),c=o?.firstElementChild;const a=p.getBoundingClientRect(),b=o.getBoundingClientRect(),d=c?.getBoundingClientRect();return{page:a.width,owner:b.width,ownerRight:Math.round(a.right-b.right),child:d?.width||0}});check(st.owner>=st.page*.94&&Math.abs(st.ownerRight)<=16,'stats scroll owner reaches the route edge '+vp.width,st);check(st.child<=1442&&st.child>=Math.min(1200,st.page*.78),'stats cards use the shared wide PC container '+vp.width,st);
+  await go(page,'resources');const rs=await page.evaluate(()=>{const p=document.querySelector('.page').getBoundingClientRect(),o=document.querySelector('.resources-119').getBoundingClientRect(),c=document.querySelector('.resources-119>.card')?.getBoundingClientRect();return{page:p.width,owner:o.width,card:c?.width||0}});check(rs.owner>=rs.page*.94,'resources scroll owner reaches the route edge '+vp.width,rs);check(rs.card<=1442&&rs.card>=Math.min(1200,rs.page*.78),'resources cards use the shared wide PC container '+vp.width,rs);
+  check(errors.length===0,'PC UI pass has zero runtime errors '+vp.width,{errors});
+  await ctx.close()
+ }
+ if(failures.length)throw new Error('V77_UI_FINISH_FAILURES '+JSON.stringify(failures));
+ console.log('V77_UI_FINISH_E2E_SUCCESS')
+}finally{await browser.close()}
