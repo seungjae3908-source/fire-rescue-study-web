@@ -1278,7 +1278,7 @@ await V.Auth?.init?.();
 await V.Auth?.rejectNonStudySession?.();
 let questionLaneReady=true,restoredActiveExam=false;
 if(!memberGateRequired()){if(V.Lazy119?.needsQuestionsForCurrentState?.()){try{await V.Lazy119.ensureQuestions()}catch(err){questionLaneReady=false;console.error(err);if(V.ExamSession119?.has?.(S.ownerId)||V.Lazy119?.needsQuestions?.(state().page,state().studyTab)){state().page='home';state().studyTab='core';S.save();runtime.authNotice='문제은행 로딩에 실패해 홈으로 이동했습니다. 네트워크 연결 후 다시 시도해주세요.'}}}restoredActiveExam=questionLaneReady?restoreActiveExam():false}
-V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();if(restoredActiveExam)startExamTicker()
+V.App={render,go,chooseConcept,runtime,tutorConceptFor,sampleAcrossScopes,studentStudyText,studentQuestionText};render();setTimeout(()=>V.PassNote?.prepareEditable?.().catch(()=>{}),0);if(restoredActiveExam)startExamTicker()
 }
 boot();
 })();
