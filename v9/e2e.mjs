@@ -762,6 +762,7 @@ try{
     await m.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
     await m.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,id);
     await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+    await m.locator('.study-body-unified .detail-section').evaluateAll(nodes=>nodes.forEach(x=>{if(x.tagName==='DETAILS')x.open=true}));
     const tankText=await m.locator('.study-body-unified').innerText();
     assert((await m.locator('.concept-head h2').innerText()).trim()===title,'tank-fire phenomenon keeps its own lesson title: '+title);
     for(const term of terms)assert(tankText.includes(term),title+' detail keeps distinguishing clue/comparison: '+term);
