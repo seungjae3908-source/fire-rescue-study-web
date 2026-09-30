@@ -53,19 +53,20 @@ try{
   await page.waitForSelector('.page-study .detail-view');
   const detail=await page.locator('.page-study .detail-view').evaluate(root=>{
     const text=x=>String(x?.textContent||'').replace(/\s+/g,' ').trim();
-    const rows=[
-      ...[...root.querySelectorAll('.detail-definition p')].map(text),
-      ...[...root.querySelectorAll('.detail-fold .detail-copy > p,.detail-fold .detail-copy li')].map(text),
-      ...[...root.querySelectorAll('.detail-criteria li')].map(text),
-      ...[...root.querySelectorAll('.detail-exam-points li')].map(text)
-    ].filter(Boolean);
+    const tagged=[
+      ...[...root.querySelectorAll('.detail-definition p')].map(x=>({source:'definition',text:text(x)})),
+      ...[...root.querySelectorAll('.detail-fold .detail-copy > p')].map(x=>({source:'detail-body',text:text(x)})),
+      ...[...root.querySelectorAll('.detail-fold .detail-copy li')].map(x=>({source:'detail-bullet',text:text(x)})),
+      ...[...root.querySelectorAll('.detail-criteria li')].map(x=>({source:'criteria',text:text(x)})),
+      ...[...root.querySelectorAll('.detail-exam-points li')].map(x=>({source:'trap',text:text(x)}))
+    ].filter(x=>x.text);
     const compare=[...root.querySelectorAll('.detail-compare .concept-class-card')].map(x=>({label:text(x.querySelector('b')),body:text(x.querySelector('p'))})).filter(x=>x.label&&x.body);
-    return{facts:rows,compare}
+    return{facts:tagged.map(x=>x.text),tagged,compare}
   });
   stats.detailFacts+=detail.facts.length+detail.compare.length;
-  const detailDup=pairDuplicates(detail.facts);if(detailDup.length){stats.detailDup+=detailDup.length;issues.push({id,type:'DETAIL_DUP',rows:detailDup.slice(0,4)})}
+  const detailDup=pairDuplicates(detail.facts);if(detailDup.length){stats.detailDup+=detailDup.length;issues.push({id,type:'DETAIL_DUP',rows:detailDup.slice(0,4).map(pair=>pair.map(text=>({text,source:detail.tagged.find(x=>x.text===text)?.source||'?'})))})}
   const cross=[];for(const a of core.facts)for(const b of detail.facts)if(sameFact(a,b))cross.push([a,b]);
-  if(cross.length){stats.crossDup+=cross.length;issues.push({id,type:'CORE_DETAIL_DUP',rows:cross.slice(0,5)})}
+  if(cross.length){stats.crossDup+=cross.length;issues.push({id,type:'CORE_DETAIL_DUP',rows:cross.slice(0,5).map(([a,b])=>[a,{text:b,source:detail.tagged.find(x=>x.text===b)?.source||'?'}])})}
   const labels=new Set;
   for(const row of detail.compare){
     const lk=norm(row.label);if(labels.has(lk))issues.push({id,type:'COMPARE_LABEL_DUP',label:row.label});labels.add(lk);
