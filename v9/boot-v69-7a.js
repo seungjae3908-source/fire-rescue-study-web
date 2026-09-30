@@ -357,7 +357,10 @@ function ocrCandidateScore(row,reference=''){
   if(reference&&reference.replace(/\s/g,'').length>=20){const m=ocrBenchmarkMetrics(reference,row.text);score+=m.numericRecall*10+m.unitRecall*8+m.koreanRecall*5-Math.min(.5,m.cer)*8}
   return score
 }
-async function bestOcrCanvas(worker,canvas,reference=''){
+const OCR_UNIT_RE=/(\d+(?:[.,]\d+)?)\s*(mmHg|L\/min|mL|cm|mm|kg|mg|psi|%|L|m)\b/gi;
+function recoverOcrUnits(text,probe){
+  const canon={mmhg:'mmHg','l/min':'L/min',ml:'mL',cm:'cm',mm:'mm',kg:'kg',mg:'mg',psi:'psi','%':'%',l:'L',m:'m'};let out=String(text||'');
+  for(const m of String(probe||'').matchAll(OCR_UNIT_RE)){const n=m[1].replace(/[.*+?^$()|[\]\\]/g,'\\async function bestOcrCanvas(worker,canvas,reference=''){
   const first=await recognizeCanvas(worker,canvas),rows=[first];
   if(first.confidence==null||first.confidence<88||first.quality<.78){
     for(const mode of ['contrast','threshold']){
@@ -367,6 +370,28 @@ async function bestOcrCanvas(worker,canvas,reference=''){
     }
   }
   return rows.sort((a,b)=>ocrCandidateScore(b,reference)-ocrCandidateScore(a,reference))[0]
+}'),u=canon[m[2].toLowerCase()]||m[2],re=new RegExp('('+n+')(\\s+)(?:0{1,3}|[oOeEcC]{1,3})(?=\\s|$|[.,;:])');out=out.replace(re,'$1 '+u)}
+  return out
+}
+async function recoverOcrUnitPass(worker,canvas,row){
+  if(!/\d+\s+(?:0{1,3}|[oOeEcC]{1,3})(?=\s|$|[.,;:])/.test(row.text||''))return row;
+  try{
+    await worker.setParameters?.({tessedit_char_whitelist:'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz%/.-'});
+    const p=await recognizeCanvas(worker,canvas),text=recoverOcrUnits(row.text,p.text);
+    return text===row.text?row:{...row,text,quality:textQuality(text)}
+  }catch{return row}finally{try{await worker.setParameters?.({tessedit_char_whitelist:'',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}}
+}
+async function bestOcrCanvas(worker,canvas,reference=''){
+  const first=await recognizeCanvas(worker,canvas),rows=[first];
+  if(first.confidence==null||first.confidence<88||first.quality<.78){
+    for(const mode of ['contrast','threshold']){
+      const x=prepareOcrCanvas(canvas,mode);try{rows.push(await recognizeCanvas(worker,x))}finally{x.width=1;x.height=1}
+      const best=rows.slice().sort((a,b)=>ocrCandidateScore(b,reference)-ocrCandidateScore(a,reference))[0];
+      if(best.quality>=.82&&(best.confidence==null||best.confidence>=88))break
+    }
+  }
+  const best=rows.sort((a,b)=>ocrCandidateScore(b,reference)-ocrCandidateScore(a,reference))[0];
+  return recoverOcrUnitPass(worker,canvas,best)
 }
 async function ocrPdfPage(pg,worker,native=''){
   const base=pg.getViewport({scale:1}),maxWidth=3000,scale=Math.min(3.4,Math.max(2,maxWidth/base.width)),viewport=pg.getViewport({scale}),canvas=document.createElement('canvas');
