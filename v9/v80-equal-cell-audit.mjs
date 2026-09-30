@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const base=read('./styles.css'),css=read('./v54-responsive.css');
+assert(base.includes('.page-stats .metric-grid{grid-template-columns:repeat(4,minmax(0,1fr))}'),'PC stats summary uses four equal columns');
+assert(base.includes('.page-stats .metric-grid>.metric{min-height:92px}'),'stats summary cells share a minimum height');
+assert(css.includes('.page-stats .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}'),'tablet/mobile stats summary uses two columns');
+assert(base.includes('.exam-start>:is(.exam-round-picker,.difficulty-picker){margin:0;min-height:112px}'),'round and difficulty cells share desktop/tablet height');
+assert(css.includes('.exam-secondary-actions>.btn{min-height:50px}')&&css.includes('.exam-secondary-actions>.btn:only-child{grid-column:1/-1}'),'practice action matches real-start sizing and fills its column');
+assert(base.includes('.tutor-message.me{background:#10243c}.tutor-message.assistant{background:#0a1828}'),'AI messages no longer use mismatched card widths');
+console.log('V80_EQUAL_CELL_AUDIT_SUCCESS');
