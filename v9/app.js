@@ -351,10 +351,10 @@ return `<section class="detail-compare detail-compare-cards" data-detail-section
 function buildDetailModel(c,pack){
 const seen=[],definition=detailDefinitionText(c,pack,[]);if(definition)seen.push(definition);
 const criteriaRows=detailCriteriaRows(pack,seen);seen.push(...criteriaRows);
+const trapRows=detailExamPointRows(pack,seen);seen.push(...trapRows);
 const detail=pack.detail||[],sections=uniqueSections(pack.deepSections||[]),rawRows=[...schemaDetailRows(c,pack),...detailGroups(c,detail,[]),...sections],sorted=detailSortRows(c,rawRows.filter(x=>detailHasUniqueContent(x,[]))),detailRows=mergeDetailRowsByTitle(c,dedupeDetailRows(sorted,seen));
 seen.push(...detailRowSeedTexts(detailRows));
 const compareRows=detailComparisonRows(pack,seen);seen.push(...compareRows.map(x=>x.join(' ')));
-const trapRows=detailExamPointRows(pack,seen);
 return{definition,detailRows,compareRows,criteriaRows,trapRows}
 }
 function specialCombustibleBlock(pack){
