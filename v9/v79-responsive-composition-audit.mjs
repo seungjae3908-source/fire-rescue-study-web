@@ -10,6 +10,6 @@ assert(base.includes('.question-card{max-width:1440px'),'question bank no longer
 assert(base.includes('grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-content:start')&&base.includes('.exam-start>*{grid-column:auto}'),'exam setup uses two columns with a mobile one-column reset');
 assert(css.includes('justify-content:center!important;overflow:visible!important'),'desktop study question navigator is centered instead of left-clustered');
 assert(css.includes('.pdf-mobile-tools>.pdf-mobile-tools-body{display:grid!important;grid-template-columns:auto minmax(0,1fr)')&&css.includes('.pdf-mobile-tools[open]>.pdf-mobile-tools-body{display:grid!important;grid-template-columns:1fr'),'PDF controls are compact on PC/tablet and one-column when expanded on phone');
-assert(css.includes('.modal-wrap:has(.pdf-evidence-modal){background:#07111f}'),'PDF overlay is opaque so underlying controls cannot bleed through');
+assert(base.includes('.modal-wrap{position:fixed;inset:0;background:#07111f;'),'modal backdrop is opaque so underlying controls cannot bleed through');
 assert(sw.includes("ai-tutor-v9-shell-20260930-v78-fluid-density"),'current shell cache key remains compatible');
 console.log('V79_RESPONSIVE_COMPOSITION_AUDIT_SUCCESS');
