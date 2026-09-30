@@ -162,14 +162,7 @@ const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(
 for(const raw of V.StudyEmphasis119?.trapRows?.(pack)||[]){const text=studentStudyText(raw);if(!text||seeds.some(x=>sameStudyFact(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;rows.push(text);if(rows.length>=3)break}
 return rows
 }
-function coreStudySeeds(pack){
-return uniqueTextRows([
-pack?.studySchema?.quick30||pack?.summary||'',
-...coreEssentialRows(pack).map(x=>x.text),
-...coreNumberRows(pack),
-...coreTrapRows(pack)
-]).map(studentStudyText).filter(Boolean)
-}
+function coreStudySeeds(pack){return[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text),...coreNumberRows(pack),...coreTrapRows(pack)].map(studentStudyText).filter(Boolean)}
 function coreHighlightTerms(pack){
 const a=[...(pack?.compare||[]).map(x=>x?.[0]),...(pack?.must||[]).flatMap(x=>String(x||'').split(/\s*(?:→|:|=|·)\s*/))];
 return[...new Set(a.map(x=>String(x||'').replace(/^[★☆\d.\s-]+/,'').trim()).filter(x=>x.length>=2&&x.length<=12&&!/^(정의|핵심|시험|주의|원칙|방법|내용)$/.test(x)))].sort((a,b)=>b.length-a.length).slice(0,12)
@@ -260,27 +253,14 @@ const type=V.ConceptArchitecture119?.typeOf?.(c?.id)||'',order=(DETAIL_TYPE_RULE
 return rows.map((row,index)=>{const sample=[row?.title,row?.body,...(row?.bullets||[])].filter(Boolean).join(' '),bucket=detailSemanticTitle(c,sample),rank=order.indexOf(bucket);return{row,index,rank:rank<0?99:rank}}).sort((a,b)=>a.rank-b.rank||a.index-b.index).map(x=>x.row)
 }
 function schemaDetailRows(c,pack){if(V.ConceptArchitecture119?.get?.(c.id)?.genericSchema!==true)return[];const x=pack?.studySchema||{},rows=[['발생 조건',x.conditions],['작용 원리',x.mechanisms],['시기 · 단계',x.timingStages],['전조 · 위험신호',x.warningSigns],['발생 전 · 후',x.beforeAfter]];return rows.filter(([,v])=>v?.length).map(([title,bullets])=>({title,body:'',bullets}))}
-function detailDefinitionText(c,pack,seeds=[]){
-const quick=studentStudyText(pack?.studySchema?.quick30||pack?.summary||''),candidates=[pack?.studySchema?.definition,...(pack?.detail||[]),...(pack?.deepSections||[]).map(x=>x?.body),pack?.summary].map(studentStudyText).filter(Boolean);
-for(const candidate of candidates){const body=detailOnlyText(candidate,seeds.length?seeds:[quick]);if(body)return body}
-return''
-}
+function detailDefinitionText(c,pack,seeds=[]){const q=studentStudyText(pack?.studySchema?.quick30||pack?.summary||''),s=seeds.length?seeds:[q],a=[pack?.studySchema?.definition,...(pack?.detail||[]),...(pack?.deepSections||[]).map(x=>x?.body),pack?.summary].map(studentStudyText).filter(Boolean);for(const x of a){const b=detailOnlyText(x,s);if(b&&!s.some(y=>sameStudyFact(y,b)))return b}return''}
 function detailDefinitionBlock(c,body){
 if(!body)return'';
 const stem=String(c?.title||'개념').replace(/\s*(?:개론|원리|이론|기초|개요)\s*$/,'').trim()||String(c?.title||'개념'),title=stem+'의 정의';
 return `<section class="detail-section detail-definition" data-detail-section="definition"><div class="detail-copy"><h3>${esc(title)}</h3><p>${esc(body)}</p></div></section>`
 }
 function detailRowSeedTexts(rows=[]){return rows.flatMap(row=>[row?.body,...(row?.bullets||[])]).map(studentStudyText).filter(Boolean)}
-function dedupeDetailRows(rows=[],seeds=[]){
-const seen=[...seeds].map(studentStudyText).filter(Boolean),out=[];
-for(const row of rows||[]){
- const body=detailOnlyText(row?.body,seen),bullets=[];
- for(const raw of uniqueTextRows(row?.bullets||[])){const text=detailOnlyText(raw,[...seen,body,...bullets].filter(Boolean));if(text)bullets.push(text)}
- if(!body&&!bullets.length)continue;
- out.push({...row,body,bullets});if(body)seen.push(body);seen.push(...bullets)
-}
-return out
-}
+function dedupeDetailRows(rows=[],seeds=[]){const seen=[...seeds].map(studentStudyText).filter(Boolean),out=[];for(const row of rows||[]){let body=detailOnlyText(row?.body,seen),bullets=[];if(body&&seen.some(x=>sameStudyFact(x,body)))body='';for(const raw of uniqueTextRows(row?.bullets||[])){const t=detailOnlyText(raw,[...seen,body,...bullets].filter(Boolean));if(t&&!seen.some(x=>sameStudyFact(x,t))&&!bullets.some(x=>sameStudyFact(x,t)))bullets.push(t)}if(!body&&!bullets.length)continue;out.push({...row,body,bullets});if(body)seen.push(body);seen.push(...bullets)}return out}
 function detailTrapPriority(text,index=0){const t=String(text||'');let score=0;if(/[→←<>≈]|\d/.test(t))score+=4;if(/먼저|다음|순서|시각|시간|기준|비율|주기|분|초/.test(t))score+=5;if(/금지|않|주의|예외|구분|확인|배제|중단/.test(t))score+=2;return{score,index}}
 function detailExamPointRows(pack,seeds=[]){
 const all=uniqueTextRows([...(pack?.traps||[])]).map(studentStudyText).filter(Boolean),rows=[];
