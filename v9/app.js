@@ -180,9 +180,14 @@ const t=studentStudyText(v),n=studyNumberMatch(t);
 if(!n)return esc(t);
 const i=t.indexOf(n);return esc(t.slice(0,i))+`<span class="study-key-emphasis study-key-number">${esc(n)}</span>`+esc(t.slice(i+n.length))
 }
+function addsSubstantialDetail(base,detail){
+const a=studyNorm(base),b=studyNorm(detail);if(!a||!b||b.length<a.length*1.35)return false;
+const A=studyFactWords(base),B=studyFactWords(detail);let extra=0;for(const x of B)if(!A.has(x))extra++;
+return extra>=4
+}
 function isCoreStudyText(v,seeds=[]){
 const text=studentStudyText(v);if(!text)return false;
-return seeds.some(seed=>sameStudyFactCross(text,seed))
+return seeds.some(seed=>sameStudyFactCross(text,seed)&&!addsSubstantialDetail(seed,text))
 }
 function detailSeedCovers(text,seed){
 const a=studyNorm(text),b=studyNorm(seed);if(!a||!b)return false;
