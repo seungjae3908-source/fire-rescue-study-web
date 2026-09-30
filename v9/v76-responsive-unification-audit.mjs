@@ -28,3 +28,4 @@ assert(!styles.includes('.page-study .study-body-desktop>.lesson{max-width:1240p
 assert(sw.includes("ai-tutor-v9-shell-20260930-v76-responsive-unification"),'V76 cache epoch ships the unified responsive assets');
 
 console.log('V76_RESPONSIVE_UNIFICATION_AUDIT_SUCCESS');
+// Exact-head V76 responsive regression trigger.
