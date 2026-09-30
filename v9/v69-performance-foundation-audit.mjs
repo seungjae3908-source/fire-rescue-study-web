@@ -37,12 +37,12 @@ assert(app.includes('dashboard-home-compact')&&app.includes('dashboard-actions-c
 assert(app.includes('resource-grid')&&app.includes('중앙소방학교 공식 교재'),'resources show source attribution once and use a compact grid');
 assert(css.includes('@media(min-width:1600px)')&&css.includes('max-width:1240px!important')&&css.includes('max-width:1320px!important')&&css.includes('max-width:1400px!important'),'1920-class desktop layout uses materially more horizontal space');
 assert(app.includes('class="study study-single-scroll" data-scroll-owner="study"')&&!app.includes('data-scroll-owner="study-desktop"')&&!app.includes('data-scroll-owner="study-mobile"'),'study has one route-level scroll owner across desktop and mobile');
-assert(css.includes('/* V69 study route scroll owner: no short inner reading viewport */')&&css.includes('max-height:none!important')&&css.includes('overflow:visible!important'),'study content is no longer trapped in the former short inner reading viewport');
+assert(css.includes('.page-study .study-body{')&&css.includes('max-height:none!important')&&css.includes('overflow:visible!important'),'study content is no longer trapped in the former short inner reading viewport');
 assert(app.includes("closest('.study[data-scroll-owner=\"study\"]')"),'AI and detail runtime target the route-level study owner');
 assert(app.includes('<details class="detail-section detail-fold"')&&app.includes('detailSectionShouldOpen')&&app.includes('/비교|구분|분석|시험|함정|주의|예외|수치|기준|금기|변형|오염/'),'first and high-priority exam-distinction detail sections stay expanded by default');
 assert(app.includes('function detailTrapPriority')&&app.includes('b.score-a.score||a.index-b.index'),'detail exam points prioritize numeric, sequence, and timing traps before the four-row cap');
 assert(app.includes("target?.tagName==='DETAILS')target.open=true"),'detail TOC opens a folded section before scrolling to it');
-assert(css.includes('/* V69 structured detail folding */')&&css.includes('.detail-fold-summary'),'long detail content is structured as accessible collapsible sections');
+assert(css.includes('.detail-fold{')&&css.includes('.detail-fold-summary{'),'long detail content is structured as accessible collapsible sections');
 assert(localAi.includes('function chooseModel(list=[])')&&localAi.includes('memory>=8')&&localAi.includes('cores>=8'),'local AI model choice is device-aware');
 assert(localAi.includes('1\\.5B|1\\.7B|1B|1\\.0B')&&localAi.includes('0\\.5B.*Instruct'),'capable desktops prefer a larger Instruct model while 0.5B remains the bounded low-end fallback');
 assert(!localAi.includes("const model=list.find(x=>/0\\.5B.*Instruct"),'0.5B is no longer unconditionally preferred on every WebGPU device');
