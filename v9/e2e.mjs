@@ -688,8 +688,9 @@ try{
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E21-C04'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E21-C04');
   await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.locator('.study-body-unified .detail-section').evaluateAll(nodes=>nodes.forEach(x=>{if(x.tagName==='DETAILS')x.open=true}));
   const palsText=await m.locator('.study-body-unified').innerText();
-  assert(palsText.includes('0.01mg/kg')&&palsText.includes('3~5분')&&palsText.includes('0.1mg/kg')&&palsText.includes('0.2mg/kg')&&palsText.includes('0.5~1J/kg'),'pediatric ALS lesson includes official 2020 arrest brady/tachy algorithm anchors');
+  assert(palsText.includes('0.01mg/kg')&&palsText.includes('3~5분')&&palsText.includes('0.1mg/kg')&&palsText.includes('0.2mg/kg')&&palsText.includes('0.5~1J/kg'),'pediatric ALS lesson keeps official 2020 arrest brady/tachy algorithm anchors accessible in detail');
   const palsBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,qs=V.questions.filter(q=>/^119-pals-adv-/.test(q.id||''));return{n:qs.length,p:qs.every(q=>q.grade==='P'),source:qs.every(q=>/2020년 한국심폐소생술 가이드라인/.test(q.source||''))}});
   assert(palsBank.n===7&&palsBank.p&&palsBank.source,'advanced pediatric ALS practice stays P-grade and is bound to the official 2020 guideline');
   await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
