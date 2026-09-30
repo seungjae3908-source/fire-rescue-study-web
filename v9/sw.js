@@ -1,5 +1,5 @@
 'use strict';
-const CACHE='ai-tutor-v9-shell-20260930-v75-full-study-dedupe';
+const CACHE='ai-tutor-v9-shell-20260930-v76-responsive-unification';
 const PREFIX='ai-tutor-v9-';
 const CORE=[
   './','./index.html','./styles.css','./v54-responsive.css','./manifest.webmanifest',
