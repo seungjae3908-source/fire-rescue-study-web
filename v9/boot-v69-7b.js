@@ -1027,11 +1027,12 @@ function exportPdf(mode){
   const html=printDocument(mode),w=window.open('','_blank');if(!w)throw Error('POPUP_BLOCKED');try{w.opener=null}catch{}
   w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch{}},350);return true;
 }
-function exportEditable(mode){
-  const names={fire:'소방학-핵심',ems:'구급-핵심',pass:'내-합격노트',rapid:'시험직전-초압축'},html=printDocument(mode);
-  const blob=new Blob(['\ufeff',html],{type:'application/msword;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=(names[mode]||'119-합격노트')+'.doc';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return true
+async function exportEditable(mode){
+  const names={fire:'소방학-핵심',ems:'구급-핵심',pass:'내-합격노트',rapid:'시험직전-초압축'},titles={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'},html=printDocument(mode);
+  const mod=await import('./docx-export.js'),blob=mod.buildDocxBlobFromHtml(html,titles[mode]||'소방합격'),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=(names[mode]||'119-합격노트')+'.docx';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1800);return true
 }
+
 V.PassNote={conceptKey,conceptCoreKey,questionKey,has,find,persist,remove,toggleConcept,toggleConceptCore,conceptCoreNote,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,exportEditable,subjectOf,subjectLabel};
 })();
 
