@@ -357,16 +357,21 @@ function ocrCandidateScore(row,reference=''){
   if(reference&&reference.replace(/\s/g,'').length>=20){const m=ocrBenchmarkMetrics(reference,row.text);score+=m.numericRecall*10+m.unitRecall*8+m.koreanRecall*5-Math.min(.5,m.cer)*8}
   return score
 }
-const OCR_UNIT_RE=/(\d+(?:[.,]\d+)?)\s*(mmHg|L\/min|mL|cm|mm|kg|mg|psi|%|L|m)\b/gi;
+const OCR_UNIT_RE=/(mmHg|L\/min|mL|cm|mm|kg|mg|psi|%)/gi,OCR_SUSPECT_RE=/(\d+(?:[.,]\d+)?)\s+(?:0{1,3}|[oOeEcC]{1,3})(?=\s|$|[.,;:])/g;
+function ocrUnitKey(v){return String(v||'').toLowerCase()}
+function ocrUnitLabel(v){return({mmhg:'mmHg','l/min':'L/min',ml:'mL',cm:'cm',mm:'mm',kg:'kg',mg:'mg',psi:'psi','%':'%'})[ocrUnitKey(v)]||v}
 async function recoverOcrUnitPass(worker,canvas,row){
-  if(!/\d+\s+(?:0{1,3}|[oOeEcC]{1,3})(?=\s|$|[.,;:])/.test(row.text||''))return row;
+  const suspects=[...String(row.text||'').matchAll(OCR_SUSPECT_RE)];if(!suspects.length)return row;
   try{
-    await worker.setParameters?.({tessedit_char_whitelist:'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz%/.-'});
-    const p=await recognizeCanvas(worker,canvas);let text=row.text;
-    for(const m of p.text.matchAll(OCR_UNIT_RE)){const n=m[1].replace(/\./g,'\\.'),re=new RegExp('('+n+')(\\s+)(?:0{1,3}|[oOeEcC]{1,3})(?=\\s|$|[.,;:])');text=text.replace(re,'$1 '+m[2])}
+    await worker.setParameters?.({tessedit_char_whitelist:'mMHgLlckKpPsiInNJj/%'});
+    const p=await recognizeCanvas(worker,canvas),known=[...row.text.matchAll(OCR_UNIT_RE)].map(x=>ocrUnitKey(x[0])),probe=[...p.text.matchAll(OCR_UNIT_RE)].map(x=>ocrUnitKey(x[0]));
+    for(const k of known){const i=probe.indexOf(k);if(i>=0)probe.splice(i,1)}
+    if(!probe.length)return row;let i=0;
+    const text=row.text.replace(OCR_SUSPECT_RE,m=>probe[i]?m.replace(/\s+\S+$/, ' '+ocrUnitLabel(probe[i++])):m);
     return text===row.text?row:{...row,text,quality:textQuality(text)}
   }catch{return row}finally{try{await worker.setParameters?.({tessedit_char_whitelist:'',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}}
 }
+
 async function bestOcrCanvas(worker,canvas,reference=''){
   const first=await recognizeCanvas(worker,canvas),rows=[first];
   if(first.confidence==null||first.confidence<88||first.quality<.78){
