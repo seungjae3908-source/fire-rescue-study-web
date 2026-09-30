@@ -31,11 +31,12 @@ assert(config.includes("officialPdfMirrorDocs:['fire1','fire2','ems','prevention
 assert(perf.includes('noParserBlockingScripts:parserBlockingScripts.length===0')&&perf.includes('jsCount:16'),'performance budget prevents parser-blocking and high-request bootstrap regression');
 const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
+const responsive=fs.readFileSync(new URL('./v54-responsive.css',import.meta.url),'utf8');
 assert(!app.includes('<span>오늘 목표</span><b>\${goal.done}/\${goal.total}</b>'),'home metrics no longer duplicate the full daily-goal card');
 assert(!app.includes('class="card dashboard-schedule"'),'home no longer repeats the official schedule beside the hero');
 assert(app.includes('dashboard-home-compact')&&app.includes('dashboard-actions-compact')&&!app.includes('class="card dashboard-quick"')&&!app.includes('<b>바로가기</b>'),'home removes the shortcut rail and keeps only compact primary actions');
 assert(app.includes('resource-grid')&&app.includes('중앙소방학교 공식 교재'),'resources show source attribution once and use a compact grid');
-assert(css.includes('@media(min-width:1600px)')&&css.includes('max-width:1240px!important')&&css.includes('max-width:1320px!important')&&css.includes('max-width:1400px!important'),'1920-class desktop layout uses materially more horizontal space');
+assert(responsive.includes('--study-max:1440px')&&responsive.includes('.page-study .study-body-unified>:not(.concept-nav-single)')&&css.includes('max-width:1320px!important')&&css.includes('max-width:1400px!important'),'1920-class desktop layout uses the shared 1440px study container and wide app surfaces');
 assert(app.includes('class="study study-single-scroll" data-scroll-owner="study"')&&!app.includes('data-scroll-owner="study-desktop"')&&!app.includes('data-scroll-owner="study-mobile"'),'study has one route-level scroll owner across desktop and mobile');
 assert(css.includes('.page-study .study-body{')&&css.includes('max-height:none!important')&&css.includes('overflow:visible!important'),'study content is no longer trapped in the former short inner reading viewport');
 assert(app.includes("closest('.study[data-scroll-owner=\"study\"]')"),'AI and detail runtime target the route-level study owner');
