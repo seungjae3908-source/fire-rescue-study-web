@@ -106,6 +106,7 @@ try{
  });
  await page.waitForSelector('.page-study .detail-view');
  const waterDetail=await page.locator('.page-study .detail-view').innerText();
+ const waterDebug=await page.evaluate(()=>{const V=window.AITUTOR_V9,p=V.contentPacks.get('F07-C14'),root=document.querySelector('.page-study .detail-view');return{numberRows:V.StudyEmphasis119.numberRows(p,20),must:p.must,criteria:[...root.querySelectorAll('.detail-criteria li')].map(x=>x.textContent.trim()),detailText:root.innerText.replace(/\s+/g,' ')}});console.log('V75_F07_C14_DEBUG',JSON.stringify(waterDebug));
  for(const term of ['소화수조','저수조','채수구','흡수관투입구','2m','20㎥','0.6m','65mm','0.5m','1m'])assert(waterDetail.includes(term),'F07-C14 detail preserves distinct fire-water fact: '+term);
 
  console.log('V75_FULL_STUDY_DEDUPE_STATS',JSON.stringify(stats));
