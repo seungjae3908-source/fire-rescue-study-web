@@ -1027,9 +1027,22 @@ function exportPdf(mode){
   const html=printDocument(mode),w=window.open('','_blank');if(!w)throw Error('POPUP_BLOCKED');try{w.opener=null}catch{}
   w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch{}},350);return true;
 }
+let docxExportLoader=null;
+function loadDocxExporter(){
+  if(V.DocxExport119?.buildDocxBlobFromHtml)return Promise.resolve(V.DocxExport119);
+  if(docxExportLoader)return docxExportLoader;
+  docxExportLoader=new Promise((resolve,reject)=>{
+    const existing=document.querySelector('script[data-docx-export]');
+    const script=existing||document.createElement('script');
+    const done=()=>V.DocxExport119?.buildDocxBlobFromHtml?resolve(V.DocxExport119):reject(Error('DOCX_EXPORTER_UNAVAILABLE'));
+    const fail=()=>reject(Error('DOCX_EXPORTER_LOAD_FAILED'));
+    if(!existing){script.src='./docx-export.js';script.async=true;script.dataset.docxExport='1';script.addEventListener('load',done,{once:true});script.addEventListener('error',fail,{once:true});document.head.appendChild(script)}
+    else if(V.DocxExport119?.buildDocxBlobFromHtml)done();else{script.addEventListener('load',done,{once:true});script.addEventListener('error',fail,{once:true})}
+  }).catch(err=>{docxExportLoader=null;throw err});
+  return docxExportLoader
+}
 async function exportEditable(mode){
-  const names={fire:'소방학-핵심',ems:'구급-핵심',pass:'내-합격노트',rapid:'시험직전-초압축'},titles={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'},html=printDocument(mode);
-  const mod=await import('./docx-export.js'),blob=mod.buildDocxBlobFromHtml(html,titles[mode]||'소방합격'),url=URL.createObjectURL(blob),a=document.createElement('a');
+  const names={fire:'소방학-핵심',ems:'구급-핵심',pass:'내-합격노트',rapid:'시험직전-초압축'},titles={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'},html=printDocument(mode),mod=await loadDocxExporter(),blob=mod.buildDocxBlobFromHtml(html,titles[mode]||'소방합격'),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download=(names[mode]||'119-합격노트')+'.docx';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1800);return true
 }
 
