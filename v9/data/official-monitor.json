@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-09-29T20:51:49.573Z",
+  "generatedAt": "2026-09-30T00:31:42.923Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -45,44 +45,44 @@
     "suppressSameOriginFallbackAfterTransportFailure": true,
     "snapshotBranch": "chore/official-monitor-snapshot"
   },
-  "healthy": false,
-  "coverageComplete": false,
+  "healthy": true,
+  "coverageComplete": true,
   "hasRelevantItems": true,
   "sourceStatus": [
     {
       "id": "gosi-fire",
       "label": "국가공무원 채용시스템 · 소방청",
       "required": true,
-      "ok": false,
-      "pagesOk": 0,
-      "status": "error",
-      "error": "UND_ERR_CONNECT_TIMEOUT: UND_ERR_CONNECT_TIMEOUT: fetch failed: Connect Timeout Error (attempted address: gongmuwon.gosi.kr:443, timeout: 10000ms): fetch failed",
-      "errorCode": "UND_ERR_CONNECT_TIMEOUT",
-      "errorUrl": "https://gongmuwon.gosi.kr/spcsv/indexMain3.do",
+      "ok": true,
+      "pagesOk": 1,
+      "status": "ok",
+      "error": "",
+      "errorCode": "",
+      "errorUrl": "",
       "fallbackUsed": false
     },
     {
       "id": "nfsa-notice",
       "label": "중앙소방학교 고시·공고",
       "required": false,
-      "ok": false,
-      "pagesOk": 0,
-      "status": "error",
-      "error": "20: This operation was aborted",
-      "errorCode": "20",
-      "errorUrl": "https://www.nfa.go.kr/nfsa/news/0011/job/?pageIdx=1",
+      "ok": true,
+      "pagesOk": 1,
+      "status": "ok",
+      "error": "",
+      "errorCode": "",
+      "errorUrl": "",
       "fallbackUsed": false
     },
     {
       "id": "nfsa-materials",
       "label": "중앙소방학교 공식교재",
       "required": false,
-      "ok": false,
-      "pagesOk": 0,
-      "status": "error",
-      "error": "20: This operation was aborted",
-      "errorCode": "20",
-      "errorUrl": "https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/",
+      "ok": true,
+      "pagesOk": 1,
+      "status": "ok",
+      "error": "",
+      "errorCode": "",
+      "errorUrl": "",
       "fallbackUsed": false
     }
   ],
@@ -445,16 +445,15 @@
       "changeSummary": []
     }
   ],
-  "degraded": true,
-  "preservedLastGood": true,
-  "notificationSuppressed": true,
-  "lastAttemptAt": "2026-09-29T20:51:49.573Z",
-  "lastSuccessfulAt": "2026-09-29T15:56:42.620Z",
+  "degraded": false,
+  "preservedLastGood": false,
+  "notificationSuppressed": false,
+  "lastAttemptAt": "2026-09-30T00:31:42.923Z",
+  "lastSuccessfulAt": "2026-09-30T00:31:42.923Z",
   "delta": {
     "newIds": [],
     "updatedIds": [],
     "newCount": 0,
     "updatedCount": 0
-  },
-  "liveItemCount": 0
+  }
 }
