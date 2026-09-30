@@ -293,7 +293,7 @@ async function createOcrWorker(){
   const T=V.RuntimeDeps?.loadTesseract?await V.RuntimeDeps.loadTesseract():await import('https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js');
   const create=T.createWorker||T.default?.createWorker||window.Tesseract?.createWorker;
   if(!create)throw Error('OCR_ENGINE_UNAVAILABLE');
-  const worker=await create('kor+eng');
+  const worker=await create('eng+kor');
   try{await worker.setParameters?.({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}
   return worker
 }
