@@ -129,7 +129,7 @@ const STUDY_FACT_STOP=new Set(['정답','오답','교재','공식','핵심','시
 function studyFactWord(v){let x=String(v||'').toLowerCase().replace(/(?:119|112)(?=\s*(?:안전센터|구조대|구급대|지역대|출장소|구조구급센터|종합상황실|신고|구조|구급))/g,'');if(x.length>=3)x=x.replace(/(?:으로는|에서는|에게서|으로|에서|에게|에는|까지|부터|보다|처럼|은|는|이|가|을|를|과|와|의|에|로|도|만)$/,'');return x}
 function studyFactWords(v){const out=new Set;for(const raw of studentStudyText(v).split(/[\s·,()\/→←:=+\-–~]+/)){const x=studyFactWord(raw).replace(/[^0-9a-z가-힣%℃]+/g,'');if(x.length>=2&&!STUDY_FACT_STOP.has(x))out.add(x)}return out}
 function studyTokenCoverage(a,b){const A=studyFactWords(a),B=studyFactWords(b);if(!A.size||!B.size)return 0;let hit=0;for(const x of A)if(B.has(x))hit++;return hit/Math.min(A.size,B.size)}
-function sameCriterionFact(a,b){const na=numericTokens(a),nb=numericTokens(b);return !!na&&na===nb&&studyGramDice(a,b)>=.46}
+function sameCriterionFact(a,b){return sameNumericSignature(a,b)&&studyGramDice(a,b)>=.46}
 function sameStudyFact(a,b){if(sameStudyText(a,b)||sameCriterionFact(a,b))return true;const x=studyNorm(a),y=studyNorm(b);if(!x||!y)return false;const min=Math.min(x.length,y.length);if(min>=14&&studyGramDice(a,b)>=.78)return true;return min>=10&&studyTokenCoverage(a,b)>=.78&&studyGramDice(a,b)>=.48}
 function sameStudyFactCross(a,b){if(sameStudyFact(a,b))return true;const x=studyNorm(a),y=studyNorm(b),min=Math.min(x.length,y.length);return min>=18&&studyTokenCoverage(a,b)>=.66&&studyGramDice(a,b)>=.42}
 function numericTokenSet(v){return new Set((studentStudyText(v).match(/\d+(?:[.,]\d+)?\s*(?:[%℃°㎥㎡a-zA-Z가-힣\/]+)?/g)||[]).map(x=>x.replace(/\s+/g,'').toLowerCase()))}
