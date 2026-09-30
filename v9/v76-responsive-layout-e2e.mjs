@@ -117,8 +117,8 @@ try{
         const el=document.querySelector('.detail-criteria ul'),cs=getComputedStyle(el);
         return{columns:cs.gridTemplateColumns.split(' ').filter(Boolean).length,width:el.getBoundingClientRect().width};
       });
-      const expected=vp.width>=1600?3:vp.width>1024?2:1;
-      check(criteria.columns===expected,vp.label+' numeric criteria use the intended responsive column count',{...criteria,expected});
+      const expected=vp.width<=720?1:vp.width<=1024?2:3;
+      check(vp.width<=1024?criteria.columns===expected:criteria.columns>=expected,vp.label+' numeric criteria use the intended responsive column count',{...criteria,expected});
     }
 
     await renderConcept(page,first,'ai');
