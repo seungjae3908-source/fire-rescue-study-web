@@ -2,16 +2,17 @@ import fs from 'node:fs';
 
 function assert(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
 const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
+const responsive=fs.readFileSync(new URL('./v54-responsive.css',import.meta.url),'utf8');
 const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const smoke=fs.readFileSync(new URL('./pages-live-browser-e2e.mjs',import.meta.url),'utf8');
 const workflow=fs.readFileSync(new URL('../.github/workflows/v9-ci.yml',import.meta.url),'utf8');
 
-assert(css.includes('.page-home .dashboard-home')&&css.includes('.page-study .study{')&&css.includes('.modal.pdf-evidence-modal .pdf-evidence-host'),'V65 single-scroll CSS selectors are present');
+assert(css.includes('.page-home .dashboard-home')&&responsive.includes('.page-study .study-single-scroll{')&&css.includes('.modal.pdf-evidence-modal .pdf-evidence-host'),'V65 single-scroll CSS selectors are present');
 assert(css.includes('.page-home .dashboard-home')&&css.includes('.page-stats .stats-page .home-main'),'home route and stats main expose one vertical owner each');
 assert(css.includes('.page-home .dashboard-home .home-main')&&css.includes('overflow:visible!important'),'home nested columns no longer own vertical scrolling');
 assert(app.includes('home-main stats-v61" data-scroll-owner="stats')||app.includes('home-main" data-scroll-owner="stats'),'stats marks the full-width main column as its single scroll owner');
-assert(css.includes('.page-study .study-ai-chat')&&css.includes('overflow:visible!important'),'AI chat no longer owns a second vertical scrollbar');
-assert(css.includes('.page-study .study{')&&css.includes('overflow-y:auto!important')&&css.includes('.page-study .study-body{'),'study route owns reading scroll instead of a capped study-body viewport');
+assert(responsive.includes('.page-study .study-ai-chat')&&responsive.includes('overflow:visible!important'),'AI chat no longer owns a second vertical scrollbar');
+assert(responsive.includes('.page-study .study-single-scroll{')&&responsive.includes('overflow-y:auto!important')&&responsive.includes('.page-study .study-body-unified{'),'study route owns reading scroll instead of a capped study-body viewport');
 assert(app.includes("b.scrollTop=b.scrollHeight")&&!app.includes("x.scrollTop=x.scrollHeight"),'AI scroll restoration targets only the study route owner');
 assert(app.includes('study bank-page screen-scroll')&&app.includes('bank-workspace'),'question bank uses route-level vertical owner');
 assert(css.includes('.page-bank .bank-workspace .bank-question-body')&&css.includes('overflow:visible!important'),'question bank inner body no longer scrolls independently');
