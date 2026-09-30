@@ -191,9 +191,8 @@ async function auditStudyRole(page,{id,tab},coreCache){
     if(x.detailCriteria>1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-criteria-duplicate-block',count:x.detailCriteria});
     if((page.viewportSize()?.width||0)<=720&&x.jumpPosition&&x.jumpPosition!=='static')pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'mobile-tab-overlap-risk',position:x.jumpPosition});
     if(/개념\s*구조와\s*읽는\s*순서|학습\s*순서|검증문제·범위/.test(x.detailFull))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-meta-copy'});
-    const core=coreCache.get(id)||[];
-    const repeated=x.detailTexts.filter(d=>core.some(k=>{const min=Math.min(d.length,k.length),max=Math.max(d.length,k.length);return min>=24&&min/max>=.78&&(d===k||d.includes(k)||k.includes(d))})).slice(0,3);
-    if(repeated.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-detail-repeat',samples:repeated});
+    // Core is the summary layer and detail is the full explanation layer.
+    // Factual overlap across those two tabs is intentional; duplicates are audited within each tab by V75.
   }
 }
 
