@@ -78,7 +78,7 @@ try{
     if(m.lesson&&m.tabs){
       check(Math.abs(m.lesson.left-m.tabs.left)<=4&&Math.abs(m.lesson.right-m.tabs.right)<=4,vp.label+' tabs and lesson share the same horizontal container',{lesson:m.lesson,tabs:m.tabs});
     }
-    if(vp.width>=1600&&m.lesson)check(m.lesson.width>=1350&&m.lesson.width<=1442,'large desktop materially expands study content up to the 1440px contract',{width:m.lesson.width});
+    if(vp.width>=1600&&m.lesson)check(m.lesson.width>=1580&&m.lesson.width<=1682,'large desktop materially expands study content up to the 1680px contract',{width:m.lesson.width});
 
     const orgId=await findConcept(page,{tab:'detail',selector:'.visual-flow.vertical-org'});
     check(!!orgId,vp.label+' finds an organization diagram concept');
@@ -132,7 +132,7 @@ try{
       };
     });
     check(ai.width>=ai.paneWidth*.76,vp.label+' AI uses the same broad content container',{width:ai.width,paneWidth:ai.paneWidth});
-    if(vp.width>=1600)check(ai.width>=1350&&ai.width<=1442,'large desktop AI expands with the 1440px study container',{width:ai.width});
+    if(vp.width>=1600)check(ai.width>=1580&&ai.width<=1682,'large desktop AI expands with the 1680px study container',{width:ai.width});
     check(['visible','initial'].includes(ai.chatOverflowY),vp.label+' AI history is not a nested vertical scroller',{overflow:ai.chatOverflowY});
     check(ai.composePosition==='static',vp.label+' AI composer stays in document flow',{position:ai.composePosition});
     check(ai.composeRect.left>=-1&&ai.composeRect.right<=vp.width+1,vp.label+' AI composer stays inside the viewport',{rect:ai.composeRect});
