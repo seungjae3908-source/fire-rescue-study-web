@@ -11,11 +11,11 @@ async function listDocuments(kind){const d=await db(),owner=V.Store.ownerId,t=d.
 async function chunksFor(docId){const d=await db(),t=d.transaction('chunks','readonly'),req=t.objectStore('chunks').index('doc').getAll(docId);return await new Promise((res,rej)=>{req.onsuccess=()=>res((req.result||[]).filter(x=>x.ownerId===V.Store.ownerId));req.onerror=()=>rej(req.error)})}
 async function purge(docId){const d=await db(),chunks=await chunksFor(docId),t=d.transaction(['docs','chunks'],'readwrite');t.objectStore('docs').delete(docId);for(const c of chunks)t.objectStore('chunks').delete(c.id);await txDone(t)}
 async function remove(docId){await purge(docId);tombstones()[docId]=Date.now();V.Store.save()}
-async function createOcrWorker(){
+async function createOcrWorker(langs='eng+kor'){
   const T=V.RuntimeDeps?.loadTesseract?await V.RuntimeDeps.loadTesseract():await import('https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js');
   const create=T.createWorker||T.default?.createWorker||window.Tesseract?.createWorker;
   if(!create)throw Error('OCR_ENGINE_UNAVAILABLE');
-  const worker=await create('eng+kor');
+  const worker=await create(langs);
   try{await worker.setParameters?.({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}
   return worker
 }
@@ -83,15 +83,16 @@ const OCR_UNIT_RE=/(mmHg|L\/min|mL|cm|mm|kg|mg|psi|%)/gi,OCR_SUSPECT_RE=/(\d+(?:
 function ocrUnitKey(v){return String(v||'').toLowerCase()}
 function ocrUnitLabel(v){return({mmhg:'mmHg','l/min':'L/min',ml:'mL',cm:'cm',mm:'mm',kg:'kg',mg:'mg',psi:'psi','%':'%'})[ocrUnitKey(v)]||v}
 async function recoverOcrUnitPass(worker,canvas,row){
-  const suspects=[...String(row.text||'').matchAll(OCR_SUSPECT_RE)];if(!suspects.length)return row;
+  const suspects=[...String(row.text||'').matchAll(OCR_SUSPECT_RE)];if(!suspects.length)return row;let unitWorker=null;
   try{
-    await worker.setParameters?.({tessedit_char_whitelist:'mMHgLlckKpPsiInNJj/%'});
-    const p=await recognizeCanvas(worker,canvas),known=[...row.text.matchAll(OCR_UNIT_RE)].map(x=>ocrUnitKey(x[0])),probe=[...p.text.matchAll(OCR_UNIT_RE)].map(x=>ocrUnitKey(x[0]));
+    unitWorker=await createOcrWorker('eng');
+    try{await unitWorker.setParameters?.({tessedit_char_whitelist:'0123456789mMHgLlckKpPsiInNJj/%.-',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}
+    const p=await recognizeCanvas(unitWorker,canvas),known=[...row.text.matchAll(OCR_UNIT_RE)].map(x=>ocrUnitKey(x[0])),probe=[...p.text.matchAll(OCR_UNIT_RE)].map(x=>ocrUnitKey(x[0]));
     for(const k of known){const i=probe.indexOf(k);if(i>=0)probe.splice(i,1)}
     if(!probe.length)return row;let i=0;
     const text=row.text.replace(OCR_SUSPECT_RE,m=>probe[i]?m.replace(/\s+\S+$/, ' '+ocrUnitLabel(probe[i++])):m);
     return text===row.text?row:{...row,text,quality:textQuality(text)}
-  }catch{return row}finally{try{await worker.setParameters?.({tessedit_char_whitelist:'',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}}
+  }catch{return row}finally{if(unitWorker)await unitWorker.terminate().catch(()=>{})}
 }
 
 async function bestOcrCanvas(worker,canvas,reference=''){
