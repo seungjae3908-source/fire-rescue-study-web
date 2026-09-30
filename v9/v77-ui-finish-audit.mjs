@@ -17,3 +17,4 @@ assert(!base.includes('.resources-119{display:grid;gap:12px;max-width:1180px;mar
 assert(!base.includes('.settings-page{height:100%;max-width:900px;margin:0 auto;display:grid;gap:10px;align-content:start;padding-bottom:16px}'),'legacy narrow settings cap removed');
 assert(sw.includes('ai-tutor-v9-shell-20260930-v77-ui-finish'),'V77 UI cache epoch is active');
 console.log('V77_UI_FINISH_AUDIT_SUCCESS');
+// V77 exact-head UI trigger.
