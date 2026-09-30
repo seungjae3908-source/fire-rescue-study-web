@@ -25,7 +25,7 @@ assert(!responsive.includes('.page-study .study-body-unified>.lesson{width:100%;
 assert(!styles.includes('.page-study .concept-nav{position:sticky!important;bottom:0!important;z-index:10!important}'),'legacy sticky concept navigation override is removed');
 assert(!styles.includes('.page-study .study-body-desktop>.lesson{max-width:900px!important}'),'legacy tablet 900px lesson cap is removed');
 assert(!styles.includes('.page-study .study-body-desktop>.lesson{max-width:1240px!important}'),'legacy large-desktop 1240px lesson cap is removed');
-assert(sw.includes("ai-tutor-v9-shell-20260930-v76-responsive-unification"),'V76 cache epoch ships the unified responsive assets');
+assert(sw.includes("ai-tutor-v9-shell-20260930-v77-ui-finish"),'current shell cache epoch ships the unified responsive assets');
 
 console.log('V76_RESPONSIVE_UNIFICATION_AUDIT_SUCCESS');
 // Exact-head V76 responsive regression trigger.
