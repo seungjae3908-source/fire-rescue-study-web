@@ -28,7 +28,7 @@ const checks=[
   ['known exact-page fixture',questions.includes("['119-gov-f01-01b'")&&questions.includes("source:id==='119-gov-f01-01b'?'소방법령2 · 소방기본법 46쪽'")],
   ['app bundle synced',boot8.includes('data-question-retry="${esc(q.id)}"')&&boot8.includes('questionSourceEvidence(question)')&&boot8.includes('questionEvidencePhraseCandidates')&&boot8.includes('<details class="pdf-mobile-tools">')],
   ['source bundle synced',boot7b.includes('exactEvidence=evidence.filter(x=>x.markExact)')&&boot7b.includes('const anchorPhrases=')&&boot7b.includes('matchedPhrase:phrase')],
-  ['service-worker cache bumped',sw.includes('v76-responsive-unification')]
+  ['service-worker cache bumped',sw.includes('v77-ui-finish')]
 ];
 
 const failed=checks.filter(([,ok])=>!ok);
