@@ -69,6 +69,7 @@ try{
   assert(first.progress.some(x=>x[0]===1&&x[1]===1),'image OCR reports completion progress');
   assert(first.bundle.docs.length===1&&first.bundle.chunks.length>=1,'image OCR metadata + extracted text export for member sync');
   assert(first.bundle.docs.every(d=>d.ownerId===owner&&!d.original),'sync export strips original image bytes');
+  console.log('OCR_BENCHMARK_OBSERVED',JSON.stringify(first.benchmark));
   const benchmarkCer=cer(first.benchmark.expected,first.benchmark.text);
   const compact=normBenchmark(first.benchmark.text);
   const numericFacts=['119','95','15','5'].every(x=>compact.includes(x));
