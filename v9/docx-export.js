@@ -1,3 +1,6 @@
+'use strict';
+(()=>{
+const V=window.AITUTOR_V9=window.AITUTOR_V9||{};
 const MIME='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const enc=new TextEncoder(),crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?0xedb88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[m]));
@@ -29,3 +32,6 @@ export function buildDocxBlobFromHtml(html,title='소방합격'){
  const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
  return storedZip([{name:'[Content_Types].xml',data:types},{name:'_rels/.rels',data:rels},{name:'word/document.xml',data:document}])
 }
+
+V.DocxExport119={buildDocxBlobFromHtml};
+})();
