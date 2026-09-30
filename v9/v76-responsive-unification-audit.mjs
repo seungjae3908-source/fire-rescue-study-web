@@ -13,7 +13,7 @@ assert((responsive.match(/--study-max:1280px/g)||[]).length===1,'V76 has one can
 assert((responsive.match(/--study-max:1440px/g)||[]).length===1,'V76 has one canonical large-desktop study-width token');
 assert(responsive.includes('.page-study .study-body-unified>:not(.concept-nav-single)'),'study content shares one canonical width owner');
 assert(responsive.includes('grid-template-columns:repeat(5,minmax(0,1fr))!important'),'five study tabs use one equal-column grid');
-assert(responsive.includes('.page-study .concept-visual .vertical-org>.visual-node{min-height:0!important;height:auto!important;padding:10px 14px!important}'),'organization nodes size to content instead of fixed tall boxes');
+assert(responsive.includes('.page-study .concept-visual .vertical-org>.visual-node{flex:0 0 auto!important;min-height:0!important;height:auto!important;padding:10px 14px!important}'),'organization nodes neutralize inherited flex basis and size to content');
 assert(responsive.includes('grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important'),'desktop flow diagrams use responsive auto-fit columns');
 assert(responsive.includes('@media(min-width:721px) and (max-width:1024px)')&&responsive.includes('grid-template-columns:repeat(2,minmax(0,1fr))!important'),'tablet flow diagrams use two columns');
 assert(responsive.includes('@media(max-width:720px)')&&responsive.includes('.page-study .concept-visual .visual-flow:not(.vertical-org){grid-template-columns:1fr!important'),'mobile flow diagrams collapse to one column');
