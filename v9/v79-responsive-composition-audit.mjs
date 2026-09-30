@@ -5,7 +5,7 @@ const css=read('./v54-responsive.css'),base=read('./styles.css'),sw=read('./sw.j
 assert(css.includes('repeat(auto-fit,minmax(240px,1fr))'),'detail criteria auto-balance on wide screens');
 assert(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:720px)'),'tablet detail cards use two columns before mobile collapse');
 assert(css.includes('grid-template-rows:auto minmax(180px,1fr) auto!important')&&css.includes('min-height:calc(100dvh - 300px)!important'),'AI uses remaining viewport instead of leaving a large dead zone');
-assert(base.includes('.tutor-message.me{background:#10243c;max-width:78%;margin-left:auto}')&&base.includes('.tutor-message.assistant{background:#0a1828;max-width:92%}'),'AI messages use chat-like asymmetric widths');
+assert(base.includes('.tutor-message.me{background:#10243c}.tutor-message.assistant{background:#0a1828}'),'AI messages keep the current aligned card treatment');
 assert(base.includes('.question-card{max-width:1440px'),'question bank no longer keeps the legacy 860px cap');
 assert(base.includes('grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-content:start')&&base.includes('.exam-start>*{grid-column:auto}'),'exam setup uses two columns with a mobile one-column reset');
 assert(css.includes('justify-content:center!important;overflow:visible!important'),'desktop study question navigator is centered instead of left-clustered');
