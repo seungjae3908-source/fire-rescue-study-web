@@ -112,3 +112,4 @@ try{
   console.log('V9_IMAGE_OCR_RESTORE_QA_SUCCESS',JSON.stringify({first:{doc:first.doc,hits:first.hits,progress:first.progress,bundle:{docs:first.bundle.docs.length,chunks:first.bundle.chunks.length},benchmark:{...first.benchmark,cer:cer(first.benchmark.expected,first.benchmark.text)}},other,restored}));
   await restoreCtx.close();
 }finally{await browser.close()}
+// Focused V75 OCR unit-recovery acceptance trigger.
