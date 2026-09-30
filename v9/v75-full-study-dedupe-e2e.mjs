@@ -74,13 +74,24 @@ try{
     if(related)issues.push({id,type:'COMPARE_REPEAT',rows:[[related,row.label+' '+row.body]]});
   }
  }
- await page.evaluate(()=>{
-  const V=window.AITUTOR_V9,c=V.curriculum.byId['F06-C03'],s=V.Store.state;
-  s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=c.id;s.studyTab='detail';s.outline=false;V.Store.save();V.App.render()
- });
- await page.waitForSelector('.page-study .detail-view');
- const originDetail=await page.locator('.page-study .detail-view').innerText();
- assert(originDetail.includes('환기'),'F06-C03 detail preserves the unique ventilation interpretation while core/detail duplicates remain removed');
+ const priorityContracts=[
+  ['F04-C01',['냉각','질식','제거','연쇄반응']],
+  ['F06-C02',['현장보존','전체','근접','진압수','분석']],
+  ['F06-C03',['발화부','점화원','최초착화물','환기']],
+  ['E08-C01',['현장안전','환자수','추가지원','위험']],
+  ['E13-C05',['조직관류','혈압','의식','보상']],
+  ['E17-C04',['얼굴','팔','말','마지막','정상']],
+  ['E24-C04',['30:2','2분','5주기','10초']]
+ ];
+ for(const [id,terms] of priorityContracts){
+  await page.evaluate(id=>{
+   const V=window.AITUTOR_V9,c=V.curriculum.byId[id],s=V.Store.state;
+   s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=id;s.studyTab='detail';s.outline=false;V.Store.save();V.App.render()
+  },id);
+  await page.waitForSelector('.page-study .detail-view');
+  const detailText=(await page.locator('.page-study .detail-view').innerText()).replace(/\s+/g,' ');
+  for(const term of terms)assert(detailText.includes(term),id+' detail preserves high-priority distinction after semantic dedupe: '+term);
+ }
 
  const org=await page.evaluate(()=>{
   const V=window.AITUTOR_V9,p=V.contentPacks.get('F01-C01');
