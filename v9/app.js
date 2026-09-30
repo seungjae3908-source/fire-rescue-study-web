@@ -193,35 +193,24 @@ return seeds.some(seed=>sameStudyFactCross(text,seed))
 }
 function detailSeedCovers(text,seed){
 const a=studyNorm(text),b=studyNorm(seed);if(!a||!b)return false;
-if(a===b)return true;
-if(a.length>=12&&b.includes(a))return true;
-return a.length<=b.length&&sameStudyFactCross(text,seed)
+return a===b||(a.length>=12&&b.includes(a))||sameStudyFactCross(text,seed)
 }
 function trimCoveredLeadClause(text,seeds=[]){
-const parts=studentStudyText(text).split(/,\s+/).filter(Boolean);
-if(parts.length<2)return studentStudyText(text);
-for(let i=1;i<Math.min(parts.length,3);i++){
- const prefix=parts.slice(0,i).join(', ');
- const covered=seeds.some(seed=>detailSeedCovers(prefix,seed)&&!addsNumericCriterion(seed,prefix));
- if(covered)return parts.slice(i).join(', ').trim()
-}
-return studentStudyText(text)
+const t=studentStudyText(text),cuts=[...t.matchAll(/,\s+|하고\s+|하며\s+/g)].slice(0,3);
+for(const m of cuts){const prefix=t.slice(0,m.index).trim(),tail=t.slice(m.index+m[0].length).trim();if(prefix&&tail&&seeds.some(seed=>detailSeedCovers(prefix,seed)&&!addsNumericCriterion(seed,prefix)))return tail}
+return t
 }
 function detailFragmentText(v,seeds=[]){
-const text=studentStudyText(v);if(!text)return'';
-const segments=text.split(/\s+·\s+/).map(studentStudyText).filter(Boolean);
-if(segments.length<2){
- const part=trimCoveredLeadClause(text,seeds);if(!part)return'';
- const covered=seeds.some(seed=>detailSeedCovers(part,seed)&&!addsNumericCriterion(seed,part));
- return covered?'':part
-}
-const kept=[];
-for(const segment of segments){
+let text=studentStudyText(v);if(!text)return'';
+for(const seed of seeds){const s=studentStudyText(seed);if(s.length>=4&&text.toLowerCase().includes(s.toLowerCase()))text=text.replace(s,'').replace(/^[\s·,:;→←+\/-]+|[\s·,:;→←+\/-]+$/g,'').trim()}
+if(!text)return'';
+const segments=text.split(/\s+·\s+/).map(studentStudyText).filter(Boolean),kept=[];
+for(const segment of segments.length?segments:[text]){
  const part=trimCoveredLeadClause(segment,seeds);if(!part)continue;
  const covered=seeds.some(seed=>detailSeedCovers(part,seed)&&!addsNumericCriterion(seed,part));
- if(!covered&&!kept.some(x=>sameStudyFact(x,part)))kept.push(part)
+ if(!covered&&!kept.some(x=>sameStudyFactCross(x,part)))kept.push(part)
 }
-return kept.join(' · ').trim()
+const out=kept.join(' · ').trim();return out&&seeds.some(seed=>detailSeedCovers(out,seed)&&!addsNumericCriterion(seed,out))?'':out
 }
 function detailOnlyText(v,seeds=[]){
 const text=studentStudyText(v);if(!text)return'';
@@ -296,7 +285,7 @@ function detailTrapPriority(text,index=0){const t=String(text||'');let score=0;i
 function detailExamPointRows(pack,seeds=[]){
 const all=uniqueTextRows([...(pack?.traps||[])]).map(studentStudyText).filter(Boolean),rows=[];
 for(const row of all.map((text,index)=>({text,...detailTrapPriority(text,index)})).sort((a,b)=>b.score-a.score||a.index-b.index)){
- if(seeds.some(x=>sameStudyFact(x,row.text))||rows.some(x=>sameStudyFact(x,row.text)))continue;
+ if(seeds.some(x=>sameStudyFactCross(x,row.text))||rows.some(x=>sameStudyFactCross(x,row.text)))continue;
  rows.push(row.text);if(rows.length>=4)break
 }
 return rows
@@ -311,7 +300,7 @@ function detailCriteriaRows(pack,seeds=[]){
 const compareBodies=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[1]).map(x=>studentStudyText(x[1])).filter(Boolean),out=[];
 for(const raw of uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,20)||[]).map(studentStudyText).filter(Boolean))){
  const text=detailCriterionText(raw,[...seeds,...out]);
- if(!text||compareBodies.some(x=>sameStudyText(x,text)||sameNumericSignature(x,text))||out.some(x=>sameStudyFact(x,text)))continue;
+ if(!text||compareBodies.some(x=>sameStudyText(x,text)||sameNumericSignature(x,text))||seeds.some(x=>sameStudyFactCross(x,text)&&!addsNumericCriterion(x,text))||out.some(x=>sameStudyFactCross(x,text)))continue;
  out.push(text);if(out.length>=12)break
 }
 return out
