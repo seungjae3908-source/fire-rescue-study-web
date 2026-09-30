@@ -16,7 +16,7 @@ assert(smoke.includes("stats touch layout"),'Production smoke guards V61 stats m
 assert(smoke.includes("live runtime errors = 0"),'Production smoke fails on browser/runtime request errors');
 assert(smoke.includes("runtime.sha===expected"),'Production smoke is pinned to exact runtime SHA');
 assert(productionWorkflow.includes('node v9/pages-live-browser-e2e.mjs'),'Production Current-Main Acceptance runs the GitHub Pages multi-device learner smoke');
-assert(css.includes('/* V62 production multi-device usability hardening */'),'V62 responsive hardening CSS is present');
+assert(css.includes('.stats-weak-row{min-height:44px}')&&css.includes('.stats-readiness-strip span{font-size:12px!important;line-height:1.45}'),'V62 responsive hardening CSS is present');
 assert(css.includes('.stats-weak-row{min-height:44px}'),'V61 weak rows keep a 44px minimum target');
 assert(css.includes('.stats-readiness-strip span{font-size:12px!important;line-height:1.45}'),'V61 readiness labels stay readable');
 console.log('V62_PRODUCTION_MULTIDEVICE_COMPLETE');
