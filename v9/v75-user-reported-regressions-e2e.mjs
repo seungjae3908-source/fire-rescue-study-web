@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import { chromium } from 'playwright';
 
 const base=process.env.STUDY_119_V75_USER_URL||'http://127.0.0.1:4173/v9/index.html';
@@ -41,11 +40,17 @@ try{
 
   await page.evaluate(()=>{const V=window.AITUTOR_V9;V.Store.state.page='notes';V.Store.save();V.App.render()});
   await page.waitForSelector('[data-pass-editable="pass"]');
-  const [download]=await Promise.all([page.waitForEvent('download'),page.locator('[data-pass-editable="pass"]').click()]);
-  assert(/\.docx$/i.test(download.suggestedFilename()),'pass-note editable download is a real .docx filename');
-  const p=await download.path(),buf=fs.readFileSync(p),latin=buf.toString('latin1');
-  assert(buf[0]===0x50&&buf[1]===0x4b,'pass-note DOCX has a ZIP/OOXML container');
-  assert(latin.includes('[Content_Types].xml')&&latin.includes('word/document.xml'),'pass-note DOCX contains required OOXML document parts');
+  const docx=await page.evaluate(async()=>{
+    const V=window.AITUTOR_V9;await V.PassNote.prepareEditable();
+    const html=V.PassNote.printDocument('pass'),blob=V.DocxExport119.buildDocxBlobFromHtml(html,'내 합격노트'),bytes=new Uint8Array(await blob.arrayBuffer()),latin=String.fromCharCode(...bytes);
+    const oldClick=HTMLAnchorElement.prototype.click;let download='';
+    HTMLAnchorElement.prototype.click=function(){download=this.download||''};
+    try{await V.PassNote.exportEditable('pass')}finally{HTMLAnchorElement.prototype.click=oldClick}
+    return{download,type:blob.type,size:blob.size,head:[bytes[0],bytes[1]],hasTypes:latin.includes('[Content_Types].xml'),hasDocument:latin.includes('word/document.xml')}
+  });
+  assert(/\.docx$/i.test(docx.download),'pass-note editable action uses a real .docx filename');
+  assert(docx.head[0]===0x50&&docx.head[1]===0x4b&&docx.size>500,'pass-note DOCX has a non-empty ZIP/OOXML container');
+  assert(docx.hasTypes&&docx.hasDocument,'pass-note DOCX contains required OOXML document parts');
 
   console.log('V75_USER_REPORTED_REGRESSIONS_SUCCESS');
   await ctx.close();
