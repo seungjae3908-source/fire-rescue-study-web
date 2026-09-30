@@ -132,7 +132,8 @@ function studyTokenCoverage(a,b){const A=studyFactWords(a),B=studyFactWords(b);i
 function sameCriterionFact(a,b){const na=numericTokens(a),nb=numericTokens(b);return !!na&&na===nb&&studyGramDice(a,b)>=.46}
 function sameStudyFact(a,b){if(sameStudyText(a,b)||sameCriterionFact(a,b))return true;const x=studyNorm(a),y=studyNorm(b);if(!x||!y)return false;const min=Math.min(x.length,y.length);if(min>=14&&studyGramDice(a,b)>=.78)return true;return min>=10&&studyTokenCoverage(a,b)>=.78&&studyGramDice(a,b)>=.48}
 function sameStudyFactCross(a,b){if(sameStudyFact(a,b))return true;const x=studyNorm(a),y=studyNorm(b),min=Math.min(x.length,y.length);return min>=18&&studyTokenCoverage(a,b)>=.66&&studyGramDice(a,b)>=.42}
-function numericTokenSet(v){return new Set(numericTokens(v).split('|').filter(Boolean))}
+const NUMERIC_CRITERION_TOKEN_RE=/\d+(?:[.,]\d+)?(?:\s*(?:~|–|-|:|×|\/)\s*\d+(?:[.,]\d+)?)?\s*(?:%|℃|°C|°|㎥|㎡|cm|mmHg|mm|kg\/㎠|kg|mg\/kg|mg|mL|L\/min|L|m\/s|m|psi|J\/kg|J|kW(?:\/㎡)?|회\/분|회|분|초|시간|일|개월|년|세|명|개|대|주기|배|단계|요소|류|급|종)?/g;
+function numericTokenSet(v){const t=studentStudyText(v),precise=(t.match(NUMERIC_CRITERION_TOKEN_RE)||[]).map(x=>x.replace(/\s+/g,'').toLowerCase());return new Set(precise.length?precise:numericTokens(v).split('|').filter(Boolean))}
 function sameNumericSignature(a,b){const A=numericTokenSet(a),B=numericTokenSet(b);if(!A.size||!B.size||A.size!==B.size)return false;for(const x of A)if(!B.has(x))return false;return true}
 function addsNumericCriterion(base,detail){const a=numericTokenSet(base),b=numericTokenSet(detail);return [...b].some(x=>!a.has(x))}
 function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(!row||sameStudyFact(row,seed)||out.some(x=>sameStudyFact(x,row)))continue;out.push(row)}return out}
