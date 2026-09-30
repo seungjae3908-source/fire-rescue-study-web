@@ -46,7 +46,7 @@ try{
   assert(/첫째 줄 A 첫째 줄 B\n+둘째 줄/.test(result.guardAudit.ordered),'native PDF text reconstruction preserves line reading order while allowing paragraph spacing');
   assert(result.ingested.chunks>=1,'PDF.js creates at least one private text chunk');
   assert(result.doc?.pageCount===1,'PDF page count preserved');
-  assert(result.doc?.extractionVersion==='v10-hybrid-ocr-ai','private PDF uses hybrid text/OCR/AI extraction contract');
+  assert(result.doc?.extractionVersion==='v11-hybrid-korean-ocr','private PDF uses hybrid text/OCR/AI extraction contract');
   assert(Number(result.doc?.extractionQuality)>0,'private PDF stores extraction-quality evidence');
   assert(result.hits>=1&&/AITUTOR PDF QA SAMPLE 123/.test(result.hitText),'extracted PDF text is searchable');
   assert(result.otherHits===0,'PDF chunks are invisible to another local owner');
