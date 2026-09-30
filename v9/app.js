@@ -22,8 +22,8 @@ function abandonExam(){
 const e=runtime.exam;if(!e)return;
 const answered=Object.keys(e.answers||{}).length;
 if(!answered){
-  if(!confirm('아직 푼 문제가 없습니다. 시험을 종료할까요?'))return;
-  stopExamTicker();clearActiveExam();runtime.exam=null;state().page='exam';S.save();render();return
+if(!confirm('아직 푼 문제가 없습니다. 시험을 종료할까요?'))return;
+stopExamTicker();clearActiveExam();runtime.exam=null;state().page='exam';S.save();render();return
 }
 if(!confirm(`현재까지 푼 ${answered}문제를 채점하고 중단 결과를 볼까요?`))return;
 finishExam(false,{partial:true,abandoned:true,skipConfirm:true})
@@ -94,17 +94,16 @@ return shell(`<div class="dashboard-home dashboard-home-compact home-main screen
 function outline(){
 const subj=state().subject,scopes=subj==='fire'?V.curriculum.fire:V.curriculum.ems,q=studyNorm(runtime.outlineQuery||''),groups=[],hits=[];
 for(let si=0;si<scopes.length;si++){
-  const sc=scopes[si],scopeHit=!!q&&studyNorm(sc.title).includes(q),concepts=[];
-  for(let i=0;i<sc.concepts.length;i++){
-    const title=sc.concepts[i],id=`${sc.id}-C${String(i+1).padStart(2,'0')}`,match=!q||scopeHit||studyNorm(title).includes(q);
-    if(match){concepts.push({id,title,i});hits.push(id)}
-  }
-  if(!q||concepts.length)groups.push({sc,si,concepts})
+const sc=scopes[si],scopeHit=!!q&&studyNorm(sc.title).includes(q),concepts=[];
+for(let i=0;i<sc.concepts.length;i++){
+const title=sc.concepts[i],id=`${sc.id}-C${String(i+1).padStart(2,'0')}`,match=!q||scopeHit||studyNorm(title).includes(q);
+if(match){concepts.push({id,title,i});hits.push(id)}
+}
+if(!q||concepts.length)groups.push({sc,si,concepts})
 }
 const body=groups.length?groups.map(({sc,si,concepts})=>`<div class="scope"><button class="${sc.id===state().scopeId?'on':''}" data-scope="${sc.id}"><b>${si+1}. ${esc(sc.title)}</b></button><div class="concepts">${concepts.map(x=>`<button class="${x.id===state().conceptId?'on':''}" data-concept="${x.id}">${x.i+1}. ${esc(x.title)}</button>`).join('')}</div></div>`).join(''):'<div class="empty compact outline-empty">검색 결과가 없습니다.</div>';
 return `<div class="backdrop ${state().outline?'on':''}" data-outline-close></div><aside class="outline ${state().outline?'open':''}"><div class="outline-head"><div><b>목차</b><small>${subj==='fire'?'소방학개론':'응급처치학개론'}</small></div><span class="spacer"></span><button class="btn small ghost" data-outline-close>닫기</button></div><div class="outline-subject"><div class="seg"><button class="${subj==='fire'?'on':''}" data-subject="fire">소방학</button><button class="${subj==='ems'?'on':''}" data-subject="ems">응급처치</button></div></div><div class="outline-search-panel"><div class="outline-search-wrap"><input class="input outline-search" data-outline-search value="${esc(runtime.outlineQuery||'')}" placeholder="개념·단원 검색" aria-label="개념과 단원 검색">${runtime.outlineQuery?`<button class="btn small ghost" data-outline-search-clear>초기화</button>`:''}</div>${q?`<small class="outline-search-count">검색 결과 ${hits.length}개</small>`:''}</div><div class="outline-list">${body}</div></aside>`
 }
-
 function sectionTitle(v){const raw=String(v||'개념').trim();return /개념\s*이해|개념\s*구조|읽는\s*순서|학습\s*순서|개념\s*구조와\s*읽는\s*순서/.test(raw)?'개념':raw}
 function studentStudyText(v){return String(v||'')
 .replace(/개념\s*구조와\s*읽는\s*순서/gi,'')
@@ -152,9 +151,9 @@ function coreNumberRows(pack){
 if(pack?.detailCriteriaOwner==='detail')return[];
 const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),compareBodies=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[1]).map(x=>studentStudyText(x[1])).filter(Boolean),rows=[];
 for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){
- const text=studentStudyText(raw);
- if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text)||seeds.some(x=>sameStudyFact(x,text))||compareBodies.some(x=>sameStudyText(x,text)||sameNumericSignature(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;
- rows.push(text);if(rows.length>=6)break
+const text=studentStudyText(raw);
+if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text)||seeds.some(x=>sameStudyFact(x,text))||compareBodies.some(x=>sameStudyText(x,text)||sameNumericSignature(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;
+rows.push(text);if(rows.length>=6)break
 }
 return rows
 }
@@ -195,9 +194,9 @@ for(const seed of seeds){const s=studentStudyText(seed);if(s.length>=4&&text.toL
 if(!text)return'';
 const segments=text.split(/\s+·\s+/).map(studentStudyText).filter(Boolean),kept=[];
 for(const segment of segments.length?segments:[text]){
- const part=trimCoveredLeadClause(segment,seeds);if(!part)continue;
- const covered=seeds.some(seed=>detailSeedCovers(part,seed)&&!addsNumericCriterion(seed,part));
- if(!covered&&!kept.some(x=>sameStudyFactCross(x,part)))kept.push(part)
+const part=trimCoveredLeadClause(segment,seeds);if(!part)continue;
+const covered=seeds.some(seed=>detailSeedCovers(part,seed)&&!addsNumericCriterion(seed,part));
+if(!covered&&!kept.some(x=>sameStudyFactCross(x,part)))kept.push(part)
 }
 const out=kept.join(' · ').trim();return out&&seeds.some(seed=>detailSeedCovers(out,seed)&&!addsNumericCriterion(seed,out))?'':out
 }
@@ -205,7 +204,7 @@ function detailOnlyText(v,seeds=[]){
 const text=studentStudyText(v);if(!text)return'';
 const sentences=text.split(/(?<=[.!?。])\s+/).map(studentStudyText).filter(Boolean),kept=[];
 for(const sentence of sentences.length?sentences:[text]){
- const part=detailFragmentText(sentence,[...seeds,...kept]);if(part)kept.push(part)
+const part=detailFragmentText(sentence,[...seeds,...kept]);if(part)kept.push(part)
 }
 return kept.join(' ').trim()
 }
@@ -261,8 +260,8 @@ function detailTrapPriority(text,index=0){const t=String(text||'');let score=0;i
 function detailExamPointRows(pack,seeds=[]){
 const all=uniqueTextRows([...(pack?.traps||[])]).map(studentStudyText).filter(Boolean),rows=[];
 for(const row of all.map((text,index)=>({text,...detailTrapPriority(text,index)})).sort((a,b)=>b.score-a.score||a.index-b.index)){
- if(seeds.some(x=>sameStudyFactCross(x,row.text))||rows.some(x=>sameStudyFactCross(x,row.text)))continue;
- rows.push(row.text);if(rows.length>=4)break
+if(seeds.some(x=>sameStudyFactCross(x,row.text))||rows.some(x=>sameStudyFactCross(x,row.text)))continue;
+rows.push(row.text);if(rows.length>=4)break
 }
 return rows
 }
@@ -275,9 +274,9 @@ return text
 function detailCriteriaRows(pack,seeds=[]){
 const compareBodies=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[1]).map(x=>studentStudyText(x[1])).filter(Boolean),out=[];
 for(const raw of uniqueCriterionRows((V.StudyEmphasis119?.numberRows?.(pack,20)||[]).map(studentStudyText).filter(Boolean))){
- const text=detailCriterionText(raw,[...seeds,...out]);
- if(!text||compareBodies.some(x=>sameStudyText(x,text)||sameNumericSignature(x,text))||seeds.some(x=>sameStudyFactCross(x,text)&&!addsNumericCriterion(x,text))||out.some(x=>sameStudyFactCross(x,text)))continue;
- out.push(text);if(out.length>=12)break
+const text=detailCriterionText(raw,[...seeds,...out]);
+if(!text||compareBodies.some(x=>sameStudyText(x,text)||sameNumericSignature(x,text))||seeds.some(x=>sameStudyFactCross(x,text)&&!addsNumericCriterion(x,text))||out.some(x=>sameStudyFactCross(x,text)))continue;
+out.push(text);if(out.length>=12)break
 }
 return out
 }
@@ -333,13 +332,13 @@ return `<section class="study-traps"><div class="study-traps-title">자주 틀�
 }
 function detailComparisonRows(pack,seeds=[]){
 const out=[];for(const raw of pack?.compare||[]){
- if(!Array.isArray(raw)||!raw[0]||!raw[1])continue;
- const row=[studentStudyText(raw[0]),studentStudyText(raw[1])],fact=row.join(' ');
- if(pack?.hazmatOfficialCommon&&/^\s*\d[\d,.]*\s*(?:kg|L|㎥)?\s*$/i.test(row[1]))continue;
- const repeated=seeds.some(x=>sameStudyFactCross(x,row[1])||sameStudyFactCross(x,fact)||sameNumericSignature(x,row[1]));
- if(repeated)continue;
- if(out.some(x=>sameStudyText(x[0],row[0])&&sameStudyText(x[1],row[1])))continue;
- out.push(row)
+if(!Array.isArray(raw)||!raw[0]||!raw[1])continue;
+const row=[studentStudyText(raw[0]),studentStudyText(raw[1])],fact=row.join(' ');
+if(pack?.hazmatOfficialCommon&&/^\s*\d[\d,.]*\s*(?:kg|L|㎥)?\s*$/i.test(row[1]))continue;
+const repeated=seeds.some(x=>sameStudyFactCross(x,row[1])||sameStudyFactCross(x,fact)||sameNumericSignature(x,row[1]));
+if(repeated)continue;
+if(out.some(x=>sameStudyText(x[0],row[0])&&sameStudyText(x[1],row[1])))continue;
+out.push(row)
 }
 return out
 }
@@ -358,7 +357,6 @@ if(!criteriaFirst){criteriaRows=detailCriteriaRows(pack,seen);seen.push(...crite
 const trapRows=detailExamPointRows(pack,seen);
 return{definition,detailRows,compareRows,criteriaRows,trapRows}
 }
-
 function specialCombustibleBlock(pack){
 const rows=pack?.specialCombustibles||[],rules=pack?.specialCombustibleStorage||[];if(!rows.length)return'';
 return `<section class="hazmat-reference special-combustible-reference"><div class="lesson-heading"><div><span class="eyebrow">현행 기준</span><h3>특수가연물 품명별 기준수량</h3></div></div><div class="table-scroll"><table class="hazmat-table"><thead><tr><th>품명</th><th>기준수량</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x[0])}</td><td><b>${esc(x[1])}</b></td></tr>`).join('')}</tbody></table></div>${rules.length?`<div class="lesson-box"><b>저장·취급 상세</b><ul>${rules.map(x=>`<li>${esc(studentStudyText(x))}</li>`).join('')}</ul></div>`:''}</section>`;
@@ -395,7 +393,6 @@ const choices=`<div class="choices">${q.choices.map((x,i)=>`<button class="choic
 let correctExplain=studentStudyText(q.ex||''),wrongExplain='';if(Array.isArray(q.choiceExplanations)){if(q.choiceExplanations[q.a])correctExplain=studentStudyText(q.choiceExplanations[q.a]);if(done&&ans!==q.a&&q.choiceExplanations[ans])wrongExplain=studentStudyText(q.choiceExplanations[ans])}const distinctWrong=wrongExplain&&!sameStudyFact(wrongExplain,correctExplain);
 return `<div class="question-card ${done?'answered':''}" ${inline?'style="margin:0 0 10px"':''}>${meta}<h2>${esc(studentQuestionText(q.q))}</h2>${confidence}${choices}${done?`<div class="answer"><b style="color:${ans===q.a?'var(--green)':'var(--red)'}">${ans===q.a?'정답':'오답'} · ${q.a+1}번</b>${correctExplain?`<p class="answer-ex">${esc(correctExplain)}</p>`:''}${distinctWrong?`<div class="choice-explanations"><div class="choice-explain wrong"><b>${ans+1}번 선택지</b><span>${esc(wrongExplain)}</span></div></div>`:''}<div class="answer-source"><small class="muted">출처: ${esc(q.source)}</small><div class="toolbar"><button class="btn small" data-question-retry="${esc(q.id)}">다시 풀기</button><button class="btn small ghost" data-source-question="${esc(q.id)}" data-source-concept="${esc(q.conceptId)}">원문 근거 보기</button></div></div></div>`:''}</div>`
 }
-
 function calcGroupFor(q){
 const id=q?.conceptId||'',src=String(q?.source||'');
 if(/^F05-/.test(id))return'hazmat';
@@ -586,8 +583,8 @@ return shell(`<div class="exam-landing exam-landing-single screen-scroll" data-s
 function startExam(mode){
 const ready=V.examReadiness();if(mode==='real'&&!ready.ready)return toast('실전 문제은행을 준비 중입니다.');
 if(mode==='past2025'){
-  const qs=V.OfficialPastExam119?.buildPractice?.()||[];if(!qs.length)return toast('공식 기출 문제를 불러오지 못했습니다.');
-  runtime.exam={id:crypto.randomUUID?crypto.randomUUID():'exam-'+Date.now(),mode:'past',title:'2025 실제 기출',difficulty:'official',qs,i:0,startedAt:Date.now(),answers:{},confidence:{},blueprint:{fire:qs.filter(q=>q.subject==='fire').length,ems:qs.filter(q=>q.subject==='ems').length,minutes:null,officialPastExam:true,year:2025,label:'2025 실제 기출'}};persistActiveExam();render();return
+const qs=V.OfficialPastExam119?.buildPractice?.()||[];if(!qs.length)return toast('공식 기출 문제를 불러오지 못했습니다.');
+runtime.exam={id:crypto.randomUUID?crypto.randomUUID():'exam-'+Date.now(),mode:'past',title:'2025 실제 기출',difficulty:'official',qs,i:0,startedAt:Date.now(),answers:{},confidence:{},blueprint:{fire:qs.filter(q=>q.subject==='fire').length,ems:qs.filter(q=>q.subject==='ems').length,minutes:null,officialPastExam:true,year:2025,label:'2025 실제 기출'}};persistActiveExam();render();return
 }
 const round=Math.max(1,Math.min(50,Number(runtime.examRound)||1)),built=roundQuestions(mode,runtime.examDifficulty,round);if(!built||built.qs.length!==65)return toast('65문항을 구성할 수 없습니다. 문제은행을 확인해주세요.');
 const qs=built.qs,seed=built.record.seed;
@@ -610,8 +607,8 @@ let fireCorrect=0,emsCorrect=0,fireAnswered=0,emsAnswered=0;
 for(const q of e.qs){
 const a=e.answers[q.id];
 if(a!==undefined){
-  if(q.subject==='fire')fireAnswered++;else emsAnswered++;
-  V.Mastery.recordAnswer?.(q,a,confidenceSnapshot[q.id]||'none',null)
+if(q.subject==='fire')fireAnswered++;else emsAnswered++;
+V.Mastery.recordAnswer?.(q,a,confidenceSnapshot[q.id]||'none',null)
 }
 if(a===q.a){if(q.subject==='fire')fireCorrect++;else emsCorrect++}
 }
@@ -734,7 +731,6 @@ if(/시험|함정|주의/.test(String(prompt||''))&&(pack.traps||[]).length)rows
 }
 rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));return cleanTutorText(rows.join('\n'))
 }
-
 function tutorConceptFor(prompt){
 const q=studyNorm(prompt),current=currentConcept();if(!q)return current;
 const generic=new Set(['개념','유형','정의','기본','개요','평가','처치','원리','방법','사용법','체계','상황','핵심','요약','시험','설명','비교','구분','상세','정리','특징','종류']);
@@ -929,7 +925,6 @@ return shell(`<div class="settings-page screen-scroll" data-scroll-owner="settin
 function view(){if(memberGateRequired())return loginGate();if(state().page==='tutor'){state().page='study';state().studyTab='ai';S.save()}return({home,study,notes,bank,exam,wrong,stats,resources,suggestions,settings}[state().page]||home)()}
 function scrollTutorToBottom(s,force){requestAnimationFrame(()=>requestAnimationFrame(()=>{const x=[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent!==null);if(!x)return;const b=x.closest('.study[data-scroll-owner="study"]');if(!b)return;if(force||!s||s[1])b.scrollTop=b.scrollHeight;else b.scrollTop=s[0];runtime.tutorForceLatest=false}))}
 function render(){const a=state().page==='study'&&state().studyTab==='ai',x=a?[...document.querySelectorAll('.study-ai-chat')].find(e=>e.offsetParent!==null):null,b=x?.closest('.study[data-scroll-owner="study"]'),s=b&&[b.scrollTop,b.scrollHeight-b.clientHeight-b.scrollTop<25],f=runtime.tutorForceLatest;document.querySelector('#app').innerHTML=view();if(a)scrollTutorToBottom(s,f);if(state().page==='study'&&state().studyTab==='detail')bindDetailSectionTracking()}
-
 function syncDetailTocActive(root,key,{scrollChip=false}={}){
 const view=root?.querySelector?.('.detail-view')||root?.closest?.('.detail-view')||document.querySelector('.detail-view');if(!view)return;
 const wanted=String(key??'');
@@ -1030,62 +1025,61 @@ restoreSourceFocus();return true
 }
 /* V66 real interaction scroll bridge: keep one owner while eliminating fixed-chrome wheel/touch dead zones. */
 function interactionScrollOwner(target){
-  if(!(target instanceof Element))return null;
-  const pdfModal=target.closest('.pdf-evidence-modal');
-  if(pdfModal){
-    if(target.closest('.pdf-evidence-host'))return null;
-    return pdfModal.querySelector('.pdf-evidence-host[data-scroll-owner="pdf"]');
-  }
-  const studyPage=target.closest('.page-study');
-  if(studyPage){
-    const owner=studyPage.querySelector('.study[data-scroll-owner="study"]');
-    if(target.closest('.outline,.backdrop'))return null;
-    if(owner?.contains(target))return null;
-    return owner||null;
-  }
-  const examPage=target.closest('.page-exam.exam-active');
-  if(examPage){
-    if(target.closest('.exam-body'))return null;
-    return examPage.querySelector('.exam-body[data-scroll-owner="exam-active"]');
-  }
-  if(target.closest('.top')){
-    const page=document.querySelector('.page');
-    return page?[...page.querySelectorAll('[data-scroll-owner]')].find(el=>el.offsetParent!==null)||null:null;
-  }
-  return null;
+if(!(target instanceof Element))return null;
+const pdfModal=target.closest('.pdf-evidence-modal');
+if(pdfModal){
+if(target.closest('.pdf-evidence-host'))return null;
+return pdfModal.querySelector('.pdf-evidence-host[data-scroll-owner="pdf"]');
+}
+const studyPage=target.closest('.page-study');
+if(studyPage){
+const owner=studyPage.querySelector('.study[data-scroll-owner="study"]');
+if(target.closest('.outline,.backdrop'))return null;
+if(owner?.contains(target))return null;
+return owner||null;
+}
+const examPage=target.closest('.page-exam.exam-active');
+if(examPage){
+if(target.closest('.exam-body'))return null;
+return examPage.querySelector('.exam-body[data-scroll-owner="exam-active"]');
+}
+if(target.closest('.top')){
+const page=document.querySelector('.page');
+return page?[...page.querySelectorAll('[data-scroll-owner]')].find(el=>el.offsetParent!==null)||null:null;
+}
+return null;
 }
 function moveInteractionScroll(owner,delta){
-  if(!owner||!owner.isConnected||!Number.isFinite(delta)||Math.abs(delta)<.01)return false;
-  const max=Math.max(0,owner.scrollHeight-owner.clientHeight),before=owner.scrollTop;
-  if(max<=0)return false;
-  owner.scrollTop=Math.max(0,Math.min(max,before+delta));
-  return Math.abs(owner.scrollTop-before)>.5;
+if(!owner||!owner.isConnected||!Number.isFinite(delta)||Math.abs(delta)<.01)return false;
+const max=Math.max(0,owner.scrollHeight-owner.clientHeight),before=owner.scrollTop;
+if(max<=0)return false;
+owner.scrollTop=Math.max(0,Math.min(max,before+delta));
+return Math.abs(owner.scrollTop-before)>.5;
 }
 document.addEventListener('wheel',e=>{
-  if(e.ctrlKey||Math.abs(e.deltaY)<=Math.abs(e.deltaX))return;
-  const owner=interactionScrollOwner(e.target);if(!owner)return;
-  const unit=e.deltaMode===1?16:e.deltaMode===2?Math.max(1,owner.clientHeight):1;
-  if(moveInteractionScroll(owner,e.deltaY*unit))e.preventDefault();
+if(e.ctrlKey||Math.abs(e.deltaY)<=Math.abs(e.deltaX))return;
+const owner=interactionScrollOwner(e.target);if(!owner)return;
+const unit=e.deltaMode===1?16:e.deltaMode===2?Math.max(1,owner.clientHeight):1;
+if(moveInteractionScroll(owner,e.deltaY*unit))e.preventDefault();
 },{passive:false,capture:true});
 let interactionTouch=null;
 document.addEventListener('touchstart',e=>{
-  if(e.touches?.length!==1){interactionTouch=null;return}
-  const owner=interactionScrollOwner(e.target);if(!owner){interactionTouch=null;return}
-  const t=e.touches[0];
-  interactionTouch={owner,startX:t.clientX,startY:t.clientY,lastX:t.clientX,lastY:t.clientY,decided:false,vertical:false};
+if(e.touches?.length!==1){interactionTouch=null;return}
+const owner=interactionScrollOwner(e.target);if(!owner){interactionTouch=null;return}
+const t=e.touches[0];
+interactionTouch={owner,startX:t.clientX,startY:t.clientY,lastX:t.clientX,lastY:t.clientY,decided:false,vertical:false};
 },{passive:true,capture:true});
 document.addEventListener('touchmove',e=>{
-  const s=interactionTouch;if(!s||!s.owner?.isConnected||e.touches?.length!==1)return;
-  const t=e.touches[0],totalX=t.clientX-s.startX,totalY=t.clientY-s.startY;
-  if(!s.decided&&(Math.abs(totalX)>7||Math.abs(totalY)>7)){s.decided=true;s.vertical=Math.abs(totalY)>Math.abs(totalX)}
-  const delta=s.lastY-t.clientY;s.lastX=t.clientX;s.lastY=t.clientY;
-  if(!s.decided||!s.vertical)return;
-  if(moveInteractionScroll(s.owner,delta))e.preventDefault();
+const s=interactionTouch;if(!s||!s.owner?.isConnected||e.touches?.length!==1)return;
+const t=e.touches[0],totalX=t.clientX-s.startX,totalY=t.clientY-s.startY;
+if(!s.decided&&(Math.abs(totalX)>7||Math.abs(totalY)>7)){s.decided=true;s.vertical=Math.abs(totalY)>Math.abs(totalX)}
+const delta=s.lastY-t.clientY;s.lastX=t.clientX;s.lastY=t.clientY;
+if(!s.decided||!s.vertical)return;
+if(moveInteractionScroll(s.owner,delta))e.preventDefault();
 },{passive:false,capture:true});
 const clearInteractionTouch=()=>{interactionTouch=null};
 document.addEventListener('touchend',clearInteractionTouch,{passive:true,capture:true});
 document.addEventListener('touchcancel',clearInteractionTouch,{passive:true,capture:true});
-
 function requestedPdfPage(key,raw){
 const n=Math.floor(Number(raw)||0);if(n<1)return 0;
 return Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOffsets||{},key)?(V.SourcePDF.pdfPage?.(key,n)||n):n
@@ -1093,9 +1087,9 @@ return Object.prototype.hasOwnProperty.call(V.SourcePDF?.pageOffsets||{},key)?(V
 async function locatePdfText(key,query){
 const q=String(query||'').trim();if(q.length<2)return{query:q,error:'SEARCH_QUERY_SHORT'};
 try{
-  const found=V.SourcePDF.findPages?await V.SourcePDF.findPages(key,q,{limit:12}):null;
-  if(found?.results?.length)return{query:q,page:found.results[0].page,pages:found.pages,results:found.results,index:0};
-  const hit=await V.SourcePDF.locate(key,[q]);return hit?.score>0?{query:q,...hit,results:[{page:hit.page,score:hit.score}],index:0}:{query:q,error:'SEARCH_NOT_FOUND'}
+const found=V.SourcePDF.findPages?await V.SourcePDF.findPages(key,q,{limit:12}):null;
+if(found?.results?.length)return{query:q,page:found.results[0].page,pages:found.pages,results:found.results,index:0};
+const hit=await V.SourcePDF.locate(key,[q]);return hit?.score>0?{query:q,...hit,results:[{page:hit.page,score:hit.score}],index:0}:{query:q,error:'SEARCH_NOT_FOUND'}
 }catch(err){return{query:q,error:String(err?.message||err)}}
 }
 function pdfSearchPages(root){try{return JSON.parse(root?.dataset?.searchResults||'[]').map(Number).filter(x=>x>0)}catch{return[]}}
