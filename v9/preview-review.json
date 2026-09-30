@@ -1,0 +1,7 @@
+{
+  "purpose": "manual-user-review-before-production",
+  "sourceSha": "6eac4b2987cabb966808c8c3d6758ecdef2ca576",
+  "pr": 123,
+  "generatedAt": "2026-09-30T15:17:00+09:00",
+  "productionBlocked": true
+}
