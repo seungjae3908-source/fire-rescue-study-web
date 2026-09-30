@@ -1,5 +1,4 @@
-/* V54 tablet-PC and medium-desktop study layout.
-   The learner study DOM is intentionally single-pane; never reserve the legacy empty rail column. */
+
 .page-study .workspace.study-workspace-single{grid-template-columns:minmax(0,1fr)!important}
 @media (min-width:721px) and (max-width:1180px){
   .page-home .dashboard-home{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;align-content:start!important;overflow-y:auto!important;overflow-x:hidden!important}
@@ -36,7 +35,7 @@
   .page-study .concept-visual .visual-node b{font-size:15px!important;line-height:1.45!important;white-space:normal!important;overflow-wrap:anywhere!important}
 }
 
-/* V72 mobile field-report hardening: screenshots 390px Android */
+
 .note-preview{
   display:grid!important;
   gap:6px!important;
@@ -185,7 +184,7 @@
 
 
 
-/* V73 UX regression consolidation: compact home, single study navigation, calm exam hub, member gate */
+
 .login-gate-shell{min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 0,rgba(57,109,164,.16),transparent 42%),#06111f;color:var(--text)}
 .login-gate-card{width:min(100%,470px);display:grid;gap:20px;padding:28px;border:1px solid var(--line);border-radius:20px;background:#091827;box-shadow:0 18px 60px rgba(0,0,0,.24)}
 .login-brand{display:flex;align-items:center;gap:11px}.login-brand>div{display:grid;gap:2px}.login-brand small{color:var(--muted);font-size:12px}.login-copy{display:grid;gap:7px}.login-copy h1{margin:0;font-size:28px;line-height:1.25}.login-copy p{margin:0;color:var(--muted);line-height:1.65}
@@ -229,7 +228,7 @@
 }
 
 
-/* V74 mobile interaction + exact question evidence */
+
 .login-gate-shell{
   grid-template-columns:minmax(0,1fr)!important;
   grid-template-rows:minmax(0,1fr)!important;
