@@ -1,5 +1,4 @@
-'use strict';
-// V79 responsive composition
+"use strict";
 const CACHE='ai-tutor-v9-shell-20260930-v78-fluid-density';
 const PREFIX='ai-tutor-v9-';
 const CORE=[
