@@ -121,6 +121,8 @@ jobs:
           node --check v9/v76-responsive-layout-e2e.mjs
           node --check v9/v77-ui-finish-audit.mjs
           node --check v9/v77-ui-finish-e2e.mjs
+          node --check v9/v78-desktop-density-audit.mjs
+          node --check v9/v78-desktop-density-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -159,6 +161,8 @@ jobs:
         run: node v9/v76-responsive-unification-audit.mjs
       - name: V77 PC UI finish gate
         run: node v9/v77-ui-finish-audit.mjs
+      - name: V78 desktop fluid-density gate
+        run: node v9/v78-desktop-density-audit.mjs
       - name: Official notice monitor contract gate
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
@@ -500,6 +504,10 @@ jobs:
         env:
           STUDY_119_V77_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v77-ui-finish-e2e.mjs
+      - name: V78 PC fluid-density geometry QA
+        env:
+          STUDY_119_V78_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v78-desktop-density-e2e.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
       - name: Korean image OCR quality + owner isolation QA
