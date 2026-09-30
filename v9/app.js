@@ -127,7 +127,7 @@ function studyTokenCoverage(a,b){const A=studyFactWords(a),B=studyFactWords(b);i
 function sameCriterionFact(a,b){return sameNumericSignature(a,b)&&(studyGramDice(a,b)>=.46||studyTokenCoverage(a,b)>=.6)}
 function sameStudyFact(a,b){if(sameStudyText(a,b)||sameCriterionFact(a,b))return true;const x=studyNorm(a),y=studyNorm(b);if(!x||!y)return false;const min=Math.min(x.length,y.length);if(min>=14&&studyGramDice(a,b)>=.78)return true;return min>=10&&studyTokenCoverage(a,b)>=.78&&studyGramDice(a,b)>=.48}
 function sameStudyFactCross(a,b){if(sameStudyFact(a,b))return true;const x=studyNorm(a),y=studyNorm(b),min=Math.min(x.length,y.length);return min>=18&&studyTokenCoverage(a,b)>=.66&&studyGramDice(a,b)>=.42}
-function numericTokenSet(v){return new Set((studentStudyText(v).match(/\d+(?:[.,]\d+)?\s*(?:[%℃°㎥㎡a-zA-Z가-힣\/]+)?/g)||[]).map(x=>x.replace(/\s+/g,'').toLowerCase()))}
+function numericTokenSet(v){return new Set((studentStudyText(v).match(/\d+(?:[.,]\d+)?\s*(?:[%℃°㎥㎡a-zA-Z가-힣\/]+)?/g)||[]).map(x=>x.replace(/\s+/g,'').toLowerCase().replace(/(?:이상|이하|미만|초과|이내|부터|까지|은|는|이|가|을|를|과|와|의|에|로|도|만)$/,'')))}
 function sameNumericSignature(a,b){const A=numericTokenSet(a),B=numericTokenSet(b);if(!A.size||!B.size||A.size!==B.size)return false;for(const x of A)if(!B.has(x))return false;return true}
 function addsNumericCriterion(base,detail){const a=numericTokenSet(base),b=numericTokenSet(detail);return [...b].some(x=>!a.has(x))}
 function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(!row||sameStudyFact(row,seed)||out.some(x=>sameStudyFact(x,row)))continue;out.push(row)}return out}
