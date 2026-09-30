@@ -22,7 +22,7 @@ assert(app.includes("split('\\n')")&&app.includes('note-preview-gap'),'in-app pa
 assert(pdf.includes('const expandEvidence=')&&pdf.includes('sentenceEnded(cur.text)')&&pdf.includes('looksLikeNewBlock(next.text)'),'PDF evidence highlighter expands wrapped sentence lines without crossing new blocks');
 assert(pdf.includes('return picked.slice(0,12)'),'PDF evidence highlight remains bounded');
 
-assert(css.includes('V72 mobile field-report hardening'),'V72 mobile final-override block exists');
+assert(css.includes('.page-study .concept-nav-single')&&css.includes('body:has(.pdf-evidence-modal) .mobile-nav')&&css.includes('.page-home .dashboard-home-compact'),'V72 mobile final overrides remain present');
 assert(css.includes('.page-study .concept-nav-single')&&css.includes('position:static!important'),'one concept previous/toc/next navigation stays in document flow');
 assert(css.includes('body:has(.pdf-evidence-modal) .mobile-nav'),'PDF evidence modal hides the global bottom navigation');
 assert(css.includes('.pdf-render-meta{')&&css.includes('position:static!important'),'PDF evidence meta label no longer overlays the PDF canvas');
