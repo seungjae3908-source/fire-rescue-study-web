@@ -261,16 +261,7 @@ return `<section class="detail-section detail-definition" data-detail-section="d
 }
 function detailRowSeedTexts(rows=[]){return rows.flatMap(row=>[row?.body,...(row?.bullets||[])]).map(studentStudyText).filter(Boolean)}
 function dedupeDetailRows(rows=[],seeds=[]){const seen=[...seeds].map(studentStudyText).filter(Boolean),out=[];for(const row of rows||[]){let body=detailOnlyText(row?.body,seen),bullets=[];if(body&&seen.some(x=>sameStudyFact(x,body)))body='';for(const raw of uniqueTextRows(row?.bullets||[])){const t=detailOnlyText(raw,[...seen,body,...bullets].filter(Boolean));if(t&&!seen.some(x=>sameStudyFact(x,t))&&!bullets.some(x=>sameStudyFact(x,t)))bullets.push(t)}if(!body&&!bullets.length)continue;out.push({...row,body,bullets});if(body)seen.push(body);seen.push(...bullets)}return out}
-function mergeDetailRowsByTitle(c,rows=[]){
-const out=[],by=new Map;
-for(const row of rows){const sample=row?.body||(row?.bullets||[])[0]||'',title=detailSectionTitle(c,row?.title||'',sample),key=studyNorm(title);if(!key)continue;
-if(!by.has(key)){const x={...row,title};by.set(key,x);out.push(x);continue}
-const x=by.get(key),seen=[x.body,...(x.bullets||[])].map(studentStudyText).filter(Boolean),incoming=[row?.body,...(row?.bullets||[])].map(studentStudyText).filter(Boolean);
-for(const text of incoming){if(!text||seen.some(v=>sameStudyFact(v,text)))continue;if(!x.body)x.body=text;else{x.bullets=x.bullets||[];x.bullets.push(text)}seen.push(text)}
-x.bullets=uniqueTextRows(x.bullets||[],x.body)
-}
-return out
-}
+function mergeDetailRowsByTitle(c,rows=[]){const out=[],by=new Map;for(const r of rows){const s=r?.body||(r?.bullets||[])[0]||'';let t=detailSectionTitle(c,r?.title||'',s);if(/^(종류 · 구분|비교 · 구분|수치 · 기준|시험 포인트 · 함정\/주의)$/.test(t))t+=' 해설';const k=studyNorm(t);if(!k)continue;if(!by.has(k)){const x={...r,title:t};by.set(k,x);out.push(x);continue}const x=by.get(k),seen=[x.body,...(x.bullets||[])].map(studentStudyText).filter(Boolean);for(const v of [r?.body,...(r?.bullets||[])].map(studentStudyText).filter(Boolean)){if(seen.some(z=>sameStudyFact(z,v)))continue;if(!x.body)x.body=v;else(x.bullets||(x.bullets=[])).push(v);seen.push(v)}x.bullets=uniqueTextRows(x.bullets||[],x.body)}return out}
 function detailTrapPriority(text,index=0){const t=String(text||'');let score=0;if(/[→←<>≈]|\d/.test(t))score+=4;if(/먼저|다음|순서|시각|시간|기준|비율|주기|분|초/.test(t))score+=5;if(/금지|않|주의|예외|구분|확인|배제|중단/.test(t))score+=2;return{score,index}}
 function detailExamPointRows(pack,seeds=[]){
 const all=uniqueTextRows([...(pack?.traps||[])]).map(studentStudyText).filter(Boolean),rows=[];
@@ -280,7 +271,7 @@ rows.push(row.text);if(rows.length>=4)break
 }
 return rows
 }
-function detailExamPointBlock(rows=[],usedHeadings=[]){if(!rows.length)return'';const base='시험 포인트 · 함정/주의',used=new Set(usedHeadings.map(studyNorm)),title=used.has(studyNorm(base))?'시험 함정 · 주의':base;return `<section class="detail-exam-points" data-detail-section="traps"><h3>${title}</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
+function detailExamPointBlock(rows=[]){if(!rows.length)return'';return `<section class="detail-exam-points" data-detail-section="traps"><h3>시험 포인트 · 함정/주의</h3><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
 function detailCriterionText(raw,seeds=[]){
 const text=detailOnlyText(raw,seeds);
 if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text))return'';
@@ -295,10 +286,9 @@ out.push(text);if(out.length>=12)break
 }
 return out
 }
-function detailCriteriaBlock(rows=[],usedHeadings=[]){
+function detailCriteriaBlock(rows=[]){
 if(!rows.length)return'';
-const base='수치 · 기준',used=new Set(usedHeadings.map(studyNorm)),title=used.has(studyNorm(base))?'핵심 수치 · 기준':base;
-return `<section class="detail-criteria" data-detail-section="criteria"><h3>${title}</h3><ul>${rows.map(x=>`<li>${numberHighlight(x)}</li>`).join('')}</ul></section>`
+return `<section class="detail-criteria" data-detail-section="criteria"><h3>수치 · 기준</h3><ul>${rows.map(x=>`<li>${numberHighlight(x)}</li>`).join('')}</ul></section>`
 }
 function detailHasUniqueContent(x,seeds=[]){if(!x)return false;if(detailOnlyText(x.body,seeds))return true;return(x.bullets||[]).some(v=>detailOnlyText(v,seeds))}
 function detailSectionShouldOpen(title,index=0){return index===0||/비교|구분|분석|시험|함정|주의|예외|수치|기준|금기|변형|오염/.test(String(title||''))}
@@ -358,9 +348,9 @@ out.push(row)
 }
 return out
 }
-function comparisonBlock(c,pack,rows=[],usedHeadings=[]){
+function comparisonBlock(c,pack,rows=[]){
 if(!rows.length)return'';
-const typeLike=rows.length>=2&&/원리|종류|분류|구분/.test(String(c?.title||'')+' '+String(pack.summary||'')),base=c?.id==='F04-C01'?'소화의 종류':typeLike?'종류 · 구분':pack.compareFamily?.title||'비교 · 구분',used=new Set(usedHeadings.map(studyNorm)),title=used.has(studyNorm(base))?base+' 비교표':base;
+const typeLike=rows.length>=2&&/원리|종류|분류|구분/.test(String(c?.title||'')+' '+String(pack.summary||'')),title=c?.id==='F04-C01'?'소화의 종류':typeLike?'종류 · 구분':pack.compareFamily?.title||'비교 · 구분';
 return `<section class="detail-compare detail-compare-cards" data-detail-section="comparison"><h3>${esc(title)}</h3><div class="concept-class-grid">${rows.map(r=>`<article class="concept-class-card static"><b>${esc(r[0])}</b><p>${esc(r[1])}</p></article>`).join('')}</div></section>`
 }
 function buildDetailModel(c,pack){
@@ -383,7 +373,7 @@ const pdfActions=hasPdf?`<div class="source-primary-actions"><button class="btn 
 return `<div class="lesson source-only"><p class="lead">${esc(source)}</p>${pdfActions}${links.length?`<div class="source-law-links"><b>공식 근거</b>${links.map(x=>`<a class="source-law-link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)} <span aria-hidden="true">↗</span></a>`).join('')}</div>`:''}</div>`
 }
 function lessonContent(c,pack,tab){const qs=V.QuestionQuality119?.forConcept(c.id)||[];
-if(tab==='detail'){const model=buildDetailModel(c,pack),usedHeadings=model.detailRows.map(x=>detailSectionTitle(c,x?.title||'',x?.body||(x?.bullets||[])[0]||''));if(model.definition)usedHeadings.push(String(c?.title||'개념').replace(/\s*(?:개론|원리|이론|기초|개요)\s*$/,'').trim()+'의 정의');return `<div class="lesson detail-view detail-type-${esc(V.ConceptArchitecture119?.typeOf?.(c.id)||'general')}">${detailToc(c,model)}${detailDefinitionBlock(c,model.definition)}${model.detailRows.map((x,i)=>detailSection(c,x,i)).join('')}${comparisonBlock(c,pack,model.compareRows,usedHeadings)}${detailCriteriaBlock(model.criteriaRows,usedHeadings)}${detailExamPointBlock(model.trapRows,usedHeadings)}${visualBlocks(pack)}${c.id==='F05-C01'?'':hazmatBlock(c)}${specialCombustibleBlock(pack)}${calculationBlocks(c,pack)}</div>`}
+if(tab==='detail'){const model=buildDetailModel(c,pack);return `<div class="lesson detail-view detail-type-${esc(V.ConceptArchitecture119?.typeOf?.(c.id)||'general')}">${detailToc(c,model)}${detailDefinitionBlock(c,model.definition)}${model.detailRows.map((x,i)=>detailSection(c,x,i)).join('')}${comparisonBlock(c,pack,model.compareRows)}${detailCriteriaBlock(model.criteriaRows)}${detailExamPointBlock(model.trapRows)}${visualBlocks(pack)}${c.id==='F05-C01'?'':hazmatBlock(c)}${specialCombustibleBlock(pack)}${calculationBlocks(c,pack)}</div>`}
 if(tab==='quiz'){
 if(!qs.length)return '<div class="lesson quiz-view"><div class="empty book-empty">아직 준비된 문제가 없습니다.</div></div>';
 const raw=Number(runtime.studyQuizIndex[c.id]||0),idx=Math.max(0,Math.min(raw,qs.length-1));runtime.studyQuizIndex[c.id]=idx;
