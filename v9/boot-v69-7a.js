@@ -358,19 +358,14 @@ function ocrCandidateScore(row,reference=''){
   return score
 }
 const OCR_UNIT_RE=/(mmHg|L\/min|mL|cm|mm|kg|mg|psi|%)/gi,OCR_SUSPECT_RE=/(\d+(?:[.,]\d+)?)\s+(?:0{1,3}|[oOeEcC]{1,3})(?=\s|$|[.,;:])/g;
-function ocrUnitKey(v){return String(v||'').toLowerCase()}
-function ocrUnitLabel(v){return({mmhg:'mmHg','l/min':'L/min',ml:'mL',cm:'cm',mm:'mm',kg:'kg',mg:'mg',psi:'psi','%':'%'})[ocrUnitKey(v)]||v}
 async function recoverOcrUnitPass(worker,canvas,row){
-  const suspects=[...String(row.text||'').matchAll(OCR_SUSPECT_RE)];if(!suspects.length)return row;let unitWorker=null;
+  if(!String(row.text||'').match(OCR_SUSPECT_RE))return row;let w=null;
   try{
-    unitWorker=await createOcrWorker('eng');
-    try{await unitWorker.setParameters?.({tessedit_char_whitelist:'0123456789mMHgLlckKpPsiInNJj/%.-',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}
-    const p=await recognizeCanvas(unitWorker,canvas),known=[...row.text.matchAll(OCR_UNIT_RE)].map(x=>ocrUnitKey(x[0])),probe=[...p.text.matchAll(OCR_UNIT_RE)].map(x=>ocrUnitKey(x[0]));
-    for(const k of known){const i=probe.indexOf(k);if(i>=0)probe.splice(i,1)}
-    if(!probe.length)return row;let i=0;
-    const text=row.text.replace(OCR_SUSPECT_RE,m=>probe[i]?m.replace(/\s+\S+$/, ' '+ocrUnitLabel(probe[i++])):m);
-    return text===row.text?row:{...row,text,quality:textQuality(text)}
-  }catch{return row}finally{if(unitWorker)await unitWorker.terminate().catch(()=>{})}
+    w=await createOcrWorker('eng');try{await w.setParameters?.({tessedit_char_whitelist:'0123456789mMHgLlckKpPsiInNJj/%.-',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}
+    const p=await recognizeCanvas(w,canvas),known=[...row.text.matchAll(OCR_UNIT_RE)].map(x=>x[0].toLowerCase()),probe=[...p.text.matchAll(OCR_UNIT_RE)].map(x=>x[0]);
+    for(const k of known){const i=probe.findIndex(x=>x.toLowerCase()===k);if(i>=0)probe.splice(i,1)}if(!probe.length)return row;let i=0;
+    const text=row.text.replace(OCR_SUSPECT_RE,m=>probe[i]?m.replace(/\s+\S+$/,' '+probe[i++]):m);return text===row.text?row:{...row,text,quality:textQuality(text)}
+  }catch{return row}finally{if(w)await w.terminate().catch(()=>{})}
 }
 
 async function bestOcrCanvas(worker,canvas,reference=''){
