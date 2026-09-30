@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const css=read('./v54-responsive.css'),base=read('./styles.css'),sw=read('./sw.js');
+assert(css.includes('@media(min-width:1025px){:root{--ui-pc-max:1440px}'),'V77 has one desktop UI width token');
+assert(css.includes('grid-template-columns:30px minmax(0,1fr)!important')&&css.includes('align-items:center!important'),'detail flow cards share one number/text alignment grid');
+assert(css.includes('.page-study .study-quiz-single,.page-study .quiz-view .question-card{width:100%!important;max-width:none!important}'),'study quiz card uses full quiz width');
+assert(css.includes('grid-template-columns:repeat(15,44px)!important'),'desktop quiz jump buttons wrap into a controlled two-row grid');
+assert(css.includes('.page-stats .stats-page{width:100%!important;max-width:none!important;margin:0!important}'),'stats scroll owner uses the full route width');
+assert(css.includes('.page-stats .stats-v61>*,.resources-119>.card,.suggestions-page>.card,.notes-page>.card,.settings-page>.card'),'major desktop pages share the same content-width rule');
+assert(css.includes('.page-exam.exam-active .exam-layout{width:100%!important;max-width:1280px!important;grid-template-columns:minmax(0,1fr) 300px!important}'),'active exam uses a consistent wide desktop grid');
+assert(css.includes('.suggestions-page section.card:has(.suggestion-list>.empty) .suggestion-pager{display:none!important}'),'empty suggestion UI hides meaningless pagination');
+assert(!base.includes('.stats-page{grid-template-columns:minmax(0,1fr);max-width:1080px;margin:0 auto}'),'legacy narrow stats cap removed');
+assert(!base.includes('.resources-119{display:grid;gap:12px;max-width:1180px;margin:0 auto;padding-bottom:18px}'),'legacy narrow resources cap removed');
+assert(!base.includes('.settings-page{height:100%;max-width:900px;margin:0 auto;display:grid;gap:10px;align-content:start;padding-bottom:16px}'),'legacy narrow settings cap removed');
+assert(sw.includes('ai-tutor-v9-shell-20260930-v77-ui-finish'),'V77 UI cache epoch is active');
+console.log('V77_UI_FINISH_AUDIT_SUCCESS');
