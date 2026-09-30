@@ -6,7 +6,7 @@ assert(css.includes('@media(min-width:1025px){:root{--ui-pc-max:1440px}'),'V77 h
 assert(css.includes('grid-template-columns:30px minmax(0,1fr)!important')&&css.includes('align-items:center!important'),'detail flow cards share one number/text alignment grid');
 assert(css.includes('.page-study .study-quiz-single,.page-study .quiz-view .question-card{width:100%!important;max-width:none!important}'),'study quiz card uses full quiz width');
 assert(css.includes('grid-template-columns:repeat(15,44px)!important'),'desktop quiz jump buttons wrap into a controlled two-row grid');
-assert(css.includes('.page-stats .stats-page{width:100%!important;max-width:none!important;margin:0!important}'),'stats scroll owner uses the full route width');
+assert(css.includes('.page-stats .stats-page{width:100%!important;max-width:none!important;margin:0!important;grid-template-columns:minmax(0,1fr)!important}'),'stats uses one full-width desktop column instead of inheriting the home split grid');
 assert(css.includes('.page-stats .stats-v61>*,.resources-119>.card,.suggestions-page>.card,.notes-page>.card,.settings-page>.card'),'major desktop pages share the same content-width rule');
 assert(css.includes('.page-exam.exam-active .exam-layout{width:100%!important;max-width:1280px!important;grid-template-columns:minmax(0,1fr) 300px!important}'),'active exam uses a consistent wide desktop grid');
 assert(css.includes('.suggestions-page section.card:has(.suggestion-list>.empty) .suggestion-pager{display:none!important}'),'empty suggestion UI hides meaningless pagination');
