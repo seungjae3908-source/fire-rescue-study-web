@@ -16,7 +16,7 @@ function run(text,kind='p'){
  return `<w:p><w:pPr><w:spacing w:after="${kind==='title'?220:kind.startsWith('h')?140:70}" w:line="340"/>${kind==='title'?'<w:jc w:val="center"/>':''}</w:pPr><w:r><w:rPr>${bold?'<w:b/>':''}<w:sz w:val="${size}"/><w:szCs w:val="${size}"/><w:lang w:val="ko-KR" w:eastAsia="ko-KR"/></w:rPr><w:t xml:space="preserve">${esc(prefix+text)}</w:t></w:r></w:p>`
 }
 function rowsFromHtml(html,title){
- const doc=new DOMParser().parseFromString(String(html||''),'text/html'),rows=[{text:title,kind:'title'}],seenCover=false;
+ const doc=new DOMParser().parseFromString(String(html||''),'text/html'),rows=[{text:title,kind:'title'}];let seenCover=false;
  for(const el of doc.body.querySelectorAll('h1,h2,h3,p,li')){
   const text=String(el.textContent||'').replace(/\s+/g,' ').trim();if(!text)continue;
   if(!seenCover&&el.tagName==='H1'&&text===title){seenCover=true;continue}
