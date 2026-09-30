@@ -74,6 +74,14 @@ try{
     if(related)issues.push({id,type:'COMPARE_REPEAT',rows:[[related,row.label+' '+row.body]]});
   }
  }
+ await page.evaluate(()=>{
+  const V=window.AITUTOR_V9,c=V.curriculum.byId['F06-C03'],s=V.Store.state;
+  s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=c.id;s.studyTab='detail';s.outline=false;V.Store.save();V.App.render()
+ });
+ await page.waitForSelector('.page-study .detail-view');
+ const originDetail=await page.locator('.page-study .detail-view').innerText();
+ assert(originDetail.includes('환기'),'F06-C03 detail preserves the unique ventilation interpretation while core/detail duplicates remain removed');
+
  const org=await page.evaluate(()=>{
   const V=window.AITUTOR_V9,p=V.contentPacks.get('F01-C01');
   return{numbers:V.StudyEmphasis119.numberRows(p,20),valid119:V.StudyEmphasis119.isNumericCriterion('소방서장 소속 → 119안전센터·구조대·구급대 등')}
