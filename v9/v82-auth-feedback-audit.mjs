@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const app=read('./app.js'),auth=read('./auth.js'),lite=read('./supabase-lite.js'),styles=read('./styles.css'),responsive=read('./v54-responsive.css');
+assert(auth.includes("u.search='?auth=confirmed'")&&auth.includes('emailRedirectTo:authRedirectUrl()'),'signup and resend route email confirmation back to the app');
+assert(lite.includes("'?redirect_to='+encodeURIComponent(redirect)")&&lite.includes('redirectResult={consumed:true'),'same-origin auth client sends redirect_to and records confirmation redirects');
+assert(app.includes('회원가입 신청이 완료되었습니다')&&app.includes('이메일 인증이 완료되었습니다'),'signup and confirmation success dialogs are present');
+assert(app.includes("RELEASE_NOTES_VERSION='2026.10.02'")&&app.includes("RELEASE_NOTES_KEY='aitutor9:release-notes-seen'"),'release notes are versioned and persist one-time acknowledgement');
+assert(app.includes('소방합격 업데이트')&&app.includes('data-release-notes-confirm')&&app.includes('data-release-notes-later'),'login update modal exposes confirm and later actions');
+assert(app.includes("reason==='signed-in'")&&app.includes('maybeOpenReleaseNotes()'),'signed-in flow opens unseen release notes');
+assert(!styles.includes('V82')&&!responsive.includes('V82'),'V82 leaves accepted study UI CSS untouched');
+console.log('V82_AUTH_FEEDBACK_AUDIT_SUCCESS');
