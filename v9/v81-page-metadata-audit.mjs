@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const app=read('./app.js'),sw=read('./sw.js'),styles=read('./styles.css'),responsive=read('./v54-responsive.css');
+assert(app.includes('(?:에서는?|에서도|에선|에서|에는|의|기준으로|기준에서|에\\s*따르면)?'),'learner text filter removes page-number suffix phrases');
+assert(app.includes("m.role==='assistant'?studentStudyText(cleanTutorText(m?.text||'')):cleanTutorText(m?.text||'')"),'AI display text passes through learner-text cleanup');
+assert(app.includes("if(evidenceOnly)return'근거\\n• 현재 개념의 공식 근거';"),'AI evidence-only fallback does not expose page metadata');
+assert(app.includes("rows.push('','근거','• 현재 개념의 공식 근거')"),'normal AI fallback does not expose page metadata');
+assert(app.includes("학생 화면 답변에는 페이지·쪽수를 표시하지 말고"),'local AI system prompt suppresses page metadata in displayed answers');
+assert(sw.includes('ai-tutor-v9-shell-20261001-v81-page-clean'),'V81 cache epoch is active');
+assert(!styles.includes('V81')&&!responsive.includes('V81'),'V81 does not alter frozen UI/CSS');
+console.log('V81_PAGE_METADATA_AUDIT_SUCCESS');
