@@ -15,6 +15,6 @@ assert(css.includes('.suggestions-page section.card:has(.suggestion-list>.empty)
 assert(!base.includes('.stats-page{grid-template-columns:minmax(0,1fr);max-width:1080px;margin:0 auto}'),'legacy narrow stats cap removed');
 assert(!base.includes('.resources-119{display:grid;gap:12px;max-width:1180px;margin:0 auto;padding-bottom:18px}'),'legacy narrow resources cap removed');
 assert(!base.includes('.settings-page{height:100%;max-width:900px;margin:0 auto;display:grid;gap:10px;align-content:start;padding-bottom:16px}'),'legacy narrow settings cap removed');
-assert(sw.includes('ai-tutor-v9-shell-20260930-v78-fluid-density'),'latest UI cache epoch is active');
+assert(sw.includes('ai-tutor-v9-shell-20261001-v81-page-clean'),'latest UI cache epoch is active');
 console.log('V77_UI_FINISH_AUDIT_SUCCESS');
 // V77 exact-head UI trigger.
