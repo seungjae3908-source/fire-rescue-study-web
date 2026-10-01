@@ -11,38 +11,37 @@ const normalize=s=>String(s||'').replace(/\s+/g,' ').trim();
 const normalizeBody=s=>String(s||'').replace(/\r\n?/g,'\n').split('\n').map(x=>x.replace(/[ \t]+/g,' ').trim()).join('\n').replace(/\n{3,}/g,'\n\n').trim();
 const uniq=arr=>{const out=[];for(const x of arr||[]){const t=normalize(x);if(t&&!out.includes(t))out.push(t)}return out};
 const emphasis=()=>{const E=V.StudyEmphasis119;if(!E)throw Error('STUDY_EMPHASIS_SSOT_MISSING');return E};
-
 function conceptKey(conceptId,bucket='must',index=0){return 'pass-c-'+conceptId+'-'+bucket+'-'+index}
 function conceptCoreKey(conceptId){return 'pass-c-'+conceptId+'-core'}
 function questionKey(questionId){return 'pass-q-'+questionId}
 function find(id){return (state().notes||[]).find(n=>n.id===id)||null}
 function has(id){return !!find(id)}
 async function persist(note){
-  const s=state(),i=(s.notes||[]).findIndex(n=>n.id===note.id),row={private:true,...note,createdAt:note.createdAt||now(),updatedAt:now()};
-  if(i>=0)s.notes[i]={...s.notes[i],...row};else s.notes.push(row);
-  V.Store.save();
-  try{if(V.Auth?.user&&V.Auth?.saveNote)await V.Auth.saveNote(row)}catch(e){console.warn('pass note sync failed',e)}
-  return row;
+const s=state(),i=(s.notes||[]).findIndex(n=>n.id===note.id),row={private:true,...note,createdAt:note.createdAt||now(),updatedAt:now()};
+if(i>=0)s.notes[i]={...s.notes[i],...row};else s.notes.push(row);
+V.Store.save();
+try{if(V.Auth?.user&&V.Auth?.saveNote)await V.Auth.saveNote(row)}catch(e){console.warn('pass note sync failed',e)}
+return row;
 }
 async function remove(id){
-  try{if(V.Auth?.user&&V.Auth?.deleteNote)await V.Auth.deleteNote(id)}catch(e){throw e}
-  V.Store.state.notes=(V.Store.state.notes||[]).filter(n=>n.id!==id);V.Store.save();return true;
+try{if(V.Auth?.user&&V.Auth?.deleteNote)await V.Auth.deleteNote(id)}catch(e){throw e}
+V.Store.state.notes=(V.Store.state.notes||[]).filter(n=>n.id!==id);V.Store.save();return true;
 }
 function conceptNoteFromKey(key){
-  const m=String(key||'').match(/^pass-c-(F\d\d-C\d\d|E\d\d-C\d\d)-(must|number|summary|feature)-(\d+)$/);if(!m)return null;
-  const [,conceptId,bucket,idxRaw]=m,idx=Number(idxRaw),c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
-  let rows=[];
-  if(bucket==='must')rows=emphasis().mustRows(p);
-  else if(bucket==='feature')rows=emphasis().featureRows(p);
-  else if(bucket==='number')rows=emphasis().numberRows(p,12);
-  else rows=[p.summary];
-  const text=rows[idx];if(!text)return null;
-  const subj=subjectOf(c),source=emphasis().evidence(conceptId,p).source||'공식교재';
-  return{id:key,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:`[핵심]\n★ ${cleanStudentText(text)}\n\n[공식근거]\n${source}`,sourceType:'pass-star',conceptId,subject:subj,sourceRef:source};
+const m=String(key||'').match(/^pass-c-(F\d\d-C\d\d|E\d\d-C\d\d)-(must|number|summary|feature)-(\d+)$/);if(!m)return null;
+const [,conceptId,bucket,idxRaw]=m,idx=Number(idxRaw),c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
+let rows=[];
+if(bucket==='must')rows=emphasis().mustRows(p);
+else if(bucket==='feature')rows=emphasis().featureRows(p);
+else if(bucket==='number')rows=emphasis().numberRows(p,12);
+else rows=[p.summary];
+const text=rows[idx];if(!text)return null;
+const subj=subjectOf(c),source=emphasis().evidence(conceptId,p).source||'공식교재';
+return{id:key,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:`[핵심]\n★ ${cleanStudentText(text)}\n\n[공식근거]\n${source}`,sourceType:'pass-star',conceptId,subject:subj,sourceRef:source};
 }
 async function toggleConcept(key){
-  if(has(key)){await remove(key);return{saved:false,id:key}}
-  const note=conceptNoteFromKey(key);if(!note)throw Error('PASS_NOTE_SOURCE_NOT_FOUND');await persist(note);return{saved:true,id:key,note};
+if(has(key)){await remove(key);return{saved:false,id:key}}
+const note=conceptNoteFromKey(key);if(!note)throw Error('PASS_NOTE_SOURCE_NOT_FOUND');await persist(note);return{saved:true,id:key,note};
 }
 function cleanStudentText(v){return normalize(v)
 .replace(/\b20\d{2}\s*(?:소방전술\s*\d+(?:\([^)]*\))?|예방실무\s*\d+|소방법령\s*\d+)\s*(?:기준으로|기준에서|에\s*따르면|에서는?)\s*/gi,'')
@@ -50,105 +49,108 @@ function cleanStudentText(v){return normalize(v)
 .replace(/(?:연결된\s*)?(?:공식\s*)?(?:교재|원문|학습팩|근거)(?:\s*근거)?\s*(?:에서는?|에\s*따르면|에서|은|는)\s*/gi,'')
 .replace(/\s*교재의\s*정의(?:이)?다\.?/gi,'').trim()}
 function conceptCoreNote(conceptId){
-  const c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
-  const E=emphasis(),summary=cleanStudentText(p?.studySchema?.quick30||p.summary||''),core=uniq([...E.mustRows(p),...E.featureRows(p)].map(cleanStudentText)).filter(x=>x&&x!==summary).slice(0,6),numbers=uniq(E.numberRows(p,12).map(cleanStudentText)).filter(Boolean),traps=uniq(E.trapRows(p).map(cleanStudentText)).filter(Boolean).slice(0,4),source=E.evidence(conceptId,p).source||'공식교재',parts=[];
-  if(summary||core.length)parts.push('[핵심]\n'+[summary?'★ '+summary:'',...core.map(x=>'• '+x)].filter(Boolean).join('\n'));
-  if(numbers.length)parts.push('[숫자·단위·기준]\n'+numbers.map(x=>'• '+x).join('\n'));
-  if(traps.length)parts.push('[주의·예외]\n'+traps.map(x=>'• '+x).join('\n'));
-  parts.push('[공식근거]\n'+source);
-  const subj=subjectOf(c),id=conceptCoreKey(conceptId);return{id,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:parts.join('\n\n'),sourceType:'pass-star-concept',conceptId,subject:subj,sourceRef:source};
+const c=V.curriculum?.byId?.[conceptId],p=V.contentPacks?.get?.(conceptId);if(!c||!p)return null;
+const E=emphasis(),summary=cleanStudentText(p?.studySchema?.quick30||p.summary||''),core=uniq([...E.mustRows(p),...E.featureRows(p)].map(cleanStudentText)).filter(x=>x&&x!==summary).slice(0,6),numbers=uniq(E.numberRows(p,12).map(cleanStudentText)).filter(Boolean),traps=uniq(E.trapRows(p).map(cleanStudentText)).filter(Boolean).slice(0,4),source=E.evidence(conceptId,p).source||'공식교재',parts=[];
+if(summary||core.length)parts.push('[핵심]\n'+[summary?'★ '+summary:'',...core.map(x=>'• '+x)].filter(Boolean).join('\n'));
+if(numbers.length)parts.push('[숫자·단위·기준]\n'+numbers.map(x=>'• '+x).join('\n'));
+if(traps.length)parts.push('[주의·예외]\n'+traps.map(x=>'• '+x).join('\n'));
+parts.push('[공식근거]\n'+source);
+const subj=subjectOf(c),id=conceptCoreKey(conceptId);return{id,title:`★ [${subjectLabel(subj)}] ${c.scopeTitle||''} › ${c.title}`,body:parts.join('\n\n'),sourceType:'pass-star-concept',conceptId,subject:subj,sourceRef:source};
 }
 async function toggleConceptCore(conceptId){const id=conceptCoreKey(conceptId);if(has(id)){await remove(id);return{saved:false,id}}const note=conceptCoreNote(conceptId);if(!note)throw Error('PASS_NOTE_SOURCE_NOT_FOUND');await persist(note);return{saved:true,id,note}}
-
 function questionNote(qid){
-  const q=V.questionById?.[qid],c=q&&V.curriculum?.byId?.[q.conceptId];if(!q||!c)return null;
-  const subj=subjectOf(c),right=`${q.a+1}. ${q.choices?.[q.a]||''}`;
-  return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`[문제]\n${cleanStudentText(q.q)}\n\n[정답]\n★ ${cleanStudentText(right)}\n\n[해설]\n${cleanStudentText(q.ex||'')}\n\n[공식근거]\n${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
+const q=V.questionById?.[qid],c=q&&V.curriculum?.byId?.[q.conceptId];if(!q||!c)return null;
+const subj=subjectOf(c),right=`${q.a+1}. ${q.choices?.[q.a]||''}`;
+return{id:questionKey(qid),title:`★ [문제] ${c.scopeTitle||''} › ${c.title}`,body:`[문제]\n${cleanStudentText(q.q)}\n\n[정답]\n★ ${cleanStudentText(right)}\n\n[해설]\n${cleanStudentText(q.ex||'')}\n\n[공식근거]\n${q.source||''}`,sourceType:'pass-question',conceptId:q.conceptId,subject:subj,questionId:qid};
 }
 async function toggleQuestion(qid){const id=questionKey(qid);if(has(id)){await remove(id);return{saved:false,id}}const note=questionNote(qid);if(!note)throw Error('PASS_QUESTION_NOT_FOUND');await persist(note);return{saved:true,id,note}}
 async function saveManual({id,title,body,sourceType='manual',subject=''}){
-  const text=normalizeBody(body);if(!text)throw Error('NOTE_BODY_REQUIRED');
-  const subj=subject==='ems'?'ems':subject==='fire'?'fire':(V.Store.state.subject==='ems'?'ems':'fire');
-  return persist({id:id||('note-'+now()+'-'+hash(text)),title:normalize(title)||'내 합격노트',body:text,sourceType,subject:subj});
+const text=normalizeBody(body);if(!text)throw Error('NOTE_BODY_REQUIRED');
+const subj=subject==='ems'?'ems':subject==='fire'?'fire':(V.Store.state.subject==='ems'?'ems':'fire');
+return persist({id:id||('note-'+now()+'-'+hash(text)),title:normalize(title)||'내 합격노트',body:text,sourceType,subject:subj});
 }
 function extractLines(text){
-  const rows=uniq(String(text||'').split(/\n+/).map(x=>x.replace(/^\[\d+쪽\]\s*/,'').trim()).filter(x=>x.length>=10&&x.length<=260));
-  const score=x=>{
-    let n=0;if(/\d|%|℃|kg|mL|\bL\b|분|초|시간|배|이하|이상|미만|초과/.test(x))n+=5;
-    if(/핵심|주의|금지|원칙|예외|정의|기준|우선|반드시|위험|정답|증상|처치|소화|설치|저장|취급/.test(x))n+=4;
-    if(x.length>=20&&x.length<=110)n+=2;return n;
-  };
-  return rows.map((x,i)=>({x,i,s:score(x)})).sort((a,b)=>b.s-a.s||a.i-b.i).slice(0,14).sort((a,b)=>a.i-b.i).map(x=>x.x);
+const rows=uniq(String(text||'').split(/\n+/).map(x=>x.replace(/^\[\d+쪽\]\s*/,'').trim()).filter(x=>x.length>=10&&x.length<=260));
+const score=x=>{
+let n=0;if(/\d|%|℃|kg|mL|\bL\b|분|초|시간|배|이하|이상|미만|초과/.test(x))n+=5;
+if(/핵심|주의|금지|원칙|예외|정의|기준|우선|반드시|위험|정답|증상|처치|소화|설치|저장|취급/.test(x))n+=4;
+if(x.length>=20&&x.length<=110)n+=2;return n;
+};
+return rows.map((x,i)=>({x,i,s:score(x)})).sort((a,b)=>b.s-a.s||a.i-b.i).slice(0,14).sort((a,b)=>a.i-b.i).map(x=>x.x);
 }
 async function createFromPrivateDoc(docId,title,subject=''){
-  const chunks=await V.PrivateDocs?.chunksFor?.(docId);if(!chunks?.length)throw Error('PRIVATE_DOC_TEXT_NOT_FOUND');
-  const sorted=chunks.sort((a,b)=>(a.page||0)-(b.page||0)||(a.chunkIndex||0)-(b.chunkIndex||0)),text=sorted.map(x=>x.text||'').join('\n');
-  const lines=extractLines(text),fallback=(lines.length?lines:['추출된 내용이 부족합니다. 원문을 확인해 직접 수정하세요.']).map(x=>'• '+x).join('\n');
-  let body=fallback,aiUsed=false;
-  if(navigator.gpu&&V.LocalAI?.studyDigest){
-    try{
-      const ai=await V.LocalAI.studyDigest({title:title||'PDF/사진 정리',text});
-      if(ai&&ai.length>=40){body=ai;aiUsed=true}
-    }catch{}
-  }
-  const review=sorted.some(x=>x.needsReview)?'\n\n⚠ OCR 신뢰도가 낮은 페이지가 포함되어 있습니다. 해당 원문 페이지를 꼭 확인하세요.':'';
-  const note=await persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+`\n\n※ 자동으로 정리한 초안입니다. 원문과 대조해 수정하세요.`+review,subject:subject==='ems'?'ems':subject==='fire'?'fire':undefined,sourceType:aiUsed?'pass-doc-ai':'pass-doc'});
-  return{...note,aiUsed};
+const chunks=await V.PrivateDocs?.chunksFor?.(docId);if(!chunks?.length)throw Error('PRIVATE_DOC_TEXT_NOT_FOUND');
+const sorted=chunks.sort((a,b)=>(a.page||0)-(b.page||0)||(a.chunkIndex||0)-(b.chunkIndex||0)),text=sorted.map(x=>x.text||'').join('\n');
+const lines=extractLines(text),fallback=(lines.length?lines:['추출된 내용이 부족합니다. 원문을 확인해 직접 수정하세요.']).map(x=>'• '+x).join('\n');
+let body=fallback,aiUsed=false;
+if(navigator.gpu&&V.LocalAI?.studyDigest){
+try{
+const ai=await V.LocalAI.studyDigest({title:title||'PDF/사진 정리',text});
+if(ai&&ai.length>=40){body=ai;aiUsed=true}
+}catch{}
+}
+const review=sorted.some(x=>x.needsReview)?'\n\n⚠ OCR 신뢰도가 낮은 페이지가 포함되어 있습니다. 해당 원문 페이지를 꼭 확인하세요.':'';
+const note=await persist({id:'pass-doc-'+docId,title:`[내 자료] ${title||'PDF/사진 정리'}`,body:body+`\n\n※ 자동으로 정리한 초안입니다. 원문과 대조해 수정하세요.`+review,subject:subject==='ems'?'ems':subject==='fire'?'fire':undefined,sourceType:aiUsed?'pass-doc-ai':'pass-doc'});
+return{...note,aiUsed};
 }
 function passNotes(){return (state().notes||[]).filter(n=>/^pass-/.test(String(n.sourceType||''))||/^pass-/.test(String(n.id||'')))}
 function numericRows(p){return emphasis().numberRows(p,10)}
 function conceptHtml(c,compact=false){
-  const p=V.contentPacks?.get?.(c.id);if(!p)return'';
-  const E=emphasis(),features=E.featureRows(p),must=E.mustRows(p),allNums=E.numberRows(p,10),traps=E.trapRows(p);
-  const main=compact?must.slice(0,3):must,featureRows=compact?features.slice(0,2):features,nums=compact?allNums.slice(0,4):allNums;
-  return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${featureRows.length?'<h3>핵심 특징</h3><ul class="important">'+featureRows.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${main.length?'<h3>시험 필수</h3><ul class="important">'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자 · 단위 · 기준</h3><ul class="numbers">'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>자주 틀리는 포인트</h3><ul class="traps">'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
+const p=V.contentPacks?.get?.(c.id);if(!p)return'';
+const E=emphasis(),features=E.featureRows(p),must=E.mustRows(p),allNums=E.numberRows(p,10),traps=E.trapRows(p);
+const main=compact?must.slice(0,3):must,featureRows=compact?features.slice(0,2):features,nums=compact?allNums.slice(0,4):allNums;
+return `<section class="c"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${featureRows.length?'<h3>핵심 특징</h3><ul class="important">'+featureRows.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${main.length?'<h3>시험 필수</h3><ul class="important">'+main.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자 · 단위 · 기준</h3><ul class="numbers">'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>자주 틀리는 포인트</h3><ul class="traps">'+traps.slice(0,compact?4:traps.length).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}<p class="src">근거: ${esc(p.source||'공식교재')}</p></section>`;
 }
 function noteBodyHtml(note){
-  const rows=String(note?.body||'').replace(/\r/g,'').split('\n'),star=String(note?.sourceType||'').startsWith('pass-star'),question=String(note?.sourceType||'')==='pass-question';let section=star?'핵심':'';
-  return rows.map((raw,i)=>{const line=String(raw||'').trim();if(!line)return'<div class="note-gap"></div>';const m=line.match(/^\[(핵심|숫자·단위·기준|비교·구분|주의·예외|문제|정답|해설|원문 확인 필요|공식근거|내 메모)\]$/);if(m){section=m[1];return'<h3 class="note-sec">'+esc(section)+'</h3>'}const cls=section==='핵심'||star&&i===0?'note-core':section==='숫자·단위·기준'?'note-num':section==='주의·예외'?'note-warn':section==='정답'||question&&/^정답:/.test(line)?'note-answer':section==='공식근거'?'note-source':'';return'<p class="note-line '+cls+'">'+esc(line)+'</p>'}).join('')
+const rows=String(note?.body||'').replace(/\r/g,'').split('\n'),star=String(note?.sourceType||'').startsWith('pass-star'),question=String(note?.sourceType||'')==='pass-question';let section=star?'핵심':'';
+return rows.map((raw,i)=>{const line=String(raw||'').trim();if(!line)return'<div class="note-gap"></div>';const m=line.match(/^\[(핵심|숫자·단위·기준|비교·구분|주의·예외|문제|정답|해설|원문 확인 필요|공식근거|내 메모)\]$/);if(m){section=m[1];return'<h3 class="note-sec">'+esc(section)+'</h3>'}const cls=section==='핵심'||star&&i===0?'note-core':section==='숫자·단위·기준'?'note-num':section==='주의·예외'?'note-warn':section==='정답'||question&&/^정답:/.test(line)?'note-answer':section==='공식근거'?'note-source':'';return'<p class="note-line '+cls+'">'+esc(line)+'</p>'}).join('')
 }
 function notesHtml(rows){return rows.map(n=>'<section class="c"><h2>'+esc(n.title||'합격노트')+'</h2><div class="note">'+noteBodyHtml(n)+'</div></section>').join('')}
 function rapidConceptHtml(c){
-  const p=V.contentPacks?.get?.(c.id);if(!p)return'';
-  const E=emphasis(),must=E.mustRows(p,3),nums=E.numberRows(p,3),traps=E.trapRows(p,2);
-  return `<section class="c rapid"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${must.length?'<h3>시험 필수</h3><ul class="important">'+must.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자 · 기준</h3><ul class="numbers">'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>자주 틀리는 포인트</h3><ul class="traps">'+traps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}</section>`
+const p=V.contentPacks?.get?.(c.id);if(!p)return'';
+const E=emphasis(),must=E.mustRows(p,3),nums=E.numberRows(p,3),traps=E.trapRows(p,2);
+return `<section class="c rapid"><h2>${esc(c.scopeTitle||'')} · ${esc(c.title)}</h2><p class="summary">${esc(p.summary||'')}</p>${must.length?'<h3>시험 필수</h3><ul class="important">'+must.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${nums.length?'<h3>숫자 · 기준</h3><ul class="numbers">'+nums.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}${traps.length?'<h3>자주 틀리는 포인트</h3><ul class="traps">'+traps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':''}</section>`
 }
 function rapidConceptSets(){
-  const concepts=V.curriculum?.concepts||[],wrongIds=[...new Set((state().wrongs||[]).filter(x=>!x.resolved).map(x=>x.conceptId))],wrongSet=new Set(wrongIds);
-  const wrong=wrongIds.map(id=>V.curriculum?.byId?.[id]).filter(Boolean).slice(0,40);
-  const high=concepts.filter(c=>!wrongSet.has(c.id)&&(V.QuestionQuality119?.forConcept?.(c.id)||[]).length>=20).slice(0,50);
-  return{wrong,high}
+const concepts=V.curriculum?.concepts||[],wrongIds=[...new Set((state().wrongs||[]).filter(x=>!x.resolved).map(x=>x.conceptId))],wrongSet=new Set(wrongIds);
+const wrong=wrongIds.map(id=>V.curriculum?.byId?.[id]).filter(Boolean).slice(0,40);
+const high=concepts.filter(c=>!wrongSet.has(c.id)&&(V.QuestionQuality119?.forConcept?.(c.id)||[]).length>=20).slice(0,50);
+return{wrong,high}
 }
 function printDocument(mode){
-  const map={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'};
-  const title=map[mode]||'119 합격노트';
-  let body='';
-  if(mode==='pass'){const all=state().notes||[],fire=all.filter(n=>n.subject==='fire'),ems=all.filter(n=>n.subject==='ems'),other=all.filter(n=>n.subject!=='fire'&&n.subject!=='ems');body=(fire.length?'<h1>소방학</h1>'+notesHtml(fire):'')+(ems.length?'<h1>구급</h1>'+notesHtml(ems):'')+(other.length?'<h1>기타 메모</h1>'+notesHtml(other):'');if(!body)body='<p>저장한 합격노트가 없습니다.</p>'}
-  else if(mode==='rapid'){
-    const starred=passNotes(),sets=rapidConceptSets();
-    body=starred.length?'<h1>내 ★ 핵심</h1>'+notesHtml(starred):'<p>저장한 ★ 핵심이 없습니다.</p>';
-    if(sets.wrong.length)body+='<h1>최근 오답 개념</h1>'+sets.wrong.map(rapidConceptHtml).join('');
-    if(sets.high.length)body+='<h1>초고빈도 핵심</h1>'+sets.high.map(rapidConceptHtml).join('');
-    if(!sets.wrong.length&&!sets.high.length)body+='<h1>핵심 압축</h1>'+((V.curriculum?.concepts||[]).slice(0,30).map(rapidConceptHtml).join(''));
-  } else {
-    const subject=mode==='fire'?'fire':'ems';
-    body=(V.curriculum?.concepts||[]).filter(c=>subjectOf(c)===subject).map(c=>conceptHtml(c,true)).join('');
-  }
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"><title>${esc(title)}</title><style>
-  @page{size:A4;margin:0}*{box-sizing:border-box}html{font-size:16px}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#17202b;font-size:14pt;line-height:1.68;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:24pt;color:#17202b;border-bottom:3px solid #3f6e9e;padding-bottom:8px;margin:18px 0 12px}h2{font-size:17pt;line-height:1.42;margin:18px 0 8px;color:#173c62;break-after:avoid-page}h3{font-size:13.5pt;line-height:1.42;margin:10px 0 5px;color:#385a78;break-after:avoid-page}ul{margin:5px 0 10px 20px;padding:0}.c{break-inside:auto;border-bottom:1px solid #d8e0e8;padding:0 0 10px;margin:0 0 10px}.summary{font-weight:720;background:#f5f8fb;border-left:3px solid #668fb8;padding:9px 11px;border-radius:4px}.important{border-left:3px solid #7fa6c8;padding-left:24px}.numbers{border-left:3px solid #c49a4e;padding-left:24px}.traps{border-left:3px solid #b8785b;padding-left:24px}.important li,.numbers li,.traps li{margin:4px 0;break-inside:avoid-page}.important li{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#668fb8}.numbers li{font-weight:650;text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#c49a4e}.traps li{text-decoration-line:underline;text-decoration-thickness:1.25px;text-underline-offset:3px;text-decoration-color:#b8785b}.src{font-size:10pt;color:#647283;margin-top:8px}.note{white-space:normal;line-height:1.74}.note-sec{margin:12px 0 5px}.note-line{margin:4px 0;line-height:1.72}.note-core,.note-num,.note-answer{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}.note-core{font-weight:700;text-decoration-color:#668fb8}.note-num{font-weight:650;text-decoration-color:#c49a4e}.note-answer{font-weight:750;text-decoration-color:#5e9b75}.note-warn{border-left:3px solid #b8785b;padding-left:8px}.note-source{color:#647283;font-size:.9em}.note-gap{height:7px}.cover{min-height:255mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:31pt;color:#173c62}.cover p{color:#5f6d7b}.c li{margin:3px 0}.rapid h2{font-size:15.5pt}
-  @media screen and (min-width:721px) and (max-width:1180px){body{font-size:19px;line-height:1.76;padding:24px;max-width:920px;margin:0 auto}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}.src{font-size:14px}.cover{min-height:88vh}}
-  @media screen and (max-width:720px){body{font-size:17px;padding:14px;line-height:1.78}h1{font-size:28px}h2{font-size:22px}h3{font-size:18px}.cover{min-height:88vh}.src{font-size:13px}}
-  @media print{body{padding:9mm;font-size:14pt;line-height:1.64}.cover{min-height:255mm}.c{break-inside:auto}.c h2,.c h3{break-after:avoid-page}.c li{break-inside:avoid-page}}
-  </style></head><body><section class="cover"><h1>${esc(title)}</h1><p>119 소방·구급 합격 학습 OS</p><p>생성일 ${new Date().toLocaleDateString('ko-KR')}</p><p>텍스트 기반 문서 · PDF 저장 후 확대해도 선명하게 볼 수 있습니다.</p></section>${body}</body></html>`;
+const map={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'};
+const title=map[mode]||'119 합격노트';
+let body='';
+if(mode==='pass'){const all=state().notes||[],fire=all.filter(n=>n.subject==='fire'),ems=all.filter(n=>n.subject==='ems'),other=all.filter(n=>n.subject!=='fire'&&n.subject!=='ems');body=(fire.length?'<h1>소방학</h1>'+notesHtml(fire):'')+(ems.length?'<h1>구급</h1>'+notesHtml(ems):'')+(other.length?'<h1>기타 메모</h1>'+notesHtml(other):'');if(!body)body='<p>저장한 합격노트가 없습니다.</p>'}
+else if(mode==='rapid'){
+const starred=passNotes(),sets=rapidConceptSets();
+body=starred.length?'<h1>내 ★ 핵심</h1>'+notesHtml(starred):'<p>저장한 ★ 핵심이 없습니다.</p>';
+if(sets.wrong.length)body+='<h1>최근 오답 개념</h1>'+sets.wrong.map(rapidConceptHtml).join('');
+if(sets.high.length)body+='<h1>초고빈도 핵심</h1>'+sets.high.map(rapidConceptHtml).join('');
+if(!sets.wrong.length&&!sets.high.length)body+='<h1>핵심 압축</h1>'+((V.curriculum?.concepts||[]).slice(0,30).map(rapidConceptHtml).join(''));
+} else {
+const subject=mode==='fire'?'fire':'ems';
+body=(V.curriculum?.concepts||[]).filter(c=>subjectOf(c)===subject).map(c=>conceptHtml(c,true)).join('');
+}
+return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"><title>${esc(title)}</title><style>
+@page{size:A4;margin:0}*{box-sizing:border-box}html{font-size:16px}body{font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;color:#17202b;font-size:14pt;line-height:1.68;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:24pt;color:#17202b;border-bottom:3px solid #3f6e9e;padding-bottom:8px;margin:18px 0 12px}h2{font-size:17pt;line-height:1.42;margin:18px 0 8px;color:#173c62;break-after:avoid-page}h3{font-size:13.5pt;line-height:1.42;margin:10px 0 5px;color:#385a78;break-after:avoid-page}ul{margin:5px 0 10px 20px;padding:0}.c{break-inside:auto;border-bottom:1px solid #d8e0e8;padding:0 0 10px;margin:0 0 10px}.summary{font-weight:720;background:#f5f8fb;border-left:3px solid #668fb8;padding:9px 11px;border-radius:4px}.important{border-left:3px solid #7fa6c8;padding-left:24px}.numbers{border-left:3px solid #c49a4e;padding-left:24px}.traps{border-left:3px solid #b8785b;padding-left:24px}.important li,.numbers li,.traps li{margin:4px 0;break-inside:avoid-page}.important li{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#668fb8}.numbers li{font-weight:650;text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:#c49a4e}.traps li{text-decoration-line:underline;text-decoration-thickness:1.25px;text-underline-offset:3px;text-decoration-color:#b8785b}.src{font-size:10pt;color:#647283;margin-top:8px}.note{white-space:normal;line-height:1.74}.note-sec{margin:12px 0 5px}.note-line{margin:4px 0;line-height:1.72}.note-core,.note-num,.note-answer{text-decoration-line:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}.note-core{font-weight:700;text-decoration-color:#668fb8}.note-num{font-weight:650;text-decoration-color:#c49a4e}.note-answer{font-weight:750;text-decoration-color:#5e9b75}.note-warn{border-left:3px solid #b8785b;padding-left:8px}.note-source{color:#647283;font-size:.9em}.note-gap{height:7px}.cover{min-height:255mm;display:grid;align-content:center;text-align:center;page-break-after:always}.cover h1{border:0;font-size:31pt;color:#173c62}.cover p{color:#5f6d7b}.c li{margin:3px 0}.rapid h2{font-size:15.5pt}
+@media screen and (min-width:721px) and (max-width:1180px){body{font-size:19px;line-height:1.76;padding:24px;max-width:920px;margin:0 auto}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}.src{font-size:14px}.cover{min-height:88vh}}
+@media screen and (max-width:720px){body{font-size:17px;padding:14px;line-height:1.78}h1{font-size:28px}h2{font-size:22px}h3{font-size:18px}.cover{min-height:88vh}.src{font-size:13px}}
+@media print{body{padding:9mm;font-size:14pt;line-height:1.64}.cover{min-height:255mm}.c{break-inside:auto}.c h2,.c h3{break-after:avoid-page}.c li{break-inside:avoid-page}}
+</style></head><body><section class="cover"><h1>${esc(title)}</h1><p>119 소방·구급 합격 학습 OS</p><p>생성일 ${new Date().toLocaleDateString('ko-KR')}</p><p>텍스트 기반 문서 · PDF 저장 후 확대해도 선명하게 볼 수 있습니다.</p></section>${body}</body></html>`;
 }
 function exportPdf(mode){
-  const html=printDocument(mode),w=window.open('','_blank');if(!w)throw Error('POPUP_BLOCKED');try{w.opener=null}catch{}
-  w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch{}},350);return true;
+const html=printDocument(mode),w=window.open('','_blank');if(!w)throw Error('POPUP_BLOCKED');try{w.opener=null}catch{}
+w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch{}},350);return true;
 }
-function exportEditable(mode){
-  const names={fire:'소방학-핵심',ems:'구급-핵심',pass:'내-합격노트',rapid:'시험직전-초압축'},html=printDocument(mode);
-  const blob=new Blob(['\ufeff',html],{type:'application/msword;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=(names[mode]||'119-합격노트')+'.doc';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);return true
+let docxPrep=null;
+function prepareEditable(){if(V.DocxExport119?.buildDocxBlobFromHtml)return Promise.resolve(true);return docxPrep||(docxPrep=new Promise((ok,fail)=>{const s=document.createElement('script');s.src='./docx-export.js';s.onload=()=>ok(true);s.onerror=()=>fail(Error('DOCX_EXPORTER_LOAD_FAILED'));document.head.appendChild(s)}))}
+async function exportEditable(mode){
+const names={fire:'소방학-핵심',ems:'구급-핵심',pass:'내-합격노트',rapid:'시험직전-초압축'},titles={fire:'소방학개론 핵심내용 요약',ems:'응급처치학개론 핵심내용 요약',pass:'내 합격노트',rapid:'시험직전 초압축'},html=printDocument(mode);
+if(!V.DocxExport119?.buildDocxBlobFromHtml)await prepareEditable();
+if(!V.DocxExport119?.buildDocxBlobFromHtml)throw Error('DOCX_EXPORTER_UNAVAILABLE');
+const blob=V.DocxExport119.buildDocxBlobFromHtml(html,titles[mode]||'소방합격'),url=URL.createObjectURL(blob),a=document.createElement('a');
+a.href=url;a.download=(names[mode]||'119-합격노트')+'.docx';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1800);return true
 }
-V.PassNote={conceptKey,conceptCoreKey,questionKey,has,find,persist,remove,toggleConcept,toggleConceptCore,conceptCoreNote,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,exportEditable,subjectOf,subjectLabel};
+V.PassNote={conceptKey,conceptCoreKey,questionKey,has,find,persist,remove,toggleConcept,toggleConceptCore,conceptCoreNote,toggleQuestion,saveManual,createFromPrivateDoc,passNotes,extractLines,printDocument,exportPdf,exportEditable,prepareEditable,subjectOf,subjectLabel};
 })();

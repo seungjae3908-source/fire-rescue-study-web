@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const base=read('./styles.css'),css=read('./v54-responsive.css');
+assert(base.includes('.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}'),'PC stats summary uses four equal columns');
+assert(base.includes('@media(max-width:980px){:root{--nav:150px}.metric-grid{grid-template-columns:repeat(2,1fr)}'),'tablet stats summary uses two columns');
+assert(base.includes('.difficulty-picker{display:grid;gap:8px;margin:0;padding:13px'),'round and difficulty cells share the same grid-row sizing');
+assert(css.includes('.exam-secondary-actions>.btn:only-child{grid-column:1/-1}'),'single practice action fills its full grid cell');
+assert(base.includes('.tutor-message.me{background:#10243c}.tutor-message.assistant{background:#0a1828}'),'AI messages no longer use mismatched card widths');
+console.log('V80_EQUAL_CELL_AUDIT_SUCCESS');

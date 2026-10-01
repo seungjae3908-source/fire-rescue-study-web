@@ -22,7 +22,7 @@ assert(app.includes("split('\\n')")&&app.includes('note-preview-gap'),'in-app pa
 assert(pdf.includes('const expandEvidence=')&&pdf.includes('sentenceEnded(cur.text)')&&pdf.includes('looksLikeNewBlock(next.text)'),'PDF evidence highlighter expands wrapped sentence lines without crossing new blocks');
 assert(pdf.includes('return picked.slice(0,12)'),'PDF evidence highlight remains bounded');
 
-assert(css.includes('V72 mobile field-report hardening'),'V72 mobile final-override block exists');
+assert(css.includes('.page-study .concept-nav-single')&&css.includes('body:has(.pdf-evidence-modal) .mobile-nav')&&css.includes('.page-home .dashboard-home-compact'),'V72 mobile final overrides remain present');
 assert(css.includes('.page-study .concept-nav-single')&&css.includes('position:static!important'),'one concept previous/toc/next navigation stays in document flow');
 assert(css.includes('body:has(.pdf-evidence-modal) .mobile-nav'),'PDF evidence modal hides the global bottom navigation');
 assert(css.includes('.pdf-render-meta{')&&css.includes('position:static!important'),'PDF evidence meta label no longer overlays the PDF canvas');
@@ -31,7 +31,7 @@ assert(css.includes('.note-core-line,.note-number-line,.note-answer-line')&&css.
 
 assert(boot7b.includes('const expandEvidence=')&&boot7b.includes('const normalizeBody='),'runtime source bundle 7b contains V72 PDF and pass-note logic');
 assert(boot8.includes('function tutorPromptRelevant(')&&boot8.includes('note-core-line'),'runtime source bundle 8 contains V72 tutor and note-preview logic');
-assert(sw.includes("const CACHE='ai-tutor-v9-shell-20260929-v73-ux-regression-consolidation-v74-mobile-answer-source'"),'V74 service-worker cache epoch invalidates stale V73 boot and responsive assets');
+assert(sw.includes("const CACHE='ai-tutor-v9-shell-20261001-v81-page-clean'"),'V76 service-worker cache epoch invalidates stale V75 study assets');
 assert(sw.includes("keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k))"),'V72 service worker deletes older V9 shell caches on activation');
 
 console.log('V72_MOBILE_READABILITY_AUDIT_SUCCESS');

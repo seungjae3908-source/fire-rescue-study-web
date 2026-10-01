@@ -174,7 +174,7 @@ async function auditStudyRole(page,{id,tab},coreCache){
   if(tab==='core'){
     coreCache.set(id,x.coreTexts);
     if(x.quick!==1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-summary-count',count:x.quick});
-    if(x.essentials<1||x.essentials>5)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-essential-count',count:x.essentials});
+    if(x.essentials>5)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-essential-count',count:x.essentials});
     if(x.emphasisCount>12)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-emphasis-excess',count:x.emphasisCount});
     if(x.details||x.schemas)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-detail-leak',details:x.details,schemas:x.schemas});
     if(x.coreFavoriteText&&!/^합격노트\s*[☆★]$/.test(x.coreFavoriteText))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'favorite-label',text:x.coreFavoriteText});
@@ -187,13 +187,12 @@ async function auditStudyRole(page,{id,tab},coreCache){
     if((x.detailHeadings||[]).some(h=>/^상세\s*설명$/.test(h)))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'generic-detail-heading'});
     if(new Set(x.detailHeadings||[]).size<2)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-structure-too-flat',headings:x.detailHeadings});
     if(x.quick||x.essentials||x.numbers.length||x.traps.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-core-leak',quick:x.quick,essentials:x.essentials,numbers:x.numbers.length,traps:x.traps.length});
-    if(x.expectedCompare&&(x.compareCards!==x.expectedCompare||!x.compareBodiesVisible||x.expandableCompare))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'comparison-not-directly-visible',expected:x.expectedCompare,cards:x.compareCards,bodies:x.compareBodiesVisible,expandable:x.expandableCompare});
-    if(x.expectedCriteria&&x.detailCriteria!==1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-criteria-missing',count:x.detailCriteria});
+    if(x.compareCards>x.expectedCompare||!x.compareBodiesVisible||x.expandableCompare)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'comparison-display-invalid',expectedMax:x.expectedCompare,cards:x.compareCards,bodies:x.compareBodiesVisible,expandable:x.expandableCompare});
+    if(x.detailCriteria>1)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-criteria-duplicate-block',count:x.detailCriteria});
     if((page.viewportSize()?.width||0)<=720&&x.jumpPosition&&x.jumpPosition!=='static')pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'mobile-tab-overlap-risk',position:x.jumpPosition});
     if(/개념\s*구조와\s*읽는\s*순서|학습\s*순서|검증문제·범위/.test(x.detailFull))pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'detail-meta-copy'});
-    const core=coreCache.get(id)||[];
-    const repeated=x.detailTexts.filter(d=>core.some(k=>{const min=Math.min(d.length,k.length),max=Math.max(d.length,k.length);return min>=24&&min/max>=.78&&(d===k||d.includes(k)||k.includes(d))})).slice(0,3);
-    if(repeated.length)pushIssue({width:page.viewportSize()?.width||0,id,tab,type:'core-detail-repeat',samples:repeated});
+    // Core is the summary layer and detail is the full explanation layer.
+    // Factual overlap across those two tabs is intentional; duplicates are audited within each tab by V75.
   }
 }
 

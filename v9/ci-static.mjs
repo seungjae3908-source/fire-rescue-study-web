@@ -26,7 +26,7 @@ ok(typeof V.ContentContract119?.audit==='function','119 fail-closed content comp
 ok(typeof V.QuestionQuality119?.isExamStyle==='function','119 exam-style question quality gate is loaded');
 ok(V.VerifiedV52FireBreadth119?.added===14,'V52 fire breadth adds 14 manually source-reviewed third questions');
 ok(V.VerifiedV52BreadthBatch2?.verifiedAdded===14&&V.VerifiedV52BreadthBatch2?.practiceAdded===0,'V52 batch2 adds exactly 14 source-reviewed questions for the remaining canonical gaps');
-ok(V.StudyEmphasis119?.version==='119-study-emphasis-ssot-v1','study emphasis SSOT is loaded');
+ok(V.StudyEmphasis119?.version==='119-study-emphasis-ssot-v2-deduped-criteria','study emphasis SSOT is loaded');
 ok(V.Quality2StudySchema119?.version==='119-quality2-study-schema-v2','study schema consumes the emphasis SSOT');
 ok(V.VisibleDetailCoverage119?.version==='119-visible-detail-coverage-v50','V50 visible detail normalization and facility coverage layer is loaded');
 ok(V.VisibleDetailCoverage119?.normalizedConcepts===V.curriculum.concepts.length,'V50 normalization reaches every curriculum concept');
@@ -741,7 +741,7 @@ ok(appSource.includes('detailSemanticTitle')&&appSource.includes('detailDefiniti
 ok(appSource.includes('study-key-emphasis')&&appSource.includes('coreHighlightTerms')&&appSource.includes("slice(0,2)"),'core view limits visual emphasis to at most two high-yield terms or numeric criteria');
 ok(appSource.includes("scope:'document'")&&appSource.includes('broadHit.score>=8'),'source evidence recovery expands beyond mapped pages only for a strong whole-document match');
 ok(appSource.includes("updatedAt:Date.now()"),'profile save stamps its conflict clock directly without a second sync UI listener');
-ok(appSource.includes('이전 답을 반복하지 말고 현재 질문에 직접 답한다')&&appSource.includes('wantsTutorEvidence')&&appSource.includes('사용자가 출처나 근거를 묻지 않았다면 답변 첫 문장에 교재명'),'study AI is answer-first, follow-up aware, source-framing restrained, and preserves an explicit evidence-only mode');
+ok(appSource.includes('이전 답을 반복하지 말고 현재 질문에 직접 답한다')&&appSource.includes('wantsTutorEvidence')&&appSource.includes('학생 화면 답변에는 페이지·쪽수를 표시하지 말고'),'study AI is answer-first, follow-up aware, page-framing restrained, and preserves an explicit evidence-only mode');
 ok(appSource.includes('studentQuestionText')&&appSource.includes('data-pass-core')&&appSource.includes('DETAIL_META_SECTION_RE'),'learner study UI strips source framing, uses one concept favorite, and removes internal meta-study sections');
 ok(appSource.includes("navigator.gpu&&V.LocalAI?.ensure"),'first eligible AI question may initialize the local reasoning engine instead of staying on static evidence fallback');
 ok(appSource.includes('scrollTutorToBottom')&&appSource.includes("document.querySelectorAll('.study-ai-chat')")&&appSource.includes('runtime.tutorForceLatest=true')&&appSource.includes('requestAnimationFrame(()=>requestAnimationFrame'),'AI study chat keeps the existing bottom helper, forces explicit sends to latest, and retains intentional history reading');

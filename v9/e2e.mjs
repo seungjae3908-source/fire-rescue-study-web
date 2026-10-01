@@ -295,9 +295,8 @@ try{
   assert(await m.locator('.study-body-unified .hazmat-class-card [data-concept="F05-C02"]').count()===1,'always-visible hazardous-material class links directly to its detailed concept');
 
   await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
-  await m.waitForSelector('.study-body-unified .hazmat-class-grid');
-  assert(await m.locator('.study-body-unified .hazmat-class-card').count()===6,'hazardous-material detail keeps the six-class reference');
-  assert((await m.locator('.study-body-unified .hazmat-class-grid').innerText()).includes('제6류'),'hazardous-material detail visibly reaches class 6');
+  await m.waitForSelector('.study-body-unified .detail-view');
+  assert(await m.locator('.study-body-unified .detail-view .hazmat-class-grid').count()===0,'hazardous-material detail does not duplicate the six-class overview already shown in core');
 
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('F03-C03'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='F03-C03');
@@ -689,8 +688,9 @@ try{
   await m.evaluate(()=>window.AITUTOR_V9.App.chooseConcept('E21-C04'));
   await m.waitForFunction(()=>window.AITUTOR_V9.Store.state.conceptId==='E21-C04');
   await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+  await m.locator('.study-body-unified .detail-section').evaluateAll(nodes=>nodes.forEach(x=>{if(x.tagName==='DETAILS')x.open=true}));
   const palsText=await m.locator('.study-body-unified').innerText();
-  assert(palsText.includes('0.01mg/kg')&&palsText.includes('3~5분')&&palsText.includes('0.1mg/kg')&&palsText.includes('0.2mg/kg')&&palsText.includes('0.5~1J/kg'),'pediatric ALS lesson includes official 2020 arrest brady/tachy algorithm anchors');
+  assert(palsText.includes('0.01mg/kg')&&palsText.includes('3~5분')&&palsText.includes('0.1mg/kg')&&palsText.includes('0.2mg/kg')&&palsText.includes('0.5~1J/kg'),'pediatric ALS lesson keeps official 2020 arrest brady/tachy algorithm anchors accessible in detail');
   const palsBank=await m.evaluate(()=>{const V=window.AITUTOR_V9,qs=V.questions.filter(q=>/^119-pals-adv-/.test(q.id||''));return{n:qs.length,p:qs.every(q=>q.grade==='P'),source:qs.every(q=>/2020년 한국심폐소생술 가이드라인/.test(q.source||''))}});
   assert(palsBank.n===7&&palsBank.p&&palsBank.source,'advanced pediatric ALS practice stays P-grade and is bound to the official 2020 guideline');
   await m.locator('.concept-head .tabbar [data-study-tab="source"]').click();
@@ -762,6 +762,7 @@ try{
     await m.evaluate(id=>window.AITUTOR_V9.App.chooseConcept(id),id);
     await m.waitForFunction(id=>window.AITUTOR_V9.Store.state.conceptId===id,id);
     await m.locator('.concept-head .tabbar [data-study-tab="detail"]').click();
+    await m.locator('.study-body-unified .detail-section').evaluateAll(nodes=>nodes.forEach(x=>{if(x.tagName==='DETAILS')x.open=true}));
     const tankText=await m.locator('.study-body-unified').innerText();
     assert((await m.locator('.concept-head h2').innerText()).trim()===title,'tank-fire phenomenon keeps its own lesson title: '+title);
     for(const term of terms)assert(tankText.includes(term),title+' detail keeps distinguishing clue/comparison: '+term);

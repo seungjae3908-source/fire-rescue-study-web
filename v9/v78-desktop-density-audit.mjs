@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const css=read('./v54-responsive.css'),sw=read('./sw.js');
+assert(css.includes(':root{--ui-pc-max:1680px}'),'desktop shared content token expands to 1680px');
+assert(css.includes('dashboard-home-compact{display:grid!important')&&css.includes('max-width:1680px;margin:0 auto'),'home uses the fluid desktop width');
+assert(css.includes('.page-study{--study-max:1680px;--study-pad:clamp(12px,2vw,28px)}'),'study expands to the fluid desktop width');
+assert(css.includes('.page-study .quiz-view{max-width:1680px!important}'),'study quiz no longer keeps the 1280px desktop cap');
+assert(css.includes('.page-exam .exam-pane{width:100%!important;max-width:none!important;margin-inline:0!important}'),'exam landing pane no longer keeps the 1180px cap');
+assert(css.includes('.page-exam.exam-active .exam-layout{width:100%!important;max-width:none!important;grid-template-columns:minmax(0,1fr) 300px!important}'),'active exam no longer keeps the 1280px layout cap');
+assert(css.includes('.page-exam.exam-active .exam-footer{width:calc(100% - 24px)!important;max-width:none!important;margin-inline:auto!important}'),'active exam footer follows the same wide geometry');
+assert(css.includes('.page-stats .stats-v61>*,.resources-119>.card,.suggestions-page>.card,.notes-page>.card,.settings-page>.card'),'major desktop pages share the fluid content rule');
+assert(sw.includes('ai-tutor-v9-shell-20261001-v81-page-clean'),'V78 cache epoch is active');
+console.log('V78_DESKTOP_DENSITY_AUDIT_SUCCESS');

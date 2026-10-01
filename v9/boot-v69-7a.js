@@ -140,22 +140,23 @@ const V=window.AITUTOR_V9=window.AITUTOR_V9||{};let pdfPromise=null,tesseractPro
 const local=()=>/^(?:localhost|127\.|\[?::1\]?$)/i.test(location.hostname),deps=(x,...r)=>local()?[x,...r]:r;
 async function firstImport(candidates,label){const errors=[];for(const url of candidates){try{return{module:await import(url),url}}catch(err){errors.push(String(err?.message||err))}}throw Error(label+'_LOAD_FAILED: '+errors.slice(-2).join(' | '))}
 async function loadPdfJs(){
-  if(pdfPromise)return pdfPromise;
-  pdfPromise=(async()=>{
-    const {module:p,url}=await firstImport(deps('../node_modules/pdfjs-dist/build/pdf.min.mjs','https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs','https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.min.mjs'),'PDFJS');
-    p.GlobalWorkerOptions.workerSrc=url.includes('/build/pdf.min.mjs')?url.replace('/build/pdf.min.mjs','/build/pdf.worker.min.mjs'):'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p
-  })().catch(err=>{pdfPromise=null;throw err});return pdfPromise
+if(pdfPromise)return pdfPromise;
+pdfPromise=(async()=>{
+const {module:p,url}=await firstImport(deps('../node_modules/pdfjs-dist/build/pdf.min.mjs','https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs','https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.min.mjs'),'PDFJS');
+p.GlobalWorkerOptions.workerSrc=url.includes('/build/pdf.min.mjs')?url.replace('/build/pdf.min.mjs','/build/pdf.worker.min.mjs'):'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';return p
+})().catch(err=>{pdfPromise=null;throw err});return pdfPromise
 }
 async function loadTesseract(){
-  if(tesseractPromise)return tesseractPromise;
-  tesseractPromise=(async()=>{const {module:T}=await firstImport(deps('../node_modules/tesseract.js/dist/tesseract.esm.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js','https://esm.sh/tesseract.js@7.0.0'),'TESSERACT');return T})().catch(err=>{tesseractPromise=null;throw err});return tesseractPromise
+if(tesseractPromise)return tesseractPromise;
+tesseractPromise=(async()=>{const {module:T}=await firstImport(deps('../node_modules/tesseract.js/dist/tesseract.esm.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js','https://esm.sh/tesseract.js@7.0.0'),'TESSERACT');return T})().catch(err=>{tesseractPromise=null;throw err});return tesseractPromise
 }
 async function loadWebLLM(){
-  if(webllmPromise)return webllmPromise;
-  webllmPromise=(async()=>{const {module:m}=await firstImport(['https://esm.run/@mlc-ai/web-llm@0.2.85','https://esm.sh/@mlc-ai/web-llm@0.2.85'],'WEBLLM');return m})().catch(err=>{webllmPromise=null;throw err});return webllmPromise
+if(webllmPromise)return webllmPromise;
+webllmPromise=(async()=>{const {module:m}=await firstImport(['https://esm.run/@mlc-ai/web-llm@0.2.85','https://esm.sh/@mlc-ai/web-llm@0.2.85'],'WEBLLM');return m})().catch(err=>{webllmPromise=null;throw err});return webllmPromise
 }
 V.RuntimeDeps={loadPdfJs,loadTesseract,loadWebLLM,localRuntime:local,dependencyCandidates:deps};
 })();
+
 
 ;
 /* ---- local-ai.js ---- */
@@ -167,81 +168,77 @@ const emit=(text,cb)=>{status=String(text||status);try{cb?.(status)}catch{}};
 const numTokens=s=>[...String(s||'').matchAll(/(?:\d+(?:[.,]\d+)?)(?:\s*(?:%|℃|°C|kg|g|mg|L|mL|ml|mmHg|cm|mm|m|km|초|분|시간|회|배|명|쪽))?/g)].map(x=>x[0].replace(/\s+/g,'').toLowerCase());
 const hangulRatio=s=>{const t=String(s||'').replace(/\s/g,'');if(!t)return 0;return (t.match(/[가-힣0-9A-Za-z]/g)||[]).length/t.length};
 function textQuality(s){
-  const t=String(s||'').replace(/\s+/g,' ').trim(),compact=t.replace(/\s/g,'');if(!compact)return 0;
-  const valid=hangulRatio(t),weird=(compact.match(/[�□▯]/g)||[]).length/compact.length;
-  const tokenBonus=Math.min(1,(t.split(/\s+/).filter(Boolean).length||0)/28);
-  const lenBonus=Math.min(1,compact.length/180);
-  return Math.max(0,Math.min(1,valid*.55+tokenBonus*.2+lenBonus*.25-weird*.8));
+const t=String(s||'').replace(/\s+/g,' ').trim(),compact=t.replace(/\s/g,'');if(!compact)return 0;
+const valid=hangulRatio(t),weird=(compact.match(/[�□▯]/g)||[]).length/compact.length;
+const tokenBonus=Math.min(1,(t.split(/\s+/).filter(Boolean).length||0)/28);
+const lenBonus=Math.min(1,compact.length/180);
+return Math.max(0,Math.min(1,valid*.55+tokenBonus*.2+lenBonus*.25-weird*.8));
 }
 function numbersPreserved(source,out){
-  const a=numTokens(source);if(!a.length)return true;const b=new Set(numTokens(out));return a.every(x=>b.has(x));
+const a=numTokens(source);if(!a.length)return true;const b=new Set(numTokens(out));return a.every(x=>b.has(x));
 }
 function chooseModel(list=[]){
-  const rows=[...list].filter(x=>x?.model_id),instruct=rows.filter(x=>/Instruct/i.test(x.model_id));
-  const smallest=(instruct.length?instruct:rows).slice().sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0]||null;
-  const half=instruct.find(x=>/0\.5B.*Instruct/i.test(x.model_id))||smallest;
-  const memory=Number(navigator.deviceMemory||0),cores=Number(navigator.hardwareConcurrency||0),mobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'');
-  const capable=!mobile&&((memory>=8)||(memory===0&&cores>=8));
-  if(!capable)return half;
-  const quality=instruct.filter(x=>/(?:1\.5B|1\.7B|1B|1\.0B).*Instruct/i.test(x.model_id)).sort((a,b)=>{
-    const ar=/1\.[57]B/i.test(a.model_id)?0:1,br=/1\.[57]B/i.test(b.model_id)?0:1;
-    return ar-br||(a.vram_required_MB||99999)-(b.vram_required_MB||99999)
-  })[0];
-  return quality||half
+const rows=[...list].filter(x=>x?.model_id),instruct=rows.filter(x=>/Instruct/i.test(x.model_id));
+const smallest=(instruct.length?instruct:rows).slice().sort((a,b)=>(a.vram_required_MB||99999)-(b.vram_required_MB||99999))[0]||null;
+const half=instruct.find(x=>/0\.5B.*Instruct/i.test(x.model_id))||smallest;
+const memory=Number(navigator.deviceMemory||0),cores=Number(navigator.hardwareConcurrency||0),mobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'');
+const capable=!mobile&&((memory>=8)||(memory===0&&cores>=8));
+if(!capable)return half;
+const quality=instruct.filter(x=>/(?:1\.5B|1\.7B|1B|1\.0B).*Instruct/i.test(x.model_id)).sort((a,b)=>{
+const ar=/1\.[57]B/i.test(a.model_id)?0:1,br=/1\.[57]B/i.test(b.model_id)?0:1;
+return ar-br||(a.vram_required_MB||99999)-(b.vram_required_MB||99999)
+})[0];
+return quality||half
 }
 async function ensure({onProgress}={}){
-  if(engine)return engine;if(loading)return loading;
-  if(!navigator.gpu)throw Error('WEBGPU_UNAVAILABLE');
-  loading=(async()=>{
-    emit('로컬 AI 엔진 불러오는 중',onProgress);
-    const m=V.RuntimeDeps?.loadWebLLM?await V.RuntimeDeps.loadWebLLM():await import('https://esm.run/@mlc-ai/web-llm@0.2.85'),list=m.prebuiltAppConfig?.model_list||[];
-    const model=chooseModel(list);
-    if(!model)throw Error('LOCAL_AI_MODEL_UNAVAILABLE');
-    modelId=model.model_id;
-    emit('AI 모델 선택 · '+modelId,onProgress);
-    engine=await m.CreateMLCEngine(modelId,{initProgressCallback:p=>emit(p.text||'AI 모델 준비 중',onProgress)});
-    emit('로컬 AI 준비됨 · '+modelId,onProgress);return engine;
-  })().catch(err=>{engine=null;emit('로컬 AI 사용 불가',onProgress);throw err}).finally(()=>loading=null);
-  return loading;
+if(engine)return engine;if(loading)return loading;
+if(!navigator.gpu)throw Error('WEBGPU_UNAVAILABLE');
+loading=(async()=>{
+emit('로컬 AI 엔진 불러오는 중',onProgress);
+const m=V.RuntimeDeps?.loadWebLLM?await V.RuntimeDeps.loadWebLLM():await import('https://esm.run/@mlc-ai/web-llm@0.2.85'),list=m.prebuiltAppConfig?.model_list||[];
+const model=chooseModel(list);
+if(!model)throw Error('LOCAL_AI_MODEL_UNAVAILABLE');
+modelId=model.model_id;
+emit('AI 모델 선택 · '+modelId,onProgress);
+engine=await m.CreateMLCEngine(modelId,{initProgressCallback:p=>emit(p.text||'AI 모델 준비 중',onProgress)});
+emit('로컬 AI 준비됨 · '+modelId,onProgress);return engine;
+})().catch(err=>{engine=null;emit('로컬 AI 사용 불가',onProgress);throw err}).finally(()=>loading=null);
+return loading;
 }
 async function chat(messages,{temperature=.1,max_tokens=900,onProgress}={}){
-  const e=await ensure({onProgress});
-  const r=await e.chat.completions.create({messages,temperature,max_tokens});
-  return String(r?.choices?.[0]?.message?.content||'').trim();
+const e=await ensure({onProgress});
+const r=await e.chat.completions.create({messages,temperature,max_tokens});
+return String(r?.choices?.[0]?.message?.content||'').trim();
 }
 async function correctExtractedText({primary='',alternate='',confidence=null,onProgress}={}){
-  const base=String(primary||alternate||'').trim();if(!base)return{accepted:false,text:'',reason:'empty'};
-  if(!navigator.gpu)return{accepted:false,text:base,reason:'no-webgpu'};
-  const prompt=`아래는 같은 페이지에서 얻은 텍스트 후보입니다.
+const base=String(primary||alternate||'').trim();if(!base)return{accepted:false,text:'',reason:'empty'};
+if(!navigator.gpu)return{accepted:false,text:base,reason:'no-webgpu'};
+const prompt=`아래는 같은 페이지에서 얻은 텍스트 후보입니다.
 규칙:
 1) 입력에 없는 사실을 절대 추가하지 마라.
 2) OCR 오탈자와 띄어쓰기만 교정하고 문장 순서를 자연스럽게 복원하라.
 3) 숫자·단위·기호는 임의로 바꾸거나 새로 만들지 마라.
 4) 표는 가능하면 행 단위 줄바꿈을 유지하라.
 5) 설명 없이 교정된 본문만 출력하라.
-
 [후보 A]
 ${base}
-
 [후보 B]
 ${String(alternate||'없음')}
-
 [OCR 신뢰도]
 ${confidence==null?'미상':confidence}`;
-  let out='';
-  try{out=await chat([{role:'system',content:'너는 한국어 소방·구급 교재 OCR 교정기다. 원문 밖의 내용을 만들지 않는다.'},{role:'user',content:prompt}],{temperature:0,max_tokens:1200,onProgress})}catch(err){return{accepted:false,text:base,reason:String(err?.message||err)}}
-  if(!out||out.length<Math.max(20,base.length*.45)||out.length>base.length*2.1)return{accepted:false,text:base,reason:'length-guard'};
-  if(!numbersPreserved(base,out))return{accepted:false,text:base,reason:'number-guard'};
-  if(textQuality(out)+.03<textQuality(base))return{accepted:false,text:base,reason:'quality-guard'};
-  return{accepted:true,text:out,reason:'ai-corrected'};
+let out='';
+try{out=await chat([{role:'system',content:'너는 한국어 소방·구급 교재 OCR 교정기다. 원문 밖의 내용을 만들지 않는다.'},{role:'user',content:prompt}],{temperature:0,max_tokens:1200,onProgress})}catch(err){return{accepted:false,text:base,reason:String(err?.message||err)}}
+if(!out||out.length<Math.max(20,base.length*.45)||out.length>base.length*2.1)return{accepted:false,text:base,reason:'length-guard'};
+if(!numbersPreserved(base,out))return{accepted:false,text:base,reason:'number-guard'};
+if(textQuality(out)+.03<textQuality(base))return{accepted:false,text:base,reason:'quality-guard'};
+return{accepted:true,text:out,reason:'ai-corrected'};
 }
 async function studyDigest({title='',text='',onProgress}={}){
-  const src=String(text||'').trim();if(!src)throw Error('AI_DIGEST_TEXT_REQUIRED');
-  const excerpt=src.slice(0,18000);
-  return chat([
-    {role:'system',content:'너는 소방공무원 시험용 개인자료 정리기다. 제공된 자료 안의 내용만 사용하고, 자료에 없는 사실·수치·법규를 절대 추가하지 않는다.'},
-    {role:'user',content:`자료명: ${title||'개인자료'}
-
+const src=String(text||'').trim();if(!src)throw Error('AI_DIGEST_TEXT_REQUIRED');
+const excerpt=src.slice(0,18000);
+return chat([
+{role:'system',content:'너는 소방공무원 시험용 개인자료 정리기다. 제공된 자료 안의 내용만 사용하고, 자료에 없는 사실·수치·법규를 절대 추가하지 않는다.'},
+{role:'user',content:`자료명: ${title||'개인자료'}
 아래 추출문만 근거로 합격노트 초안을 작성해라.
 형식:
 [핵심]
@@ -254,25 +251,24 @@ async function studyDigest({title='',text='',onProgress}={}){
 • ...
 [원문 확인 필요]
 • OCR이 불확실하거나 문맥이 끊긴 부분
-
 중요 규칙:
 - 핵심은 짧고 시험용으로 정리한다.
 - 숫자와 단위는 원문에 있는 것만 쓴다.
 - 불확실하면 추정하지 말고 '원문 확인 필요'에 넣는다.
 - 결과만 출력한다.
-
 [추출문]
 ${excerpt}`}
-  ],{temperature:.05,max_tokens:1100,onProgress});
+],{temperature:.05,max_tokens:1100,onProgress});
 }
 V.LocalAI={
-  ensure,chat,correctExtractedText,studyDigest,textQuality,numTokens,numbersPreserved,
-  get ready(){return !!engine},
-  get status(){return status},
-  get engine(){return engine},
-  get modelId(){return modelId}
+ensure,chat,correctExtractedText,studyDigest,textQuality,numTokens,numbersPreserved,
+get ready(){return !!engine},
+get status(){return status},
+get engine(){return engine},
+get modelId(){return modelId}
 };
 })();
+
 
 ;
 /* ---- pdf.js ---- */
@@ -289,137 +285,156 @@ async function listDocuments(kind){const d=await db(),owner=V.Store.ownerId,t=d.
 async function chunksFor(docId){const d=await db(),t=d.transaction('chunks','readonly'),req=t.objectStore('chunks').index('doc').getAll(docId);return await new Promise((res,rej)=>{req.onsuccess=()=>res((req.result||[]).filter(x=>x.ownerId===V.Store.ownerId));req.onerror=()=>rej(req.error)})}
 async function purge(docId){const d=await db(),chunks=await chunksFor(docId),t=d.transaction(['docs','chunks'],'readwrite');t.objectStore('docs').delete(docId);for(const c of chunks)t.objectStore('chunks').delete(c.id);await txDone(t)}
 async function remove(docId){await purge(docId);tombstones()[docId]=Date.now();V.Store.save()}
-async function createOcrWorker(){
-  const T=V.RuntimeDeps?.loadTesseract?await V.RuntimeDeps.loadTesseract():await import('https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js');
-  const create=T.createWorker||T.default?.createWorker||window.Tesseract?.createWorker;
-  if(!create)throw Error('OCR_ENGINE_UNAVAILABLE');
-  const worker=await create('kor+eng');
-  try{await worker.setParameters?.({preserve_interword_spaces:'1'})}catch{}
-  return worker
+async function createOcrWorker(langs='eng+kor'){
+const T=V.RuntimeDeps?.loadTesseract?await V.RuntimeDeps.loadTesseract():await import('https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.esm.min.js');
+const create=T.createWorker||T.default?.createWorker||window.Tesseract?.createWorker;
+if(!create)throw Error('OCR_ENGINE_UNAVAILABLE');
+const worker=await create(langs);
+try{await worker.setParameters?.({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}
+return worker
 }
 function normalizeText(s){return String(s||'').replace(/[\t\u00a0]+/g,' ').replace(/ *\n */g,'\n').replace(/[ ]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim()}
 function nativePdfText(tc){
-  const items=(tc?.items||[]).filter(x=>String(x?.str||'').trim()).map(x=>({text:String(x.str).trim(),x:Number(x.transform?.[4]||0),y:Number(x.transform?.[5]||0),h:Math.abs(Number(x.height||x.transform?.[3]||10))||10}));
-  if(!items.length)return'';
-  const lines=[];
-  for(const item of items.sort((a,b)=>Math.abs(b.y-a.y)>3?b.y-a.y:a.x-b.x)){
-    let line=lines.find(l=>Math.abs(l.y-item.y)<=Math.max(2.5,Math.min(6,item.h*.42)));
-    if(!line){line={y:item.y,h:item.h,items:[]};lines.push(line)}
-    line.items.push(item);line.h=Math.max(line.h,item.h);
-  }
-  lines.sort((a,b)=>b.y-a.y);
-  const out=[];let prev=null;
-  for(const line of lines){
-    const text=line.items.sort((a,b)=>a.x-b.x).map(x=>x.text).join(' ').replace(/\s+/g,' ').trim();
-    if(!text)continue;
-    if(prev&&Math.abs(prev.y-line.y)>Math.max(prev.h,line.h)*1.65)out.push('');
-    out.push(text);prev=line;
-  }
-  return normalizeText(out.join('\n'))
+const items=(tc?.items||[]).filter(x=>String(x?.str||'').trim()).map(x=>({text:String(x.str).trim(),x:Number(x.transform?.[4]||0),y:Number(x.transform?.[5]||0),h:Math.abs(Number(x.height||x.transform?.[3]||10))||10}));
+if(!items.length)return'';
+const lines=[];
+for(const item of items.sort((a,b)=>Math.abs(b.y-a.y)>3?b.y-a.y:a.x-b.x)){
+let line=lines.find(l=>Math.abs(l.y-item.y)<=Math.max(2.5,Math.min(6,item.h*.42)));
+if(!line){line={y:item.y,h:item.h,items:[]};lines.push(line)}
+line.items.push(item);line.h=Math.max(line.h,item.h);
+}
+lines.sort((a,b)=>b.y-a.y);
+const out=[];let prev=null;
+for(const line of lines){
+const text=line.items.sort((a,b)=>a.x-b.x).map(x=>x.text).join(' ').replace(/\s+/g,' ').trim();
+if(!text)continue;
+if(prev&&Math.abs(prev.y-line.y)>Math.max(prev.h,line.h)*1.65)out.push('');
+out.push(text);prev=line;
+}
+return normalizeText(out.join('\n'))
 }
 function benchmarkNorm(s){return String(s||'').replace(/\[\s*\d+\s*쪽\s*\]/g,' ').normalize('NFKC').toLowerCase().replace(/[^0-9a-z가-힣%./-]/g,'')}
 function editDistance(a,b){a=[...String(a||'')];b=[...String(b||'')];let prev=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const cur=[i];for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur}return prev[b.length]}
 function tokenRecall(reference,observed,re){const ref=String(reference||'').match(re)||[];if(!ref.length)return 1;const obs=benchmarkNorm(observed);let hit=0;for(const raw of ref){const t=benchmarkNorm(raw);if(t&&obs.includes(t))hit++}return hit/ref.length}
 function ocrBenchmarkMetrics(reference,observed){
-  const ref=benchmarkNorm(reference),obs=benchmarkNorm(observed),cer=ref.length?editDistance(ref,obs)/ref.length:0;
-  const koreanRecall=tokenRecall(reference,observed,/[가-힣]{2,}/g);
-  const numericRecall=tokenRecall(reference,observed,/\d+(?:\.\d+)?/g);
-  const unitRecall=tokenRecall(reference,observed,/(?:mL|mmHg|kg|mg|cm|mm|psi|%|J\/kg|회\/분|℃)/gi);
-  return{cer:Number(cer.toFixed(3)),koreanRecall:Number(koreanRecall.toFixed(3)),numericRecall:Number(numericRecall.toFixed(3)),unitRecall:Number(unitRecall.toFixed(3)),referenceChars:ref.length,observedChars:obs.length}
+const ref=benchmarkNorm(reference),obs=benchmarkNorm(observed),cer=ref.length?editDistance(ref,obs)/ref.length:0;
+const koreanRecall=tokenRecall(reference,observed,/[가-힣]{2,}/g);
+const numericRecall=tokenRecall(reference,observed,/\d+(?:\.\d+)?/g);
+const unitRecall=tokenRecall(reference,observed,/(?:mL|mmHg|kg|mg|cm|mm|psi|%|J\/kg|회\/분|℃)/gi);
+return{cer:Number(cer.toFixed(3)),koreanRecall:Number(koreanRecall.toFixed(3)),numericRecall:Number(numericRecall.toFixed(3)),unitRecall:Number(unitRecall.toFixed(3)),referenceChars:ref.length,observedChars:obs.length}
 }
 function textQuality(text){
-  if(V.LocalAI?.textQuality)return V.LocalAI.textQuality(text);
-  const t=String(text||'').replace(/\s+/g,' ').trim(),compact=t.replace(/\s/g,'');if(!compact)return 0;
-  const valid=(compact.match(/[가-힣0-9A-Za-z.,:%()\-+\/]/g)||[]).length/compact.length;
-  const weird=(compact.match(/[�□▯]/g)||[]).length/compact.length;
-  const len=Math.min(1,compact.length/180),words=Math.min(1,t.split(/\s+/).filter(Boolean).length/28);
-  return Math.max(0,Math.min(1,valid*.55+len*.25+words*.2-weird*.8))
+if(V.LocalAI?.textQuality)return V.LocalAI.textQuality(text);
+const t=String(text||'').replace(/\s+/g,' ').trim(),compact=t.replace(/\s/g,'');if(!compact)return 0;
+const valid=(compact.match(/[가-힣0-9A-Za-z.,:%()\-+\/]/g)||[]).length/compact.length;
+const weird=(compact.match(/[�□▯]/g)||[]).length/compact.length;
+const len=Math.min(1,compact.length/180),words=Math.min(1,t.split(/\s+/).filter(Boolean).length/28);
+return Math.max(0,Math.min(1,valid*.55+len*.25+words*.2-weird*.8))
 }
 function pdfPageNeedsOcr(tc,text){
-  const visible=(tc?.items||[]).filter(x=>String(x?.str||'').trim()).length,compact=String(text||'').replace(/\s+/g,'').length,q=textQuality(text);
-  return visible<3||compact<45||q<.57
+const visible=(tc?.items||[]).filter(x=>String(x?.str||'').trim()).length,compact=String(text||'').replace(/\s+/g,'').length,q=textQuality(text);
+return visible<3||compact<55||q<.66
 }
-function prepareOcrCanvas(canvas,threshold=false){
-  if(!threshold)return canvas;
-  const out=document.createElement('canvas');out.width=canvas.width;out.height=canvas.height;
-  const ctx=out.getContext('2d',{alpha:false});ctx.drawImage(canvas,0,0);
-  const img=ctx.getImageData(0,0,out.width,out.height),d=img.data;
-  for(let i=0;i<d.length;i+=4){const y=.299*d[i]+.587*d[i+1]+.114*d[i+2],v=y<188?0:255;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}
-  ctx.putImageData(img,0,0);return out
+function prepareOcrCanvas(canvas,mode='contrast'){
+const out=document.createElement('canvas');out.width=canvas.width;out.height=canvas.height;
+const ctx=out.getContext('2d',{alpha:false});ctx.drawImage(canvas,0,0);
+const img=ctx.getImageData(0,0,out.width,out.height),d=img.data;let sum=0;
+if(mode==='threshold')for(let i=0;i<d.length;i+=4)sum+=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+const threshold=mode==='threshold'?Math.max(155,Math.min(205,(sum/(d.length/4))*.9)):0;
+for(let i=0;i<d.length;i+=4){const y=.299*d[i]+.587*d[i+1]+.114*d[i+2],v=mode==='threshold'?(y<threshold?0:255):Math.max(0,Math.min(255,(y-128)*1.38+128));d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}
+ctx.putImageData(img,0,0);return out
 }
 async function recognizeCanvas(worker,canvas){
-  const r=await worker.recognize(canvas),text=normalizeText(r.data?.text||''),confidence=Number(r.data?.confidence);
-  return{text,confidence:Number.isFinite(confidence)?confidence:null,quality:textQuality(text)}
+const r=await worker.recognize(canvas),text=normalizeText(r.data?.text||''),confidence=Number(r.data?.confidence);
+return{text,confidence:Number.isFinite(confidence)?confidence:null,quality:textQuality(text)}
 }
-async function bestOcrCanvas(worker,canvas){
-  const first=await recognizeCanvas(worker,canvas);let best=first;
-  if(first.confidence==null||first.confidence<82||first.quality<.68){
-    const enhanced=prepareOcrCanvas(canvas,true);
-    try{const second=await recognizeCanvas(worker,enhanced);if(second.quality>best.quality+.025||second.confidence!=null&&best.confidence!=null&&second.confidence>best.confidence+7)best=second}finally{enhanced.width=1;enhanced.height=1}
-  }
-  return best
+function ocrCandidateScore(row,reference=''){
+let score=row.quality*72+(row.confidence==null?45:row.confidence)*.28;
+if(reference&&reference.replace(/\s/g,'').length>=20){const m=ocrBenchmarkMetrics(reference,row.text);score+=m.numericRecall*10+m.unitRecall*8+m.koreanRecall*5-Math.min(.5,m.cer)*8}
+return score
 }
-async function ocrPdfPage(pg,worker){
-  const base=pg.getViewport({scale:1}),maxWidth=2400,scale=Math.min(3,Math.max(1.8,maxWidth/base.width)),viewport=pg.getViewport({scale}),canvas=document.createElement('canvas');
-  canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
-  const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  await pg.render({canvasContext:ctx,viewport}).promise;
-  try{return await bestOcrCanvas(worker,canvas)}finally{canvas.width=1;canvas.height=1}
+const OCR_UNIT_RE=/(mmHg|L\/min|mL|cm|mm|kg|mg|psi|%)/gi,OCR_SUSPECT_RE=/(\d+(?:[.,]\d+)?)\s+(?:0{1,3}|[oOeEcC]{1,3})(?=\s|$|[.,;:])/g;
+async function recoverOcrUnitPass(worker,canvas,row){
+if(!String(row.text||'').match(OCR_SUSPECT_RE))return row;let w=null;
+try{
+w=await createOcrWorker('eng');try{await w.setParameters?.({tessedit_char_whitelist:'0123456789mMHgLlckKpPsiInNJj/%.-',tessedit_pageseg_mode:'6',user_defined_dpi:'300'})}catch{}
+const p=await recognizeCanvas(w,canvas),known=[...row.text.matchAll(OCR_UNIT_RE)].map(x=>x[0].toLowerCase()),probe=[...p.text.matchAll(OCR_UNIT_RE)].map(x=>x[0]);
+for(const k of known){const i=probe.findIndex(x=>x.toLowerCase()===k);if(i>=0)probe.splice(i,1)}if(!probe.length)return row;let i=0;
+const text=row.text.replace(OCR_SUSPECT_RE,m=>probe[i]?m.replace(/\s+\S+$/,' '+probe[i++]):m);return text===row.text?row:{...row,text,quality:textQuality(text)}
+}catch{return row}finally{if(w)await w.terminate().catch(()=>{})}
+}
+async function bestOcrCanvas(worker,canvas,reference=''){
+const first=await recognizeCanvas(worker,canvas),rows=[first];
+if(first.confidence==null||first.confidence<88||first.quality<.78){
+for(const mode of ['contrast','threshold']){
+const x=prepareOcrCanvas(canvas,mode);try{rows.push(await recognizeCanvas(worker,x))}finally{x.width=1;x.height=1}
+const best=rows.slice().sort((a,b)=>ocrCandidateScore(b,reference)-ocrCandidateScore(a,reference))[0];
+if(best.quality>=.82&&(best.confidence==null||best.confidence>=88))break
+}
+}
+return recoverOcrUnitPass(worker,canvas,rows.sort((a,b)=>ocrCandidateScore(b,reference)-ocrCandidateScore(a,reference))[0])
+}
+async function ocrPdfPage(pg,worker,native=''){
+const base=pg.getViewport({scale:1}),maxWidth=3000,scale=Math.min(3.4,Math.max(2,maxWidth/base.width)),viewport=pg.getViewport({scale}),canvas=document.createElement('canvas');
+canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+await pg.render({canvasContext:ctx,viewport}).promise;
+try{return await bestOcrCanvas(worker,canvas,native)}finally{canvas.width=1;canvas.height=1}
 }
 async function maybeAiCorrect(primary,alternate,confidence,onProgress){
-  const q=textQuality(primary),needs=q<.72||(confidence!=null&&confidence<82);
-  if(!needs||!navigator.gpu||!V.LocalAI?.correctExtractedText)return{accepted:false,text:primary,reason:'not-needed'};
-  onProgress?.('AI OCR 보정 중');
-  try{return await V.LocalAI.correctExtractedText({primary,alternate,confidence,onProgress:t=>onProgress?.(t)})}catch(err){return{accepted:false,text:primary,reason:String(err?.message||err)}}
+const q=textQuality(primary),needs=q<.72||(confidence!=null&&confidence<82);
+if(!needs||!navigator.gpu||!V.LocalAI?.correctExtractedText)return{accepted:false,text:primary,reason:'not-needed'};
+onProgress?.('AI OCR 보정 중');
+try{return await V.LocalAI.correctExtractedText({primary,alternate,confidence,onProgress:t=>onProgress?.(t)})}catch(err){return{accepted:false,text:primary,reason:String(err?.message||err)}}
 }
 async function pdfText(file,onProgress,{aiAssist='auto'}={}){
-  const p=V.RuntimeDeps?.loadPdfJs?await V.RuntimeDeps.loadPdfJs():await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');
-  if(!V.RuntimeDeps?.loadPdfJs)p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';
-  const task=p.getDocument({data:await file.arrayBuffer()}),pdf=await task.promise,out=[];let worker=null,aiBudget=6;
-  try{
-    for(let i=1;i<=pdf.numPages;i++){
-      const pg=await pdf.getPage(i),tc=await pg.getTextContent(),native=nativePdfText(tc),nativeQ=textQuality(native);
-      let text=native,ocr=false,ocrConfidence=null,mode='text',alternate='';
-      if(pdfPageNeedsOcr(tc,native)){
-        worker=worker||await createOcrWorker();const o=await ocrPdfPage(pg,worker);ocr=true;ocrConfidence=o.confidence;alternate=native;
-        if(o.quality>=nativeQ-.02||native.length<45){text=o.text;mode='ocr'}else{mode='native-preferred'}
-        if(aiAssist!==false&&aiBudget>0&&(o.quality<.72||o.confidence!=null&&o.confidence<82)){
-          const a=await maybeAiCorrect(text,alternate,o.confidence,t=>onProgress?.(i,pdf.numPages,'ai',t));if(a.accepted){text=a.text;mode='ocr+ai'}aiBudget--
-        }
-      }
-      const quality=textQuality(text),needsReview=quality<.62||(ocrConfidence!=null&&ocrConfidence<70);
-      out.push({page:i,text:normalizeText(text),ocr,ocrConfidence,quality,needsReview,mode});
-      onProgress?.(i,pdf.numPages,mode)
-    }
-  }finally{if(worker)await worker.terminate().catch(()=>{});await task.destroy?.().catch?.(()=>{})}
-  return out
+const p=V.RuntimeDeps?.loadPdfJs?await V.RuntimeDeps.loadPdfJs():await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs');
+if(!V.RuntimeDeps?.loadPdfJs)p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs';
+const task=p.getDocument({data:await file.arrayBuffer()}),pdf=await task.promise,out=[];let worker=null,aiBudget=10;
+try{
+for(let i=1;i<=pdf.numPages;i++){
+const pg=await pdf.getPage(i),tc=await pg.getTextContent(),native=nativePdfText(tc),nativeQ=textQuality(native);
+let text=native,ocr=false,ocrConfidence=null,mode='text',alternate='';
+if(pdfPageNeedsOcr(tc,native)){
+worker=worker||await createOcrWorker();const o=await ocrPdfPage(pg,worker,native);ocr=true;ocrConfidence=o.confidence;alternate=native;
+if(o.quality>=nativeQ-.02||native.length<45){text=o.text;mode='ocr'}else{mode='native-preferred'}
+if(aiAssist!==false&&aiBudget>0&&(o.quality<.72||o.confidence!=null&&o.confidence<82)){
+const a=await maybeAiCorrect(text,alternate,o.confidence,t=>onProgress?.(i,pdf.numPages,'ai',t));if(a.accepted){text=a.text;mode='ocr+ai'}aiBudget--
+}
+}
+const quality=textQuality(text),needsReview=quality<.62||(ocrConfidence!=null&&ocrConfidence<70);
+out.push({page:i,text:normalizeText(text),ocr,ocrConfidence,quality,needsReview,mode});
+onProgress?.(i,pdf.numPages,mode)
+}
+}finally{if(worker)await worker.terminate().catch(()=>{});await task.destroy?.().catch?.(()=>{})}
+return out
 }
 async function imageText(file,onProgress,{aiAssist='auto'}={}){
-  onProgress?.(0,1,'ocr');const worker=await createOcrWorker();
-  try{
-    const bitmap=await createImageBitmap(file),canvas=document.createElement('canvas'),maxWidth=2600,scale=Math.min(3,Math.max(1,Math.min(maxWidth/bitmap.width,3)));
-    canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
-    const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close?.();
-    let o=await bestOcrCanvas(worker,canvas),text=o.text,mode='ocr';
-    if(aiAssist!==false&&(o.quality<.72||o.confidence!=null&&o.confidence<82)){
-      const a=await maybeAiCorrect(text,'',o.confidence,t=>onProgress?.(0,1,'ai',t));if(a.accepted){text=a.text;mode='ocr+ai'}
-    }
-    canvas.width=1;canvas.height=1;onProgress?.(1,1,mode);
-    return[{page:1,text:normalizeText(text),ocr:true,ocrConfidence:o.confidence,quality:textQuality(text),needsReview:textQuality(text)<.62||(o.confidence!=null&&o.confidence<70),mode}]
-  }finally{await worker.terminate().catch(()=>{})}
+onProgress?.(0,1,'ocr');const worker=await createOcrWorker();
+try{
+const bitmap=await createImageBitmap(file),canvas=document.createElement('canvas'),maxWidth=2600,scale=Math.min(3,Math.max(1,Math.min(maxWidth/bitmap.width,3)));
+canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close?.();
+let o=await bestOcrCanvas(worker,canvas),text=o.text,mode='ocr';
+if(aiAssist!==false&&(o.quality<.72||o.confidence!=null&&o.confidence<82)){
+const a=await maybeAiCorrect(text,'',o.confidence,t=>onProgress?.(0,1,'ai',t));if(a.accepted){text=a.text;mode='ocr+ai'}
+}
+canvas.width=1;canvas.height=1;onProgress?.(1,1,mode);
+return[{page:1,text:normalizeText(text),ocr:true,ocrConfidence:o.confidence,quality:textQuality(text),needsReview:textQuality(text)<.62||(o.confidence!=null&&o.confidence<70),mode}]
+}finally{await worker.terminate().catch(()=>{})}
 }
 async function ingest(file,{kind='personal',title='',keepOriginal=false,onProgress,aiAssist='auto'}={}){
-  if(!file)throw Error('FILE_REQUIRED');let pages=[];
-  if(file.type==='application/pdf'||/\.pdf$/i.test(file.name))pages=await pdfText(file,onProgress,{aiAssist});
-  else if(file.type?.startsWith('image/'))pages=await imageText(file,onProgress,{aiAssist});
-  else{const text=normalizeText(await file.text());pages=[{page:1,text,ocr:false,ocrConfidence:null,quality:textQuality(text),needsReview:textQuality(text)<.62,mode:'text'}]}
-  const extractedChars=pages.reduce((n,p)=>n+String(p.text||'').trim().length,0);if(!extractedChars)throw Error('NO_TEXT_EXTRACTED');
-  const now=Date.now(),docId=uuid(),ownerId=V.Store.ownerId,reviewPages=pages.filter(p=>p.needsReview).map(p=>p.page),avgQuality=pages.length?pages.reduce((n,p)=>n+Number(p.quality||0),0)/pages.length:0;
-  const doc={id:docId,ownerId,kind,title:title||file.name,fileName:file.name,mime:file.type||'',pageCount:pages.length,extractedChars,ocrPages:pages.filter(p=>p.ocr).map(p=>p.page),reviewPages,extractionVersion:'v10-hybrid-ocr-ai',extractionQuality:Number(avgQuality.toFixed(3)),private:kind==='personal',createdAt:now,updatedAt:now,original:keepOriginal?file:null};
-  const chunks=[];
-  for(const p of pages){const text=(p.text||'').trim();if(!text)continue;const size=1300;for(let i=0;i<text.length;i+=size){const part=text.slice(i,i+size);chunks.push({id:`${docId}:${p.page}:${i}`,docId,ownerId,kind,page:p.page,chunkIndex:Math.floor(i/size),text:part,tokenSet:tokens(part),quality:p.quality,ocr:p.ocr,ocrConfidence:p.ocrConfidence,needsReview:p.needsReview,mode:p.mode})}}
-  await putDocument(doc,chunks);delete tombstones()[docId];V.Store.save();
-  return{doc,chunks:chunks.length,extractedChars,ocrPages:doc.ocrPages,reviewPages,extractionQuality:doc.extractionQuality}
+if(!file)throw Error('FILE_REQUIRED');let pages=[];
+if(file.type==='application/pdf'||/\.pdf$/i.test(file.name))pages=await pdfText(file,onProgress,{aiAssist});
+else if(file.type?.startsWith('image/'))pages=await imageText(file,onProgress,{aiAssist});
+else{const text=normalizeText(await file.text());pages=[{page:1,text,ocr:false,ocrConfidence:null,quality:textQuality(text),needsReview:textQuality(text)<.62,mode:'text'}]}
+const extractedChars=pages.reduce((n,p)=>n+String(p.text||'').trim().length,0);if(!extractedChars)throw Error('NO_TEXT_EXTRACTED');
+const now=Date.now(),docId=uuid(),ownerId=V.Store.ownerId,reviewPages=pages.filter(p=>p.needsReview).map(p=>p.page),avgQuality=pages.length?pages.reduce((n,p)=>n+Number(p.quality||0),0)/pages.length:0;
+const doc={id:docId,ownerId,kind,title:title||file.name,fileName:file.name,mime:file.type||'',pageCount:pages.length,extractedChars,ocrPages:pages.filter(p=>p.ocr).map(p=>p.page),reviewPages,extractionVersion:'v11-hybrid-korean-ocr',extractionQuality:Number(avgQuality.toFixed(3)),private:kind==='personal',createdAt:now,updatedAt:now,original:keepOriginal?file:null};
+const chunks=[];
+for(const p of pages){const text=(p.text||'').trim();if(!text)continue;const size=1300;for(let i=0;i<text.length;i+=size){const part=text.slice(i,i+size);chunks.push({id:`${docId}:${p.page}:${i}`,docId,ownerId,kind,page:p.page,chunkIndex:Math.floor(i/size),text:part,tokenSet:tokens(part),quality:p.quality,ocr:p.ocr,ocrConfidence:p.ocrConfidence,needsReview:p.needsReview,mode:p.mode})}}
+await putDocument(doc,chunks);delete tombstones()[docId];V.Store.save();
+return{doc,chunks:chunks.length,extractedChars,ocrPages:doc.ocrPages,reviewPages,extractionQuality:doc.extractionQuality}
 }
 async function search(query,{kind,limit=8}={}){const qs=tokens(query);if(!qs.length)return[];const docs=await listDocuments(kind),docIds=new Set(docs.map(x=>x.id)),d=await db(),t=d.transaction('chunks','readonly'),req=t.objectStore('chunks').index('owner').getAll(V.Store.ownerId);const rows=await new Promise((res,rej)=>{req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error)});return rows.filter(x=>docIds.has(x.docId)&&(!kind||x.kind===kind)).map(x=>{let score=0;for(const q of qs)if((x.tokenSet||[]).some(t=>t.includes(q)||q.includes(t)))score+=q.length;return{...x,score,doc:docs.find(d=>d.id===x.docId)}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,limit)}
 async function privateGrounding(query,limit=5){const hits=await search(query,{kind:'personal',limit});return hits.map(h=>`[내 개인자료 · ${h.doc.title} · ${h.page}쪽]\n${h.text.slice(0,900)}`).join('\n\n')}
