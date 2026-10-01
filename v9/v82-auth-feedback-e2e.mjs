@@ -11,7 +11,7 @@ try{
  await p.route('**/auth/v1/signup**',r=>{signupRedirect=new URL(r.request().url()).searchParams.get('redirect_to')||'';return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:'v82-user',email:'qa-v82@example.com',confirmation_sent_at:new Date().toISOString()})})});
  await p.route('**/auth/v1/resend**',r=>{resendRedirect=new URL(r.request().url()).searchParams.get('redirect_to')||'';return r.fulfill({status:200,contentType:'application/json',body:'{}'})});
  await p.goto(base,{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>!!window.AITUTOR_V9?.App&&!!window.AITUTOR_V82_AUTH_FEEDBACK);
- await p.locator('[data-account]').first().click();await p.waitForSelector('#authEmail');
+ await p.locator('[data-account]:visible').first().click();await p.waitForSelector('#authEmail');
  await p.locator('#authEmail').fill('qa-v82@example.com');await p.locator('#authPw').fill('password123');
  await p.locator('[data-signup]').click();await p.waitForSelector('#v82AuthFeedback [data-v82-dialog-close]');
  let dialog=await p.locator('#v82AuthFeedback [role="dialog"]').innerText();
