@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 const base=process.env.STUDY_119_V81_URL||'http://127.0.0.1:4173/v9/index.html';
-const leak=/(?:\d{1,4}\s*[~–-]\s*)?\d{1,4}\s*(?:쪽|페이지)\b|\b\d{1,4}\s*[pP]\b/;
+const leak=/(?:\d{1,4}[ \t]*[~–-][ \t]*)?\d{1,4}[ \t]*(?:쪽|페이지)\b|\b\d{1,4}[ \t]*[pP]\b/;
 const failures=[];const check=(v,m,x={})=>{if(v)console.log('PASS',m);else{failures.push({message:m,...x});console.error('V81_FAIL',JSON.stringify({message:m,...x}))}};
 const settle=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 const browser=await chromium.launch({headless:true});
