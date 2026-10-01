@@ -694,7 +694,7 @@ function tutorTableCells(x){return String(x||'').trim().replace(/^\||\|$/g,'').s
 function tutorTableDivider(x){const a=tutorTableCells(x);return a.length>1&&a.every(x=>/^:?-{3,}:?$/.test(x))}
 function tutorPipeRow(x){const a=tutorTableCells(x);return String(x||'').includes('|')&&a.length>=2&&a.length<=6&&a.some(Boolean)}
 function tutorRichAnswer(v){const l=cleanTutorText(v).split('\n'),o=[];let p=[];const flush=()=>{if(p.some(x=>x.trim()))o.push(`<p class="tutor-answer-text">${p.map(esc).join('<br>')}</p>`);p=[]};for(let i=0;i<l.length;i++){if(tutorPipeRow(l[i])&&tutorPipeRow(l[i+1]||'')){flush();const h=tutorTableCells(l[i]),divider=tutorTableDivider(l[i+1]||''),r=[];for(i+=divider?2:1;i<l.length&&tutorPipeRow(l[i]);i++){if(tutorTableDivider(l[i]))continue;const x=tutorTableCells(l[i]);while(x.length<h.length)x.push('');if(x.length>h.length)x.splice(h.length-1,x.length-h.length+1,x.slice(h.length-1).join(' · '));r.push(x.slice(0,h.length))}i--;if(h.length>1&&r.length){o.push(`<div class="tutor-ai-table-wrap" role="region" aria-label="AI 답변 표" tabindex="0"><table class="tutor-ai-table"><thead><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${r.map(x=>`<tr>${x.map((v,k)=>`<td>${k?esc(v):'<b>'+esc(v)+'</b>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);continue}}p.push(l[i])}flush();return o.join('')}
-function tutorMessageHtml(m){const t=cleanTutorText(m?.text||''),r=Array.isArray(m?.compareRows)?m.compareRows.filter(x=>Array.isArray(x)&&x.length>1):[],c=r.length?`<div class="tutor-compare-wrap"><table class="tutor-compare-table"><thead><tr><th>구분</th><th>핵심 차이</th></tr></thead><tbody>${r.map(x=>`<tr><td><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td></tr>`).join('')}</tbody></table></div>`:'';return`<div class="row tutor-message ${m.role==='user'?'me':'assistant'}"><b>${m.role==='user'?'나':'AI'}</b>${c}${m.role==='assistant'?tutorRichAnswer(t):`<p class="tutor-answer-text">${esc(t)}</p>`}</div>`}
+function tutorMessageHtml(m){const t=m.role==='assistant'?studentStudyText(cleanTutorText(m?.text||'')):cleanTutorText(m?.text||''),r=Array.isArray(m?.compareRows)?m.compareRows.filter(x=>Array.isArray(x)&&x.length>1):[],c=r.length?`<div class="tutor-compare-wrap"><table class="tutor-compare-table"><thead><tr><th>구분</th><th>핵심 차이</th></tr></thead><tbody>${r.map(x=>`<tr><td><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td></tr>`).join('')}</tbody></table></div>`:'';return`<div class="row tutor-message ${m.role==='user'?'me':'assistant'}"><b>${m.role==='user'?'나':'AI'}</b>${c}${m.role==='assistant'?tutorRichAnswer(t):`<p class="tutor-answer-text">${esc(t)}</p>`}</div>`}
 function wantsTutorDetail(prompt){return /상세|자세히|깊게|전부|원리부터|교재처럼/.test(String(prompt||''))}
 function wantsTutorCompare(prompt){return /비교|차이|뭐가\s*달|vs|구분/.test(String(prompt||'').toLowerCase())}
 function wantsTutorEvidence(prompt){return /근거만|출처만|원문만|공식\s*근거만|근거\s*위주/.test(String(prompt||''))}
@@ -717,7 +717,7 @@ return candidates.map(x=>({...x,score:score(x)})).filter(x=>x.score>0).sort((a,b
 }
 function fallbackTutor(prompt,c,pack){
 const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),concise=wantsTutorConcise(prompt),definitionOnly=wantsTutorDefinitionOnly(prompt),rows=[],general=/30초|요약|핵심\s*(?:정리|설명)?$/.test(String(prompt||''));
-if(evidenceOnly)return cleanTutorText(['근거','• '+(pack.source||'공식 학습팩')].join('\n'));
+if(evidenceOnly)return'근거\n• 현재 개념의 공식 근거';
 if(definitionOnly)return cleanTutorText(studentStudyText(pack?.studySchema?.definition||pack.summary||((pack.must||[])[0])||c.title));
 if(concise){const hits=tutorRelevantRows(prompt,c,pack),answer=studentStudyText(hits[0]?.text||pack.summary||((pack.must||[])[0])||c.title);return cleanTutorText(answer)}
 if(general){rows.push('답변',studentStudyText(pack.summary||((pack.must||[])[0])||c.title));const must=(pack.must||[]).map(studentStudyText).filter(Boolean).slice(0,detail?5:3),why=uniqueTextRows([...(pack.detail||[]),...(pack.deepSections||[]).map(x=>x?.body).filter(Boolean)].map(studentStudyText)).slice(0,detail?4:2);if(must.length)rows.push('','핵심 포인트',...must.map(x=>'• '+x));if(why.length)rows.push('','왜 그런가',...why.map(x=>'• '+x))}
@@ -728,7 +728,7 @@ else rows.push('답변',studentStudyText(pack.summary||((pack.must||[])[0])||c.t
 if(compare&&(pack.compare||[]).length)rows.push('','비교 판단',...(pack.compare||[]).slice(0,6).map(x=>'• '+x.join(' → ')));
 if(/시험|함정|주의/.test(String(prompt||''))&&(pack.traps||[]).length)rows.push('','시험 적용',...(pack.traps||[]).slice(0,3).map(x=>'• '+x))
 }
-rows.push('','근거','• '+(pack.source||'현재 개념의 공식 학습팩'));return cleanTutorText(rows.join('\n'))
+rows.push('','근거','• 현재 개념의 공식 근거');return cleanTutorText(rows.join('\n'))
 }
 function tutorConceptFor(prompt){
 const q=studyNorm(prompt),current=currentConcept();if(!q)return current;
@@ -806,7 +806,7 @@ const context=`[현재 개념]\n${current.id} ${current.title}\n[유형]\n${V.Co
 const style=evidenceOnly?'근거만 요청했다. 판단을 확장하지 말고 출처와 근거만 답한다.':definitionOnly?'정의만 1~2문장으로 답하고 이유·시험포인트·근거를 덧붙이지 않는다.':concise?'최대 3문장으로 질문에 직접 답하고 불필요한 확장을 하지 않는다.':compare?'현재 질문이 요구하는 대상의 차이를 먼저 답하고 필요한 경우 표를 사용한다.':detailed?'현재 질문에 대한 결론부터 제시한 뒤 원리·이유와 시험 적용을 자세히 설명한다.':'현재 질문에 직접 답하고 필요한 이유와 시험 포인트만 짧게 설명한다.';
 const history=prior.filter(m=>m.role==='user'||m.role==='assistant').map(m=>({role:m.role,content:cleanTutorText(m.text||'')})).filter(m=>m.content&&!/답변 준비 중|생각 중/.test(m.content));
 const enhanced=await V.LocalAI.chat([
-{role:'system',content:'119 소방·구급 시험 학습도우미다. 제공된 공식 학습팩과 직접 연결된 공식근거 안에서만 답한다. 사용자의 후속질문에서 “그럼”, “그건”, “둘”, “기관들” 같은 지시대상은 직전 대화 문맥으로 해석한다. 현재 질문이 달라졌으면 이전 답을 반복하지 말고 현재 질문에 직접 답한다. 근거에 없는 기관명·수치·법규·의학 기준은 추측하거나 보완하지 말고 “현재 연결된 공식 근거에서 확인되지 않습니다”라고 명시한다. 답변의 사실과 숫자는 반드시 제공된 근거에서 확인 가능해야 한다. 사용자가 출처나 근거를 묻지 않았다면 답변 첫 문장에 교재명·연도·페이지를 반복하지 말고 정의와 결론부터 제시한다. 표는 열 수가 맞는 Markdown 표로 작성한다. '+style},
+{role:'system',content:'119 소방·구급 시험 학습도우미다. 제공된 공식 학습팩과 직접 연결된 공식근거 안에서만 답한다. 사용자의 후속질문에서 “그럼”, “그건”, “둘”, “기관들” 같은 지시대상은 직전 대화 문맥으로 해석한다. 현재 질문이 달라졌으면 이전 답을 반복하지 말고 현재 질문에 직접 답한다. 근거에 없는 기관명·수치·법규·의학 기준은 추측하거나 보완하지 말고 “현재 연결된 공식 근거에서 확인되지 않습니다”라고 명시한다. 답변의 사실과 숫자는 반드시 제공된 근거에서 확인 가능해야 한다. 학생 화면 답변에는 페이지·쪽수를 표시하지 말고 정의와 결론부터 제시한다. 표는 열 수가 맞는 Markdown 표로 작성한다. '+style},
 {role:'system',content:context},
 ...history,
 {role:'user',content:prompt}
