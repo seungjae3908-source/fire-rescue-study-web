@@ -30,7 +30,7 @@ const checks=[
   ['precise evidence geometry',sourcePdf.includes('markLeft')&&sourcePdf.includes('markRight')&&sourcePdf.includes('markExact')],
   ['precise evidence runtime marker',sourcePdf.includes('pdfjs-v16-range-remote-cache-epoch-precise-evidence-ranges')],
   ['V73 responsive contract',css.includes('.concept-nav-single')&&css.includes('.exam-hub-tabs')&&css.includes('.note-upload-card')&&css.includes('.dashboard-home-compact')],
-  ['service worker epoch bumped',sw.includes('v78-fluid-density')],
+  ['service worker epoch bumped',sw.includes('v81-page-clean')],
   ['boot8 synced',boot8.includes('dashboard-home-compact')&&boot8.includes('id="passNotePdf"')&&boot8.includes('data-exam-bundle')],
   ['boot7b synced',boot7b.includes('pdfjs-v16-range-remote-cache-epoch-precise-evidence-ranges')&&boot7b.includes("createFromPrivateDoc(docId,title,subject='')")]
 ];
