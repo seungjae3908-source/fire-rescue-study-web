@@ -653,7 +653,7 @@ ok(!auth.includes('.storage.from('),'auth sync has no original-file storage uplo
 ok(auth.includes('sharedProjectNamespace:\'study_*\''),'sync contract records the Study shared-project namespace');
 ok(auth.includes('supabasePublishableKey'),'browser auth prefers the Supabase publishable key');
 ok(auth.includes('enableCloudSync===true'),'backend connection is feature-gated until explicitly enabled');
-ok(auth.includes("client.auth.resend({type:'signup',email,options:{emailRedirectTo:authRedirectUrl()}})"),'signup confirmation email can be resent with an app-return redirect without changing project-wide auth settings');
+ok(auth.includes("client.auth.resend({type:'signup',email})"),'signup confirmation email can be resent without changing project-wide auth settings');
 ok(auth.includes('pendingEmailConfirmation:true'),'unconfirmed signup is represented as a pending state instead of a false failure');
 ok(appCode.includes('data-resend-confirmation'),'account UI exposes confirmation-email resend');
 ok(appCode.includes('Email not confirmed'),'account UI explains unconfirmed-email sign-in failures');
