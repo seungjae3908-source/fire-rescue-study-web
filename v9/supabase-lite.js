@@ -42,7 +42,7 @@ function createClient(url,key){
     }
     return r
   }
-  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,'')),e=h.get('error_description')||h.get('error');if(e){sessionStorage.setItem('study119-auth-result','error');history.replaceState(null,'',location.pathname+location.search);return false}if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});sessionStorage.setItem('study119-auth-result','confirmed');history.replaceState(null,'',location.pathname+location.search);return true}}catch{}return false}
+  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,''));if(h.get('error')||h.get('error_description')){V.authRedirectResult='error';history.replaceState(null,'',location.pathname+location.search);return false}if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});V.authRedirectResult='confirmed';history.replaceState(null,'',location.pathname+location.search);return true}}catch{}return false}
   consumeRedirect();
   class Query{
     constructor(table){this.table=table;this.op='select';this.cols='*';this.filters=[];this.body=null;this.options={}}
