@@ -131,6 +131,8 @@ jobs:
           node --check v9/v81-page-metadata-e2e.mjs
           node --check v9/v82-auth-ux-audit.mjs
           node --check v9/v82-auth-ux-e2e.mjs
+          node --check v9/v83-content-ux-integrity-audit.mjs
+          node --check v9/v83-content-ux-e2e.mjs
       - name: Static integrity / privacy / source truth
         run: node v9/ci-static.mjs
       - name: Current-curriculum + 119 textbook/content contract depth gate
@@ -179,6 +181,8 @@ jobs:
         run: node v9/v81-page-metadata-audit.mjs
       - name: V82 auth UX gate
         run: node v9/v82-auth-ux-audit.mjs
+      - name: V83 full-content learner-visible integrity gate
+        run: node v9/v83-content-ux-integrity-audit.mjs
       - name: Official notice monitor contract gate
         run: node v9/official-monitor-contract.mjs
       - name: Official monitor root API handler gate
@@ -540,6 +544,10 @@ jobs:
         env:
           STUDY_119_V82_URL: http://127.0.0.1:4173/v9/index.html
         run: node v9/v82-auth-ux-e2e.mjs
+      - name: V83 183-concept mobile tablet desktop content UX QA
+        env:
+          STUDY_119_V83_URL: http://127.0.0.1:4173/v9/index.html
+        run: node v9/v83-content-ux-e2e.mjs
       - name: Personal PDF extraction and owner isolation QA
         run: node v9/pdf-e2e.mjs
       - name: Korean image OCR quality + owner isolation QA
