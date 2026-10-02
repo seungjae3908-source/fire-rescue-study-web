@@ -42,7 +42,7 @@ function createClient(url,key){
     }
     return r
   }
-  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,''));if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});history.replaceState(null,'',location.pathname+location.search);return true}}catch{}return false}
+  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,'')),t=h.get('type');if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});history.replaceState(null,'',location.pathname+location.search);if(t==='signup')setTimeout(()=>alert('이메일 인증이 완료되었습니다.\n회원가입이 완료되었습니다.'),0);return true}}catch{}return false}
   consumeRedirect();
   class Query{
     constructor(table){this.table=table;this.op='select';this.cols='*';this.filters=[];this.body=null;this.options={}}
