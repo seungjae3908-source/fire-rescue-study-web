@@ -146,10 +146,11 @@ rows.push({...row,text});if(rows.length>=5)break
 return rows
 }
 function coreNumberRows(pack){
-const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),rows=[];
+const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),rows=[],overlap=(a,b)=>{const A=numericTokenSet(a);return[...numericTokenSet(b)].some(x=>A.has(x))};
 for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){
-const text=studentStudyText(raw);
-if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text)||seeds.some(x=>sameStudyFact(x,text)&&!addsNumericCriterion(x,text))||rows.some(x=>sameStudyFact(x,text)&&sameNumericSignature(x,text)))continue;
+const text=studentStudyText(raw);if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text))continue;
+if(seeds.some(x=>sameStudyFact(x,text)&&overlap(x,text)))continue;
+const i=rows.findIndex(x=>sameStudyFact(x,text)&&overlap(x,text));if(i>=0){if(addsNumericCriterion(rows[i],text))rows[i]=text;continue}
 rows.push(text);if(rows.length>=10)break
 }
 return rows
