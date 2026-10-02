@@ -619,7 +619,7 @@ const readSession=()=>{try{return safeJson(localStorage.getItem(SESSION_KEY))}ca
 const writeSession=s=>{try{s?localStorage.setItem(SESSION_KEY,JSON.stringify(s)):localStorage.removeItem(SESSION_KEY)}catch{}};
 const decodeJwt=token=>{try{const p=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(p))))}catch{return{}}};
 function createClient(url,key){
-  url=String(url||'').replace(/\/$/,'');let session=readSession(),refreshing=null;const listeners=new Set();
+  url=String(url||'').replace(/\/$/,'');let session=readSession(),refreshing=null,redirect=null;const listeners=new Set();
   const headers=(token=session?.access_token)=>({'apikey':key,'Authorization':`Bearer ${token||key}`,'Content-Type':'application/json'});
   const errObj=async r=>{let d=null;try{d=await r.json()}catch{}const e=new Error(d?.msg||d?.message||d?.error_description||d?.error||`HTTP ${r.status}`);e.status=r.status;e.code=d?.code||null;return e};
   const emit=(event)=>{const s=session?{...session,user:session.user||null}:null;for(const fn of listeners){try{fn(event,s)}catch(e){console.warn('auth listener failed',e)}}};
@@ -654,7 +654,7 @@ function createClient(url,key){
     }
     return r
   }
-  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,''));if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});history.replaceState(null,'',location.pathname+location.search);return true}}catch{}return false}
+  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,'')),e=h.get('error_description')||h.get('error');if(e)redirect={type:h.get('type')||'',error:e};else if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});redirect={type:h.get('type')||'auth',ok:true}}if(redirect)history.replaceState(null,'',location.pathname+location.search)}catch{}}
   consumeRedirect();
   class Query{
     constructor(table){this.table=table;this.op='select';this.cols='*';this.filters=[];this.body=null;this.options={}}
@@ -696,14 +696,14 @@ function createClient(url,key){
     },
     onAuthStateChange(fn){listeners.add(fn);return{data:{subscription:{unsubscribe(){listeners.delete(fn)}}}}},
     async signUp({email,password,options={}}){
-      const r=await fetch(url+'/auth/v1/signup',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:options.data||{}})});
+      const q=options.emailRedirectTo?'?redirect_to='+encodeURIComponent(options.emailRedirectTo):'',r=await fetch(url+'/auth/v1/signup'+q,{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:options.data||{}})});
       if(!r.ok)return{data:null,error:await errObj(r)};const d=await r.json(),s=store(d);if(s)emit('SIGNED_IN');return{data:{user:d.user||d,session:s},error:null}
     },
-    async resend({type,email}){const r=await fetch(url+'/auth/v1/resend',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({type,email})});if(!r.ok)return{data:null,error:await errObj(r)};let d=null;try{d=await r.json()}catch{}return{data:d,error:null}},
+    async resend({type,email,options={}}){const q=options.emailRedirectTo?'?redirect_to='+encodeURIComponent(options.emailRedirectTo):'',r=await fetch(url+'/auth/v1/resend'+q,{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({type,email})});if(!r.ok)return{data:null,error:await errObj(r)};let d=null;try{d=await r.json()}catch{}return{data:d,error:null}},
     async signInWithPassword({email,password}){const r=await fetch(url+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!r.ok)return{data:null,error:await errObj(r)};const d=await r.json(),s=store(d);emit('SIGNED_IN');return{data:{user:d.user||s?.user||null,session:s},error:null}},
     async signOut(){const t=session?.access_token;clearSession();if(t){try{await fetch(url+'/auth/v1/logout',{method:'POST',headers:{'apikey':key,'Authorization':'Bearer '+t,'Content-Type':'application/json'}})}catch{}}return{error:null}}
   };
-  return{auth,from(table){return new Query(table)},__runtime:'same-origin-lite'};
+  return{auth,from(table){return new Query(table)},get redirect(){return redirect},__runtime:'same-origin-lite'};
 }
 V.SupabaseLite={createClient,sessionKey:SESSION_KEY,runtime:'same-origin-lite'};
 })();
@@ -715,7 +715,7 @@ V.SupabaseLite={createClient,sessionKey:SESSION_KEY,runtime:'same-origin-lite'};
 const V=window.AITUTOR_V9=window.AITUTOR_V9||{};const cfg=window.AITUTOR_V9_CONFIG||{};let client=null,user=null,readyPromise=null,activeAdopt=null,activeId='',lastAdoptedId='',lastAdoptedAt=0,manualSignOutUntil=0,lastEmitReason='';
 const T=Object.freeze({profiles:'study_profiles',user_progress:'study_user_progress',user_answers:'study_user_answers',wrong_answers:'study_wrong_answers',review_schedule:'study_review_schedule',personal_notes:'study_personal_notes',private_documents:'study_private_documents',document_chunks:'study_document_chunks',study_sessions:'study_sessions',exam_history:'study_exam_history',tutor_preferences:'study_tutor_preferences'});
 const clientKey=()=>cfg.supabasePublishableKey||cfg.supabaseAnonKey||'';
-const configured=()=>cfg.enableCloudSync===true&&!!(cfg.supabaseUrl&&clientKey());const iso=x=>x?new Date(x).toISOString():null;const ms=x=>x?Date.parse(x)||0:0;
+const configured=()=>cfg.enableCloudSync===true&&!!(cfg.supabaseUrl&&clientKey()),emailRedirect=()=>location.origin+location.pathname;const iso=x=>x?new Date(x).toISOString():null;const ms=x=>x?Date.parse(x)||0:0;
 const subject=s=>s==='fire'||/소방/.test(String(s||''))?'fire':'ems';
 function emit(reason='state-change'){lastEmitReason=reason;window.dispatchEvent(new CustomEvent('aitutor-auth-change',{detail:{user,reason}}))}
 async function checked(p){const r=await p;if(r.error)throw r.error;return r.data}
@@ -767,8 +767,8 @@ async function syncAllInternal(uid){if(!client||!uid)throw Error('NOT_SIGNED_IN'
 async function adoptUser(next){if(!next)return;if(V.Auth?.hasStudyMembership&&!(await V.Auth.hasStudyMembership(next.id)))throw Error('STUDY_ACCOUNT_REQUIRED');user=next;V.Store.switchOwner(next.id);await pullRemoteIntoLocal(next.id);V.Store.migrateGuestToUser(next.id);await syncAllInternal(next.id);lastAdoptedId=next.id;lastAdoptedAt=Date.now();emit('signed-in')}
 function queueAdopt(next){if(!next)return Promise.resolve();if(activeId===next.id&&activeAdopt)return activeAdopt;if(lastAdoptedId===next.id&&Date.now()-lastAdoptedAt<3000)return Promise.resolve();activeId=next.id;activeAdopt=adoptUser(next).finally(()=>{activeId='';activeAdopt=null});return activeAdopt}
 async function init(){if(readyPromise)return readyPromise;readyPromise=(async()=>{if(!configured())return{client:null,user:null};try{const m=V.SupabaseLite;if(!m?.createClient)throw Error('SUPABASE_LITE_NOT_LOADED');client=m.createClient(cfg.supabaseUrl,clientKey());const {data,error}=await client.auth.getUser();if(error)throw error;user=data?.user||null;client.auth.onAuthStateChange((event,session)=>{const next=session?.user||null;if(event==='SIGNED_OUT'||!next){if(event==='SIGNED_OUT'){user=null;V.Store.switchOwner(V.Store.guestId);emit(Date.now()<manualSignOutUntil?'manual-signout':'session-expired')}return}user=next;if(event==='SIGNED_IN'||event==='USER_UPDATED')queueAdopt(next).catch(e=>console.warn('member adopt failed',e))});if(user)setTimeout(()=>queueAdopt(user).catch(e=>console.warn('initial member sync failed',e)),0);return{client,user}}catch(e){console.warn('auth init failed',e);client=null;user=null;return{client:null,user:null}}})();return readyPromise}
-async function signUp(email,password){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');const {data,error}=await client.auth.signUp({email,password,options:{data:{app_scope:'study-v9'}}});if(error)throw error;if(data?.session&&data?.user){await queueAdopt(data.user);return{...data,pendingEmailConfirmation:false}}if(data?.user)return{...data,pendingEmailConfirmation:true};return{...data,pendingEmailConfirmation:true}}
-async function resendConfirmation(email){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');if(!email)throw Error('EMAIL_REQUIRED');const {data,error}=await client.auth.resend({type:'signup',email});if(error)throw error;return data}
+async function signUp(email,password){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');const {data,error}=await client.auth.signUp({email,password,options:{data:{app_scope:'study-v9'},emailRedirectTo:emailRedirect()}});if(error)throw error;if(data?.session&&data?.user){await queueAdopt(data.user);return{...data,pendingEmailConfirmation:false}}if(data?.user)return{...data,pendingEmailConfirmation:true};return{...data,pendingEmailConfirmation:true}}
+async function resendConfirmation(email){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');if(!email)throw Error('EMAIL_REQUIRED');const {data,error}=await client.auth.resend({type:'signup',email,options:{emailRedirectTo:emailRedirect()}});if(error)throw error;return data}
 async function signIn(email,password){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;if(data?.user)await queueAdopt(data.user);return data}
 async function signOut(){await init();manualSignOutUntil=Date.now()+3000;if(client){const {error}=await client.auth.signOut();if(error)throw error}if(lastEmitReason!=='manual-signout'){user=null;V.Store.switchOwner(V.Store.guestId);emit('manual-signout')}}
 async function syncAll(){await init();if(!client||!user)throw Error('NOT_SIGNED_IN');await pullRemoteIntoLocal(user.id);return syncAllInternal(user.id)}
