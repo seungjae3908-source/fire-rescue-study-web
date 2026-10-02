@@ -536,8 +536,6 @@ function peerRows(c,p){
   return rows.filter(r=>r[0]&&r[1])
 }
 function deriveComparison(c,p){
-  // Quality 2.0 does not invent comparison partners merely because concepts are adjacent.
-  // Curated semantic families are applied by quality2-comparison-families-119.js.
   if((p.compare||[]).length)return;
   p.compare=[];
 }
@@ -629,8 +627,6 @@ function secondPass(id,{detail=[],sections=[],must=[],traps=[],compare=[]}={}){
   deriveFeatures(C.concepts.find(c=>c.id===id)||{id,scopeId:''},p);
 }
 
-// Quality 5 second pass: weakest rendered study concepts get textbook-style depth,
-// but without inventing new page claims or protocol numbers.
 secondPass('F03-C01',{
   detail:['화재의 분류는 연료의 성상만 외우는 문제가 아니라 어떤 물질이 타는지, 어떤 위험이 지배적인지, 어떤 소화원리가 적합한지를 함께 연결하는 출발점이다.','같은 불꽃처럼 보여도 일반가연물·유류·전기·금속 등 화재는 연소특성과 재발화·감전·비산 위험이 달라 초기 판단과 소화수단 선택이 달라진다.'],
   sections:[
@@ -790,7 +786,6 @@ secondPass('F02-C07',{
   traps:['상황실을 현장대응조직 자체와 동일시하거나 보고를 사후 기록업무로만 보지 않는다.']
 });
 
-// EMS second pass: high-yield concepts that were structurally complete but still terse.
 secondPass('E07-C01',{
   detail:['기도확보 장비는 환자의 의식수준, 구역반사, 기도폐쇄 원인, 얼굴·머리 손상 여부를 평가한 뒤 적절한 보조기구를 선택하는 것이 핵심이다. 장비 이름보다 “어떤 환자에게 왜 쓰는가”를 먼저 본다.'],
   sections:[
