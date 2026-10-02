@@ -44,7 +44,7 @@ const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 const coreSlice=app.slice(app.indexOf('function coreNumberRows'),app.indexOf('function coreTrapRows'));
 assert(!coreSlice.includes("detailCriteriaOwner==='detail'"),'core numeric criteria are never hidden just because detail owns criteria');
 assert(!coreSlice.includes('compareBodies'),'core numeric criteria are not suppressed by a comparison duplicate');
-assert(coreSlice.includes("for(const x of m)add(x,true)")&&coreSlice.includes("must?(rel(y,x)&&sub(x,y))")&&coreSlice.includes("Math.max(12,m.length)"),'numeric memory rows preserve must facts unless the same semantic numeric fact is already visible');
+assert(coreSlice.includes("for(const x of m)add(x)")&&coreSlice.includes("s.some(y=>rel(y,x)&&sub(x,y))")&&coreSlice.includes("r.findIndex(y=>rel(y,x)&&(sub(y,x)||sub(x,y)))")&&coreSlice.includes("Math.max(12,m.length)"),'numeric memory rows dedupe only when the same numeric tokens are already visible');
 assert(app.includes("i<9?numberHighlight(x):esc(x)"),'numeric rows beyond the first nine stay visible without excess emphasis');
 assert(app.includes("if(!row[0]||!row[1])continue"),'runtime drops comparison cards whose learner-visible body became empty');
 assert(app.includes("/^(?:제?\\d+\\s*(?:종|류|급))$/"),'numbered type/class comparison rows survive cross-section dedupe');
