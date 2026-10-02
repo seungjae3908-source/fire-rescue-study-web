@@ -256,7 +256,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   };
   const anchorPhrases=[...new Set((options.anchorTerms||[]).map(norm).filter(x=>x.length>=4))].sort((a,b)=>b.length-a.length);
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
-  const exactMarkTerms=anchorPhrases.length?anchorPhrases:[...new Set(tokens.filter(x=>x.length>=5))].sort((a,b)=>b.length-a.length);
+  const exactMarkTerms=[...new Set([...(anchorPhrases.length?anchorPhrases:tokens.filter(x=>x.length>=5)),...anchorTokens.filter(x=>x.length>=5)])].sort((a,b)=>b.length-a.length);
   const markLine=line=>{
     const parts=[];let offset=0;
     for(const item of line.items||[]){
