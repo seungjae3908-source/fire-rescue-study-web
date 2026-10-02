@@ -154,8 +154,8 @@ function coreNumberRows(pack){
 const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),rows=[];
 for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){
 const text=studentStudyText(raw);
-if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text)||seeds.some(x=>sameStudyFact(x,text))||rows.some(x=>sameStudyFact(x,text)))continue;
-rows.push(text);if(rows.length>=12)break
+if(!text||!V.StudyEmphasis119?.isNumericCriterion?.(text)||seeds.some(x=>sameStudyFact(x,text)&&!addsNumericCriterion(x,text))||rows.some(x=>sameStudyFact(x,text)&&sameNumericSignature(x,text)))continue;
+rows.push(text);if(rows.length>=10)break
 }
 return rows
 }
