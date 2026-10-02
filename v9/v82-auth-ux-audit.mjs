@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const app=read('./app.js'),supa=read('./supabase-lite.js'),sw=read('./sw.js'),styles=read('./styles.css'),responsive=read('./v54-responsive.css'),notes=read('./release-v82.txt');
+assert(supa.includes("V.authRedirectResult='confirmed'")&&supa.includes("V.authRedirectResult='error'"),'confirmation callback records success and failure state');
+assert(app.includes("const UPDATE_VERSION='V82'")&&app.includes("fetch('./release-v82.txt')"),'V82 update notice is lazy-loaded');
+assert(app.includes("study119-update-")&&app.includes("localStorage.getItem(k)")&&app.includes("localStorage.setItem(k,'1')"),'update notice is shown once per user/version');
+assert(app.includes("runtime.authNotice='회원가입 신청 완료 · 인증메일을 확인해주세요.'")&&app.includes("alert(runtime.authNotice)"),'signup success shows an explicit confirmation alert');
+assert(app.includes("이메일 인증 완료\\n회원가입이 완료되었습니다.")&&app.includes("이메일 인증 실패\\n인증메일을 다시 요청해주세요."),'email confirmation callback has explicit success/failure alerts');
+assert(sw.includes('ai-tutor-v9-shell-20261002-v82-auth-ux'),'V82 shell cache epoch is active');
+assert(notes.includes('회원가입·이메일 인증 안내 개선')&&notes.includes('PC·패드·폰 화면 최적화'),'release notes contain user-facing V82 changes');
+assert(!styles.includes('V82')&&!responsive.includes('V82'),'V82 auth UX does not alter frozen study UI CSS');
+console.log('V82_AUTH_UX_AUDIT_SUCCESS');
