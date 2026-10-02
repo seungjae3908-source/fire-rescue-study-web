@@ -1,5 +1,4 @@
 'use strict';
-/* V69 bootstrap bundle 7b. Source order is canonical. */
 
 ;
 /* ---- source-pdf.js ---- */
@@ -761,7 +760,6 @@ async function syncAllInternal(uid){if(!client||!uid)throw Error('NOT_SIGNED_IN'
   const exams=(s.examHistory||[]).map(x=>({id:x.id,user_id:uid,mode:x.mode==='real'?'real':'practice',score:x.score||0,fire_correct:x.fireCorrect||0,ems_correct:x.emsCorrect||0,total_answered:x.totalAnswered||0,created_at:iso(x.at||Date.now())}));tasks.push(upsertRows(T.exam_history,exams));
   const tp=s.tutorPreferences||{};tasks.push(upsertRows(T.tutor_preferences,[{user_id:uid,explanation_level:tp.explanationLevel||'adaptive',emphasize_dangerous_wrong:tp.emphasizeDangerousWrong!==false,use_private_notes:tp.usePrivateNotes!==false,updated_at:iso(tp.updatedAt||Date.now())}]));
   await Promise.all(tasks);
-  // Only extracted text/metadata sync here. Original PDF/image bytes are never uploaded automatically.
   if(V.PrivateDocs?.exportForSync){const bundle=await V.PrivateDocs.exportForSync();const docs=(bundle.docs||[]).map(d=>({id:d.id,user_id:uid,title:d.title||d.fileName||'개인자료',file_name:d.fileName||null,mime_type:d.mime||null,page_count:d.pageCount||0,source_hash:d.sourceHash||null,storage_path:null,sync_original:false,created_at:iso(d.createdAt||Date.now()),updated_at:iso(d.updatedAt||d.createdAt||Date.now()),deleted_at:null}));const tomb=(bundle.deleted||[]).map(d=>({id:d.id,user_id:uid,title:'(삭제됨)',file_name:null,mime_type:null,page_count:0,source_hash:null,storage_path:null,sync_original:false,created_at:iso(d.deletedAt),updated_at:iso(d.deletedAt),deleted_at:iso(d.deletedAt)}));await upsertRows(T.private_documents,[...docs,...tomb]);const liveIds=new Set(docs.map(d=>d.id));const chunks=(bundle.chunks||[]).filter(c=>liveIds.has(c.docId)).map(c=>({id:c.id,user_id:uid,document_id:c.docId,page_no:c.page||null,chunk_index:c.chunkIndex||0,body:c.text||'',created_at:now}));await upsertRows(T.document_chunks,chunks);await deleteChunksFor(uid,tomb.map(x=>x.id))}
   s.settings.cloudSync=true;V.Store.save();return true;
 }
@@ -874,7 +872,6 @@ V.Auth.hasStudyMembership=hasStudyMembership;
 V.Auth.rejectNonStudySession=rejectNonStudySession;
 V.Auth.syncPolicy={...V.Auth.syncPolicy,dbMembershipRequired:true,membershipTable:'study_memberships',membershipPreflightBeforeAdopt:true,clientRuntime:'same-origin-lite'};
 
-// Protect against an already-persisted session from another app sharing this Supabase project.
 rejectNonStudySession().catch(e=>console.warn('study membership guard failed',e));
 })();
 
@@ -1068,9 +1065,6 @@ const QUESTION_FILES=[
 ];
 let questionsPromise=null,questionsReady=false;
 
-// V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
-// tokens as real learner-facing underlines as well as marker emphasis so the core
-// contract remains visible on every responsive layout without re-highlighting full lines.
 function restoreCoreUnderlineSemantics(root=document){
   root?.querySelectorAll?.('.study-key-emphasis').forEach(el=>{
     el.classList.add('study-key-underline');
