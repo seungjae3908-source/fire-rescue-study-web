@@ -10,5 +10,5 @@ assert(css.includes('.page-exam .exam-pane{width:100%!important;max-width:none!i
 assert(css.includes('.page-exam.exam-active .exam-layout{width:100%!important;max-width:none!important;grid-template-columns:minmax(0,1fr) 300px!important}'),'active exam no longer keeps the 1280px layout cap');
 assert(css.includes('.page-exam.exam-active .exam-footer{width:calc(100% - 24px)!important;max-width:none!important;margin-inline:auto!important}'),'active exam footer follows the same wide geometry');
 assert(css.includes('.page-stats .stats-v61>*,.resources-119>.card,.suggestions-page>.card,.notes-page>.card,.settings-page>.card'),'major desktop pages share the fluid content rule');
-assert(sw.includes('ai-tutor-v9-shell-20261002-v82-auth-ux'),'V78 cache epoch is active');
+assert(sw.includes('ai-tutor-v9-shell-20261002-v83-content-ux'),'V78 cache epoch is active');
 console.log('V78_DESKTOP_DENSITY_AUDIT_SUCCESS');
