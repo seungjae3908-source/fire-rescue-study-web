@@ -751,8 +751,6 @@ const MEANINGFUL_CHANGE_KINDS=new Set([
   'official_clinical_standard'
 ]);
 
-// Target-year evidence must be added only after an official source is confirmed.
-// Empty means "do not claim a 2027 official change yet".
 const targetYearEvidence=[];
 const recordedChanges=[];
 

@@ -17,7 +17,7 @@ const checks=[
   ['single study body',(app.match(/study-body-unified/g)||[]).length===1&&(app.match(/class="actionbar concept-nav/g)||[]).length===1],
   ['one concept nav',(app.match(/class="actionbar concept-nav/g)||[]).length===1],
   ['distinct question pager',app.includes('← 이전 문제')&&app.includes('다음 문제 →')],
-  ['core textbook page scrub',app.includes('studentStudyText')&&app.includes('(?:p|페이지|쪽)\\s*(?:에서는?|에서도|에선|에서|에는|의|기준으로|기준에서|에\\s*따르면)?')],
+  ['core textbook page scrub',app.includes('studentStudyText')&&app.includes('(?:p(?![a-z])|페이지|쪽)\\s*(?:에서는?|에서도|에선|에서|에는|의|기준으로|기준에서|에\\s*따르면)?')],
   ['exam hub split',app.includes('data-exam-hub="mock"')&&app.includes('data-exam-hub="training"')],
   ['exam current PDF export',app.includes('data-exam-print=')&&app.includes('printExamRound')],
   ['exam editable round export',app.includes('data-exam-doc=')&&app.includes('downloadExamRoundDoc')],
@@ -30,7 +30,7 @@ const checks=[
   ['precise evidence geometry',sourcePdf.includes('markLeft')&&sourcePdf.includes('markRight')&&sourcePdf.includes('markExact')],
   ['precise evidence runtime marker',sourcePdf.includes('pdfjs-v16-range-remote-cache-epoch-precise-evidence-ranges')],
   ['V73 responsive contract',css.includes('.concept-nav-single')&&css.includes('.exam-hub-tabs')&&css.includes('.note-upload-card')&&css.includes('.dashboard-home-compact')],
-  ['service worker epoch bumped',sw.includes('v82-auth-ux')],
+  ['service worker epoch bumped',sw.includes('v83-content-ux')],
   ['boot8 synced',boot8.includes('dashboard-home-compact')&&boot8.includes('id="passNotePdf"')&&boot8.includes('data-exam-bundle')],
   ['boot7b synced',boot7b.includes('pdfjs-v16-range-remote-cache-epoch-precise-evidence-ranges')&&boot7b.includes("createFromPrivateDoc(docId,title,subject='')")]
 ];

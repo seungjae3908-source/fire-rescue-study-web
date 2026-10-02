@@ -7,6 +7,6 @@ assert(app.includes("m.role==='assistant'?studentStudyText(cleanTutorText(m?.tex
 assert(app.includes("if(evidenceOnly)return'근거\\n• 현재 개념의 공식 근거';"),'AI evidence-only fallback does not expose page metadata');
 assert(app.includes("rows.push('','근거','• 현재 개념의 공식 근거')"),'normal AI fallback does not expose page metadata');
 assert(app.includes("학생 화면 답변에는 페이지·쪽수를 표시하지 말고"),'local AI system prompt suppresses page metadata in displayed answers');
-assert(sw.includes('ai-tutor-v9-shell-20261002-v82-auth-ux'),'V81 cache epoch is active');
+assert(sw.includes('ai-tutor-v9-shell-20261002-v83-content-ux'),'V81 cache epoch is active');
 assert(!styles.includes('V81')&&!responsive.includes('V81'),'V81 does not alter frozen UI/CSS');
 console.log('V81_PAGE_METADATA_AUDIT_SUCCESS');

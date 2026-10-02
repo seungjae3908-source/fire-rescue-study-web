@@ -209,7 +209,7 @@ async function openPdf(key,{timeoutMs=90000,onProgress}={}){
     pdfCache.set(key,entry);return entry
   }catch(err){await task.destroy?.().catch?.(()=>{});throw err}
 }
-async function locate(key,queries=[],options={}){const {pdf}=await openPdf(key),tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};const ranges=Array.isArray(options.bookRanges)?options.bookRanges.filter(x=>x&&x.doc===key):[],pageSet=new Set();if(ranges.length){for(const r of ranges){const from=Math.max(1,pdfPage(key,Number(r.from)||1)),to=Math.min(pdf.numPages,pdfPage(key,Number(r.to)||Number(r.from)||1));for(let n=from;n<=to;n++)pageSet.add(n)}}const pages=pageSet.size?[...pageSet].sort((a,b)=>a-b):Array.from({length:pdf.numPages},(_,i)=>i+1);let best={page:pages[0]||1,score:-1,pages:pdf.numPages};for(const n of pages){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
+async function locate(key,queries=[],options={}){const {pdf}=await openPdf(key),tokens=queryTokens(queries);if(!tokens.length)return{page:1,pages:pdf.numPages,score:0};const ranges=Array.isArray(options.bookRanges)?options.bookRanges.filter(x=>x&&x.doc===key):[],pageSet=new Set();if(ranges.length){for(const r of ranges){const from=Math.max(1,pdfPage(key,Number(r.from)||1)),to=Math.min(pdf.numPages,pdfPage(key,Number(r.to)||Number(r.from)||1));for(let n=from;n<=to;n++)pageSet.add(n)}}const pages=pageSet.size?[...pageSet].sort((a,b)=>a-b):Array.from({length:pdf.numPages},(_,i)=>i+1);let best={page:pages[0]||1,score:-1,pages:pdf.numPages};for(const n of pages){const pg=await pdf.getPage(n),tc=await pg.getTextContent(),text=norm((tc.items||[]).map(x=>x.str).join(' '));let score=0;for(const q of tokens)if(text.includes(q))score+=Math.min(12,q.length);if(score>best.score)best={page:n,score,pages:pdf.numPages};if(!options.exhaustive&&score>=Math.min(48,tokens.slice(0,5).reduce((a,x)=>a+Math.min(12,x.length),0)))break}return best}
 async function findPages(key,query,{limit=12}={}){
 const q=String(query||'').trim(),tokens=queryTokens([q]),{pdf}=await openPdf(key);if(!tokens.length)return{query:q,pages:pdf.numPages,results:[]};
 const qn=norm(q),hits=[];
@@ -251,7 +251,7 @@ function evidenceLines(items,viewport,p,queries=[],options={}){
   };
   const anchorPhrases=[...new Set((options.anchorTerms||[]).map(norm).filter(x=>x.length>=4))].sort((a,b)=>b.length-a.length);
   const anchorTokens=queryTokens(options.anchorTerms||[]).filter(x=>x.length>=2);
-  const exactMarkTerms=anchorPhrases.length?anchorPhrases:[...new Set(tokens.filter(x=>x.length>=5))].sort((a,b)=>b.length-a.length);
+  const exactMarkTerms=anchorPhrases.length?anchorPhrases.concat(anchorTokens.filter(x=>x.length>=5)):[...new Set(tokens.filter(x=>x.length>=5))].sort((a,b)=>b.length-a.length);
   const markLine=line=>{
     const parts=[];let offset=0;
     for(const item of line.items||[]){

@@ -10,8 +10,6 @@ const warning=/전조|징후|증상|주의|위험|금지|피한다|하지 않는
 const beforeAfter=/이전|이후|전에는|후에는|직전|직후|발생 전|발생 후|회복 후|소생 후/;
 const metaHeading=/개념\s*구조와\s*읽는\s*순서|개념\s*이해|학습\s*순서/;
 function allText(p){
-  // 상세 스키마는 교재형 설명 원천만 사용한다.
-  // summary/features/must/traps는 핵심 탭 전용이므로 상세에 다시 주입하지 않는다.
   return uniq([
     ...(p.detail||[]),...(p.flow||[]),
     ...(p.deepSections||[]).flatMap(s=>[metaHeading.test(String(s.title||''))?'':s.title,s.body,...(s.bullets||[])])
