@@ -34,7 +34,7 @@ try{
 
  // UI flow: signup and login both show explicit dialogs while keeping the frozen app UI.
  await p.evaluate(()=>{localStorage.removeItem('aitutor9:v82-seen');window.AITUTOR_V9.Auth.signUp=async()=>({pendingEmailConfirmation:true});window.AITUTOR_V9.Auth.signIn=async()=>({user:{id:'u1'}})});
- await p.locator('[data-account]').first().click();
+ await p.locator('[data-account]:visible').first().click();
  await p.locator('#authEmail').fill('qa@example.com');await p.locator('#authPw').fill('12345678');
  const signupDialog=p.waitForEvent('dialog');await p.locator('[data-signup]').click();const sd=await signupDialog;const signupText=sd.message();await sd.accept();
  check(signupText.includes('회원가입 신청이 완료되었습니다.')&&signupText.includes('인증메일'),'signup click shows completion + email verification guidance',{signupText});
