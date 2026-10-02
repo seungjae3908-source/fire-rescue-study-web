@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const app=read('./app.js'),sup=read('./supabase-lite.js'),sw=read('./sw.js');
+assert(app.includes("alert('회원가입 신청이 완료되었습니다."),'signup success confirmation exists');
+assert(app.includes("alert('인증메일을 다시 보냈습니다."),'resend confirmation exists');
+assert(app.includes("localStorage.a9u82")&&app.includes("소방합격 업데이트"),'post-login update popup is version-gated');
+assert(sup.includes("t=h.get('type')")&&sup.includes("t==='signup'")&&sup.includes("이메일 인증이 완료되었습니다."),'email-confirm redirect shows success confirmation');
+assert(sw.includes('v82-auth-ux'),'V82 shell cache epoch is active');
+console.log('V82_AUTH_UX_AUDIT_SUCCESS');
