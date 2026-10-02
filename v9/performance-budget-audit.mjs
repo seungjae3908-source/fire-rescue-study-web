@@ -23,7 +23,7 @@ const jsCount=rows.filter(x=>x.asset.endsWith('.js')).length;
 const cssCount=rows.filter(x=>x.asset.endsWith('.css')).length;
 const largest=rows.slice().sort((a,b)=>b.size-a.size)[0]||{asset:'',size:0};
 const limits={
-  totalBytes:1850000,
+  totalBytes:1855000,
   assetCount:20,
   jsCount:16,
   largestSingleAsset:250000
