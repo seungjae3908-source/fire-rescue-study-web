@@ -11,7 +11,7 @@ try{
  let signupUrl='',resendUrl='';
  await p.route('https://example.supabase.co/**',async route=>{
    const u=route.request().url();if(u.includes('/signup'))signupUrl=u;if(u.includes('/resend'))resendUrl=u;
-   await route.fulfill({status:200,contentType:'application/json',body:u.includes('/signup')?JSON.stringify({user:{id:'u1',email:'qa@example.com'}}):'{}'});
+   await route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS'},body:u.includes('/signup')?JSON.stringify({user:{id:'u1',email:'qa@example.com'}}):'{}'});
  });
  const redirect=await p.evaluate(async()=>{
    const c=window.AITUTOR_V9.SupabaseLite.createClient('https://example.supabase.co','pk');
