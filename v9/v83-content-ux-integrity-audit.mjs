@@ -44,7 +44,7 @@ const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
 const coreSlice=app.slice(app.indexOf('function coreNumberRows'),app.indexOf('function coreTrapRows'));
 assert(!coreSlice.includes("detailCriteriaOwner==='detail'"),'core numeric criteria are never hidden just because detail owns criteria');
 assert(!coreSlice.includes('compareBodies'),'core numeric criteria are not suppressed by a comparison duplicate');
-assert(coreSlice.includes('!addsNumericCriterion(x,text)'),'a summary match cannot suppress a new numeric criterion');
+assert(coreSlice.includes('overlap=(a,b)=>')&&coreSlice.includes('addsNumericCriterion(rows[i],text)'),'overlapping numeric facts collapse to the richer row instead of duplicating');
 assert(coreSlice.includes('rows.length>=10'),'core exposes up to 10 high-yield numeric criteria without visual overload');
 assert(app.includes("if(!row[0]||!row[1])continue"),'runtime drops comparison cards whose learner-visible body became empty');
 assert(app.includes("/^(?:제?\\d+\\s*(?:종|류|급))$/"),'numbered type/class comparison rows survive cross-section dedupe');
