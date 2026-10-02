@@ -700,7 +700,8 @@ function tutorMessageHtml(m){const t=m.role==='assistant'?studentStudyText(clean
 function wantsTutorDetail(prompt){return /상세|자세히|깊게|전부|원리부터|교재처럼/.test(String(prompt||''))}
 function wantsTutorCompare(prompt){return /비교|차이|뭐가\s*달|vs|구분/.test(String(prompt||'').toLowerCase())}
 function wantsTutorEvidence(prompt){return /근거만|출처만|원문만|공식\s*근거만|근거\s*위주/.test(String(prompt||''))}
-function wantsTutorConcise(prompt){return /정의만|간단히|짧게|한\s*줄|1문장|두\s*문장|2문장|(?:종류|구분)(?:는|가)?\s*(?:뭐|무엇)|몇\s*종/.test(String(prompt||''))}
+function wantsTutorKinds(p){return /(?:종류|구분).*(?:뭐|무엇)|몇\s*종/.test(String(p||''))}
+function wantsTutorConcise(prompt){return /정의만|간단히|짧게|한\s*줄|1문장|두\s*문장|2문장/.test(String(prompt||''))}
 function wantsTutorDefinitionOnly(prompt){return /정의만/.test(String(prompt||''))}
 function tutorKeywords(v){
 const stop=new Set(['그럼','그러면','그거','그건','이거','이건','뭐가있어','뭐야','무엇','어떤','알려줘','설명해줘','해줘','있어','있나','관련','대해','핵심','요약','시험','상세','자세히']);
@@ -710,18 +711,19 @@ function previousTutorQuestion(c,prompt){
 const rows=(state().chat||[]).filter(m=>m.conceptId===c.id&&m.role==='user'&&String(m.text||'').trim()!==String(prompt||'').trim());return rows.slice(-1)[0]?.text||''
 }
 function tutorRelevantRows(prompt,c,pack){
-const current=tutorKeywords(prompt),previous=tutorKeywords(previousTutorQuestion(c,prompt)),kinds=/(?:종류|구분)(?:는|가)?\s*(?:뭐|무엇)|몇\s*종/.test(String(prompt||'')),candidates=[];
+const current=tutorKeywords(prompt),previous=tutorKeywords(previousTutorQuestion(c,prompt)),candidates=[];
 const push=(text,label='')=>{const t=studentStudyText(text);if(t)candidates.push({text:t,label})};
 push(pack.summary,'요약');(pack.must||[]).forEach(x=>push(x,'시험필수'));(pack.detail||[]).forEach(x=>push(x,'상세'));(pack.compare||[]).forEach(x=>push((x||[]).join(' → '),'비교'));(pack.traps||[]).forEach(x=>push(x,'시험주의'));
 for(const sec of pack.deepSections||[]){push(sec?.body,sec?.title||'상세');(sec?.bullets||[]).forEach(x=>push(x,sec?.title||'상세'))}
-const score=row=>{const n=studyNorm(row.text),label=studyNorm(row.label);let z=kinds&&/\d+\s*(?:종|류|급)/.test(row.text)?120:0;for(const t of current){const q=studyNorm(t);if(n.includes(q)||label.includes(q))z+=24+Math.min(12,q.length)}for(const t of previous){const q=studyNorm(t);if(n.includes(q)||label.includes(q))z+=5}return z};
+const score=row=>{const n=studyNorm(row.text),label=studyNorm(row.label);let z=0;for(const t of current){const q=studyNorm(t);if(n.includes(q)||label.includes(q))z+=24+Math.min(12,q.length)}for(const t of previous){const q=studyNorm(t);if(n.includes(q)||label.includes(q))z+=5}return z};
 return candidates.map(x=>({...x,score:score(x)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||b.text.length-a.text.length)
 }
 function fallbackTutor(prompt,c,pack){
 const detail=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),concise=wantsTutorConcise(prompt),definitionOnly=wantsTutorDefinitionOnly(prompt),rows=[],general=/30초|요약|핵심\s*(?:정리|설명)?$/.test(String(prompt||''));
 if(evidenceOnly)return'근거\n• 현재 개념의 공식 근거';
 if(definitionOnly)return cleanTutorText(studentStudyText(pack?.studySchema?.definition||pack.summary||((pack.must||[])[0])||c.title));
-if(concise){const hits=tutorRelevantRows(prompt,c,pack),kinds=/(?:종류|구분)(?:는|가)?\s*(?:뭐|무엇)|몇\s*종/.test(String(prompt||'')),kindRows=kinds?uniqueTextRows(hits.filter(x=>/\d+\s*(?:종|류|급)/.test(x.text)).slice(0,8).map(x=>x.text)):[];if(kindRows.length>1)return cleanTutorText(['답변',...kindRows.map(x=>'• '+x),'','근거','• 현재 개념의 공식 근거'].join('\n'));const answer=studentStudyText(hits[0]?.text||pack.summary||((pack.must||[])[0])||c.title);return cleanTutorText(answer)}
+if(wantsTutorKinds(prompt)){let k=(pack.must||[]).map(studentStudyText).filter(x=>/\d+\s*(?:종|류|급)/.test(x)).slice(0,8);if(!k.length)k=(pack.compare||[]).map(x=>(x||[]).join(' → ')).filter(Boolean).slice(0,8);if(k.length)return cleanTutorText(['답변',...k.map(x=>'• '+x),'','근거','• 현재 개념의 공식 근거'].join('\n'))}
+if(concise){const hits=tutorRelevantRows(prompt,c,pack),answer=studentStudyText(hits[0]?.text||pack.summary||((pack.must||[])[0])||c.title);return cleanTutorText(answer)}
 if(general){rows.push('답변',studentStudyText(pack.summary||((pack.must||[])[0])||c.title));const must=(pack.must||[]).map(studentStudyText).filter(Boolean).slice(0,detail?5:3),why=uniqueTextRows([...(pack.detail||[]),...(pack.deepSections||[]).map(x=>x?.body).filter(Boolean)].map(studentStudyText)).slice(0,detail?4:2);if(must.length)rows.push('','핵심 포인트',...must.map(x=>'• '+x));if(why.length)rows.push('','왜 그런가',...why.map(x=>'• '+x))}
 else{
 const hits=tutorRelevantRows(prompt,c,pack),picked=uniqueTextRows(hits.slice(0,detail?6:4).map(x=>x.text));
@@ -794,7 +796,7 @@ const out=!relevant&&(!target.detected||target.detected.id===current.id)
 :`현재 학습 항목은 「${current.title}」입니다.\n이 AI는 현재 항목과 직접 등록된 비교 내용만 설명합니다.\n「${target.detected?.title||'다른 개념'}」은 해당 개념 페이지로 이동해서 질문해 주세요.`;
 const ix=state().chat.findIndex(x=>x.id===assistant.id);if(ix>=0)state().chat[ix]={...assistant,text:out,outOfScope:true,suggestedConceptId:target.detected?.id&&target.detected.id!==current.id?target.detected.id:''};S.save();render();return
 }
-const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),concise=wantsTutorConcise(prompt),definitionOnly=wantsTutorDefinitionOnly(prompt),compareRows=compare?(pack.compare||[]).slice(0,6):[];
+const detailed=wantsTutorDetail(prompt),compare=wantsTutorCompare(prompt),evidenceOnly=wantsTutorEvidence(prompt),concise=wantsTutorConcise(prompt)||wantsTutorKinds(prompt),definitionOnly=wantsTutorDefinitionOnly(prompt),compareRows=compare?(pack.compare||[]).slice(0,6):[];
 let out=fallbackTutor(prompt,current,pack),idx=state().chat.findIndex(x=>x.id===assistant.id);
 if(idx>=0)state().chat[idx]={...assistant,text:out,targetConceptId:current.id,compareRows};S.save();render();
 if(!concise&&!(runtime.aiEngine||V.LocalAI?.ready)&&navigator.gpu&&V.LocalAI?.ensure){
