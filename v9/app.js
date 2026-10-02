@@ -132,24 +132,14 @@ function uniqueTextRows(rows=[],seed=''){const out=[];for(const row of rows){if(
 function uniqueCriterionRows(rows=[]){const out=[];for(const row of rows){if(!row||out.some(x=>sameStudyFact(x,row)))continue;out.push(row)}return out}
 const DETAIL_META_SECTION_RE=/^(?:개념\s*구조와\s*읽는\s*순서|핵심\s*포인트\s*연결|문제\s*적용과\s*난이도\s*대응|공식\s*원문으로\s*복귀하는\s*기준|회상\s*루프)$/;
 function uniqueSections(rows=[]){const out=[];for(const row of rows){if(!row?.body||DETAIL_META_SECTION_RE.test(String(row.title||'').trim()))continue;if(out.some(x=>sameStudyFact(x.body,row.body)))continue;out.push(row)}return out}
-function coreEssentialRows(pack){
-const quick=pack?.studySchema?.quick30||pack?.summary||'',numbers=(V.StudyEmphasis119?.numberRows?.(pack,16)||[]).map(studentStudyText).filter(Boolean),comparisonFacts=(pack?.compare||[]).filter(x=>Array.isArray(x)&&x[0]&&x[1]).map(x=>studentStudyText(x[0])+' '+studentStudyText(x[1]));
-const candidates=[
-...(V.StudyEmphasis119?.mustRows?.(pack)||[]).map((text,index)=>({text,bucket:'must',index})),
-...(V.StudyEmphasis119?.featureRows?.(pack)||[]).map((text,index)=>({text,bucket:'feature',index}))
-],rows=[];
-for(const row of candidates){
-const text=studentStudyText(row.text);
-if(!text||sameStudyFact(text,quick)||numbers.some(n=>sameStudyFact(text,n))||comparisonFacts.some(x=>sameStudyFactCross(text,x)))continue;
-const i=rows.findIndex(x=>sameStudyFact(x.text,text)||(V.StudyEmphasis119?.isNumericCriterion?.(x.text)&&V.StudyEmphasis119?.isNumericCriterion?.(text)&&studyTokenCoverage(x.text,text)>=.6));if(i>=0){if(text.length>rows[i].text.length)rows[i]={...row,text};continue}
-rows.push({...row,text});if(rows.length>=5)break
+const numericRelated=(a,b)=>V.StudyEmphasis119?.isNumericCriterion?.(a)&&V.StudyEmphasis119?.isNumericCriterion?.(b)&&studyTokenCoverage(a,b)>=.6;
+function coreEssentialRows(p){
+const q=p?.studySchema?.quick30||p?.summary||'',n=(V.StudyEmphasis119?.numberRows?.(p,16)||[]).map(studentStudyText).filter(Boolean),c=(p?.compare||[]).filter(x=>Array.isArray(x)&&x[0]&&x[1]).map(x=>studentStudyText(x[0])+' '+studentStudyText(x[1])),a=[...(V.StudyEmphasis119?.mustRows?.(p)||[]).map((text,index)=>({text,bucket:'must',index})),...(V.StudyEmphasis119?.featureRows?.(p)||[]).map((text,index)=>({text,bucket:'feature',index}))],r=[];
+for(const x of a){const t=studentStudyText(x.text);if(!t||sameStudyFact(t,q)||n.some(y=>sameStudyFact(t,y))||c.some(y=>sameStudyFactCross(t,y)))continue;const i=r.findIndex(y=>sameStudyFact(y.text,t)||numericRelated(y.text,t));if(i>=0){if(t.length>r[i].text.length)r[i]={...x,text:t};continue}r.push({...x,text:t});if(r.length>=5)break}return r
 }
-return rows
-}
-function coreNumberRows(pack){
-const s=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),r=[],o=(a,b)=>{const A=numericTokenSet(a);return[...numericTokenSet(b)].some(x=>A.has(x))},d=(a,b)=>o(a,b)&&(sameStudyFact(a,b)||studyTokenCoverage(a,b)>=.6||studyNorm(a).includes(studyNorm(b))||studyNorm(b).includes(studyNorm(a)));
-for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){const t=studentStudyText(raw),p=t.split(/\s*·\s*/).map(studentStudyText).filter(x=>V.StudyEmphasis119?.isNumericCriterion?.(x)),a=p.length?p:[t];for(const x of a){if(!x||!V.StudyEmphasis119?.isNumericCriterion?.(x)||s.some(y=>d(y,x)))continue;const i=r.findIndex(y=>d(y,x));if(i>=0){if(x.length>r[i].length)r[i]=x;continue}r.push(x);if(r.length>=12)return r}}
-return r
+function coreNumberRows(p){
+const s=[p?.studySchema?.quick30||p?.summary||'',...coreEssentialRows(p).map(x=>x.text)].map(studentStudyText).filter(Boolean),r=[],o=(a,b)=>{const A=numericTokenSet(a);return[...numericTokenSet(b)].some(x=>A.has(x))},d=(a,b)=>o(a,b)&&(sameStudyFact(a,b)||numericRelated(a,b)||studyNorm(a).includes(studyNorm(b))||studyNorm(b).includes(studyNorm(a)));
+for(const z of V.StudyEmphasis119?.numberRows?.(p,18)||[]){const t=studentStudyText(z),u=t.split(/\s*·\s*/).map(studentStudyText).filter(x=>V.StudyEmphasis119?.isNumericCriterion?.(x)),a=u.length?u:[t];for(const x of a){if(!x||!V.StudyEmphasis119?.isNumericCriterion?.(x)||s.some(y=>d(y,x)))continue;const i=r.findIndex(y=>d(y,x));if(i>=0){if(x.length>r[i].length)r[i]=x;continue}r.push(x);if(r.length>=12)return r}}return r
 }
 function coreTrapRows(pack){
 const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text),...coreNumberRows(pack)].map(studentStudyText).filter(Boolean),rows=[];
