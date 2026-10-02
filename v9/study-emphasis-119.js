@@ -9,6 +9,7 @@ const CRITERION_CONTEXT_RE=/(?:이상|이하|미만|초과|이내|범위|간격|
 function stripServiceIds(v){return norm(v).replace(SERVICE_ID_RE,'')}
 function stripSourceReferenceNumbers(v){
 return stripServiceIds(v)
+  .replace(/^세부\s*\d+\s*[:：.\-]\s*/,'')
   .replace(/\b20\d{2}\b/g,'')
   .replace(/(?:공식\s*)?교재\s*\d+(?:\s*[·,~–-]\s*\d+)*\s*쪽/g,'교재')
   .replace(/\d+(?:\s*[·,~–-]\s*\d+)*\s*쪽/g,'')
