@@ -13,8 +13,9 @@ function sameFact(a,b){
  const A=words(a),B=words(b);if(!A.size||!B.size)return false;let hit=0;for(const w of A)if(B.has(w))hit++;
  return min>=10&&hit/Math.min(A.size,B.size)>=.78&&dice(a,b)>=.48
 }
+const nums=v=>new Set((String(v||'').match(/\d+(?:[.,]\d+)?/g)||[]).map(x=>x.replace(/,/g,'.')));
 function pairDuplicates(rows){
- const out=[];for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++)if(sameFact(rows[i],rows[j]))out.push([rows[i],rows[j]]);
+ const out=[];for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){if(!sameFact(rows[i],rows[j]))continue;const A=nums(rows[i]),B=nums(rows[j]),a=[...A].some(x=>!B.has(x)),b=[...B].some(x=>!A.has(x));if((!A.size&&B.size)||(A.size&&!B.size)||(a&&b))continue;out.push([rows[i],rows[j]])}
  return out
 }
 
