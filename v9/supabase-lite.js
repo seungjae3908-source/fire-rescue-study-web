@@ -7,7 +7,7 @@ const readSession=()=>{try{return safeJson(localStorage.getItem(SESSION_KEY))}ca
 const writeSession=s=>{try{s?localStorage.setItem(SESSION_KEY,JSON.stringify(s)):localStorage.removeItem(SESSION_KEY)}catch{}};
 const decodeJwt=token=>{try{const p=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(p))))}catch{return{}}};
 function createClient(url,key){
-  url=String(url||'').replace(/\/$/,'');let session=readSession(),refreshing=null;const listeners=new Set();
+  url=String(url||'').replace(/\/$/,'');let session=readSession(),refreshing=null,authRedirect={consumed:false,error:''};const listeners=new Set();
   const headers=(token=session?.access_token)=>({'apikey':key,'Authorization':`Bearer ${token||key}`,'Content-Type':'application/json'});
   const errObj=async r=>{let d=null;try{d=await r.json()}catch{}const e=new Error(d?.msg||d?.message||d?.error_description||d?.error||`HTTP ${r.status}`);e.status=r.status;e.code=d?.code||null;return e};
   const emit=(event)=>{const s=session?{...session,user:session.user||null}:null;for(const fn of listeners){try{fn(event,s)}catch(e){console.warn('auth listener failed',e)}}};
@@ -42,7 +42,7 @@ function createClient(url,key){
     }
     return r
   }
-  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,''));if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});history.replaceState(null,'',location.pathname+location.search);return true}}catch{}return false}
+  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,'')),err=h.get('error_description')||h.get('error');if(err){authRedirect={consumed:false,error:err};history.replaceState(null,'',location.pathname+location.search);return false}if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});authRedirect={consumed:true,error:''};history.replaceState(null,'',location.pathname+location.search);return true}}catch{}return false}
   consumeRedirect();
   class Query{
     constructor(table){this.table=table;this.op='select';this.cols='*';this.filters=[];this.body=null;this.options={}}
@@ -84,14 +84,15 @@ function createClient(url,key){
     },
     onAuthStateChange(fn){listeners.add(fn);return{data:{subscription:{unsubscribe(){listeners.delete(fn)}}}}},
     async signUp({email,password,options={}}){
-      const r=await fetch(url+'/auth/v1/signup',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:options.data||{}})});
+      const q=options.emailRedirectTo?'?redirect_to='+encodeURIComponent(options.emailRedirectTo):'';
+      const r=await fetch(url+'/auth/v1/signup'+q,{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:options.data||{}})});
       if(!r.ok)return{data:null,error:await errObj(r)};const d=await r.json(),s=store(d);if(s)emit('SIGNED_IN');return{data:{user:d.user||d,session:s},error:null}
     },
-    async resend({type,email}){const r=await fetch(url+'/auth/v1/resend',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({type,email})});if(!r.ok)return{data:null,error:await errObj(r)};let d=null;try{d=await r.json()}catch{}return{data:d,error:null}},
+    async resend({type,email,options={}}){const q=options.emailRedirectTo?'?redirect_to='+encodeURIComponent(options.emailRedirectTo):'';const r=await fetch(url+'/auth/v1/resend'+q,{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({type,email})});if(!r.ok)return{data:null,error:await errObj(r)};let d=null;try{d=await r.json()}catch{}return{data:d,error:null}},
     async signInWithPassword({email,password}){const r=await fetch(url+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!r.ok)return{data:null,error:await errObj(r)};const d=await r.json(),s=store(d);emit('SIGNED_IN');return{data:{user:d.user||s?.user||null,session:s},error:null}},
     async signOut(){const t=session?.access_token;clearSession();if(t){try{await fetch(url+'/auth/v1/logout',{method:'POST',headers:{'apikey':key,'Authorization':'Bearer '+t,'Content-Type':'application/json'}})}catch{}}return{error:null}}
   };
-  return{auth,from(table){return new Query(table)},__runtime:'same-origin-lite'};
+  return{auth,from(table){return new Query(table)},__runtime:'same-origin-lite',__authRedirect:authRedirect};
 }
 V.SupabaseLite={createClient,sessionKey:SESSION_KEY,runtime:'same-origin-lite'};
 })();
