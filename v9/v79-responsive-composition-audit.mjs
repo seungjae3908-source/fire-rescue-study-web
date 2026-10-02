@@ -11,5 +11,5 @@ assert(base.includes('grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;ali
 assert(css.includes('justify-content:center!important;overflow:visible!important'),'desktop study question navigator is centered instead of left-clustered');
 assert(css.includes('.pdf-mobile-tools>.pdf-mobile-tools-body{display:grid!important;grid-template-columns:auto minmax(0,1fr)')&&css.includes('.pdf-mobile-tools[open]>.pdf-mobile-tools-body{display:grid!important;grid-template-columns:1fr'),'PDF controls are compact on PC/tablet and one-column when expanded on phone');
 assert(base.includes('.modal-wrap{position:fixed;inset:0;background:#07111f;'),'modal backdrop is opaque so underlying controls cannot bleed through');
-assert(sw.includes("ai-tutor-v9-shell-20261002-v82-auth-ux"),'current shell cache key remains compatible');
+assert(sw.includes("ai-tutor-v9-shell-20261002-v83-content-ux"),'current shell cache key remains compatible');
 console.log('V79_RESPONSIVE_COMPOSITION_AUDIT_SUCCESS');
