@@ -7,7 +7,7 @@ const swUrl=new URL('sw.js',base).href;
 const swRes=await fetch(swUrl,{headers:{'cache-control':'no-cache'}});
 assert(swRes.ok,'V72 service worker is publicly reachable');
 const swText=await swRes.text();
-assert(swText.includes("ai-tutor-v9-shell-20261001-v81-page-clean"),'V76 service-worker cache epoch is deployed');
+assert(swText.includes("ai-tutor-v9-shell-20261002-v82-auth-feedback"),'V76 service-worker cache epoch is deployed');
 
 const browser=await chromium.launch({headless:true});
 try{
