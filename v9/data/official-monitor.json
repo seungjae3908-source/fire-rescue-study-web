@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-10-02T12:44:01.775Z",
+  "generatedAt": "2026-10-02T18:28:23.346Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -68,8 +68,8 @@
       "ok": false,
       "pagesOk": 0,
       "status": "error",
-      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
-      "errorCode": "WAF_CHALLENGE",
+      "error": "20: This operation was aborted",
+      "errorCode": "20",
       "errorUrl": "https://www.nfa.go.kr/nfsa/news/0011/job/?pageIdx=1",
       "fallbackUsed": false
     },
@@ -80,8 +80,8 @@
       "ok": false,
       "pagesOk": 0,
       "status": "error",
-      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
-      "errorCode": "WAF_CHALLENGE",
+      "error": "20: This operation was aborted",
+      "errorCode": "20",
       "errorUrl": "https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/",
       "fallbackUsed": false
     }
@@ -448,7 +448,7 @@
   "degraded": true,
   "preservedLastGood": true,
   "notificationSuppressed": true,
-  "lastAttemptAt": "2026-10-02T12:44:01.775Z",
+  "lastAttemptAt": "2026-10-02T18:28:23.346Z",
   "lastSuccessfulAt": "2026-10-01T13:25:34.628Z",
   "delta": {
     "newIds": [],
