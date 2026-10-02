@@ -637,7 +637,7 @@ ok(appCode.includes('id="passNotePdf"')&&appCode.includes('V.PrivateDocs.ingest'
 ok(!appCode.includes('privateGrounding')&&!appCode.includes('[개인자료'),'study tutor stays grounded to official concept packs without private document injection');
 ok(auth.includes("event==='SIGNED_OUT'")&&auth.includes('V.Store.switchOwner(V.Store.guestId)'), 'SIGNED_OUT auth events switch runtime ownership back to the guest namespace');
 ok(auth.includes("'session-expired'")&&auth.includes("'manual-signout'"),'auth runtime distinguishes session expiry from explicit logout');
-ok(appCode.includes('로그인 세션이 만료되어 게스트 모드로 전환되었습니다.')&&appCode.includes('로그인 세션 만료 · 다시 로그인해주세요'),'session expiry UX provides persistent and immediate re-login guidance');
+ok(appCode.includes('로그인 세션이 만료되었습니다. 다시 로그인하면 저장한 학습 기록을 이어서 사용할 수 있습니다.')&&appCode.includes('로그인 세션 만료 · 다시 로그인해주세요'),'session expiry UX provides persistent and immediate re-login guidance');
 ok(appCode.includes('examReportId')&&appCode.includes('오답·미응답 분석')&&appCode.includes('incorrectQuestionIds'),'post-exam analytics stores the local answer snapshot and renders wrong/unanswered analysis');
 ok(appCode.includes('data-exam-report')&&appCode.includes('data-report-close'),'recent exam history exposes a reopenable local analysis flow');
 for(const [logical,physical] of Object.entries({profiles:'study_profiles',user_progress:'study_user_progress',user_answers:'study_user_answers',wrong_answers:'study_wrong_answers',review_schedule:'study_review_schedule',personal_notes:'study_personal_notes',private_documents:'study_private_documents',document_chunks:'study_document_chunks',study_sessions:'study_sessions',exam_history:'study_exam_history',tutor_preferences:'study_tutor_preferences'})){
@@ -653,7 +653,7 @@ ok(!auth.includes('.storage.from('),'auth sync has no original-file storage uplo
 ok(auth.includes('sharedProjectNamespace:\'study_*\''),'sync contract records the Study shared-project namespace');
 ok(auth.includes('supabasePublishableKey'),'browser auth prefers the Supabase publishable key');
 ok(auth.includes('enableCloudSync===true'),'backend connection is feature-gated until explicitly enabled');
-ok(auth.includes("client.auth.resend({type:'signup',email})"),'signup confirmation email can be resent without changing project-wide auth settings');
+ok(auth.includes("client.auth.resend({type:'signup',email,options:{emailRedirectTo}})")&&auth.includes("emailRedirectTo=new URL('./',location.href).href"),'signup confirmation email can be resent with an app-scoped confirmation redirect and without changing project-wide auth settings');
 ok(auth.includes('pendingEmailConfirmation:true'),'unconfirmed signup is represented as a pending state instead of a false failure');
 ok(appCode.includes('data-resend-confirmation'),'account UI exposes confirmation-email resend');
 ok(appCode.includes('Email not confirmed'),'account UI explains unconfirmed-email sign-in failures');

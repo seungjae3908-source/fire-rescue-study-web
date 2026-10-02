@@ -654,7 +654,7 @@ function createClient(url,key){
     }
     return r
   }
-  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,''));if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});history.replaceState(null,'',location.pathname+location.search);return true}}catch{}return false}
+  function consumeRedirect(){try{const h=new URLSearchParams(location.hash.replace(/^#/,'')),t=h.get('type');if(h.get('access_token')){store({access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',token_type:h.get('token_type')||'bearer',expires_in:Number(h.get('expires_in'))||3600});history.replaceState(null,'',location.pathname+location.search);if(t==='signup')setTimeout(()=>alert('이메일 인증이 완료되었습니다.\n회원가입이 완료되었습니다.'),0);return true}}catch{}return false}
   consumeRedirect();
   class Query{
     constructor(table){this.table=table;this.op='select';this.cols='*';this.filters=[];this.body=null;this.options={}}
@@ -696,10 +696,11 @@ function createClient(url,key){
     },
     onAuthStateChange(fn){listeners.add(fn);return{data:{subscription:{unsubscribe(){listeners.delete(fn)}}}}},
     async signUp({email,password,options={}}){
-      const r=await fetch(url+'/auth/v1/signup',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:options.data||{}})});
+      const redirect=String(options.emailRedirectTo||''),endpoint=url+'/auth/v1/signup'+(redirect?'?redirect_to='+encodeURIComponent(redirect):'');
+      const r=await fetch(endpoint,{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:options.data||{}})});
       if(!r.ok)return{data:null,error:await errObj(r)};const d=await r.json(),s=store(d);if(s)emit('SIGNED_IN');return{data:{user:d.user||d,session:s},error:null}
     },
-    async resend({type,email}){const r=await fetch(url+'/auth/v1/resend',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({type,email})});if(!r.ok)return{data:null,error:await errObj(r)};let d=null;try{d=await r.json()}catch{}return{data:d,error:null}},
+    async resend({type,email,options={}}){const redirect=String(options.emailRedirectTo||''),endpoint=url+'/auth/v1/resend'+(redirect?'?redirect_to='+encodeURIComponent(redirect):'');const r=await fetch(endpoint,{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({type,email})});if(!r.ok)return{data:null,error:await errObj(r)};let d=null;try{d=await r.json()}catch{}return{data:d,error:null}},
     async signInWithPassword({email,password}){const r=await fetch(url+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!r.ok)return{data:null,error:await errObj(r)};const d=await r.json(),s=store(d);emit('SIGNED_IN');return{data:{user:d.user||s?.user||null,session:s},error:null}},
     async signOut(){const t=session?.access_token;clearSession();if(t){try{await fetch(url+'/auth/v1/logout',{method:'POST',headers:{'apikey':key,'Authorization':'Bearer '+t,'Content-Type':'application/json'}})}catch{}}return{error:null}}
   };
@@ -760,15 +761,14 @@ async function syncAllInternal(uid){if(!client||!uid)throw Error('NOT_SIGNED_IN'
   const exams=(s.examHistory||[]).map(x=>({id:x.id,user_id:uid,mode:x.mode==='real'?'real':'practice',score:x.score||0,fire_correct:x.fireCorrect||0,ems_correct:x.emsCorrect||0,total_answered:x.totalAnswered||0,created_at:iso(x.at||Date.now())}));tasks.push(upsertRows(T.exam_history,exams));
   const tp=s.tutorPreferences||{};tasks.push(upsertRows(T.tutor_preferences,[{user_id:uid,explanation_level:tp.explanationLevel||'adaptive',emphasize_dangerous_wrong:tp.emphasizeDangerousWrong!==false,use_private_notes:tp.usePrivateNotes!==false,updated_at:iso(tp.updatedAt||Date.now())}]));
   await Promise.all(tasks);
-  // Only extracted text/metadata sync here. Original PDF/image bytes are never uploaded automatically.
   if(V.PrivateDocs?.exportForSync){const bundle=await V.PrivateDocs.exportForSync();const docs=(bundle.docs||[]).map(d=>({id:d.id,user_id:uid,title:d.title||d.fileName||'개인자료',file_name:d.fileName||null,mime_type:d.mime||null,page_count:d.pageCount||0,source_hash:d.sourceHash||null,storage_path:null,sync_original:false,created_at:iso(d.createdAt||Date.now()),updated_at:iso(d.updatedAt||d.createdAt||Date.now()),deleted_at:null}));const tomb=(bundle.deleted||[]).map(d=>({id:d.id,user_id:uid,title:'(삭제됨)',file_name:null,mime_type:null,page_count:0,source_hash:null,storage_path:null,sync_original:false,created_at:iso(d.deletedAt),updated_at:iso(d.deletedAt),deleted_at:iso(d.deletedAt)}));await upsertRows(T.private_documents,[...docs,...tomb]);const liveIds=new Set(docs.map(d=>d.id));const chunks=(bundle.chunks||[]).filter(c=>liveIds.has(c.docId)).map(c=>({id:c.id,user_id:uid,document_id:c.docId,page_no:c.page||null,chunk_index:c.chunkIndex||0,body:c.text||'',created_at:now}));await upsertRows(T.document_chunks,chunks);await deleteChunksFor(uid,tomb.map(x=>x.id))}
   s.settings.cloudSync=true;V.Store.save();return true;
 }
 async function adoptUser(next){if(!next)return;if(V.Auth?.hasStudyMembership&&!(await V.Auth.hasStudyMembership(next.id)))throw Error('STUDY_ACCOUNT_REQUIRED');user=next;V.Store.switchOwner(next.id);await pullRemoteIntoLocal(next.id);V.Store.migrateGuestToUser(next.id);await syncAllInternal(next.id);lastAdoptedId=next.id;lastAdoptedAt=Date.now();emit('signed-in')}
 function queueAdopt(next){if(!next)return Promise.resolve();if(activeId===next.id&&activeAdopt)return activeAdopt;if(lastAdoptedId===next.id&&Date.now()-lastAdoptedAt<3000)return Promise.resolve();activeId=next.id;activeAdopt=adoptUser(next).finally(()=>{activeId='';activeAdopt=null});return activeAdopt}
 async function init(){if(readyPromise)return readyPromise;readyPromise=(async()=>{if(!configured())return{client:null,user:null};try{const m=V.SupabaseLite;if(!m?.createClient)throw Error('SUPABASE_LITE_NOT_LOADED');client=m.createClient(cfg.supabaseUrl,clientKey());const {data,error}=await client.auth.getUser();if(error)throw error;user=data?.user||null;client.auth.onAuthStateChange((event,session)=>{const next=session?.user||null;if(event==='SIGNED_OUT'||!next){if(event==='SIGNED_OUT'){user=null;V.Store.switchOwner(V.Store.guestId);emit(Date.now()<manualSignOutUntil?'manual-signout':'session-expired')}return}user=next;if(event==='SIGNED_IN'||event==='USER_UPDATED')queueAdopt(next).catch(e=>console.warn('member adopt failed',e))});if(user)setTimeout(()=>queueAdopt(user).catch(e=>console.warn('initial member sync failed',e)),0);return{client,user}}catch(e){console.warn('auth init failed',e);client=null;user=null;return{client:null,user:null}}})();return readyPromise}
-async function signUp(email,password){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');const {data,error}=await client.auth.signUp({email,password,options:{data:{app_scope:'study-v9'}}});if(error)throw error;if(data?.session&&data?.user){await queueAdopt(data.user);return{...data,pendingEmailConfirmation:false}}if(data?.user)return{...data,pendingEmailConfirmation:true};return{...data,pendingEmailConfirmation:true}}
-async function resendConfirmation(email){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');if(!email)throw Error('EMAIL_REQUIRED');const {data,error}=await client.auth.resend({type:'signup',email});if(error)throw error;return data}
+async function signUp(email,password){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');const emailRedirectTo=new URL('./',location.href).href;const {data,error}=await client.auth.signUp({email,password,options:{data:{app_scope:'study-v9'},emailRedirectTo}});if(error)throw error;if(data?.session&&data?.user){await queueAdopt(data.user);return{...data,pendingEmailConfirmation:false}}if(data?.user)return{...data,pendingEmailConfirmation:true};return{...data,pendingEmailConfirmation:true}}
+async function resendConfirmation(email){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');if(!email)throw Error('EMAIL_REQUIRED');const emailRedirectTo=new URL('./',location.href).href;const {data,error}=await client.auth.resend({type:'signup',email,options:{emailRedirectTo}});if(error)throw error;return data}
 async function signIn(email,password){await init();if(!client)throw Error('MEMBER_BACKEND_NOT_CONFIGURED');const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;if(data?.user)await queueAdopt(data.user);return data}
 async function signOut(){await init();manualSignOutUntil=Date.now()+3000;if(client){const {error}=await client.auth.signOut();if(error)throw error}if(lastEmitReason!=='manual-signout'){user=null;V.Store.switchOwner(V.Store.guestId);emit('manual-signout')}}
 async function syncAll(){await init();if(!client||!user)throw Error('NOT_SIGNED_IN');await pullRemoteIntoLocal(user.id);return syncAllInternal(user.id)}
@@ -873,7 +873,6 @@ V.Auth.hasStudyMembership=hasStudyMembership;
 V.Auth.rejectNonStudySession=rejectNonStudySession;
 V.Auth.syncPolicy={...V.Auth.syncPolicy,dbMembershipRequired:true,membershipTable:'study_memberships',membershipPreflightBeforeAdopt:true,clientRuntime:'same-origin-lite'};
 
-// Protect against an already-persisted session from another app sharing this Supabase project.
 rejectNonStudySession().catch(e=>console.warn('study membership guard failed',e));
 })();
 
@@ -1067,9 +1066,6 @@ const QUESTION_FILES=[
 ];
 let questionsPromise=null,questionsReady=false;
 
-// V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
-// tokens as real learner-facing underlines as well as marker emphasis so the core
-// contract remains visible on every responsive layout without re-highlighting full lines.
 function restoreCoreUnderlineSemantics(root=document){
   root?.querySelectorAll?.('.study-key-emphasis').forEach(el=>{
     el.classList.add('study-key-underline');

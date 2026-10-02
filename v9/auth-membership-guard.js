@@ -50,6 +50,5 @@ V.Auth.hasStudyMembership=hasStudyMembership;
 V.Auth.rejectNonStudySession=rejectNonStudySession;
 V.Auth.syncPolicy={...V.Auth.syncPolicy,dbMembershipRequired:true,membershipTable:'study_memberships',membershipPreflightBeforeAdopt:true,clientRuntime:'same-origin-lite'};
 
-// Protect against an already-persisted session from another app sharing this Supabase project.
 rejectNonStudySession().catch(e=>console.warn('study membership guard failed',e));
 })();

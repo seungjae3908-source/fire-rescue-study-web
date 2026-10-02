@@ -25,9 +25,6 @@ const QUESTION_FILES=[
 ];
 let questionsPromise=null,questionsReady=false;
 
-// V48 deliberately limits visual emphasis to a few high-signal tokens. Keep those
-// tokens as real learner-facing underlines as well as marker emphasis so the core
-// contract remains visible on every responsive layout without re-highlighting full lines.
 function restoreCoreUnderlineSemantics(root=document){
   root?.querySelectorAll?.('.study-key-emphasis').forEach(el=>{
     el.classList.add('study-key-underline');
