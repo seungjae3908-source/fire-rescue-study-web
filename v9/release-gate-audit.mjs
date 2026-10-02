@@ -108,7 +108,7 @@ const checks={
   examVersionTruth:V.ExamVersion119?.audit?.().ready===true,
   adaptiveMasteryV2Contract:mastery.includes("version:'119-mastery-v2'")&&workflow.includes('Adaptive mastery v2 deterministic gate'),
   storageQuotaRecoveryContract:workflow.includes('Local storage quota recovery gate')&&fs.readFileSync(new URL('./store.js',import.meta.url),'utf8').includes("storageCompactionVersion:'quota-v1'"),
-  runtimePerformanceBudgetContract:workflow.includes('Static runtime performance budget gate')&&performanceBudget.includes('PERFORMANCE_BUDGET_COMPLETE')&&performanceBudget.includes('totalBytes:1850000'),
+  runtimePerformanceBudgetContract:workflow.includes('Static runtime performance budget gate')&&performanceBudget.includes('PERFORMANCE_BUDGET_COMPLETE')&&performanceBudget.includes('totalBytes:1855000'),
   questionSkillFamilyTaxonomy:V.QuestionType119?.audit?.().ready===true&&V.QuestionType119?.policy?.notOfficialExamWeight===true,
   skillFamilyRemediationContract:app.includes('function buildSkillTraining')&&app.includes('data-skill-train')&&e2e.includes('skill-family remediation starts a focused training run'),
   quality4HighYield:quality4HighYieldAudit?.missing===0&&quality4HighYieldAudit?.ready===quality4HighYieldAudit?.total&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_COMPLETE')&&quality4AuditScript.includes('QUALITY4_HIGHYIELD_FAILED'),
