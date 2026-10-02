@@ -4,7 +4,7 @@ import {chromium} from 'playwright';
 const base='http://127.0.0.1:4173/v9/index.html';
 const snapshot={
   version:'119-official-monitor-snapshot-v1',
-  generatedAt:'2026-10-01T00:00:00.000Z',
+  generatedAt:new Date().toISOString(),
   targetExamYear:2027,
   baselineYear:2026,
   officialOnly:true,
