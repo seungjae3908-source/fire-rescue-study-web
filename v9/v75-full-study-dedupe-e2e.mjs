@@ -71,7 +71,8 @@ try{
   for(const row of detail.compare){
     const lk=norm(row.label);if(labels.has(lk))issues.push({id,type:'COMPARE_LABEL_DUP',label:row.label});labels.add(lk);
     const related=detail.facts.find(seed=>sameFact(seed,row.body)&&!([...new Set((row.body.match(/\d+(?:[.,]\d+)?/g)||[]))].some(n=>!(seed.match(/\d+(?:[.,]\d+)?/g)||[]).includes(n))));
-    if(related)issues.push({id,type:'COMPARE_REPEAT',rows:[[related,row.label+' '+row.body]]});
+    const numbered=/^(?:제?\d+\s*(?:종|류|급))$/.test(row.label);
+    if(related&&!numbered)issues.push({id,type:'COMPARE_REPEAT',rows:[[related,row.label+' '+row.body]]});
   }
  }
  const priorityContracts=[
