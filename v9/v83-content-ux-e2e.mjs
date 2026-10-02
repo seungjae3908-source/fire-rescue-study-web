@@ -38,11 +38,11 @@ try{
 
       S.state.studyTab='core';V.App.render();
       const core=document.querySelector('.core-view'),coreText=core?.innerText||'';
-      const expected=(V.StudyEmphasis119.numberRows(pack,12)||[]).map(x=>V.StudyEmphasis119.stripSourceReferenceNumbers(x)).filter(Boolean);
+      const expected=(V.StudyEmphasis119.mustRows(pack)||[]).filter(x=>V.StudyEmphasis119.isNumericCriterion(x)).map(x=>V.StudyEmphasis119.stripSourceReferenceNumbers(x)).filter(Boolean);
       if(expected.length)counts.numeric++;
       for(const row of expected){
         const tokens=(String(row).match(numberRe)||[]).map(clean).filter(Boolean);
-        for(const token of tokens)if(token&&!clean(coreText).includes(token))issues.push({id:c.id,tab:'core',type:'NUMERIC_NOT_VISIBLE',token,row});
+        for(const token of tokens)if(token&&!clean(coreText).includes(token))issues.push({id:c.id,tab:'core',type:'MUST_NUMERIC_NOT_VISIBLE',token,row});
       }
 
       S.state.studyTab='detail';V.App.render();
