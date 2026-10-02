@@ -38,6 +38,7 @@ try{
  await p.locator('#authEmail').fill('qa@example.com');await p.locator('#authPw').fill('12345678');
  const signupDialog=p.waitForEvent('dialog');await p.locator('[data-signup]').click();const sd=await signupDialog;const signupText=sd.message();await sd.accept();
  check(signupText.includes('회원가입 신청이 완료되었습니다.')&&signupText.includes('인증메일'),'signup click shows completion + email verification guidance',{signupText});
+ await p.locator('#authPw').fill('12345678');
  const loginDialog=p.waitForEvent('dialog');await p.locator('[data-signin]').click();const ld=await loginDialog;const loginText=ld.message();await ld.accept();
  check(loginText.includes('소방합격 업데이트')&&loginText.includes('회원가입·이메일 인증 안내 개선'),'first login shows update notes',{loginText});
  const seen=await p.evaluate(()=>localStorage.getItem('aitutor9:v82-seen'));
