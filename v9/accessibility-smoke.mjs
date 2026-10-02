@@ -4,7 +4,7 @@ const base='http://127.0.0.1:4173/v9/index.html';
 const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
 const snapshot={
   version:'119-official-monitor-snapshot-v1',
-  generatedAt:'2026-10-01T00:00:00.000Z',
+  generatedAt:new Date().toISOString(),
   targetExamYear:2027,baselineYear:2026,officialOnly:true,healthy:true,coverageComplete:true,
   policy:{requiredSourceCount:1,totalSourceCount:3,wafBypassForbidden:true},
   sourceStatus:[
