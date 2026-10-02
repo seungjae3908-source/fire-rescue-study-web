@@ -1,4 +1,5 @@
 'use strict';
+/* V69 bootstrap bundle 7b. Source order is canonical. */
 
 ;
 /* ---- source-pdf.js ---- */
