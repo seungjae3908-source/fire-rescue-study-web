@@ -8,5 +8,5 @@ assert(auth.includes("emailRedirectTo=new URL('./',location.href).href")&&auth.i
 assert(sup.includes("/auth/v1/signup'+(redirect?'?redirect_to='+encodeURIComponent(redirect):'')")&&sup.includes("/auth/v1/resend'+(redirect?'?redirect_to='+encodeURIComponent(redirect):'')"),'Supabase Lite forwards redirect_to for signup and resend');
 assert(app.includes("localStorage.a9u82")&&app.includes("소방합격 업데이트"),'post-login update popup is version-gated');
 assert(sup.includes("t=h.get('type')")&&sup.includes("t==='signup'")&&sup.includes("이메일 인증이 완료되었습니다."),'email-confirm redirect shows success confirmation');
-assert(sw.includes('v82-auth-ux'),'V82 shell cache epoch is active');
+assert(sw.includes('v83-content-ux'),'V82 shell cache epoch is active');
 console.log('V82_AUTH_UX_AUDIT_SUCCESS');
