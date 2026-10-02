@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const app=read('./app.js'),auth=read('./auth.js'),lite=read('./supabase-lite.js'),sw=read('./sw.js');
+assert(auth.includes("emailRedirect=()=>location.origin+location.pathname"),'signup confirmation returns to the current app URL');
+assert(auth.includes("emailRedirectTo:emailRedirect()"),'signup and resend carry email redirect targets');
+assert(lite.includes("redirect_to=")&&lite.includes("get redirect(){return redirect}"),'same-origin auth client sends and exposes redirect state');
+assert(lite.includes("error_description")&&lite.includes("type:h.get('type')"),'confirmation redirect captures success type and failure details');
+assert(app.includes("회원가입 신청이 완료되었습니다.")&&app.includes("입력한 이메일로 인증메일을 보냈습니다."),'signup shows an explicit completion confirmation');
+assert(app.includes("이메일 인증이 완료되었습니다.")&&app.includes("이메일 인증에 실패했습니다."),'confirmation callback shows explicit success and expiry feedback');
+assert(app.includes("const UPDATE_KEY='aitutor9:v82-seen'")&&app.includes("소방합격 업데이트"),'login update notice is versioned and one-time');
+assert(sw.includes('ai-tutor-v9-shell-20261002-v82-auth-feedback'),'V82 shell cache epoch is active');
+console.log('V82_AUTH_FEEDBACK_AUDIT_SUCCESS');
