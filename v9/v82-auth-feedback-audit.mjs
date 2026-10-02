@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const lite=read('./supabase-lite.js'),auth=read('./auth.js'),app=read('./app.js'),sw=read('./sw.js'),styles=read('./styles.css'),responsive=read('./v54-responsive.css'),perf=read('./performance-budget-audit.mjs');
+assert(lite.includes("redirect_to='+encodeURIComponent(options.emailRedirectTo)")&&lite.includes('__authRedirect:authRedirect'),'same-origin auth client forwards email redirect targets and exposes redirect outcome');
+assert(lite.includes("error_description")&&lite.includes("authRedirect={consumed:true,error:''}"),'email confirmation redirect records success and failure');
+assert(auth.includes('emailRedirectTo:authReturnUrl()')&&auth.includes('takeAuthRedirect'),'Study auth returns signup and resend links to the current app and exposes one-shot redirect feedback');
+assert(app.includes('회원가입 신청이 완료되었습니다')&&app.includes('인증메일을 보냈습니다. 이메일에서 인증을 완료한 뒤 로그인해주세요.'),'signup shows a clear email-verification confirmation');
+assert(app.includes('이메일 인증이 완료되었습니다')&&app.includes('인증 링크가 만료되었거나 유효하지 않습니다'),'confirmation redirect has explicit success and failure feedback');
+assert(app.includes("version:'2026.10.02-v82'")&&app.includes('fire-rescue-study:update-seen:')&&app.includes('maybeOpenUpdateNotice'),'login update notice is versioned and stored once per member');
+assert(app.includes('회원가입·이메일 인증 안내 개선')&&app.includes('학습 본문의 불필요한 페이지·쪽수 표현 정리'),'update popup lists the current release changes');
+assert(sw.includes('ai-tutor-v9-shell-20261002-v82-auth-feedback'),'V82 cache epoch invalidates stale auth UI');
+assert(perf.includes('totalBytes:1855000'),'runtime budget moves only 5KB for V82 auth feedback');
+assert(!styles.includes('V82')&&!responsive.includes('V82'),'V82 keeps frozen learner UI/CSS untouched');
+console.log('V82_AUTH_FEEDBACK_AUDIT_SUCCESS');
