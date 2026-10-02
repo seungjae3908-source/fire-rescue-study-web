@@ -140,7 +140,8 @@ const candidates=[
 ],rows=[];
 for(const row of candidates){
 const text=studentStudyText(row.text);
-if(!text||sameStudyFact(text,quick)||numbers.some(n=>sameStudyFact(text,n))||comparisonFacts.some(x=>sameStudyFactCross(text,x))||rows.some(x=>sameStudyFact(x.text,text)))continue;
+if(!text||sameStudyFact(text,quick)||numbers.some(n=>sameStudyFact(text,n))||comparisonFacts.some(x=>sameStudyFactCross(text,x)))continue;
+const i=rows.findIndex(x=>sameStudyFact(x.text,text)||(V.StudyEmphasis119?.isNumericCriterion?.(x.text)&&V.StudyEmphasis119?.isNumericCriterion?.(text)&&studyTokenCoverage(x.text,text)>=.6));if(i>=0){if(text.length>rows[i].text.length)rows[i]={...row,text};continue}
 rows.push({...row,text});if(rows.length>=5)break
 }
 return rows
