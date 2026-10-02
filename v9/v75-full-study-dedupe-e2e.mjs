@@ -14,8 +14,9 @@ function sameFact(a,b){
  return min>=10&&hit/Math.min(A.size,B.size)>=.78&&dice(a,b)>=.48
 }
 const nums=v=>new Set((String(v||'').match(/\d+(?:[.,]\d+)?/g)||[]).map(x=>x.replace(/,/g,'.')));
+const distinctBranch=(a,b)=>/^non-?shockable/i.test(a)!==/^non-?shockable/i.test(b)&&/shockable/i.test(a)&&/shockable/i.test(b);
 function pairDuplicates(rows){
- const out=[];for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){if(!sameFact(rows[i],rows[j]))continue;const A=nums(rows[i]),B=nums(rows[j]),a=[...A].some(x=>!B.has(x)),b=[...B].some(x=>!A.has(x));if((!A.size&&B.size)||(A.size&&!B.size)||(a&&b))continue;out.push([rows[i],rows[j]])}
+ const out=[];for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){if(!sameFact(rows[i],rows[j])||distinctBranch(rows[i],rows[j]))continue;const A=nums(rows[i]),B=nums(rows[j]),a=[...A].some(x=>!B.has(x)),b=[...B].some(x=>!A.has(x));if((!A.size&&B.size)||(A.size&&!B.size)||(a&&b))continue;out.push([rows[i],rows[j]])}
  return out
 }
 
@@ -94,6 +95,10 @@ try{
   const detailText=(await page.locator('.page-study .detail-view').innerText()).replace(/\s+/g,' ');
   for(const term of terms)assert(detailText.includes(term),id+' detail preserves high-priority distinction after semantic dedupe: '+term);
  }
+
+ await page.evaluate(()=>{const V=window.AITUTOR_V9,c=V.curriculum.byId['E11-C03'],s=V.Store.state;s.page='study';s.subject=c.subject;s.scopeId=c.scopeId;s.conceptId=c.id;s.studyTab='core';s.outline=false;V.Store.save();V.App.render()});
+ const cardiacCore=await page.locator('.page-study .core-view').innerText();
+ assert(cardiacCore.includes('Shockable')&&cardiacCore.includes('Non-shockable'),'shockable and non-shockable 2-minute branches both remain visible in core');
 
  const org=await page.evaluate(()=>{
   const V=window.AITUTOR_V9,p=V.contentPacks.get('F01-C01');
