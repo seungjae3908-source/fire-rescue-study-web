@@ -144,7 +144,7 @@ for(const x of a){const t=studentStudyText(x.text);if(!t||V.StudyEmphasis119?.is
 }
 function coreNumberRows(p){
 const s=[p?.studySchema?.quick30||p?.summary||'',...coreEssentialRows(p).map(x=>x.text)].map(studentStudyText).filter(Boolean),r=[],o=(a,b)=>{const A=numericTokenSet(a);return[...numericTokenSet(b)].some(x=>A.has(x))},d=(a,b)=>o(a,b)&&(sameStudyFact(a,b)||numericRelated(a,b)||studyNorm(a).includes(studyNorm(b))||studyNorm(b).includes(studyNorm(a)));
-for(const z of V.StudyEmphasis119?.numberRows?.(p,18)||[]){const t=studentStudyText(z),u=t.split(/\s*·\s*/).map(studentStudyText).filter(x=>V.StudyEmphasis119?.isNumericCriterion?.(x)),a=u.length?u:[t];for(const x of a){if(!x||!V.StudyEmphasis119?.isNumericCriterion?.(x)||s.some(y=>d(y,x)))continue;const i=r.findIndex(y=>d(y,x));if(i>=0){if(x.length>r[i].length)r[i]=x;continue}r.push(x);if(r.length>=12)return r}}return r
+for(const z of V.StudyEmphasis119?.numberRows?.(p,18)||[]){const t=studentStudyText(z),u=t.split(/\s*·\s*/).map(studentStudyText).filter(x=>V.StudyEmphasis119?.isNumericCriterion?.(x)),a=u.length?u:[t];for(const x of a){if(!x||!V.StudyEmphasis119?.isNumericCriterion?.(x)||s.some(y=>d(y,x)))continue;const i=r.findIndex(y=>d(y,x));if(i>=0){if(x.length>r[i].length)r[i]=x;continue}r.push(x)}}const u=[];for(const x of r){const i=u.findIndex(y=>d(y,x));if(i>=0){if(x.length>u[i].length)u[i]=x}else u.push(x)}return u.slice(0,12)
 }
 function coreTrapRows(pack){
 const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text),...coreNumberRows(pack)].map(studentStudyText).filter(Boolean),rows=[];
