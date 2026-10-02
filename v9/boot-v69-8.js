@@ -1149,10 +1149,10 @@ if(!page){badge.textContent='근거 위치 찾는 중…';const located=await V.
 badge.textContent=manualQuery?'검색 결과 여는 중…':(staticRange?'공식 교재 여는 중…':'공식 원문 여는 중…');
 let result=await V.SourcePDF.render(key,page,host,renderQueries,{timeoutMs:18000,onProgress:progress,anchorTerms:renderAnchors,zoom:Number(root.dataset.zoom)||1});
 if(!manualQuery&&pageOverride==null&&!hasAnchorEvidence(result,anchorQueries)&&anchorQueries.length){
-const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key),candidates=[];
-const mappedHit=await V.SourcePDF.locate(key,queries,{bookRanges:mapped}).catch(()=>null);
+const mapped=(c?.sourceRanges||[]).filter(x=>x.doc===key),candidates=[],locateQueries=anchorQueries.length?anchorQueries:queries;
+const mappedHit=await V.SourcePDF.locate(key,locateQueries,{bookRanges:mapped}).catch(()=>null);
 if(mappedHit?.page&&mappedHit.score>0)candidates.push({...mappedHit,scope:'mapped'});
-const broadHit=await Promise.race([V.SourcePDF.locate(key,queries).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),6000))]);if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'});
+const broadHit=await Promise.race([V.SourcePDF.locate(key,locateQueries).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),6000))]);if(broadHit?.page&&broadHit.score>=8&&!candidates.some(x=>x.page===broadHit.page))candidates.push({...broadHit,scope:'document'});
 for(const located of candidates){
 const anchorResult=await V.SourcePDF.render(key,located.page,host,queries,{timeoutMs:18000,onProgress:progress,anchorTerms:anchorQueries,zoom:Number(root.dataset.zoom)||1});
 if(hasAnchorEvidence(anchorResult,anchorQueries)||(!question&&anchorResult.hits>=2)){result=anchorResult;root.dataset.autoLocated='true';root.dataset.searchScope=located.scope;break}
