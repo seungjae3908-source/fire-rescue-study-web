@@ -154,7 +154,7 @@ function coreNumberRows(pack){
 const seeds=[pack?.studySchema?.quick30||pack?.summary||'',...coreEssentialRows(pack).map(x=>x.text)].map(studentStudyText).filter(Boolean),rows=[],overlap=(a,b)=>{const A=numericTokenSet(a);return[...numericTokenSet(b)].some(x=>A.has(x))},dupe=(a,b)=>overlap(a,b)&&(sameStudyFact(a,b)||studyNorm(a).includes(studyNorm(b))||studyNorm(b).includes(studyNorm(a)));
 for(const raw of V.StudyEmphasis119?.numberRows?.(pack,18)||[]){
 const text=studentStudyText(raw),parts=text.split(/\s*·\s*/).map(studentStudyText).filter(x=>V.StudyEmphasis119?.isNumericCriterion?.(x)),items=parts.length?parts:[text];
-for(const item of items){if(!item||!V.StudyEmphasis119?.isNumericCriterion?.(item)||seeds.some(x=>dupe(x,item)))continue;const i=rows.findIndex(x=>dupe(x,item));if(i>=0){if(item.length>rows[i].length)rows[i]=item;continue}rows.push(item);if(rows.length>=10)return rows}
+for(const item of items){if(!item||!V.StudyEmphasis119?.isNumericCriterion?.(item)||seeds.some(x=>dupe(x,item)))continue;const i=rows.findIndex(x=>dupe(x,item));if(i>=0){if(item.length>rows[i].length)rows[i]=item;continue}rows.push(item);if(rows.length>=12)return rows}
 }
 return rows
 }
@@ -327,7 +327,7 @@ return rows.map((x,i)=>`<section class="calc-lab" data-calculation-index="${i}">
 function quickCoreBlock(c,pack){const text=pack?.studySchema?.quick30||pack?.summary||'';if(!text)return'';const key=V.PassNote?.conceptCoreKey?.(c.id)||'',saved=key&&V.PassNote?.has?.(key);return `<section class="study-quick"><div class="study-quick-title"><span>핵심</span><div class="study-quick-actions"><button class="study-core-save ${saved?'on':''}" data-pass-core="${esc(c.id)}" aria-label="${saved?'합격노트에서 삭제':'합격노트에 추가'}">합격노트 ${saved?'★':'☆'}</button></div></div><p class="lead">${studyHighlight(text,pack)}</p></section>`}
 function coreEssentialBlock(c,pack){const rows=coreEssentialRows(pack).slice(0,5);if(!rows.length)return'';return `<section class="study-core-essentials"><div class="study-core-title"><span>시험 핵심</span></div><ul>${rows.map(x=>`<li><span>${esc(x.text)}</span></li>`).join('')}</ul></section>`}
 function coreCompareBlock(){return''}
-function numberBlock(c,pack){const rows=coreNumberRows(pack);if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title"><span>숫자 · 단위 · 기준</span></div><ul>${rows.map(x=>`<li><span class="study-key-text">${numberHighlight(x)}</span></li>`).join('')}</ul></section>`}
+function numberBlock(c,pack){const rows=coreNumberRows(pack);if(!rows.length)return'';return `<section class="study-numbers"><div class="study-numbers-title"><span>숫자 · 단위 · 기준</span></div><ul>${rows.map((x,i)=>`<li><span class="study-key-text">${i<9?numberHighlight(x):esc(x)}</span></li>`).join('')}</ul></section>`}
 function trapBlock(pack){
 const rows=coreTrapRows(pack);if(!rows.length)return'';
 return `<section class="study-traps"><div class="study-traps-title">자주 틀리는 포인트</div><ul>${rows.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
@@ -377,7 +377,7 @@ return `<div class="lesson quiz-view"><div class="quiz-overview"><b>개념 확�
 }
 if(tab==='source')return sourceBlock(c,pack);
 if(tab==='ai')return aiChatBody(c);
-return `<div class="lesson core-view">${quickCoreBlock(c,pack)}${coreEssentialBlock(c,pack)}${numberBlock(c,pack)}${trapBlock(pack)}${c.id==='F05-C01'?hazmatBlock(c):''}</div>`;
+return `<div class="lesson core-view">${quickCoreBlock(c,pack)}${coreEssentialBlock(c,pack)}${numberBlock(c,pack)}${trapBlock(pack)}${c.id==='F05-C01'?hazmatBlock(c)+specialCombustibleBlock(pack):''}</div>`;
 }
 function lessonBook(c,pack){
 const tab=STUDY_TABS.some(([k])=>k===state().studyTab)?state().studyTab:'core';
