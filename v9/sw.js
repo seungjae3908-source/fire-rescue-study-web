@@ -1,5 +1,5 @@
 "use strict";
-const CACHE='ai-tutor-v9-shell-20261002-v82-auth-ux';
+const CACHE='ai-tutor-v9-shell-20261002-v83-content-ux';
 const PREFIX='ai-tutor-v9-';
 const CORE=[
   './','./index.html','./styles.css','./v54-responsive.css','./manifest.webmanifest',
