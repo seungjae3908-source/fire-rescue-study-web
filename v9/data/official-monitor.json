@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-10-08T09:04:13.639Z",
+  "generatedAt": "2026-10-08T16:33:36.697Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -56,8 +56,8 @@
       "ok": false,
       "pagesOk": 0,
       "status": "error",
-      "error": "UND_ERR_CONNECT_TIMEOUT: UND_ERR_CONNECT_TIMEOUT: fetch failed: Connect Timeout Error (attempted address: gongmuwon.gosi.kr:443, timeout: 10000ms): fetch failed",
-      "errorCode": "UND_ERR_CONNECT_TIMEOUT",
+      "error": "HTTP_404",
+      "errorCode": "HTTP_404",
       "errorUrl": "https://gongmuwon.gosi.kr/spcsv/indexMain3.do",
       "fallbackUsed": false
     },
@@ -68,8 +68,8 @@
       "ok": false,
       "pagesOk": 0,
       "status": "error",
-      "error": "20: This operation was aborted",
-      "errorCode": "20",
+      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
+      "errorCode": "WAF_CHALLENGE",
       "errorUrl": "https://www.nfa.go.kr/nfsa/news/0011/job/?pageIdx=1",
       "fallbackUsed": false
     },
@@ -80,8 +80,8 @@
       "ok": false,
       "pagesOk": 0,
       "status": "error",
-      "error": "20: This operation was aborted",
-      "errorCode": "20",
+      "error": "WAF_CHALLENGE: OFFICIAL_SITE_WAF_CHALLENGE",
+      "errorCode": "WAF_CHALLENGE",
       "errorUrl": "https://www.nfa.go.kr/nfsa/releaseinformation/archive/materials/",
       "fallbackUsed": false
     }
@@ -448,7 +448,7 @@
   "degraded": true,
   "preservedLastGood": true,
   "notificationSuppressed": true,
-  "lastAttemptAt": "2026-10-08T09:04:13.639Z",
+  "lastAttemptAt": "2026-10-08T16:33:36.697Z",
   "lastSuccessfulAt": "2026-10-07T22:02:14.819Z",
   "delta": {
     "newIds": [],
