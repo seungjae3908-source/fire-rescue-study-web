@@ -1,6 +1,6 @@
 {
   "version": "119-official-monitor-snapshot-v1",
-  "generatedAt": "2026-10-20T18:29:49.580Z",
+  "generatedAt": "2026-10-20T22:20:52.953Z",
   "targetExamYear": 2027,
   "baselineYear": 2026,
   "officialOnly": true,
@@ -259,8 +259,8 @@
   "degraded": true,
   "preservedLastGood": false,
   "notificationSuppressed": false,
-  "lastAttemptAt": "2026-10-20T18:29:49.580Z",
-  "lastSuccessfulAt": "2026-10-20T18:29:49.580Z",
+  "lastAttemptAt": "2026-10-20T22:20:52.953Z",
+  "lastSuccessfulAt": "2026-10-20T22:20:52.953Z",
   "delta": {
     "newIds": [],
     "updatedIds": [],
