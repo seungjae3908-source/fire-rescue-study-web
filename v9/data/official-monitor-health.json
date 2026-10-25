@@ -1,11 +1,11 @@
 {
   "version": "119-official-monitor-health-v1",
-  "generatedAt": "2026-10-25T09:52:05.361Z",
+  "generatedAt": "2026-10-25T14:25:29.743Z",
   "healthy": true,
   "coverageComplete": false,
   "degraded": true,
   "preservedLastGood": false,
-  "lastSuccessfulAt": "2026-10-25T09:52:05.361Z",
+  "lastSuccessfulAt": "2026-10-25T14:25:29.743Z",
   "sourceStatus": [
     {
       "id": "gosi-fire",
